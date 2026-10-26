@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#f8f7fc">
+  <meta name="description" content="Contagem regressiva até 1º de fevereiro de 2027, início do período sem mandato parlamentar de Flávio Bolsonaro.">
+  <meta property="og:title" content="Contagem regressiva — Flávio Bolsonaro">
+  <meta property="og:description" content="Dias, horas, minutos e segundos até o fim de seu mandato de senador.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="foto.webp">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='.9em' font-size='54'%3E%E2%8F%B3%3C/text%3E%3C/svg%3E">
+  <title>Contagem regressiva para o fim do mandato — Flávio Bolsonaro</title>
+  <style>
+    :root {--ink:#242038;--muted:#746f80;--purple:#713bb5;--deep:#4c2588;--lilac:#eee6fa;--line:#e7e2ef;--surface:#fff}
+    *,*::before,*::after{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:radial-gradient(ellipse 72% 40% at 12% 12%,#e9dffb 0,transparent 100%),radial-gradient(ellipse 65% 45% at 96% 90%,#eee8fa 0,transparent 100%),#f8f7fc}
+    .wrap{width:min(1100px,calc(100% - 36px));margin:0 auto;padding:30px 0 45px}
+    .nav{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:38px}
+    .brand{font-size:14px;font-weight:900;letter-spacing:.14em;color:var(--deep);text-transform:uppercase;display:flex;align-items:center;gap:11px}
+    .brand-mark{width:35px;height:35px;border-radius:11px;background:var(--deep);color:#fff;display:grid;place-items:center;font-size:20px}
+    .nav-note{font-size:12px;color:var(--muted);text-align:right}
+    .hero{background:var(--surface);border:1px solid #efedf3;border-radius:32px;padding:clamp(20px,4vw,48px);box-shadow:0 25px 80px #3d25541a;display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,390px);align-items:center;gap:clamp(20px,4vw,60px)}
+    .eyebrow{display:inline-flex;gap:8px;align-items:center;background:var(--lilac);color:var(--deep);font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.13em;padding:10px 13px;border-radius:100px;margin-bottom:20px}
+    .dot{width:7px;height:7px;background:#8750d2;border-radius:50%;box-shadow:0 0 0 4px #8952d11c}
+    h1{font-size:clamp(36px,5vw,62px);line-height:1.04;letter-spacing:-.055em;margin:0 0 16px;font-weight:900}
+    h1 span{color:var(--purple)}
+    .intro{font-size:16px;line-height:1.65;color:#686273;max-width:470px;margin:0 0 28px}
+    .target{display:flex;align-items:center;gap:12px;font-size:14px;margin:20px 0 27px;color:var(--muted)}
+    .calendar{display:grid;place-items:center;width:42px;height:42px;flex:none;background:var(--lilac);border-radius:13px;color:var(--deep);font-size:22px}
+    .target strong{display:block;color:var(--ink);font-size:16px}
+    .counter{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:560px}
+    .unit{background:#faf8fe;border:1px solid #e9e2f5;border-radius:17px;text-align:center;padding:19px 4px 16px}
+    .digit{color:var(--deep);font-weight:900;line-height:1;font-size:clamp(25px,4vw,46px);font-variant-numeric:tabular-nums;letter-spacing:-.04em}
+    .unit-label{display:block;color:#766b87;text-transform:uppercase;font-size:10px;letter-spacing:.12em;font-weight:800;margin-top:12px}
+    .share{margin-top:22px;padding:13px 20px;background:var(--deep);border:0;color:white;display:inline-flex;align-items:center;gap:10px;border-radius:13px;font-size:14px;font-weight:750;cursor:pointer;box-shadow:0 9px 18px #4c258825;transition:transform .15s,background .15s}
+    .share:hover{background:#6230a5;transform:translateY(-2px)}
+    .share:focus-visible{outline:3px solid #9c75d6;outline-offset:3px}
+    .share-message{font-size:12px;color:var(--deep);min-height:18px;margin-top:8px}
+    .photo-outer{position:relative;max-width:390px;justify-self:center}
+    .photo-outer:before{content:"";position:absolute;inset:0;border-radius:38px;background:linear-gradient(130deg,#d9c4f5,#f1eafa);transform:rotate(4deg);z-index:0}
+    .photo-outer img{position:relative;width:100%;height:auto;display:block;border-radius:28px;border:8px solid #fff;box-shadow:0 13px 35px #38235426}
+    .photo-tag{position:absolute;bottom:-13px;right:16px;z-index:1;background:#fff;border:1px solid var(--line);padding:11px 17px;border-radius:13px;box-shadow:0 5px 24px #39204e1a;font-weight:850;font-size:12px;color:var(--deep);letter-spacing:.04em}
+    .bottom{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+    .panel{background:#ffffffbf;border:1px solid var(--line);border-radius:21px;padding:23px 26px}
+    .panel h2{font-size:16px;margin:0 0 9px;letter-spacing:-.02em}
+    .panel p{font-size:13px;color:#6c6479;line-height:1.65;margin:0}
+    .panel a{color:var(--deep);font-weight:700;text-decoration-thickness:1px;text-underline-offset:3px}
+    footer{font-size:12px;color:#837b90;text-align:center;margin-top:30px}
+    .done{display:none;margin-top:20px;background:#eee6fa;color:var(--deep);font-size:20px;font-weight:850;padding:20px;border-radius:16px}
+    body.finished .done{display:block}
+    body.finished .counter{display:none}
+    @media(max-width:780px){.hero{grid-template-columns:1fr;text-align:center}.intro{margin-left:auto;margin-right:auto}.eyebrow{margin-top:2px}.target{justify-content:center}.counter{margin:auto}.photo-outer{width:min(100%,350px)}.nav{margin-bottom:22px}.bottom{grid-template-columns:1fr}}
+    @media(max-width:420px){.wrap{width:calc(100% - 22px);padding-top:17px}.hero{border-radius:24px;padding:21px 14px 32px}.counter{gap:6px}.unit{border-radius:12px;padding:16px 2px 13px}.digit{font-size:clamp(23px,7vw,32px)}.unit-label{font-size:9px;letter-spacing:.06em}.nav-note{max-width:120px}.panel{padding:20px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.share{transition:none}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="nav">
+      <div class="brand"><div class="brand-mark" aria-hidden="true">⌛</div> Contagem do foro</div>
+      <div class="nav-note">Relógio em horário de Brasília (UTC−3)</div>
+    </header>
+    <main>
+      <section class="hero" aria-labelledby="titulo">
+        <div>
+          <div class="eyebrow"><span class="dot"></span> Contagem regressiva</div>
+          <h1 id="titulo">O mandato acaba.<br><span>O relógio não para.</span></h1>
+          <p class="intro">Veja quanto falta para <strong>Flávio Bolsonaro</strong> encerrar seu mandato no Senado Federal, após a eleição presidencial de 2026.</p>
+          <div class="target"><div class="calendar" aria-hidden="true">▦</div><div><strong>1º de fevereiro de 2027 · 00h</strong>Fim do mandato: 31 de janeiro de 2027</div></div>
+          <div class="counter" role="timer" aria-label="Tempo restante até o fim do mandato">
+            <div class="unit"><div id="days" class="digit">--</div><span class="unit-label">Dias</span></div>
+            <div class="unit"><div id="hours" class="digit">--</div><span class="unit-label">Horas</span></div>
+            <div class="unit"><div id="minutes" class="digit">--</div><span class="unit-label">Minutos</span></div>
+            <div class="unit"><div id="seconds" class="digit">--</div><span class="unit-label">Segundos</span></div>
+          </div>
+          <div id="finished" class="done">O mandato parlamentar chegou ao fim.</div>
+          <button type="button" class="share" id="share">↗ Compartilhar a contagem</button>
+          <div id="share-message" class="share-message" role="status" aria-live="polite"></div>
+        </div>
+        <div class="photo-outer">
+          <img src="foto.webp" width="320" height="402" alt="Arte enviada como referência, com foto de Flávio Bolsonaro em preto e branco e a inscrição Não eleito">
+          <div class="photo-tag">ELEIÇÕES 2026</div>
+        </div>
+      </section>
+      <section class="bottom" aria-label="Informações importantes">
+        <div class="panel">
+          <h2>O que está sendo contado?</h2>
+          <p>O tempo até o encerramento do mandato de senador em 31/01/2027. A contagem chega a zero às 00h de 01/02/2027 (horário de Brasília). <a href="https://www12.senado.leg.br/noticias/materias/2026/10/25/lula-e-reeleito-para-quarto-mandato-de-presidente" target="_blank" rel="noopener noreferrer">Fonte: Senado Federal</a>.</p>
+        </div>
+        <div class="panel">
+          <h2>Atenção: ressalva jurídica</h2>
+          <p>O fim do mandato não extingue automaticamente a competência do STF em todos os casos. Segundo decisão de 2025, processos relacionados a crimes praticados no cargo e em razão dele podem continuar no tribunal. <a href="https://noticias.stf.jus.br/postsnoticias/acoes-contra-autoridades-permanecem-no-stf-mesmo-apos-saida-do-cargo/" target="_blank" rel="noopener noreferrer">Fonte: STF</a>.</p>
+        </div>
+      </section>
+    </main>
+    <footer>Projeto independente de contagem de tempo. Não é um comunicado oficial nem um parecer jurídico.</footer>
+  </div>
+  <noscript>Para ver a contagem regressiva funcionando, habilite o JavaScript no navegador.</noscript>
+  <script>
+    (() => {
+      "use strict";
+      const end = Date.parse("2027-02-01T00:00:00-03:00");
+      const $ = id => document.getElementById(id);
+      const pad = n => String(n).padStart(2, "0");
+      function tick() {
+        const left = Math.max(0, end - Date.now());
+        $("days").textContent = String(Math.floor(left / 86400000));
+        $("hours").textContent = pad(Math.floor(left % 86400000 / 3600000));
+        $("minutes").textContent = pad(Math.floor(left % 3600000 / 60000));
+        $("seconds").textContent = pad(Math.floor(left % 60000 / 1000));
+        if (!left) { document.body.classList.add("finished"); return true; }
+        return false;
+      }
+      if (!tick()) {
+        const interval = setInterval(() => { if (tick()) clearInterval(interval); }, 1000);
+        document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
+      }
+      $("share").addEventListener("click", async () => {
+        const url = window.location.href;
+        const msg = $("share-message");
+        try {
+          if (navigator.share) { await navigator.share({ title: document.title, url }); msg.textContent = "Link compartilhado."; }
+          else if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(url); msg.textContent = "Link copiado!"; }
+          else { msg.textContent = "Copie o endereço exibido no navegador para compartilhar."; }
+        } catch (e) {
+          if (e.name !== "AbortError") msg.textContent = "Copie o endereço do navegador para compartilhar.";
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
