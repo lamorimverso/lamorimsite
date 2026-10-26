@@ -6,68 +6,71 @@
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#f8f7fc">
   <meta name="description" content="Contagem regressiva até 1º de fevereiro de 2027, início do período sem mandato parlamentar de Flávio Bolsonaro.">
-  <meta property="og:title" content="Contagem regressiva — Flávio Bolsonaro">
+  <meta property="og:title" content="Tá acabando, produção! — Flávio Bolsonaro">
   <meta property="og:description" content="Dias, horas, minutos e segundos até o fim de seu mandato de senador.">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://lamorimverso.github.io/lamorimsite/fimdoforoflaviobosonaro/foto.webp">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='.9em' font-size='54'%3E%E2%8F%B3%3C/text%3E%3C/svg%3E">
-  <title>Contagem regressiva para o fim do mandato — Flávio Bolsonaro</title>
+  <title>Tá acabando, produção! — Contagem do mandato</title>
   <style>
-:root{--text:#211a30;--muted:#6c647a;--purple:#6839a8;--pale:#f2ecfa;--border:#e8e3ee}
+:root{--purple:#7843b5;--purple-dark:#4d227e;--ink:#24192e;--sub:#6b6471;--border:#e9e3ed;--soft:#f7f3fb}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;min-height:100vh;color:var(--text);background:#faf9fc;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
-.wrap{width:min(1080px,calc(100% - 36px));margin:auto;padding:26px 0 35px}
-.nav{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:24px}
-.brand{display:flex;align-items:center;gap:11px;color:var(--purple);font-weight:850;font-size:12px;letter-spacing:.13em;text-transform:uppercase}
-.brand-mark{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:var(--purple);color:white;font-size:19px}
-.nav-note{color:#797082;font-size:12px;text-align:right}
-.hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(245px,.8fr);gap:clamp(25px,4vw,60px);align-items:center;background:#fff;border:1px solid var(--border);border-radius:25px;padding:clamp(24px,5vw,58px)}
-.eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--purple);font-weight:850;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:20px}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--purple)}
-h1{font-size:clamp(36px,5vw,58px);letter-spacing:-.055em;line-height:1.05;margin:0 0 19px;font-weight:850}
+body{margin:0;background:#f9f8fb;color:var(--ink);min-height:100vh;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{width:min(920px,calc(100% - 28px));margin:auto;padding:24px 0 40px}
+.nav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 17px}
+.brand{display:flex;align-items:center;gap:10px;color:var(--purple-dark);font-size:12px;letter-spacing:.09em;font-weight:850;text-transform:uppercase}
+.brand-mark{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:var(--purple);color:#fff;font-size:18px}
+.nav-note{font-size:11px;text-align:right;color:var(--sub)}
+.hero{background:#fff;border:1px solid var(--border);border-radius:28px;padding:clamp(22px,4.5vw,48px) clamp(17px,4vw,45px);display:flex;flex-direction:column;align-items:center;text-align:center}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.13em;font-weight:800;text-transform:uppercase;color:var(--purple-dark);background:#f2eafa;padding:9px 13px;border-radius:100px}
+.dot{width:7px;height:7px;background:var(--purple);border-radius:100%}
+h1{margin:17px 0 10px;font-size:clamp(31px,5.7vw,52px);line-height:1.08;letter-spacing:-.045em}
 h1 span{color:var(--purple)}
-.intro{color:var(--muted);line-height:1.65;font-size:15px;margin:0 0 25px;max-width:530px}
-.target{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px;margin:15px 0 28px}
-.target strong{display:block;color:var(--text);font-weight:800;font-size:15px;margin-bottom:3px}
-.calendar{display:grid;place-items:center;flex:none;width:40px;height:40px;color:var(--purple);background:var(--pale);border-radius:11px;font-size:20px}
-.counter{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;max-width:560px}
-.unit{min-width:0;text-align:center;background:#f7f3fc;border:1px solid #eee7f7;border-radius:13px;padding:20px 4px 15px}
-.digit{font-size:clamp(26px,3.7vw,44px);line-height:1;font-variant-numeric:tabular-nums;font-weight:850;letter-spacing:-.04em;color:var(--purple)}
-.unit-label{display:block;margin-top:10px;color:#746a83;font-size:10px;font-weight:750;letter-spacing:.075em;text-transform:uppercase}
-.context{font-size:12px;line-height:1.6;color:var(--muted);margin:14px 0 0;max-width:490px}
-.share{background:var(--purple);color:#fff;font:inherit;font-size:13px;font-weight:800;border:0;border-radius:11px;padding:12px 18px;cursor:pointer;margin-top:20px}
-.share:hover,.music-toggle:hover{background:#512c83}
-.share:focus-visible,.music-toggle:focus-visible,.panel a:focus-visible{outline:3px solid #b293df;outline-offset:3px}
-.share-message{min-height:14px;color:var(--purple);font-size:12px;margin-top:8px}
-.photo-outer{justify-self:center;width:min(100%,355px);position:relative}
-.photo-outer::before{content:none}
-.photo-outer img{display:block;width:100%;height:auto;border-radius:18px;border:1px solid var(--border);background:#f6f4f8}
-.photo-tag{position:absolute;bottom:11px;right:11px;border-radius:8px;padding:8px 12px;background:#fff;color:var(--purple);font-size:10px;font-weight:800;letter-spacing:.08em;box-shadow:0 2px 9px #29203920}
-.music{margin-top:15px;display:flex;flex-wrap:wrap;align-items:center;gap:17px;background:#fff;border:1px solid var(--border);border-radius:18px;padding:17px 23px}
-.music-symbol{flex:none;width:44px;height:44px;display:grid;place-items:center;background:var(--pale);color:var(--purple);font-size:23px;border-radius:13px}
-.music-copy{flex:1 1 220px;min-width:0}
-.music h2{font-size:15px;letter-spacing:-.015em;margin:0 0 5px}
-.music p{font-size:12px;line-height:1.6;margin:0;color:var(--muted)}
-.music-toggle{border:0;border-radius:11px;padding:12px 17px;background:var(--purple);color:#fff;font:inherit;font-weight:800;font-size:13px;cursor:pointer}
-.music-player{width:100%;border-top:1px solid var(--border);margin-top:3px;padding-top:17px}
-.music-player[hidden]{display:none}
-.music-video{position:relative;width:100%;max-width:600px;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#17121e}
-.music-video iframe{display:block;width:100%;height:100%;border:0}
-.music-help{margin:10px 0 0!important}
-.music-help a,.panel a{color:var(--purple);text-underline-offset:3px}
-.bottom{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:15px}
-.panel{border:1px solid var(--border);border-radius:17px;background:#fff;padding:20px 23px}
-.panel h2{font-size:14px;margin:0 0 7px}
-.panel p{font-size:12px;line-height:1.7;margin:0;color:var(--muted)}
-.panel a{font-weight:750}
-footer{text-align:center;color:#81788b;font-size:11px;line-height:1.5;margin-top:26px}
-.done{display:none;background:var(--pale);padding:18px 13px;border-radius:12px;color:var(--purple);font-weight:800;margin:12px 0}
-body.finished .counter{display:none}
+.intro{margin:0 0 21px;max-width:630px;color:var(--sub);font-size:14px;line-height:1.7}
+.ring-wrap{margin:3px 0 23px;display:flex;align-items:center;flex-direction:column;gap:11px}
+.progress-ring{width:clamp(245px,36vw,322px);aspect-ratio:1;position:relative;border-radius:50%;padding:13px;background:conic-gradient(from 0deg,var(--purple) 0 var(--remaining,100%),#eeeaf0 var(--remaining,100%) 100%);transition:background .3s linear;box-shadow:0 12px 35px #52356516}
+.portrait{height:100%;width:100%;overflow:hidden;border-radius:50%;border:7px solid #fff;background:#fff}
+.portrait img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 30%;filter:grayscale(1)}
+.percent-badge{position:absolute;bottom:0;left:50%;transform:translate(-50%,8%);background:white;box-shadow:0 6px 26px #36214f27;border:1px solid var(--border);border-radius:15px;padding:10px 19px;min-width:133px}
+.percent-badge strong{display:block;font-size:clamp(25px,4vw,32px);font-variant-numeric:tabular-nums;color:var(--purple-dark);letter-spacing:-.03em;line-height:1}
+.percent-badge small{display:block;font-size:10px;font-weight:700;color:var(--sub);margin-top:4px}
+.ring-label{margin:14px 0 0;color:var(--purple-dark);font-size:11px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
+.ring-help{font-size:11px;color:var(--sub);margin:0;max-width:570px;line-height:1.6}
+.counter-label{font-size:16px;font-weight:850;margin:4px 0 14px}
+.counter{width:min(100%,600px);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.unit{background:var(--soft);border:1px solid #eee5f5;border-radius:15px;padding:18px 5px 14px}
+.digit{font-size:clamp(29px,5vw,47px);line-height:1;font-variant-numeric:tabular-nums;font-weight:900;letter-spacing:-.035em;color:var(--purple-dark)}
+.unit-label{display:block;margin-top:11px;color:#766b80;font-size:10px;letter-spacing:.07em;text-transform:uppercase;font-weight:850}
+.target{margin-top:16px;color:var(--sub);font-size:12px;line-height:1.55}
+.target strong{color:var(--ink)}
+.meme-line{margin:14px 0 0;font-size:13px;color:#65566e}
+.share{margin:19px 0 0;border:0;border-radius:11px;background:var(--purple);color:#fff;font:inherit;font-size:13px;font-weight:850;padding:13px 19px;cursor:pointer}
+.share:hover,.audio-button:hover{background:var(--purple-dark)}
+.share:focus-visible,.audio-button:focus-visible,.panel a:focus-visible{outline:3px solid #be9be6;outline-offset:3px}
+.share-message{min-height:15px;margin-top:7px;color:var(--purple-dark);font-size:12px}
+.done{display:none;padding:20px;background:var(--soft);border-radius:12px;font-weight:800;color:var(--purple-dark)}
 body.finished .done{display:block}
-@media(max-width:780px){.hero{grid-template-columns:1fr;text-align:center}.target{justify-content:center}.photo-outer{order:-1;width:min(100%,290px)}.eyebrow{margin-bottom:15px}.intro,.context{margin-left:auto;margin-right:auto}.counter{margin:auto}.bottom{grid-template-columns:1fr}}
-@media(max-width:430px){.wrap{width:calc(100% - 20px);padding-top:16px}.nav{margin-bottom:14px}.nav-note{max-width:120px}.hero{border-radius:19px;padding:24px 15px 28px}.photo-outer{width:min(100%,244px)}h1{font-size:35px}.counter{gap:6px}.unit{border-radius:10px;padding:15px 2px 12px}.digit{font-size:clamp(23px,7vw,34px)}.unit-label{font-size:9px;letter-spacing:0}.music{padding:16px}.music-toggle{width:100%}.panel{padding:18px}}
-@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body.finished .counter{display:none}
+.music{margin-top:16px;border:1px solid var(--border);background:#fff;border-radius:19px;padding:19px 24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,320px);align-items:center;gap:22px}
+.music h2{margin:0 0 6px;font-size:17px}
+.music p{margin:0 0 12px;color:var(--sub);font-size:12px;line-height:1.65}
+.audio-controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.audio-button{border:0;border-radius:10px;padding:11px 15px;background:var(--purple);color:#fff;font-weight:800;font-size:12px;cursor:pointer}
+.audio-button.secondary{background:#f0e8f7;color:var(--purple-dark)}
+.audio-button.secondary:hover{background:#e5d6f2}
+.audio-status{font-size:11px;color:var(--sub);min-height:15px;margin:11px 0 0!important}
+.music-frame{width:100%;min-height:200px;aspect-ratio:16/10;background:#24172b;border-radius:13px;overflow:hidden}
+.music-frame iframe{width:100%;height:100%;display:block;border:0}
+.music a,.panel a{color:var(--purple-dark);font-weight:700;text-underline-offset:3px}
+.bottom{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+.panel{background:#fff;border:1px solid var(--border);padding:20px 23px;border-radius:17px}
+.panel h2{font-size:14px;margin:0 0 8px}
+.panel p{font-size:12px;line-height:1.7;color:var(--sub);margin:0}
+footer{font-size:11px;line-height:1.7;text-align:center;color:#847b8d;margin-top:25px}
+@media(max-width:670px){.music{grid-template-columns:1fr}.music-frame{max-width:360px;justify-self:center}.bottom{grid-template-columns:1fr}}
+@media(max-width:420px){.wrap{width:calc(100% - 18px);padding-top:15px}.hero{border-radius:19px;padding:23px 13px 27px}.nav-note{max-width:110px}.counter{gap:6px}.unit{padding:15px 2px 13px;border-radius:11px}.digit{font-size:clamp(25px,7.2vw,35px)}.unit-label{font-size:9px;letter-spacing:0}.music{padding:16px}.progress-ring{width:min(80vw,292px)}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.progress-ring{transition:none}}
 </style>
 </head>
 <body>
@@ -77,38 +80,53 @@ body.finished .done{display:block}
       <div class="nav-note">Relógio em horário de Brasília (UTC−3)</div>
     </header>
     <main>
+
       <section class="hero" aria-labelledby="titulo">
-        <div>
-          <div class="eyebrow"><span class="dot"></span> Contagem regressiva</div>
-          <h1 id="titulo">Contagem para o <span>fim do mandato.</span></h1>
-          <p class="intro">Veja quanto tempo falta para <strong>Flávio Bolsonaro</strong> encerrar o mandato de senador, em 31 de janeiro de 2027.</p>
-          <div class="target"><div class="calendar" aria-hidden="true">▦</div><div><strong>1º de fevereiro de 2027 · 00h</strong>Fim do mandato: 31 de janeiro de 2027</div></div>
-          <div class="counter" role="timer" aria-label="Tempo restante até o fim do mandato">
-            <div class="unit"><div id="days" class="digit">--</div><span class="unit-label">Dias</span></div>
-            <div class="unit"><div id="hours" class="digit">--</div><span class="unit-label">Horas</span></div>
-            <div class="unit"><div id="minutes" class="digit">--</div><span class="unit-label">Minutos</span></div>
-            <div class="unit"><div id="seconds" class="digit">--</div><span class="unit-label">Segundos</span></div>
+        <div class="eyebrow"><span class="dot"></span> O calendário não pede vista</div>
+        <h1 id="titulo">Tá acabando,<br><span>produção! ⏳</span></h1>
+        <p class="intro">O mandato de senador de <strong>Flávio Bolsonaro</strong> tá nos episódios finais. O relógio já deu play — e não tem botão de soneca.</p>
+        <div class="ring-wrap">
+          <div class="progress-ring" id="progress-ring" role="img" aria-label="Porcentagem do intervalo ainda restante até 1º de fevereiro de 2027">
+            <div class="portrait">
+              <img src="foto.webp" alt="Retrato em preto e branco de Flávio Bolsonaro em arte com a inscrição Não eleito" width="320" height="402">
+            </div>
+            <div class="percent-badge" aria-hidden="true"><strong id="percent-number">100%</strong><small>do prazo restante</small></div>
           </div>
-          <div id="finished" class="done">O prazo do mandato parlamentar chegou ao fim.</div>
-          <p class="context">A contagem marca o fim do mandato, não a perda automática da competência do STF em todos os processos.</p>
-          <button type="button" class="share" id="share">↗ Compartilhar a contagem</button>
-          <div id="share-message" class="share-message" role="status" aria-live="polite"></div>
+          <div class="ring-label">Não eleito · contagem ativada</div>
+          <p class="ring-help">Aro roxo = porcentagem do intervalo que ainda falta (de 26/10/2026 até 01/02/2027). Não representa a situação de processos judiciais.</p>
         </div>
-        <div class="photo-outer">
-          <img src="foto.webp" width="320" height="402" alt="Arte enviada como referência, com foto de Flávio Bolsonaro em preto e branco e a inscrição Não eleito">
-          <div class="photo-tag">ELEIÇÕES 2026</div>
+        <h2 class="counter-label">Quanto falta para os créditos subirem? 🎬</h2>
+        <div class="counter" role="timer" aria-label="Contagem regressiva para o encerramento do mandato">
+          <div class="unit"><div id="days" class="digit">--</div><span class="unit-label">Dias</span></div>
+          <div class="unit"><div id="hours" class="digit">--</div><span class="unit-label">Horas</span></div>
+          <div class="unit"><div id="minutes" class="digit">--</div><span class="unit-label">Minutos</span></div>
+          <div class="unit"><div id="seconds" class="digit">--</div><span class="unit-label">Segundos</span></div>
         </div>
+        <div id="finished" class="done">Fim do mandato. Subiram os créditos. 🎬</div>
+        <div class="target"><strong>Data-alvo: 1º/02/2027, à meia-noite (Brasília).</strong><br>Fim do mandato parlamentar: 31/01/2027.</div>
+        <p class="meme-line">O calendário tá trabalhando mais que grupo de família em dia de eleição. 😅</p>
+        <button type="button" class="share" id="share">📣 Espalhar o tic-tac</button>
+        <div class="share-message" id="share-message" role="status" aria-live="polite"></div>
       </section>
+
       <section class="music" aria-labelledby="musica-titulo">
-        <div class="music-symbol" aria-hidden="true">♫</div>
         <div class="music-copy">
-          <h2 id="musica-titulo">Uma trilha sonora para a contagem</h2>
-          <p>“Tá na Hora do Jair Já Ir Embora” — Juliano Maderada e Tiago Doidão</p>
+          <h2 id="musica-titulo">🎶 A trilha sonora do plantão do tic-tac</h2>
+          <p>“Tá na Hora do Jair Já Ir Embora”, de Tiago Doidão e Juliano Maderada. Clipe disponibilizado pelo YouTube, sem cópia do áudio no site.</p>
+          <div class="audio-controls">
+            <button type="button" class="audio-button" id="sound-btn" aria-pressed="false">🔊 Ativar o som</button>
+            <button type="button" class="audio-button secondary" id="pause-btn" aria-pressed="false">⏸ Pausar</button>
+          </div>
+          <p class="audio-status" id="audio-status" role="status" aria-live="polite">O vídeo tenta iniciar sem som. Clique em “Ativar o som” para ouvir.</p>
+          <p><a href="https://www.youtube.com/watch?v=NarAz1hRvbI" target="_blank" rel="noopener noreferrer">Abrir o clipe no YouTube</a></p>
         </div>
-        <button type="button" class="music-toggle" id="music-toggle" aria-expanded="false" aria-controls="music-player">▶ Ouvir música</button>
-        <div class="music-player" id="music-player" hidden>
-          <div class="music-video" id="music-video"></div>
-          <p class="music-help">Reprodução pelo YouTube, com os direitos dos respectivos titulares. <a href="https://www.youtube.com/watch?v=NarAz1hRvbI" target="_blank" rel="noopener noreferrer">Abrir vídeo oficial no YouTube</a>.</p>
+        <div class="music-frame">
+          <iframe id="music-iframe"
+            src="https://www.youtube-nocookie.com/embed/NarAz1hRvbI?autoplay=1&amp;mute=1&amp;loop=1&amp;playlist=NarAz1hRvbI&amp;playsinline=1&amp;enablejsapi=1&amp;rel=0"
+            title="Videoclipe Tá na Hora do Jair Já Ir Embora"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allow="autoplay; encrypted-media; picture-in-picture"
+            allowfullscreen></iframe>
         </div>
       </section>
       <section class="bottom" aria-label="Informações importantes">
@@ -125,66 +143,55 @@ body.finished .done{display:block}
     <footer>Projeto independente de contagem de tempo. Não é um comunicado oficial nem um parecer jurídico.</footer>
   </div>
   <noscript>Para ver a contagem regressiva funcionando, habilite o JavaScript no navegador.</noscript>
-  <script>
-    (() => {
-      "use strict";
-      const end = Date.parse("2027-02-01T00:00:00-03:00");
-      const $ = id => document.getElementById(id);
-      const pad = n => String(n).padStart(2, "0");
-      function tick() {
-        const left = Math.max(0, end - Date.now());
-        $("days").textContent = String(Math.floor(left / 86400000));
-        $("hours").textContent = pad(Math.floor(left % 86400000 / 3600000));
-        $("minutes").textContent = pad(Math.floor(left % 3600000 / 60000));
-        $("seconds").textContent = pad(Math.floor(left % 60000 / 1000));
-        if (!left) { document.body.classList.add("finished"); return true; }
-        return false;
-      }
-      if (!tick()) {
-        const interval = setInterval(() => { if (tick()) clearInterval(interval); }, 1000);
-        document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
-      }
-      $("share").addEventListener("click", async () => {
-        const url = window.location.href;
-        const msg = $("share-message");
-        try {
-          if (navigator.share) { await navigator.share({ title: document.title, url }); msg.textContent = "Link compartilhado."; }
-          else if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(url); msg.textContent = "Link copiado!"; }
-          else { msg.textContent = "Copie o endereço exibido no navegador para compartilhar."; }
-        } catch (e) {
-          if (e.name !== "AbortError") msg.textContent = "Copie o endereço do navegador para compartilhar.";
-        }
-      });
-    })();
-  </script>
 
   <script>
     (() => {
       "use strict";
-      const button=document.getElementById("music-toggle");
-      const region=document.getElementById("music-player");
-      const container=document.getElementById("music-video");
-      if(!button||!region||!container)return;
-      button.addEventListener("click", () => {
-        const expanded=button.getAttribute("aria-expanded")==="true";
-        if(expanded){
-          region.hidden=true;
-          container.replaceChildren();
-          button.setAttribute("aria-expanded","false");
-          button.textContent="▶ Ouvir música";
-        }else{
-          const frame=document.createElement("iframe");
-          frame.src="https://www.youtube-nocookie.com/embed/NarAz1hRvbI?rel=0";
-          frame.title="Tá na Hora do Jair Já Ir Embora — videoclipe oficial";
-          frame.loading="lazy";
-          frame.allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
-          frame.setAttribute("allowfullscreen","");
-          frame.referrerPolicy="strict-origin-when-cross-origin";
-          container.appendChild(frame);
-          region.hidden=false;
-          button.setAttribute("aria-expanded","true");
-          button.textContent="■ Fechar música";
-        }
+      const start=Date.parse("2026-10-26T00:00:00-03:00");
+      const end=Date.parse("2027-02-01T00:00:00-03:00");
+      const $=id=>document.getElementById(id);
+      const pad=n=>String(n).padStart(2,"0");
+      function update(){
+        const now=Date.now(), remaining=Math.max(0,end-now);
+        const fraction=Math.max(0,Math.min(1,remaining/(end-start)));
+        const percent=100*fraction;
+        $("progress-ring").style.setProperty("--remaining",percent.toFixed(5)+"%");
+        $("progress-ring").setAttribute("aria-label",percent.toFixed(1).replace(".",",")+" por cento do intervalo ainda restante até 1º de fevereiro de 2027");
+        $("percent-number").textContent=percent.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+"%";
+        $("days").textContent=String(Math.floor(remaining/86400000));
+        $("hours").textContent=pad(Math.floor(remaining%86400000/3600000));
+        $("minutes").textContent=pad(Math.floor(remaining%3600000/60000));
+        $("seconds").textContent=pad(Math.floor(remaining%60000/1000));
+        if(remaining===0)document.body.classList.add("finished");
+      }
+      update();
+      const timer=setInterval(()=>{update();if(Date.now()>=end)clearInterval(timer)},1000);
+      document.addEventListener("visibilitychange",()=>{if(!document.hidden)update()});
+      $("share").addEventListener("click",async()=>{
+        const u=location.href,s=$("share-message");
+        try{
+          if(navigator.share){await navigator.share({title:document.title,url:u});s.textContent="Link compartilhado!"}
+          else if(navigator.clipboard&&isSecureContext){await navigator.clipboard.writeText(u);s.textContent="Link copiado!"}
+          else{s.textContent="Copie o endereço da barra do navegador."}
+        }catch(e){if(e.name!=="AbortError")s.textContent="Copie o endereço da barra do navegador."}
+      });
+      const frame=$("music-iframe"),sound=$("sound-btn"),pause=$("pause-btn"),status=$("audio-status");
+      let muted=true,paused=false;
+      const command=func=>{
+        if(frame.contentWindow)frame.contentWindow.postMessage(JSON.stringify({event:"command",func,args:[]}),"https://www.youtube-nocookie.com");
+      };
+      sound.addEventListener("click",()=>{
+        muted=!muted;
+        if(muted){command("mute");sound.textContent="🔊 Ativar o som";status.textContent="Som silenciado. O vídeo continua reproduzindo."}
+        else{command("unMute");command("playVideo");paused=false;pause.textContent="⏸ Pausar";pause.setAttribute("aria-pressed","false");sound.textContent="🔇 Silenciar";status.textContent="Som solicitado. Se não ouvir, pressione ▶ no player do YouTube."}
+        sound.setAttribute("aria-pressed",String(!muted));
+      });
+      pause.addEventListener("click",()=>{
+        paused=!paused;
+        command(paused?"pauseVideo":"playVideo");
+        pause.textContent=paused?"▶ Reproduzir":"⏸ Pausar";
+        pause.setAttribute("aria-pressed",String(paused));
+        status.textContent=paused?"Reprodução pausada.":"Reprodução solicitada. Se não iniciar, pressione ▶ no vídeo.";
       });
     })();
   </script>
