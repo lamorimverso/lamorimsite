@@ -1,4 +1,4 @@
-import { WORLD, PLAYER, PURSUERS, PICKUPS, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, togglePause, advanceRun, stageAt, pursuitAt, scoreFor } from "./runner-core.mjs?v=20261027-eight-bosses";
+import { WORLD, PLAYER, PURSUERS, PICKUPS, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, togglePause, advanceRun, stageAt, pursuitAt, scoreFor } from "./runner-core.mjs?v=20261027-one-hit";
 
 function initRunner() {
   const $ = id => document.getElementById(id);
@@ -19,7 +19,7 @@ function initRunner() {
   let run = createRun(), frameId = 0, lastFrame = 0, accumulator = 0;
   let lastStatus = "", lastStage = -1, virtualWidth = 900, measuredWidth = 0, measuredDpr = 0;
   let lastPursuit = -1, lastCollected = 0, lastSaves = 0, lastPower = "";
-  let lastLives = 3, lastEvents = 0;
+  let lastLives = 1, lastEvents = 0;
   const portrait = new Image();
   portrait.src = new URL("./retrato.webp", import.meta.url).href;
   portrait.addEventListener("load", () => draw());
@@ -75,7 +75,7 @@ function initRunner() {
     const overlays = {
       ready: ["Pronto para correr?", "Pule e sobreviva."],
       paused: ["Pausado", "Continue quando quiser."],
-      over: ["Pego pela Polícia Federal!", `A fuga fictícia acabou. ${score} pontos · ${run.passports} passaportes. Tente novamente!`]
+      over: ["Bateu, perdeu!", `${score} pontos · ${run.passports} passaportes. Tente novamente!`]
     };
     if (overlays[run.status]) {
       $("game-overlay-title").textContent = overlays[run.status][0];
@@ -87,7 +87,7 @@ function initRunner() {
         ready: "Tudo pronto. A corrida começa quando você quiser.",
         running: `${stage.name} · ${pursuit.name} na perseguição. Desvie e colete itens; risco ${difficulty.level}.`,
         paused: "Corrida pausada. Toque em Continuar corrida para retomar.",
-        over: `Pego pela Polícia Federal nesta fuga fictícia. ${score} pontos. Toque em Tentar de novo para jogar.`
+        over: `Bateu, perdeu! ${score} pontos. Toque em Tentar de novo para jogar.`
       };
       if (run.status === "running") {
         if (run.events > lastEvents) messages.running = run.event;
@@ -131,7 +131,7 @@ function initRunner() {
   function begin() {
     cancelAnimationFrame(frameId); frameId = 0;
     run = createRun(); startRun(run);
-    lastCollected = 0; lastSaves = 0; lastPower = ""; lastStatus = ""; lastEvents = 0; lastLives = 3;
+    lastCollected = 0; lastSaves = 0; lastPower = ""; lastStatus = ""; lastEvents = 0; lastLives = 1;
     accumulator = 0; lastFrame = performance.now();
     updateUI(); draw(); schedule();
     canvas.focus({ preventScroll: true });
