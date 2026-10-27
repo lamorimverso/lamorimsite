@@ -269,3 +269,38 @@ test('interface clean mantém a contagem prioritária e o jogo acessível no cel
     assert.deepEqual(errors,[]);
   } finally { await context.close(); }
 });
+
+
+test('desktop replica a coluna única do celular sem excesso de texto exposto', async () => {
+  const {context,page,errors}=await open();
+  try {
+    for(const width of [320,390,768,1024,1440]){
+      await page.setViewportSize({width,height:900});
+      const geometry=await page.evaluate(()=>{
+        const hero=document.querySelector('.hero').getBoundingClientRect();
+        const game=document.getElementById('game').getBoundingClientRect();
+        const counter=document.querySelector('.counter').getBoundingClientRect();
+        const photo=document.querySelector('.progress-ring').getBoundingClientRect();
+        const viewport=document.getElementById('runner-canvas').getBoundingClientRect();
+        return {hero:{x:hero.x,width:hero.width},game:{x:game.x,width:game.width},counterY:counter.y,photoY:photo.y,viewportWidth:viewport.width,viewportHeight:viewport.height,overflow:document.documentElement.scrollWidth>innerWidth};
+      });
+      assert.equal(geometry.overflow,false,`overflow na largura ${width}`);
+      assert.ok(geometry.hero.width <= 540,`hero não deve virar grade desktop em ${width}: ${geometry.hero.width}`);
+      assert.ok(Math.abs(geometry.hero.width-geometry.game.width)<3,`larguras das seções incoerentes: ${width}`);
+      assert.ok(Math.abs(geometry.hero.x-geometry.game.x)<3,`colunas desalinhadas: ${width}`);
+      assert.ok(geometry.counterY < geometry.photoY,`contagem deve anteceder retrato: ${width}`);
+      assert.ok(geometry.viewportWidth >= 240 && geometry.viewportHeight >= 150,`pista legível em ${width}`);
+      assert.equal(await page.locator('.game-itinerary').evaluate(e=>e.open),false);
+      assert.equal(await page.locator('.game-help').evaluate(e=>e.open),false);
+      assert.equal(await page.locator('.game-guide').evaluate(e=>e.open),false);
+    }
+    assert.equal(await page.locator('#game').getAttribute('data-chance'),'none');
+    assert.equal(await page.locator('.game-hud .power-chip').isVisible(),false);
+    assert.equal(await page.locator('.game-hud .chance-chip').isVisible(),false);
+    assert.equal(await page.locator('#game-stage-name').isVisible(),true);
+    assert.equal(await page.locator('#game-lives').isVisible(),true);
+    assert.equal(await page.locator('#game-passports').isVisible(),true);
+    assert.equal(await page.locator('.sources summary').isVisible(),true);
+    assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+});
