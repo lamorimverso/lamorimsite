@@ -17,7 +17,7 @@ function initRunner() {
     if (Number.isSafeInteger(stored) && stored >= 0 && stored <= 10000000) best = stored;
   } catch { /* O modo privado e o armazenamento bloqueado não impedem jogar. */ }
   let run = createRun(), frameId = 0, lastFrame = 0, accumulator = 0;
-  let lastStatus = "", lastStage = -1, virtualWidth = 900, measuredWidth = 0, measuredDpr = 0;
+  let lastStatus = "", lastStage = -1, lastEvent = 0, virtualWidth = 900, measuredWidth = 0, measuredDpr = 0;
   const portrait = new Image();
   portrait.src = new URL("./retrato.webp", import.meta.url).href;
   portrait.addEventListener("load", () => draw());
@@ -36,6 +36,11 @@ function initRunner() {
       try { localStorage.setItem(recordKey, String(best)); } catch { /* Recorde da sessão permanece na memória. */ }
     }
     $("game-score").textContent = String(score).padStart(4, "0");
+    $("game-lives").textContent = String(run.lives);
+    $("game-passports").textContent = String(run.passports);
+    $("game-passport-next").textContent = String(100 - run.passports % 100);
+    $("game-passport-progress").style.width = `${run.passports % 100}%`;
+    $("game-protection").textContent = run.shieldFor > 0 ? `Escudo: ${Math.ceil(run.shieldFor)} s` : run.invulnerableFor > 0 ? `Proteção: ${Math.ceil(run.invulnerableFor)} s` : "";
     $("game-best").textContent = String(best).padStart(4, "0");
     $("game-time").textContent = `${pad(Math.floor(run.elapsed / 60))}:${pad(Math.floor(run.elapsed % 60))}`;
     const sceneElapsed = Math.max(0, run.elapsed - stage.index * SCENE_SECONDS);
@@ -75,6 +80,10 @@ function initRunner() {
       });
       lastStage = stage.index;
       lastStatus = run.status;
+    }
+    if (run.events !== lastEvent) {
+      lastEvent = run.events;
+      $("game-status").textContent = run.event;
     }
   }
 
@@ -246,6 +255,7 @@ function initRunner() {
     ctx.fillStyle=stage.ink;ctx.font='650 11px system-ui, sans-serif';ctx.fillText(`${stage.index + 1}/${STAGES.length} · ${stage.name.toLocaleUpperCase("pt-BR")}`,20,26);
   }
   function character() {
+    if (run.invulnerableFor > 0 && Math.floor(run.elapsed * 10) % 2 === 0) return;
     const stride = run.player.y === 0 && run.status === "running" ? Math.sin(run.elapsed*22)*9 : 4;
     ctx.save();ctx.translate(PLAYER.x+17,WORLD.ground-run.player.y);
     ctx.fillStyle="#414052";ctx.globalAlpha=.09;ctx.beginPath();ctx.ellipse(0,run.player.y+3,21,4,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
@@ -262,6 +272,7 @@ function initRunner() {
     if(portrait.complete&&portrait.naturalWidth)ctx.drawImage(portrait,portrait.width*.2,portrait.height*.04,portrait.width*.6,portrait.height*.76,-15,-70,30,36);
     else{ctx.fillStyle="#dfbda0";ctx.fillRect(-15,-70,30,36);ctx.fillStyle="#423631";ctx.fillRect(-15,-70,30,9);}
     ctx.restore();ctx.restore();
+    if(run.shieldFor > 0){ctx.strokeStyle="#339b93";ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(PLAYER.x+17,WORLD.ground-run.player.y-37,27,42,0,0,Math.PI*2);ctx.stroke();}
   }
   function obstacle(item) {
     const y=WORLD.ground-item.height;
@@ -284,7 +295,10 @@ function initRunner() {
   }
   function pickup(item) {
     const x=item.x,y=WORLD.ground-item.y;
-    if(item.type==="miles"){
+    if(item.type==="shield"){
+      circle(x,y,15,"#c1e9df");circle(x,y,11,"#3c9788");
+      ctx.fillStyle="#fff";ctx.font="bold 16px system-ui";ctx.fillText("★",x-9,y+5);
+    }else if(item.type==="miles"){
       circle(x,y,12,"#e5c56d");circle(x,y,8,"#f9df93");ctx.fillStyle="#91742e";ctx.font='bold 15px system-ui';ctx.fillText("+",x-6,y+5);
     }else if(item.type==="passport"){
       ctx.fillStyle="#79609c";ctx.fillRect(x-10,y-14,20,28);circle(x,y-1,5,"#e2c87f");line([[x-5,y+8],[x+5,y+8]],"#e2c87f",1);
