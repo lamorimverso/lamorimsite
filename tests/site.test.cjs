@@ -375,3 +375,34 @@ test('jogo minimalista mostra só a pista, placar essencial e controles em todas
     assert.deepEqual(errors,[]);
   }finally{await context.close();}
 });
+
+
+test("HUD do chefe surge por pontuação e some ao vencer sem poluir a pista", async () => {
+  const {context,page,errors}=await openWithRun();
+  try {
+    assert.equal(await page.locator('#game-boss').isVisible(),false);
+    await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+    await page.evaluate(()=>{
+      const run=globalThis.__testRun;
+      run.bonus=1500;
+      run.nextObstacle=run.nextPickup=run.nextPassport=10000;
+      run.graceFor=100;
+    });
+    await page.waitForFunction(()=>document.getElementById('game-boss').hidden===false);
+    assert.match(await page.locator('#game-boss-name').textContent(),/Polícia Federal.*Nível 1/);
+    assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuenow'),'3');
+    assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuemax'),'3');
+    assert.equal(await page.locator('.game-help').isVisible(),false);
+    assert.equal(await page.locator('#runner-canvas').isVisible(),true);
+    await page.evaluate(()=>{
+      const run=globalThis.__testRun;
+      run.boss.fired=run.boss.total;
+      run.boss.remaining=1;
+      run.obstacles=[{x:45,width:34,height:44,type:'pf',bossAttack:true,counted:false}];
+    });
+    await page.waitForFunction(()=>document.getElementById('game-boss').hidden===true);
+    assert.equal(await page.locator('#game').getAttribute('data-boss'),'none');
+    assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
+    assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+});

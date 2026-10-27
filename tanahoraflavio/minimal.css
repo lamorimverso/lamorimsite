@@ -338,3 +338,29 @@ summary:focus-visible, #runner-canvas:focus-visible { outline: 3px solid #a994c8
   .game-scoreboard { gap: 5px; }
   .game-scoreboard span { font-size: 10px; }
 }
+
+
+/* Encontro especial: HUD compacto surge somente quando o chefe aparece. */
+.game-boss[hidden] { display: none !important; }
+.game-boss {
+  --boss-accent: #b64250;
+  margin: 4px 0 12px;
+  padding: 9px 12px 10px;
+  border: 1px solid color-mix(in srgb,var(--boss-accent) 29%,white);
+  border-radius: 10px;
+  background: color-mix(in srgb,var(--boss-accent) 7%,white);
+}
+.game-boss-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.game-boss-heading span { font-size: 10px; letter-spacing: .11em; font-weight: 850; color:var(--boss-accent); }
+.game-boss-heading strong { font-size: 12px; line-height: 1.45; font-weight: 730; color:var(--ink); text-align: right; }
+.game-boss-health { width: 100%; height: 5px; margin-top: 7px; border-radius: 20px; background: #e6e6e8; overflow:hidden; }
+.game-boss-health>span { display:block; height:100%; width:100%; border-radius: 20px; background:var(--boss-accent); }
+.game-card[data-boss="lula"] .game-boss { border-width: 2px; }
+.portrait { will-change: transform; }
+@media (prefers-reduced-motion: no-preference) {
+  .hero .portrait { animation: portrait-breathe 5s ease-in-out infinite; }
+  @keyframes portrait-breathe { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-2px); } }
+}
+@media(max-width:380px){
+  .game-boss-heading strong { font-size: 11px; }
+}

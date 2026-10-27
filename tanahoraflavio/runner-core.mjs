@@ -4,6 +4,7 @@ export const PLAYER = Object.freeze({ x: 120, width: 34, height: 58 });
 export const SCENE_SECONDS = 20;
 export const PASSPORTS_PER_LIFE = 100;
 export const STARTING_LIVES = 3;
+export const BOSS_SCORE_STEP = 1500;
 export const STAGES = Object.freeze([
   Object.freeze({ id: "brasilia", obstacle: "barrier", bonus: "miles", mission: "Pule as barreiras e colete milhas para seguir viagem.", name: "Brasília", short: "Brasília", index: 0, sky: "#edf5fa", ink: "#557b85", accent: "#477b81", ground: "#dae9de" }),
   Object.freeze({ id: "rio", obstacle: "barrier", bonus: "miles", mission: "Pule as barreiras da orla e colete milhas.", name: "Rio de Janeiro", short: "Rio", index: 1, sky: "#edf8f7", ink: "#3c7c79", accent: "#2c8379", ground: "#d9eeea" }),
@@ -16,7 +17,7 @@ export const PURSUERS = Object.freeze([
   Object.freeze({ type: "xandao", name: "Xandão", short: "Xandão", index: 1, width: 36, height: 49, color: "#454051" }),
   Object.freeze({ type: "janones", name: "Janones", short: "Janones", index: 2, width: 38, height: 46, color: "#397ba0" }),
   Object.freeze({ type: "army", name: "Exército do Lula", short: "Exército", index: 3, width: 44, height: 48, color: "#65714b" }),
-  Object.freeze({ type: "lula", name: "Lula · chefe", short: "Lula · chefe", index: 4, width: 50, height: 56, color: "#b64250" })
+  Object.freeze({ type: "lula", name: "Lula · chefe supremo", short: "Lula", index: 4, width: 50, height: 56, color: "#b64250" })
 ]);
 export const PICKUPS = Object.freeze([
   Object.freeze({ type: "chocolate", name: "Chocolate", value: 25 }),
@@ -60,7 +61,8 @@ export function createRun() {
     player: { y: 0, velocity: 0 }, obstacles: [], pickups: [],
     nextObstacle: 1.5, nextPickup: 2.2, nextPassport: 1.9,
     invisibleFor: 0, graceFor: 0, extraChance: false, saves: 0,
-    lastPickup: null, spawnedObstacles: 0, spawnedPickups: 0
+    lastPickup: null, spawnedObstacles: 0, spawnedPickups: 0,
+    boss: null, bossesDefeated: 0, nextBossScore: BOSS_SCORE_STEP, bossCooldown: 0
   };
 }
 
@@ -83,6 +85,53 @@ export function scoreFor(run) {
   return Math.floor(run.distance / 20) + run.bonus;
 }
 
+
+/** Encontros fictícios: um salto para evitar cada ataque, sem golpes extras. */
+export function bossAtRound(round) {
+  const safe=Math.max(0,Math.floor(Number.isFinite(round)?round:0));
+  const index=safe%PURSUERS.length, level=Math.floor(safe/PURSUERS.length)+1;
+  const supreme=index===PURSUERS.length-1;
+  return {foe:PURSUERS[index],level,supreme,round:safe+1,
+    attacks:Math.min(9,3+Math.min(index,2)+Math.min(level-1,2)+(supreme?2:0)),
+    interval:Math.max(1.18,1.55-index*.07-Math.min(level-1,3)*.045)};
+}
+function beginBoss(run) {
+  const conf=bossAtRound(run.bossesDefeated);
+  run.boss={type:conf.foe.type,name:conf.foe.name,color:conf.foe.color,
+    level:conf.level,supreme:conf.supreme,round:conf.round,total:conf.attacks,
+    remaining:conf.attacks,fired:0,interval:conf.interval,nextAttack:1.3};
+  run.obstacles=[]; // A arena abre sem ataques comuns encavalados.
+  run.nextObstacle=Math.max(1.8,run.nextObstacle);
+  run.events++;
+  run.event=`Chefe ${conf.foe.short} · nível ${conf.level}! Desvie dos ataques.`;
+}
+function advanceBoss(run,dt) {
+  const boss=run.boss;if(!boss)return;
+  boss.nextAttack-=dt;
+  if(boss.fired<boss.total && boss.nextAttack<=0){
+    const foe=PURSUERS.find(p=>p.type===boss.type);
+    run.obstacles.push({x:WORLD.width+50,width:foe.width,height:foe.height,type:foe.type,bossAttack:true,counted:false});
+    boss.fired++;
+    boss.nextAttack+=boss.interval;
+  }
+}
+function resolveBossDodges(run) {
+  if(!run.boss)return;
+  for(const obstacle of run.obstacles) {
+    if(obstacle.bossAttack&&!obstacle.counted&&obstacle.x+obstacle.width<PLAYER.x){
+      obstacle.counted=true;run.boss.remaining--;
+    }
+  }
+  if(run.boss.fired<run.boss.total||run.boss.remaining>0)return;
+  const boss=run.boss;run.boss=null;run.bossesDefeated++;
+  run.nextBossScore+=BOSS_SCORE_STEP;
+  run.bossCooldown=4;
+  run.nextObstacle=Math.max(1.75,run.nextObstacle);
+  if(boss.supreme)run.extraChance=true;
+  run.events++;
+  run.event=boss.supreme?`Lula · chefe supremo vencido no nível ${boss.level}! Escudo extra conquistado.`:`${boss.name} vencido! Próximo confronto: ${run.nextBossScore} pontos.`;
+}
+
 export function advanceRun(run, seconds, rng = Math.random) {
   if (run.status !== "running" || !Number.isFinite(seconds) || seconds <= 0) return;
   // Não há limite de duração: o jogo termina apenas quando acabam as vidas.
@@ -92,6 +141,7 @@ export function advanceRun(run, seconds, rng = Math.random) {
   const speed = balance.speed;
   const travel = speed * dt;
   run.distance += travel;
+  run.bossCooldown=Math.max(0,run.bossCooldown-dt);
   run.player.velocity -= 1750 * dt;
   run.player.y = Math.max(0, run.player.y + run.player.velocity * dt);
   if (run.player.y === 0) run.player.velocity = 0;
@@ -100,18 +150,23 @@ export function advanceRun(run, seconds, rng = Math.random) {
 
   for (const obstacle of run.obstacles) obstacle.x -= travel;
   for (const pickup of run.pickups) pickup.x -= travel;
+  resolveBossDodges(run);
   run.obstacles = run.obstacles.filter(o => o.x + o.width > -20);
   run.pickups = run.pickups.filter(p => p.x > -30);
 
-  run.nextObstacle -= dt;
-  if (run.nextObstacle <= 0) {
-    const current = pursuitAt(run.elapsed);
-    // O novo adversário aparece com frequência; os anteriores continuam na perseguição.
-    const opponent = run.spawnedObstacles++ % 3 === 2
-      ? PURSUERS[Math.min(current.index, Math.floor(rng() * (current.index + 1)))] : current;
-    run.obstacles.push({ x: WORLD.width + 40, width: opponent.width, height: opponent.height, type: opponent.type });
-    // Sempre maior que o tempo completo de um pulo (~0,7 s).
-    run.nextObstacle += balance.obstacleGap + rng() * .4;
+  if(!run.boss && run.bossCooldown<=0 && scoreFor(run)>=run.nextBossScore)beginBoss(run);
+  if(run.boss)advanceBoss(run,dt);
+  else {
+    run.nextObstacle -= dt;
+    if (run.nextObstacle <= 0) {
+      const current = pursuitAt(run.elapsed);
+      // O novo adversário aparece com frequência; os anteriores continuam na perseguição.
+      const opponent = run.spawnedObstacles++ % 3 === 2
+        ? PURSUERS[Math.min(current.index, Math.floor(rng() * (current.index + 1)))] : current;
+      run.obstacles.push({ x: WORLD.width + 40, width: opponent.width, height: opponent.height, type: opponent.type });
+      // Sempre maior que o tempo completo de um pulo (~0,7 s).
+      run.nextObstacle += balance.obstacleGap + rng() * .4;
+    }
   }
   run.nextPickup -= dt;
   if (run.nextPickup <= 0) {
