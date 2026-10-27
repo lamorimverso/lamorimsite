@@ -294,3 +294,98 @@ test("uma nova corrida zera vidas, passaportes e vantagens", () => {
   assert.equal(fresh.invisibleFor,0);
   assert.equal(fresh.extraChance,false);
 });
+
+
+test("o primeiro chefe só aparece ao alcançar 1.500 pontos", () => {
+  const run = running();
+  run.nextObstacle=run.nextPickup=run.nextPassport=1e8;
+  run.bonus=core.BOSS_SCORE_STEP-2;
+  core.advanceRun(run,1/120,()=>.5);
+  assert.equal(run.boss,null);
+  run.bonus=core.BOSS_SCORE_STEP;
+  core.advanceRun(run,1/120,()=>.5);
+  assert.equal(run.boss.type,"pf");
+  assert.equal(run.boss.level,1);
+  assert.equal(run.boss.remaining,3);
+  assert.equal(run.nextBossScore,core.BOSS_SCORE_STEP);
+});
+
+test("as cinco rodadas de chefes terminam em Lula supremo e o ciclo volta mais forte", () => {
+  const names=["pf","xandao","janones","army","lula"];
+  for(let i=0;i<10;i++){
+    const c=core.bossAtRound(i);
+    assert.equal(c.foe.type,names[i%5]);
+    assert.equal(c.level,Math.floor(i/5)+1);
+    if(i%5===4){assert.equal(c.supreme,true); assert.ok(c.attacks>core.bossAtRound(i-1).attacks);}
+    else assert.equal(c.supreme,false);
+    assert.ok(c.interval>=1.18,"janela de salto segura");
+  }
+  assert.ok(core.bossAtRound(9).attacks>core.bossAtRound(4).attacks);
+});
+
+test("chefe avisa antes do primeiro ataque e substitui a chuva de obstáculos comuns", () => {
+  const run=running();
+  run.bonus=core.BOSS_SCORE_STEP;
+  run.obstacles.push({x:200,width:34,height:44,type:"pf"});
+  run.nextObstacle=0;run.nextPickup=run.nextPassport=1e7;
+  core.advanceRun(run,1/120,()=>.5);
+  assert.equal(run.obstacles.length,0);
+  assert.equal(run.boss.fired,0);
+  assert.ok(run.boss.nextAttack>1);
+  frames(run,.9);
+  assert.equal(run.boss.fired,0);
+  frames(run,.5);
+  assert.equal(run.boss.fired,1);
+  assert.equal(run.obstacles.filter(x=>x.bossAttack).length,1);
+});
+
+test("a barra do chefe esgota ao superar os ataques; pause interrompe seu relógio", () => {
+  const run=running();
+  run.bonus=core.BOSS_SCORE_STEP;
+  run.nextPickup=run.nextPassport=1e8;
+  core.advanceRun(run,1/120,()=>.5);
+  run.graceFor=500;
+  core.togglePause(run);
+  const pause=structuredClone(run.boss);
+  frames(run,4);
+  assert.deepEqual(run.boss,pause);
+  core.togglePause(run);
+  const expected=run.boss.total;
+  for(let i=0;i<120*20 && run.boss;i++){
+    core.advanceRun(run,1/120,()=>.5);
+  }
+  assert.equal(run.boss,null);
+  assert.equal(run.bossesDefeated,1);
+  assert.equal(expected,3);
+  assert.equal(run.nextBossScore,core.BOSS_SCORE_STEP*2);
+  assert.equal(run.status,"running");
+});
+
+test("vida extra por 100 passaportes permanece independente dos chefes", () => {
+  const run=running();
+  run.bonus=core.BOSS_SCORE_STEP;
+  run.nextPickup=run.nextPassport=1e8;
+  core.advanceRun(run,1/120,()=>.5);
+  run.passports=99;run.lives=3;
+  run.pickups.push({x:136,y:35,value:50,type:"passport"});
+  core.advanceRun(run,1/120,()=>.5);
+  assert.equal(run.passports,100);
+  assert.equal(run.lives,4);
+  assert.equal(run.boss.type,"pf");
+});
+
+test("vencer Lula concede um escudo e abre o próximo ciclo sem finalizar a corrida", () => {
+  const run=running();
+  run.bossesDefeated=4;run.nextBossScore=5*core.BOSS_SCORE_STEP;
+  run.bonus=run.nextBossScore;run.nextObstacle=run.nextPickup=run.nextPassport=1e8;
+  core.advanceRun(run,1/120,()=>.5);
+  assert.equal(run.boss.type,"lula");
+  assert.equal(run.boss.supreme,true);
+  run.graceFor=500;
+  for(let i=0;i<120*25&&run.boss;i++)core.advanceRun(run,1/120,()=>.5);
+  assert.equal(run.boss,null);
+  assert.equal(run.status,"running");
+  assert.equal(run.bossesDefeated,5);
+  assert.equal(run.extraChance,true);
+  assert.equal(core.bossAtRound(run.bossesDefeated).level,2);
+});
