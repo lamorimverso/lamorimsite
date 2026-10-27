@@ -58,24 +58,36 @@ test("a corrida visita os cinco destinos e permanece na Casa Branca", () => {
   }
 });
 
-test("uma colisão tira uma vida; a proteção evita perdas consecutivas", () => {
+test("bateu sem proteção: perde imediatamente na primeira colisão", () => {
   const run = running();
-  assert.equal(run.lives, 3);
-  run.obstacles.push({ x: 125, width: 34, height: 44, type: "pf" });
-  frames(run, .02);
-  assert.equal(run.status, "running");
-  assert.equal(run.lives, 2);
-  frames(run, .15);
-  assert.equal(run.lives, 2);
-  run.graceFor = 0;
-  run.obstacles.push({ x: 125, width: 34, height: 44, type: "pf" });
-  frames(run, .02);
+  assert.equal(core.STARTING_LIVES, 1);
   assert.equal(run.lives, 1);
-  run.graceFor = 0;
   run.obstacles.push({ x: 125, width: 34, height: 44, type: "pf" });
   frames(run, .02);
   assert.equal(run.status, "over");
   assert.equal(run.lives, 0);
+  assert.equal(run.graceFor, 0);
+  const score=core.scoreFor(run);
+  frames(run, 2);
+  assert.equal(core.scoreFor(run), score);
+});
+
+test("vida extra coletada absorve uma colisão, mas a próxima sem proteção encerra", () => {
+  const run = running();
+  run.lives = 2; // uma vida inicial mais uma adquirida
+  run.obstacles.push({ x: 125, width: 34, height: 44, type: "pf" },
+                     { x: 133, width: 34, height: 48, type: "xandao" });
+  frames(run, .02);
+  assert.equal(run.status,"running");
+  assert.equal(run.lives,1);
+  assert.ok(run.graceFor>1,"a mesma barreira não pode consumir duas vidas");
+  frames(run,.2);
+  assert.equal(run.lives,1);
+  run.graceFor=0;
+  run.obstacles.push({ x: 125, width: 34, height: 44, type: "pf" });
+  frames(run,.02);
+  assert.equal(run.status,"over");
+  assert.equal(run.lives,0);
 });
 
 test("saltar acima de um obstáculo não é colisão", () => {
@@ -184,8 +196,8 @@ test("a invisibilidade expira e não acumula duração infinita", () => {
   assert.equal(run.invisibleFor, 0);
   run.obstacles.push({ x: 125, width: 34, height: 44, type: "pf" });
   core.advanceRun(run, 1 / 120);
-  assert.equal(run.status, "running");
-  assert.equal(run.lives, 2);
+  assert.equal(run.status, "over");
+  assert.equal(run.lives, 0);
 });
 
 test("uma chance extra absorve uma colisão e evita perda imediata por sobreposição", () => {
@@ -201,8 +213,8 @@ test("uma chance extra absorve uma colisão e evita perda imediata por sobreposi
   frames(run, 1.3);
   run.obstacles.push({ x: 125, width: 34, height: 44, type: "pf" });
   core.advanceRun(run, 1 / 120);
-  assert.equal(run.status, "running");
-  assert.equal(run.lives, 2);
+  assert.equal(run.status, "over");
+  assert.equal(run.lives, 0);
   assert.equal(run.saves, 1);
 });
 
@@ -258,9 +270,9 @@ test("100 passaportes somam uma vida e só concedem nova vida aos 200", () => {
     core.advanceRun(run,1/120,()=>.5);
   }
   assert.equal(run.passports,100);
-  assert.equal(run.lives,4);
+  assert.equal(run.lives,2);
   core.advanceRun(run,1/120,()=>.5);
-  assert.equal(run.lives,4);
+  assert.equal(run.lives,2);
   assert.equal(run.bonus,5000);
 });
 
@@ -292,7 +304,7 @@ test("uma nova corrida zera vidas, passaportes e vantagens", () => {
   old.passports=100; old.lives=5; old.invisibleFor=5; old.extraChance=true;
   const fresh=core.createRun();
   assert.equal(fresh.passports,0);
-  assert.equal(fresh.lives,3);
+  assert.equal(fresh.lives,1);
   assert.equal(fresh.invisibleFor,0);
   assert.equal(fresh.extraChance,false);
 });
@@ -374,11 +386,11 @@ test("vida extra por 100 passaportes permanece independente dos chefes", () => {
   run.bonus=core.BOSS_SCORE_STEP;
   run.nextPickup=run.nextPassport=1e8;
   core.advanceRun(run,1/120,()=>.5);
-  run.passports=99;run.lives=3;
+  run.passports=99;run.lives=1;
   run.pickups.push({x:136,y:35,value:50,type:"passport"});
   core.advanceRun(run,1/120,()=>.5);
   assert.equal(run.passports,100);
-  assert.equal(run.lives,4);
+  assert.equal(run.lives,2);
   assert.equal(run.boss.type,"pf");
 });
 
@@ -430,4 +442,44 @@ test("Lula encerra sempre a sequência de oito chefes em todos os níveis", () =
     assert.equal(first.supreme,false);
     assert.equal(first.level,level+1);
   }
+});
+
+test("escudo temporário absorve um choque, mas não oferece vidas adicionais", () => {
+  const run=running();
+  run.extraChance=true;
+  run.obstacles.push({x:125,width:34,height:44,type:"pf"});
+  frames(run,.02);
+  assert.equal(run.status,"running");
+  assert.equal(run.lives,1);
+  assert.equal(run.extraChance,false);
+  assert.equal(run.saves,1);
+  assert.ok(run.graceFor>1);
+  run.graceFor=0;
+  run.obstacles.push({x:125,width:34,height:44,type:"pf"});
+  frames(run,.02);
+  assert.equal(run.status,"over");
+  assert.equal(run.lives,0);
+});
+
+test("coletar passaporte número 100 no mesmo quadro da colisão salva a corrida", () => {
+  const run=running();
+  run.passports=99;
+  run.pickups.push({x:136,y:35,type:"passport",value:50});
+  run.obstacles.push({x:125,width:34,height:44,type:"pf"});
+  core.advanceRun(run,1/120,()=>.5);
+  assert.equal(run.passports,100);
+  assert.equal(run.status,"running");
+  assert.equal(run.lives,1);
+  assert.ok(run.graceFor>1);
+});
+
+test("colisão contra ataque de chefe também termina a corrida sem poder", () => {
+  const run=running();
+  run.bonus=core.BOSS_SCORE_STEP;
+  core.advanceRun(run,1/120,()=>.5);
+  assert.equal(run.boss.type,"pf");
+  run.obstacles.push({x:125,width:34,height:44,type:"pf",bossAttack:true,counted:false});
+  core.advanceRun(run,1/120,()=>.5);
+  assert.equal(run.status,"over");
+  assert.equal(run.lives,0);
 });
