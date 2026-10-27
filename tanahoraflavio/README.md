@@ -18,15 +18,17 @@ Site estático em `tanahoraflavio/`, atualmente no repositório público `lamori
 
 ## Minigame: Corre, Flávio!
 
-- Corrida fictícia e satírica: **Rio (0–25 s) → Argentina (25–50 s) → EUA (50–75 s)**. Completar 75 segundos encerra a rota com vitória.
+- Corrida infinita fictícia e satírica: **Brasília (0–20 s) → Rio (20–40 s) → Argentina (40–60 s) → Flórida (60–80 s) → Casa Branca (a partir de 80 s)**. A pista continua até o jogador perder as vidas; não existe vitória automática ou limite de duração.
 - Toque na pista ou em **Pular**; teclado: Espaço ou seta para cima. **P** pausa/retoma e Esc pausa quando a pista está focada. Não há início automático.
 - A perseguição começa com a **PF**. Entram **Xandão aos 15 s**, **Janones aos 30 s**, o **“exército do Lula” aos 45 s** e **Lula como chefe aos 60 s**. Os adversários anteriores continuam aparecendo. A velocidade aumenta e o intervalo entre adversários diminui até um mínimo de 1,1 s; todos podem ser saltados.
 - Colete **chocolate e recibos (+25)** ou **mansão e passaporte (+50)**. Os objetos são símbolos da sátira; não constituem alegações factuais.
 - O **fantasma** concede **6 segundos de invisibilidade**, permitindo atravessar adversários. Uma nova coleta renova o efeito, sem somar durações. O **escudo +1** guarda **uma chance extra**, consumida automaticamente em uma colisão; há 1,2 s de recuperação para evitar perda imediata. As vantagens aparecem no HUD e seus tempos congelam durante a pausa.
-- Colisão sem proteção mostra **“Pego pela Polícia Federal!”**, encerra a fuga fictícia e permite tentar novamente. Reiniciar limpa os efeitos e a chance guardada. A corrida pausa ao sair da aba, perder foco ou rolar a pista para fora da tela.
+- O jogador começa com **3 vidas**. Colisão sem invisibilidade/chance guardada reduz uma vida e dá 2 s de proteção; ao zerar as vidas, aparece **“Pego pela Polícia Federal!”**. A chance guardada ainda absorve uma colisão (recuperação por 1,2 s). Reiniciar limpa as vidas extras e todas as vantagens. A corrida pausa ao sair da aba, perder foco ou rolar a pista para fora da tela.
+- Os **passaportes** aparecem em trios; **a cada 100 coletados, +1 vida** (100, 200, 300...). Todos são itens fictícios.
+- A dificuldade é função da **distância virtual percorrida**, não da taxa de quadros: a velocidade aumenta até cerca de 420 unidades/s e o intervalo base entre adversários tende a 1,13 s. A ocorrência de bônus genéricos passa de ~1,9 s para até ~6,1 s de intervalo-base, e a de trios de passaportes passa de ~1,8 s para até ~5,6 s, com pequenos componentes aleatórios. A progressão é limitada para preservar uma janela de reação e manter vantagens raras, mas possíveis.
 - Recorde em `localStorage`, somente no navegador. Se o armazenamento estiver bloqueado, o jogo funciona e conserva o recorde durante a sessão.
 - `runner-core.mjs` contém a física e as regras sem DOM; `runner.mjs` desenha cenários e controles; `enhancements.css` ajusta o visual da página. Nenhuma dependência de runtime foi adicionada.
-- A frase satírica sobre foro e desemprego fica junto à contagem, abaixo do seu subtítulo. A ressalva jurídica permanece disponível nas fontes.
+- A frase satírica sobre foro e desemprego fica junto à contagem, abaixo do subtítulo. Cinco cenários ilustram pontos turísticos (Congresso, Cristo Redentor/Pão de Açúcar, Obelisco, Miami Beach e Casa Branca). Destinos, ajuda e fontes permanecem acessíveis, mas são recolhíveis para reduzir informação na tela. A ressalva jurídica permanece disponível.
 
 ### Verificação
 
