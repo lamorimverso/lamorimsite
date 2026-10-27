@@ -3,7 +3,8 @@ export const WORLD = Object.freeze({ width: 900, height: 300, ground: 246 });
 export const PLAYER = Object.freeze({ x: 120, width: 34, height: 58 });
 export const SCENE_SECONDS = 20;
 export const PASSPORTS_PER_LIFE = 100;
-export const STARTING_LIVES = 3;
+export const STARTING_LIVES = 1;
+export const RECOVERY_AFTER_EXTRA = 1.2;
 export const BOSS_SCORE_STEP = 1500;
 export const STAGES = Object.freeze([
   Object.freeze({ id: "brasilia", obstacle: "barrier", bonus: "miles", mission: "Pule as barreiras e colete milhas para seguir viagem.", name: "Brasília", short: "Brasília", index: 0, sky: "#edf5fa", ink: "#557b85", accent: "#477b81", ground: "#dae9de" }),
@@ -218,15 +219,17 @@ export function advanceRun(run, seconds, rng = Math.random) {
     const collision = run.obstacles.some(obstacle => right > obstacle.x + 3 && left < obstacle.x + obstacle.width - 3 && bottom < obstacle.height && top > 0);
     if (collision) {
       if (run.extraChance) {
-        run.extraChance = false; run.graceFor = 1.2; run.saves++;
+        run.extraChance = false; run.graceFor = RECOVERY_AFTER_EXTRA; run.saves++;
       } else {
         run.lives--;
         run.events++;
         run.event = run.lives > 0
-          ? `Colisão! Restam ${run.lives} vidas. Proteção por 2 s.`
-          : "Pego pela Polícia Federal! A fuga fictícia terminou.";
+          ? `Vida extra usada! Restam ${run.lives} ${run.lives === 1 ? "vida" : "vidas"}.`
+          : "Bateu, perdeu! A fuga fictícia terminou.";
         if (run.lives <= 0) { run.status = "over"; return; }
-        run.graceFor = 2;
+        // Recuperação apenas depois de gastar uma vida extra já conquistada.
+        // Impede que a mesma barreira consuma duas vidas por sobreposição.
+        run.graceFor = RECOVERY_AFTER_EXTRA;
       }
     }
   }
