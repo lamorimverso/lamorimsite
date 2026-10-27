@@ -76,7 +76,7 @@ body.finished .done{display:block}
 .panel{border-radius:14px;border:1px solid var(--line);background:white;padding:16px 19px}
 .panel h2{font-size:13px;margin:0 0 7px}
 .panel p{margin:0;color:var(--muted);font-size:11px;line-height:1.7}
-footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-height:1.6}
+footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-height:1.7}.music-credit{display:inline-block;margin-top:9px}.music-credit a{color:var(--dark);font-weight:750;text-underline-offset:3px}
 @media(max-width:620px){.bottom{grid-template-columns:1fr}}
 @media(max-width:420px){.wrap{padding:12px 8px 25px}.hero{border-radius:18px;padding:24px 11px}h1{font-size:38px}h1 .title-followup{font-size:clamp(20px,6vw,26px)}.counter{gap:6px}.unit{padding:16px 2px 13px;border-radius:10px}.digit{font-size:clamp(24px,8vw,35px)}.unit-label{font-size:9px;letter-spacing:0}.music{padding:15px}.music-copy{justify-content:center}.music h2{text-align:center;flex-basis:100%}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
@@ -111,7 +111,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
             <button type="button" class="audio-button" id="music-toggle">▶ Tocar música</button>
             <button type="button" id="music-mute" class="audio-button secondary" aria-pressed="false">🔇 Silenciar</button>
             <button type="button" id="music-close" class="audio-button secondary">■ Parar</button>
-            <p class="audio-status" id="audio-status" role="status" aria-live="polite">Tentando iniciar a música…</p>
+            <p class="audio-status" id="audio-status" role="status" aria-live="polite">Iniciando… Se não tocar com som, use ▶ Tocar música.</p>
           </div>
           <audio id="music-native" preload="auto" loop aria-label="Música da contagem regressiva"></audio>
           <div class="music-panel" id="music-panel" hidden>
@@ -146,7 +146,8 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         </section>
       </details>
     </main>
-    <footer>Projeto independente de contagem de tempo. Retrato ilustrativo recriado digitalmente. Não é comunicado oficial nem parecer jurídico.</footer>
+    <footer>Projeto independente de contagem de tempo. Retrato ilustrativo recriado digitalmente. Não é comunicado oficial nem parecer jurídico.<br>
+      <span class="music-credit">🎵 Música: “Tá na Hora do Jair Já Ir Embora” — Tiago Doidão e Juliano Maderada. <a href="https://www.youtube.com/watch?v=RTMiC5WturY" target="_blank" rel="noopener noreferrer">Ouvir a música original no YouTube ↗</a></span></footer>
   </div>
   <noscript>Para ver a contagem regressiva funcionando, habilite o JavaScript no navegador.</noscript>
 
@@ -188,7 +189,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
   const status=$("audio-status"), audio=$("music-native");
   const panel=$("music-panel"), iframe=$("music-iframe");
   let mode="checking", player=null, ready=false, closedByUser=false;
-  let requestedPlay=false, ytLoaded=false, fallbackStarted=false, ytMuted=false;
+  let requestedPlay=false, ytLoaded=false, fallbackStarted=false, ytMuted=false, userTouchedControls=false;
   const message=text=>{status.textContent=text;};
   const nativePlaying=()=>!audio.paused&&!audio.ended;
   const youtubePlaying=()=>ready&&player&&player.getPlayerState()===YT.PlayerState.PLAYING;
@@ -234,7 +235,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
     panel.hidden=false;
     message("Usando o YouTube enquanto o arquivo de música não estiver publicado.");
     render();
-    iframe.src="https://www.youtube-nocookie.com/embed/RTMiC5WturY?enablejsapi=1&autoplay=0&mute=0&playsinline=1&controls=1&loop=1&playlist=RTMiC5WturY&rel=0&origin="+encodeURIComponent(location.origin);
+    iframe.src="https://www.youtube-nocookie.com/embed/RTMiC5WturY?enablejsapi=1&autoplay=1&mute=1&playsinline=1&controls=1&loop=1&playlist=RTMiC5WturY&rel=0&origin="+encodeURIComponent(location.origin);
     window.onYouTubeIframeAPIReady=()=>{
       player=new YT.Player("music-iframe",{
         events:{
@@ -243,6 +244,18 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
             ytMuted=event.target.isMuted();
             render();
             if(!closedByUser)playYoutubeWithSound();
+            // Em alguns navegadores o bloqueio não gera callback.
+            // Uma única tentativa muda é feita se não houver reprodução.
+            setTimeout(()=>{
+              if(!userTouchedControls&&!closedByUser&&ready&&player&&!youtubePlaying()&&!ytLoaded){
+                ytLoaded=true;
+                player.mute();
+                ytMuted=true;
+                player.playVideo();
+                render();
+                message("Reprodução com som bloqueada. Vídeo sem som: toque em 🔊 Ativar som.");
+              }
+            },5500);
           },
           onStateChange:event=>{
             if(event.data===YT.PlayerState.PLAYING){
@@ -283,6 +296,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
     document.head.appendChild(script);
   }
   button.addEventListener("click",()=>{
+    userTouchedControls=true;
     closedByUser=false;
     if(mode==="native"){
       if(nativePlaying()&&!audio.muted){
@@ -303,6 +317,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
     }
   });
   muteButton.addEventListener("click",()=>{
+    userTouchedControls=true;
     if(mode==="native"){
       if(audio.muted){playNative();}else{audio.muted=true;render();message("Som silenciado.");}
     }else if(mode==="youtube"){
@@ -312,6 +327,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
     }
   });
   closeButton.addEventListener("click",()=>{
+    userTouchedControls=true;
     closedByUser=true;
     requestedPlay=false;
     if(mode==="native"){
