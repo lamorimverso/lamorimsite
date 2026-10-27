@@ -39,6 +39,11 @@ h1 span{color:var(--purple)}
 .digit{font-weight:900;font-variant-numeric:tabular-nums;color:var(--dark);font-size:clamp(27px,5vw,46px);line-height:1;letter-spacing:-.04em}
 .unit-label{display:block;color:#746879;font-size:10px;letter-spacing:.07em;font-weight:800;text-transform:uppercase;margin-top:10px}
 .target{font-size:11px;color:var(--muted);margin:18px 0 0}
+.foro-explainer{max-width:570px;margin:18px auto 0;padding:14px 16px;text-align:left;background:#faf8fd;border:1px solid #eee7f3;border-radius:12px}
+.foro-explainer h2{font-size:13px;color:var(--dark);margin:0 0 7px;font-weight:850}
+.foro-explainer p{font-size:12px;line-height:1.65;color:#595163;margin:0}
+.foro-explainer a{color:var(--dark);font-weight:750;text-underline-offset:2px}
+
 .share{border:0;margin-top:18px;border-radius:9px;padding:11px 18px;background:#efe7f8;color:var(--dark);font-size:12px;font-weight:800;cursor:pointer}
 .share:hover{background:#e7d8f4}
 .share-message{font-size:11px;color:var(--dark);min-height:12px;margin-top:5px}
@@ -96,6 +101,10 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         </div>
         <div class="done" id="finished">O prazo do mandato chegou ao fim.</div>
         <p class="target">01/02/2027 · 00h (Brasília)</p>
+        <aside class="foro-explainer" aria-labelledby="foro-title">
+          <h2 id="foro-title">O que é foro privilegiado?</h2>
+          <p>É a regra que define em qual tribunal certas autoridades respondem a processos criminais. <strong>Não é imunidade.</strong> O contador marca o fim do mandato; segundo o <a href="https://noticias.stf.jus.br/postsnoticias/acoes-contra-autoridades-permanecem-no-stf-mesmo-apos-saida-do-cargo/" target="_blank" rel="noopener noreferrer">STF</a>, o foro pode continuar para crimes cometidos no cargo e ligados à função.</p>
+        </aside>
         <button class="share" type="button" id="share">Compartilhar contagem</button>
         <div class="share-message" id="share-message" role="status" aria-live="polite"></div>
       </section>
