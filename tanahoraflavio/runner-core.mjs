@@ -4,6 +4,24 @@ export const PLAYER = Object.freeze({ x: 120, width: 34, height: 58 });
 export const SCENE_SECONDS = 20;
 export const PASSPORTS_PER_LIFE = 100;
 export const STARTING_LIVES = 3;
+
+/**
+ * Dificuldade guiada pela distância da própria partida, não pelo tempo do navegador.
+ * A curva aproxima-se de limites seguros: o salto continua capaz de superar
+ * obstáculos e os bônus tornam-se raros, mas nunca desaparecem.
+ */
+export function difficultyAt(distance) {
+  const traveled = Number.isFinite(distance) ? Math.max(0, distance) : 0;
+  const progression = traveled / (traveled + 25000);
+  return {
+    level: 1 + Math.floor(traveled / 8000),
+    speed: 260 + 160 * progression,
+    obstacleGap: 1.75 - .62 * progression,
+    pickupGap: 1.9 + 4.2 * progression,
+    passportGap: 1.8 + 3.8 * progression,
+    shieldGap: 22 + 63 * progression
+  };
+}
 export const STAGES = Object.freeze([
   Object.freeze({ id: "brasilia", obstacle: "barrier", bonus: "miles", mission: "Pule as barreiras e colete milhas para seguir viagem.", name: "Brasília", short: "Brasília", index: 0, sky: "#edf5fa", ink: "#557b85", accent: "#477b81", ground: "#dae9de" }),
   Object.freeze({ id: "rio", obstacle: "barrier", bonus: "miles", mission: "Pule as barreiras da orla e colete milhas.", name: "Rio de Janeiro", short: "Rio", index: 1, sky: "#edf8f7", ink: "#3c7c79", accent: "#2c8379", ground: "#d9eeea" }),
@@ -57,7 +75,8 @@ export function advanceRun(run, seconds, rng = Math.random) {
 
 function stepRun(run, dt, rng) {
   run.elapsed += dt;
-  const speed = Math.min(385, 260 + run.elapsed * 1.15);
+  const balance = difficultyAt(run.distance);
+  const speed = balance.speed;
   run.invulnerableFor = Math.max(0, run.invulnerableFor - dt);
   run.shieldFor = Math.max(0, run.shieldFor - dt);
   const travel = speed * dt;
@@ -77,31 +96,30 @@ function stepRun(run, dt, rng) {
     run.obstacles.push({ x: WORLD.width + 40, width: type === "papers" ? 30 : 38, height: type === "papers" ? 48 : type === "case" ? 42 : 36, type });
     // Sempre maior que o tempo completo de um pulo (~0,7 s).
     // Dificuldade progressiva, sem obstáculos em sequência impossível de saltar.
-    const minGap = Math.max(1.35, 1.75 - run.elapsed * .003);
-    run.nextObstacle += minGap + rng() * .55;
+    run.nextObstacle += balance.obstacleGap + rng() * .55;
   }
   run.nextPickup -= dt;
   if (run.nextPickup <= 0) {
     const type = stageAt(run.elapsed).bonus;
     run.pickups.push({ x: WORLD.width + 40, y: 74 + rng() * 25, type, value: type === "passport" ? 50 : 25 });
-    run.nextPickup += 1.9 + rng() * .7;
+    run.nextPickup += balance.pickupGap + rng() * .7;
   }
 
-  // Uma sequência de três passaportes pode ser alcançada em um mesmo salto.
-  // O colecionável aparece desde o início: 100 unidades é uma meta alcançável.
+  // Três passaportes por sequência tornam a meta de 100 alcançável.
+  // A frequência diminui com a distância, mas nunca chega a zero.
   run.nextPassport -= dt;
   if (run.nextPassport <= 0) {
     const y = 78 + rng() * 12;
     for (let i = 0; i < 3; i++) {
       run.pickups.push({ x: WORLD.width + 40 + i * 35, y, type: "passport", value: 50 });
     }
-    run.nextPassport += 1.75 + rng() * .5;
+    run.nextPassport += balance.passportGap + rng() * .5;
   }
   // Escudo temporário raro, distinto da invulnerabilidade após dano.
   run.nextShield -= dt;
   if (run.nextShield <= 0) {
     run.pickups.push({ x: WORLD.width + 70, y: 83, type: "shield", value: 0 });
-    run.nextShield += 20 + rng() * 9;
+    run.nextShield += balance.shieldGap + rng() * 9;
   }
 
   // Hitbox menor que o desenho: pernas e braços não geram colisões injustas.
