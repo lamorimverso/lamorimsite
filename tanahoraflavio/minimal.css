@@ -277,3 +277,64 @@ summary:focus-visible, #runner-canvas:focus-visible { outline: 3px solid #a994c8
 @media (prefers-reduced-motion:reduce) {
   *,*::before,*::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
+
+
+/* Modo jogo: somente pista, placar e controles. Todos os IDs e dados
+   continuam no DOM para que a lógica e os recursos não sejam afetados. */
+.game-heading { margin-bottom: 10px; }
+.game-heading h2 { font-size: 26px; }
+.game-duration,
+.game-stage-header,
+.game-hud,
+.game-itinerary,
+.game-help,
+.game-guide,
+.game-instructions,
+.game-overlay p,
+.route-meter { display: none !important; }
+.game-topline {
+  display: block;
+  margin: 8px 0 12px;
+  padding: 0;
+  border: 0;
+}
+.game-scoreboard {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  align-items: baseline;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.game-scoreboard > div { margin: 0; text-align: center; }
+.game-scoreboard > div:first-child { text-align: left; }
+.game-scoreboard > div:last-child { text-align: right; }
+.game-scoreboard span {
+  display: block;
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: normal;
+}
+.game-scoreboard strong {
+  display: block;
+  margin-top: 3px;
+  font-size: clamp(21px,5vw,26px);
+  line-height: 1.1;
+  font-weight: 770;
+  color: var(--ink);
+}
+.game-viewport { margin-top: 4px; }
+.game-card[data-run-state="ready"] .game-overlay { display: none !important; }
+.game-overlay { background: #ffffffd9; }
+.game-overlay strong { max-width: 95%; line-height: 1.25; font-size: clamp(18px,4.8vw,24px); }
+.game-controls { margin-top: 12px; }
+.game-controls #game-start { min-height: 48px; }
+.game-card { padding-bottom: 24px; }
+@media (max-width:380px) {
+  .game-heading h2 { font-size: 24px; }
+  .game-scoreboard { gap: 5px; }
+  .game-scoreboard span { font-size: 10px; }
+}
