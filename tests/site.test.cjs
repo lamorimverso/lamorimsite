@@ -344,3 +344,20 @@ test('referência minimalista mantém mesma hierarquia no desktop e celular sem 
     assert.deepEqual(errors,[]);
   }finally{await context.close();}
 });
+
+
+test('diagnóstico temporário: elementos que ultrapassam a tela pequena', async () => {
+  const {context,page}=await open({viewport:{width:320,height:900}});
+  try {
+    console.log('OVERFLOW_DEBUG', JSON.stringify(await page.evaluate(()=>({
+      viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,
+      offenders:[...document.querySelectorAll('body *')].map(x=>({
+        tag:x.tagName,cl:x.className?.baseVal??x.className,id:x.id,
+        text:x.textContent?.trim().slice(0,20),
+        left:Math.round(x.getBoundingClientRect().left),
+        right:Math.round(x.getBoundingClientRect().right),
+        width:Math.round(x.getBoundingClientRect().width)
+      })).filter(x=>x.right>innerWidth+1||x.left< -1).sort((a,b)=>b.right-a.right).slice(0,18)
+    }))));
+  }finally{await context.close();}
+});
