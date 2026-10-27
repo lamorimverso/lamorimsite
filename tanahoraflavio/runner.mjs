@@ -1,4 +1,4 @@
-import { WORLD, PLAYER, PURSUERS, PICKUPS, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, togglePause, advanceRun, stageAt, pursuitAt, scoreFor } from "./runner-core.mjs?v=20261027-integrated-endless";
+import { WORLD, PLAYER, PURSUERS, PICKUPS, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, togglePause, advanceRun, stageAt, pursuitAt, scoreFor } from "./runner-core.mjs?v=20261027-boss3";
 
 function initRunner() {
   const $ = id => document.getElementById(id);
@@ -53,6 +53,17 @@ function initRunner() {
     section.dataset.runState = run.status;
     section.dataset.power = power;
     section.dataset.chance = run.extraChance ? "held" : "none";
+    const bossPanel = $("game-boss");
+    bossPanel.hidden = !run.boss;
+    section.dataset.boss = run.boss?.type || "none";
+    if (run.boss) {
+      const boss = run.boss;
+      $("game-boss-name").textContent = `${boss.name} · Nível ${boss.level}`;
+      $("game-boss-health").setAttribute("aria-valuemax", String(boss.total));
+      $("game-boss-health").setAttribute("aria-valuenow", String(boss.remaining));
+      $("game-boss-progress").style.width = `${100 * boss.remaining / boss.total}%`;
+      bossPanel.style.setProperty("--boss-accent", boss.color);
+    }
     $("game-threat").textContent = `${pursuit.index + 1}/5 · ${pursuit.name}`;
     $("game-power").textContent = power === "invisible" ? `Invisível · ${Math.ceil(run.invisibleFor)} s` : power === "recovery" ? `Recuperando · ${Math.ceil(run.graceFor)} s` : "Sem efeito ativo";
     $("game-chance").textContent = run.extraChance ? "1 guardada" : "0 guardada";
@@ -268,6 +279,36 @@ function initRunner() {
     for(let x=-offset;x<virtualWidth;x+=64)line([[x,272],[x+25,272]],"#ffffffaa",3);
     ctx.fillStyle=stage.ink;ctx.font='650 11px system-ui, sans-serif';ctx.fillText(`${stage.index + 1}/${STAGES.length} · ${stage.name.toLocaleUpperCase("pt-BR")}`,20,26);
   }
+  function bossFigure() {
+    const boss = run.boss;
+    if (!boss) return;
+    const idleMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    const bob = idleMotion ? 0 : Math.sin(run.elapsed * 4) * 3;
+    const x = virtualWidth - 76, y = 155 + bob;
+    ctx.save();
+    ctx.globalAlpha = .83;
+    circle(x, y - 35, 40, "#ffffffb9");
+    circle(x, y - 35, 37, boss.color + "20");
+    ctx.fillStyle = boss.color;
+    ctx.beginPath();ctx.roundRect(x-29,y-16,58,54,15);ctx.fill();
+    circle(x, y-45, 25, "#e8c7aa");
+    ctx.strokeStyle="#3e2f30";ctx.lineWidth=3;
+    line([[x-17,y-54],[x-6,y-50]],"#3e2f30",3);
+    line([[x+6,y-50],[x+17,y-54]],"#3e2f30",3);
+    circle(x-9,y-44,2.5,"#352e2e");
+    circle(x+9,y-44,2.5,"#352e2e");
+    line([[x-8,y-33],[x+8,y-33]],"#a66c5d",2);
+    if(boss.supreme){
+      ctx.fillStyle="#dfba52";
+      ctx.beginPath();ctx.moveTo(x-23,y-71);ctx.lineTo(x-21,y-89);
+      ctx.lineTo(x-9,y-80);ctx.lineTo(x,y-96);ctx.lineTo(x+9,y-80);
+      ctx.lineTo(x+21,y-89);ctx.lineTo(x+23,y-71);ctx.closePath();ctx.fill();
+    }
+    ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="800 13px system-ui";
+    ctx.fillText(boss.supreme?"SUPREMO":"CHEFE",x,y+18);
+    ctx.restore();
+  }
+
   function character() {
     const stride = run.player.y === 0 && run.status === "running" ? Math.sin(run.elapsed*22)*9 : 4;
     ctx.save();ctx.translate(PLAYER.x+17,WORLD.ground-run.player.y);
@@ -286,7 +327,13 @@ function initRunner() {
     line([[-8,-35],[-15,-27],[-17-stride*.4,-20]],"#694790",5);
     line([[8,-35],[14,-27],[20+stride*.4,-29]],"#694790",5);
     circle(20+stride*.4,-29,3,"#ddbb9d");
-    ctx.save();ctx.beginPath();ctx.ellipse(0,-52,15,18,0,0,Math.PI*2);ctx.clip();
+    ctx.save();
+    // Leve inclinação do retrato acompanha o movimento (sem alterar a imagem).
+    if(!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) {
+      const tilt = run.player.y > 0 ? -.075 : Math.sin(run.elapsed*9)*.035;
+      ctx.translate(0,-52);ctx.rotate(tilt);ctx.translate(0,52);
+    }
+    ctx.beginPath();ctx.ellipse(0,-52,15,18,0,0,Math.PI*2);ctx.clip();
     if(portrait.complete&&portrait.naturalWidth)ctx.drawImage(portrait,portrait.width*.2,portrait.height*.04,portrait.width*.6,portrait.height*.76,-15,-70,30,36);
     else{ctx.fillStyle="#dfbda0";ctx.fillRect(-15,-70,30,36);ctx.fillStyle="#423631";ctx.fillRect(-15,-70,30,9);}
     ctx.restore();ctx.restore();
@@ -353,6 +400,7 @@ function initRunner() {
   function draw() {
     ctx.setTransform(canvas.width/virtualWidth,0,0,canvas.height/WORLD.height,0,0);
     scenery(stageAt(run.elapsed));
+    bossFigure();
     for(const item of run.pickups)pickup(item);
     for(const item of run.obstacles)obstacle(item);
     character();
