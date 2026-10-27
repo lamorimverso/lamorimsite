@@ -1,4 +1,4 @@
-import { WORLD, PLAYER, PURSUERS, PICKUPS, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, togglePause, advanceRun, stageAt, pursuitAt, scoreFor } from "./runner-core.mjs?v=20261027-one-hit";
+import { WORLD, PLAYER, PURSUERS, PICKUPS, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, togglePause, advanceRun, stageAt, pursuitAt, scoreFor } from "./runner-core.mjs?v=20261027-portrait-balance";
 
 function initRunner() {
   const $ = id => document.getElementById(id);
@@ -66,7 +66,7 @@ function initRunner() {
     }
     $("game-threat").textContent = `${pursuit.index + 1}/5 · ${pursuit.name}`;
     $("game-power").textContent = power === "invisible" ? `Invisível · ${Math.ceil(run.invisibleFor)} s` : power === "recovery" ? `Recuperando · ${Math.ceil(run.graceFor)} s` : "Sem efeito ativo";
-    $("game-chance").textContent = run.extraChance ? "1 guardada" : "0 guardada";
+    $("game-chance").textContent = run.extraChance ? "Escudo pronto" : "0 guardada";
     $("game-jump").disabled = run.status !== "running";
     $("game-pause").disabled = run.status !== "running" && run.status !== "paused";
     $("game-pause").textContent = run.status === "paused" ? "Continuar corrida" : "Pausar corrida";

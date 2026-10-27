@@ -29,7 +29,7 @@ export const PICKUPS = Object.freeze([
   Object.freeze({ type: "chocolate", name: "Chocolate", value: 25 }),
   Object.freeze({ type: "mansion", name: "Mansão", value: 50 }),
   Object.freeze({ type: "receipt", name: "Recibo", value: 25 }),
-  Object.freeze({ type: "passport", name: "Passaporte", value: 50 }),
+  Object.freeze({ type: "passport", name: "Passaporte", value: 10 }),
   Object.freeze({ type: "invisible", name: "Invisibilidade", value: 0 }),
   Object.freeze({ type: "chance", name: "Chance extra", value: 0 })
 ]);
@@ -44,11 +44,11 @@ export function difficultyAt(distance) {
   const progression = traveled / (traveled + 25000);
   return {
     level: 1 + Math.floor(traveled / 8000),
-    speed: 260 + 160 * progression,
-    obstacleGap: 1.75 - .62 * progression,
-    pickupGap: 1.9 + 4.2 * progression,
-    passportGap: 1.8 + 3.8 * progression,
-    shieldGap: 22 + 63 * progression
+    speed: 250 + 130 * progression,
+    obstacleGap: 1.95 - .6 * progression,
+    pickupGap: 3.8 + 2.4 * progression,
+    passportGap: 2.6 + 1.8 * progression,
+    powerGap: 14 + 22 * progression
   };
 }
 
@@ -65,9 +65,9 @@ export function createRun() {
     status: "ready", elapsed: 0, distance: 0, bonus: 0, collected: 0,
     passports: 0, lives: STARTING_LIVES, event: "", events: 0,
     player: { y: 0, velocity: 0 }, obstacles: [], pickups: [],
-    nextObstacle: 1.5, nextPickup: 2.2, nextPassport: 1.9,
+    nextObstacle: 1.5, nextPickup: 2.2, nextPassport: 1.9, nextPower: 4,
     invisibleFor: 0, graceFor: 0, extraChance: false, saves: 0,
-    lastPickup: null, spawnedObstacles: 0, spawnedPickups: 0,
+    lastPickup: null, spawnedObstacles: 0, spawnedPickups: 0, spawnedPowers: 0,
     boss: null, bossesDefeated: 0, nextBossScore: BOSS_SCORE_STEP, bossCooldown: 0
   };
 }
@@ -117,9 +117,34 @@ function advanceBoss(run,dt) {
   boss.nextAttack-=dt;
   if(boss.fired<boss.total && boss.nextAttack<=0){
     const foe=PURSUERS.find(p=>p.type===boss.type);
-    run.obstacles.push({x:WORLD.width+50,width:foe.width,height:foe.height,type:foe.type,bossAttack:true,counted:false});
+    const attack={x:WORLD.width+50,width:foe.width,height:foe.height,type:foe.type,bossAttack:true,counted:false};
+    run.obstacles.push(attack);
     boss.fired++;
     boss.nextAttack+=boss.interval;
+    return attack;
+  }
+}
+
+// Um salto, um grupo: os itens acompanham o arco sobre o adversário.
+// Os três relógios têm ritmos próprios, mas nunca geram ondas sobrepostas.
+function rewardForObstacle(run, obstacle, balance, rng) {
+  if (!obstacle) return;
+  let item, count = 1;
+  if (run.nextPower <= 0) {
+    const shield = run.spawnedPowers++ % 2 === 0 && !run.extraChance;
+    item = PICKUPS[shield ? 5 : 4];
+    run.nextPower = balance.powerGap + rng() * 2;
+  } else if (run.nextPassport <= 0) {
+    item = PICKUPS[3]; count = 3;
+    run.nextPassport = balance.passportGap + rng() * .5;
+  } else if (run.nextPickup <= 0) {
+    item = PICKUPS[Math.min(2, Math.floor(rng() * 3))];
+    run.nextPickup = balance.pickupGap + rng() * .7;
+  } else return;
+  run.spawnedPickups++;
+  const center = obstacle.x + obstacle.width / 2;
+  for (let i = 0; i < count; i++) {
+    run.pickups.push({x: center + (i - (count - 1) / 2) * 35, y: 100, type: item.type, value: item.value});
   }
 }
 function resolveBossDodges(run) {
@@ -162,7 +187,8 @@ export function advanceRun(run, seconds, rng = Math.random) {
   run.pickups = run.pickups.filter(p => p.x > -30);
 
   if(!run.boss && run.bossCooldown<=0 && scoreFor(run)>=run.nextBossScore)beginBoss(run);
-  if(run.boss)advanceBoss(run,dt);
+  let rewardAnchor;
+  if(run.boss)rewardAnchor=advanceBoss(run,dt);
   else {
     run.nextObstacle -= dt;
     if (run.nextObstacle <= 0) {
@@ -170,29 +196,16 @@ export function advanceRun(run, seconds, rng = Math.random) {
       // O novo adversário aparece com frequência; os anteriores continuam na perseguição.
       const opponent = run.spawnedObstacles++ % 3 === 2
         ? PURSUERS[Math.min(current.index, Math.floor(rng() * (current.index + 1)))] : current;
-      run.obstacles.push({ x: WORLD.width + 40, width: opponent.width, height: opponent.height, type: opponent.type });
+      rewardAnchor={ x: WORLD.width + 40, width: opponent.width, height: opponent.height, type: opponent.type };
+      run.obstacles.push(rewardAnchor);
       // Sempre maior que o tempo completo de um pulo (~0,7 s).
       run.nextObstacle += balance.obstacleGap + rng() * .4;
     }
   }
   run.nextPickup -= dt;
-  if (run.nextPickup <= 0) {
-    const slot = run.spawnedPickups++ % 5;
-    const item = PICKUPS[slot === 1 ? 4 : slot === 3 ? 5 : Math.min(3, Math.floor(rng() * 4))];
-    run.pickups.push({ x: WORLD.width + 40, y: 74 + rng() * 25, type: item.type, value: item.value });
-    run.nextPickup += balance.pickupGap + rng() * .7;
-  }
-
-  // Passaportes em sequência podem ser coletados num único salto. Aumentar
-  // o espaço entre sequências reduz a frequência sem tornar +1 vida impossível.
   run.nextPassport -= dt;
-  if (run.nextPassport <= 0) {
-    const y = 78 + rng() * 12;
-    for (let i = 0; i < 3; i++) {
-      run.pickups.push({ x: WORLD.width + 40 + i * 35, y, type: "passport", value: 50 });
-    }
-    run.nextPassport += balance.passportGap + rng() * .5;
-  }
+  run.nextPower -= dt;
+  rewardForObstacle(run, rewardAnchor, balance, rng);
 
   // Hitbox menor que o desenho: pernas e braços não geram colisões injustas.
   const left = PLAYER.x + 5, right = PLAYER.x + PLAYER.width - 3;
