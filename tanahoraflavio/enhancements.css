@@ -517,3 +517,8 @@ footer{padding:15px 5px 20px;font-size:11px;text-align:center;color:var(--muted)
  .game-stage-header strong{font-size:18px}
  .game-scoreboard strong{font-size:21px}
 }
+
+
+/* O primeiro (e único) link do menu continua acessível em telas estreitas. */
+.site-header nav>a:first-child{display:inline-flex}
+.game-overlay-badge{display:none}
