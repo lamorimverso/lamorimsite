@@ -17,8 +17,13 @@ export const PURSUERS = Object.freeze([
   Object.freeze({ type: "xandao", name: "Xandão", short: "Xandão", index: 1, width: 36, height: 49, color: "#454051" }),
   Object.freeze({ type: "janones", name: "Janones", short: "Janones", index: 2, width: 38, height: 46, color: "#397ba0" }),
   Object.freeze({ type: "army", name: "Exército do Lula", short: "Exército", index: 3, width: 44, height: 48, color: "#65714b" }),
-  Object.freeze({ type: "lula", name: "Lula · chefe supremo", short: "Lula", index: 4, width: 50, height: 56, color: "#b64250" })
+  Object.freeze({ type: "lula", name: "Lula · chefe supremo", short: "Lula", index: 4, width: 50, height: 56, color: "#b64250" }),
+  Object.freeze({ type: "haddad", name: "Fernando Haddad", short: "Haddad", index: 5, width: 38, height: 49, color: "#346c75" }),
+  Object.freeze({ type: "boulos", name: "Guilherme Boulos", short: "Boulos", index: 6, width: 39, height: 50, color: "#7b598c" }),
+  Object.freeze({ type: "dino", name: "Flávio Dino", short: "Dino", index: 7, width: 42, height: 52, color: "#8b623f" })
 ]);
+// A lista de chefes é independente dos perseguidores normais.
+export const BOSS_ROSTER = Object.freeze(["pf","xandao","janones","army","haddad","boulos","dino","lula"]);
 export const PICKUPS = Object.freeze([
   Object.freeze({ type: "chocolate", name: "Chocolate", value: 25 }),
   Object.freeze({ type: "mansion", name: "Mansão", value: 50 }),
@@ -89,11 +94,12 @@ export function scoreFor(run) {
 /** Encontros fictícios: um salto para evitar cada ataque, sem golpes extras. */
 export function bossAtRound(round) {
   const safe=Math.max(0,Math.floor(Number.isFinite(round)?round:0));
-  const index=safe%PURSUERS.length, level=Math.floor(safe/PURSUERS.length)+1;
-  const supreme=index===PURSUERS.length-1;
-  return {foe:PURSUERS[index],level,supreme,round:safe+1,
-    attacks:Math.min(9,3+Math.min(index,2)+Math.min(level-1,2)+(supreme?2:0)),
-    interval:Math.max(1.18,1.55-index*.07-Math.min(level-1,3)*.045)};
+  const index=safe%BOSS_ROSTER.length, level=Math.floor(safe/BOSS_ROSTER.length)+1;
+  const supreme=index===BOSS_ROSTER.length-1;
+  const foe=PURSUERS.find(p=>p.type===BOSS_ROSTER[index]);
+  const attacks=Math.min(9,3+Math.min(index,3)+Math.min(level-1,2)+(supreme?2:0));
+  return {foe,level,supreme,round:safe+1,attacks,
+    interval:Math.max(1.18,1.55-index*.052-Math.min(level-1,3)*.035)};
 }
 function beginBoss(run) {
   const conf=bossAtRound(run.bossesDefeated);
