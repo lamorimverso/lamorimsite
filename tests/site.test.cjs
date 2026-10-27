@@ -276,6 +276,11 @@ test('desktop replica a coluna única do celular sem excesso de texto exposto', 
   try {
     for(const width of [320,390,768,1024,1440]){
       await page.setViewportSize({width,height:900});
+      // ResizeObserver ajusta a proporção da pista no próximo frame.
+      await page.waitForFunction(() => {
+        const canvas=document.getElementById('runner-canvas');
+        return canvas && canvas.getBoundingClientRect().height>=150;
+      });
       const geometry=await page.evaluate(()=>{
         const hero=document.querySelector('.hero').getBoundingClientRect();
         const game=document.getElementById('game').getBoundingClientRect();
