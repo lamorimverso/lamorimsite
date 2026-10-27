@@ -76,8 +76,8 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
 @media(max-width:420px){.wrap{padding:12px 8px 25px}.hero{border-radius:18px;padding:24px 11px}h1{font-size:38px}h1 .title-followup{font-size:clamp(20px,6vw,26px)}.counter{gap:6px}.unit{padding:16px 2px 13px;border-radius:10px}.digit{font-size:clamp(24px,8vw,35px)}.unit-label{font-size:9px;letter-spacing:0}.music{padding:15px}.music-copy{justify-content:center}.music h2{text-align:center;flex-basis:100%}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
-  <link rel="stylesheet" href="enhancements.css?v=20261027-lives2">
-  <script type="module" src="runner.mjs?v=20261027-lives2"></script>
+  <link rel="stylesheet" href="enhancements.css?v=20261027-endless3">
+  <script type="module" src="runner.mjs?v=20261027-endless3"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -154,9 +154,9 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
       <section class="game-card" id="game" aria-labelledby="game-title">
         <div class="game-heading">
           <div><p class="eyebrow">Enquanto o tempo passa…</p><h2 id="game-title">Corre, Flávio! <span aria-hidden="true">↗</span></h2></div>
-          <span class="game-duration">5 destinos · corrida sem fim</span>
+          <span class="game-duration">5 destinos · sem linha de chegada</span>
         </div>
-        <p class="game-description">Uma viagem satírica por cinco cenários. Pule, colete passaportes e ganhe vidas extras.</p>
+        <p class="game-description">Uma corrida infinita: quanto mais longe, maiores os desafios e mais raros os bônus.</p>
         <details class="game-itinerary"><summary>Ver os 5 destinos e pontos turísticos</summary><ol class="game-route" aria-label="Rota da corrida">
           <li class="is-current" data-stage="0" aria-current="step"><span class="route-number">01</span><span>Brasília <small>Congresso Nacional</small></span></li>
           <li data-stage="1"><span class="route-number">02</span><span>Rio <small>Cristo Redentor e Pão de Açúcar</small></span></li>
@@ -165,7 +165,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
           <li data-stage="4"><span class="route-number">05</span><span>Casa Branca <small>Washington, EUA</small></span></li>
         </ol></details>
         <div class="game-stage-header">
-          <div><span id="game-phase">Cenário 1 de 5</span><strong id="game-stage-name">Brasília</strong></div>
+          <div><span id="game-phase">Cenário 1 de 5</span><strong id="game-stage-name">Brasília</strong><small id="game-difficulty" class="game-difficulty">Risco 1 · 0 m virtuais</small></div>
           <span class="game-stage-clock" id="game-stage-time">20 s para Rio</span>
         </div>
         <p class="game-stage-mission" id="game-stage-mission">Pule as barreiras e colete milhas para seguir viagem.</p>
@@ -189,7 +189,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         <p class="game-status" id="game-status" role="status" aria-live="polite">Tudo pronto. A corrida começa quando você quiser.</p>
         <details class="game-help"><summary>Como jogar e ganhar pontos</summary>
         <p class="game-instructions" id="game-instructions">Toque na pista ou em <strong>Pular</strong>. No teclado: <kbd>Espaço</kbd> / <kbd>↑</kbd> para pular e <kbd>P</kbd> para pausar.</p>
-        <div class="game-legend"><span><i class="legend-obstacle" aria-hidden="true"></i> Obstáculos tiram 1 vida; proteção por 2 s.</span><span><i class="legend-bonus" aria-hidden="true"></i> Milhas e notas +25 · Passaporte +50 · 100 passaportes = +1 vida · Escudo raro por 6 s</span></div><p class="game-instructions">Recorde nesta sessão/navegador: <strong id="game-best">0000</strong> pontos. Você começa com 3 vidas.</p>
+        <div class="game-legend"><span><i class="legend-obstacle" aria-hidden="true"></i> Obstáculos tiram 1 vida; proteção por 2 s.</span><span><i class="legend-bonus" aria-hidden="true"></i> Milhas e notas +25 · Passaporte +50 · 100 passaportes = +1 vida · Escudo raro por 6 s</span></div><p class="game-instructions">A dificuldade cresce com a distância, mas sempre existe uma chance de vencer os obstáculos. Recorde nesta sessão/navegador: <strong id="game-best">0000</strong> pontos. Você começa com 3 vidas.</p>
         </details>
         <p class="game-fiction">Jogo de humor. Roteiro, fuga e itens são fictícios. Seu recorde fica apenas neste navegador.</p>
         <noscript>Habilite o JavaScript para jogar.</noscript>
