@@ -332,7 +332,7 @@ test('referência minimalista mantém mesma hierarquia no desktop e celular sem 
       assert.equal(v.heroBorder,'0px','sem borda externa');
       assert.equal(v.stylesheet,true,'camada minimalista carregada');
       assert.equal(v.overflow,false,`overflow em ${width}px`);
-      assert.ok(v.portrait.x + v.portrait.width <= innerWidth, `retrato precisa caber em ${width}px`);
+      assert.ok(v.portrait.x + v.portrait.width <= width, `retrato precisa caber em ${width}px`);
       assert.ok(v.hero.width<=540,`coluna única não deve esticar em ${width}px`);
       assert.ok(Math.abs(v.hero.x-v.game.x)<3,`seções alinhadas em ${width}px`);
       assert.ok(v.counter.y<v.portrait.y,`contagem deve vir primeiro em ${width}px`);
