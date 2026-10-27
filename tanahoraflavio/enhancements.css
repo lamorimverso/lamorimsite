@@ -142,3 +142,43 @@ button:focus-visible,#runner-canvas:focus-visible{outline:3px solid #ac84d1;outl
  .game-route .route-number,.game-route small{display:none}
 }
 @media(max-width:380px){.game-route li{font-size:11px;padding:12px 2px}}
+
+/* Interface com divulgação progressiva: detalhes da viagem e recorde sob demanda. */
+.hero{gap:20px 30px}
+.hero-intro h1{max-width:590px}
+.count-subtitle{margin:4px 0 16px;color:var(--dark);font-size:clamp(14px,1.6vw,17px);line-height:1.5;font-weight:650}
+.game-description{margin:9px 0 14px}
+.game-itinerary{margin:0 0 12px}
+.game-itinerary summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--dark);font-size:13px;font-weight:700;list-style:none}
+.game-itinerary summary::after{content:"⌄";margin-left:9px}
+.game-itinerary[open] summary::after{content:"⌃"}
+.game-itinerary summary::-webkit-details-marker{display:none}
+.game-route{margin:4px 0 10px}
+.game-route li{padding:10px 8px;gap:7px;font-size:12px}
+.game-route small{font-size:10px}
+.game-stage-header{margin:8px 0 0}
+.game-stage-mission{margin:6px 0 12px}
+.game-scoreboard{margin-bottom:9px}
+.game-passport-hud{margin:0 0 12px;padding:11px 13px;border:1px solid var(--line);border-radius:12px;background:#fbf9fd}
+.game-passport-hud>div:first-child{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.game-passport-hud strong{color:var(--dark);font-variant-numeric:tabular-nums}
+.passport-track{height:5px;overflow:hidden;border-radius:10px;background:#e7dced;margin-top:9px}
+.passport-track span{display:block;width:0;height:100%;background:var(--purple)}
+#game-protection{display:block;font-size:12px;color:#176d61;font-weight:750}
+#game-protection:empty{display:none}
+@media(max-width:720px){
+ .hero{gap:16px}
+ .game-card{padding:19px 17px}
+ .game-heading h2{font-size:26px}
+ .game-heading .eyebrow{margin-bottom:5px}
+ .game-description{font-size:13px}
+ .game-itinerary .game-route{display:flex;flex-direction:column}
+ .game-route li{justify-content:flex-start;gap:10px;padding:9px 13px}
+ .game-route .route-number,.game-route small{display:block}
+ .game-route li+li{border-left:0;border-top:1px solid var(--line)}
+ .game-passport-hud{padding:10px}
+}
+@media(max-width:380px){
+ .game-scoreboard strong{font-size:21px}
+ .game-passport-hud>div:first-child{font-size:11px}
+}
