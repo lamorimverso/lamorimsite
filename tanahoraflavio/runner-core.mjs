@@ -2,6 +2,8 @@
 export const WORLD = Object.freeze({ width: 900, height: 300, ground: 246 });
 export const PLAYER = Object.freeze({ x: 120, width: 34, height: 58 });
 export const SCENE_SECONDS = 20;
+export const PASSPORTS_PER_LIFE = 100;
+export const STARTING_LIVES = 3;
 export const STAGES = Object.freeze([
   Object.freeze({ id: "brasilia", obstacle: "barrier", bonus: "miles", mission: "Pule as barreiras e colete milhas para seguir viagem.", name: "Brasília", short: "Brasília", index: 0, sky: "#edf5fa", ink: "#557b85", accent: "#477b81", ground: "#dae9de" }),
   Object.freeze({ id: "rio", obstacle: "barrier", bonus: "miles", mission: "Pule as barreiras da orla e colete milhas.", name: "Rio de Janeiro", short: "Rio", index: 1, sky: "#edf8f7", ink: "#3c7c79", accent: "#2c8379", ground: "#d9eeea" }),
@@ -17,8 +19,9 @@ export function stageAt(seconds) {
 export function createRun() {
   return {
     status: "ready", elapsed: 0, distance: 0, bonus: 0, collected: 0,
+    passports: 0, lives: STARTING_LIVES, invulnerableFor: 0, shieldFor: 0, event: "", events: 0,
     player: { y: 0, velocity: 0 }, obstacles: [], pickups: [],
-    nextObstacle: 1.5, nextPickup: 2.2
+    nextObstacle: 1.6, nextPickup: 2.2, nextPassport: 1.9, nextShield: 16
   };
 }
 
@@ -54,7 +57,9 @@ export function advanceRun(run, seconds, rng = Math.random) {
 
 function stepRun(run, dt, rng) {
   run.elapsed += dt;
-  const speed = Math.min(400, 280 + run.elapsed * 1.6);
+  const speed = Math.min(385, 260 + run.elapsed * 1.15);
+  run.invulnerableFor = Math.max(0, run.invulnerableFor - dt);
+  run.shieldFor = Math.max(0, run.shieldFor - dt);
   const travel = speed * dt;
   run.distance += travel;
   run.player.velocity -= 1750 * dt;
@@ -71,7 +76,9 @@ function stepRun(run, dt, rng) {
     const type = stageAt(run.elapsed).obstacle;
     run.obstacles.push({ x: WORLD.width + 40, width: type === "papers" ? 30 : 38, height: type === "papers" ? 48 : type === "case" ? 42 : 36, type });
     // Sempre maior que o tempo completo de um pulo (~0,7 s).
-    run.nextObstacle += 1.3 + rng() * .55;
+    // Dificuldade progressiva, sem obstáculos em sequência impossível de saltar.
+    const minGap = Math.max(1.35, 1.75 - run.elapsed * .003);
+    run.nextObstacle += minGap + rng() * .55;
   }
   run.nextPickup -= dt;
   if (run.nextPickup <= 0) {
@@ -80,18 +87,55 @@ function stepRun(run, dt, rng) {
     run.nextPickup += 1.9 + rng() * .7;
   }
 
+  // Uma sequência de três passaportes pode ser alcançada em um mesmo salto.
+  // O colecionável aparece desde o início: 100 unidades é uma meta alcançável.
+  run.nextPassport -= dt;
+  if (run.nextPassport <= 0) {
+    const y = 78 + rng() * 12;
+    for (let i = 0; i < 3; i++) {
+      run.pickups.push({ x: WORLD.width + 40 + i * 35, y, type: "passport", value: 50 });
+    }
+    run.nextPassport += 1.75 + rng() * .5;
+  }
+  // Escudo temporário raro, distinto da invulnerabilidade após dano.
+  run.nextShield -= dt;
+  if (run.nextShield <= 0) {
+    run.pickups.push({ x: WORLD.width + 70, y: 83, type: "shield", value: 0 });
+    run.nextShield += 20 + rng() * 9;
+  }
+
   // Hitbox menor que o desenho: pernas e braços não geram colisões injustas.
   const left = PLAYER.x + 5, right = PLAYER.x + PLAYER.width - 3;
   const bottom = run.player.y + 3, top = run.player.y + PLAYER.height - 5;
-  for (const obstacle of run.obstacles) {
-    if (right > obstacle.x + 3 && left < obstacle.x + obstacle.width - 3 && bottom < obstacle.height && top > 0) {
-      run.status = "over";
-      return;
+  if (run.invulnerableFor <= 0 && run.shieldFor <= 0) {
+    for (const obstacle of run.obstacles) {
+      if (right > obstacle.x + 3 && left < obstacle.x + obstacle.width - 3 && bottom < obstacle.height && top > 0) {
+        run.lives--;
+        run.invulnerableFor = 2;
+        run.events++;
+        run.event = run.lives > 0 ? `Colisão! Restam ${run.lives} ${run.lives === 1 ? "vida" : "vidas"}. Proteção por 2 s.` : "A Polícia Federal pegou você! Fim da corrida fictícia.";
+        if (run.lives <= 0) { run.status = "over"; return; }
+        break;
+      }
     }
   }
   run.pickups = run.pickups.filter(pickup => {
     const hit = right > pickup.x - 12 && left < pickup.x + 12 && top > pickup.y - 12 && bottom < pickup.y + 12;
-    if (hit) { run.bonus += pickup.value; run.collected++; }
-    return !hit;
+    if (!hit) return true;
+    run.bonus += pickup.value;
+    run.collected++;
+    if (pickup.type === "passport") {
+      run.passports++;
+      if (run.passports % PASSPORTS_PER_LIFE === 0) {
+        run.lives++;
+        run.events++;
+        run.event = `100 passaportes! +1 vida extra. Você tem ${run.lives} vidas.`;
+      }
+    } else if (pickup.type === "shield") {
+      run.shieldFor = 6;
+      run.events++;
+      run.event = "Escudo ativado! Você está invulnerável por 6 segundos.";
+    }
+    return false;
   });
 }
