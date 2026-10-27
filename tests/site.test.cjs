@@ -285,6 +285,7 @@ test('desktop replica a coluna única do celular sem excesso de texto exposto', 
         return {hero:{x:hero.x,width:hero.width},game:{x:game.x,width:game.width},counterY:counter.y,photoY:photo.y,viewportWidth:viewport.width,viewportHeight:viewport.height,overflow:document.documentElement.scrollWidth>innerWidth};
       });
       assert.equal(geometry.overflow,false,`overflow na largura ${width}`);
+      assert.equal(await page.locator('.site-header .nav-game').isVisible(),true,`link do jogo oculto em ${width}px`);
       assert.ok(geometry.hero.width <= 540,`hero não deve virar grade desktop em ${width}: ${geometry.hero.width}`);
       assert.ok(Math.abs(geometry.hero.width-geometry.game.width)<3,`larguras das seções incoerentes: ${width}`);
       assert.ok(Math.abs(geometry.hero.x-geometry.game.x)<3,`colunas desalinhadas: ${width}`);
