@@ -69,9 +69,11 @@ test("colisões consomem vidas sem dano repetido durante a proteção", () => {
   frames(run, .1);
   assert.equal(run.lives, 2);
   run.invulnerableFor = 0;
+  run.obstacles.push({ x: 125, width: 34, height: 40, type: "barrier" });
   frames(run, .02);
   assert.equal(run.lives, 1);
   run.invulnerableFor = 0;
+  run.obstacles.push({ x: 125, width: 34, height: 40, type: "barrier" });
   frames(run, .02);
   assert.equal(run.lives, 0);
   assert.equal(run.status, "over");
