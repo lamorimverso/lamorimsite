@@ -1,0 +1,43 @@
+name: Responsive site checks
+
+on:
+  pull_request:
+    paths:
+      - 'tanahoraflavio/**'
+      - 'tests/**'
+      - '.github/workflows/site-responsive-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  browser-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: npm install --no-save --ignore-scripts playwright@1.56.1
+      - name: Verify preinstalled Chrome
+        run: test -x /usr/bin/google-chrome
+      - name: Test runner and desktop/mobile UI
+        env:
+          PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/google-chrome
+        run: node --test tests/*.test.*
+      - name: Capture desktop and mobile screens
+        if: success()
+        run: |
+          mkdir -p ux-captures
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/site-http.log 2>&1 &
+          for i in $(seq 1 20); do if curl -fsS http://127.0.0.1:8765/tanahoraflavio/ >/dev/null; then break; fi; sleep 1; done
+          npx playwright screenshot --channel chrome --viewport-size "390,844" --wait-for-timeout 1000 http://127.0.0.1:8765/tanahoraflavio/ ux-captures/mobile-390.png
+          npx playwright screenshot --channel chrome --viewport-size "1440,900" --wait-for-timeout 1000 http://127.0.0.1:8765/tanahoraflavio/ ux-captures/desktop-1440.png
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: responsive-site-captures
+          path: ux-captures/*.png
+          retention-days: 7

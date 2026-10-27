@@ -198,3 +198,215 @@ button:focus-visible,#runner-canvas:focus-visible{outline:3px solid #ac84d1;outl
   .game-scoreboard strong{font-size:20px}
   .game-controls button{font-size:14px}
 }
+
+
+/*
+ * UI limpa v4 — alterações de apresentação isoladas no final.
+ * Não modifica motor do jogo, acessibilidade por teclado, player ou contador.
+ */
+:root{--purple:#6941ad;--dark:#4e3276;--ink:#242532;--muted:#646979;--line:#e8e9f0;--pale:#f5f2fa}
+html{scroll-padding-top:20px}
+body{background:#f6f7fa;color:var(--ink)}
+.wrap{width:100%;max-width:1080px;padding:0 28px 38px}
+.site-header{padding:20px 2px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.wordmark{font-size:20px;font-weight:800;letter-spacing:-.055em}
+.site-header nav a{min-height:44px;display:inline-flex;align-items:center;font-size:14px}
+.site-header nav .nav-game{border-color:transparent;background:transparent;padding:10px 4px;color:var(--dark)}
+.site-header nav .nav-game:hover{color:var(--purple)}
+.hero{grid-template-columns:minmax(0,1fr) 176px;grid-template-areas:"intro portrait" "count portrait" "tools tools";gap:14px 32px;padding:36px 40px 30px;background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 12px 40px #28233908;text-align:left;min-width:0}
+.hero-intro{align-self:end}
+.hero .eyebrow{margin-bottom:10px;font-size:11px;letter-spacing:.09em}
+.hero h1{font-size:clamp(38px,4.4vw,52px);letter-spacing:-.06em;line-height:1.05;font-weight:830}
+.count-content{min-width:0}
+.counter-label{font-size:14px;line-height:1.4;color:var(--muted);font-weight:600;margin:0 0 4px}
+.count-satire{font-size:clamp(15px,1.8vw,17px);font-weight:500;line-height:1.45;color:var(--dark);max-width:none;margin:0 0 20px;letter-spacing:-.01em}
+.count-satire strong{font-weight:700}
+.counter{width:100%;max-width:605px;margin:0;gap:10px}
+.unit{padding:17px 8px 13px;background:#f7f5fa;border:1px solid #f0edf5;border-radius:12px}
+.digit{font-size:clamp(30px,3.6vw,44px);line-height:1.08;font-weight:790;letter-spacing:-.045em}
+.unit-label{display:block;font-size:11px;font-weight:600;margin-top:7px;letter-spacing:0;text-transform:none;color:#777389}
+.target{margin:11px 0 0;font-size:12px;color:var(--muted)}
+.ring-wrap{justify-self:center;align-self:center;gap:10px;margin:0;min-width:0}
+.progress-ring{width:158px;padding:5px}
+.portrait{border-width:4px}
+.percent-badge{padding:7px 11px;min-width:113px;border:1px solid var(--line);border-radius:10px;box-shadow:0 5px 16px #34234d12}
+.percent-badge strong{font-size:23px;font-weight:800}
+.percent-badge small{font-size:10px}
+.ring-label{text-align:center;font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.hero-tools{grid-area:tools;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:22px;margin-top:5px}
+.hero-play{min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:18px;padding:11px 23px;background:var(--purple);border:1px solid var(--purple);border-radius:11px;color:#fff;text-decoration:none;font-size:14px;font-weight:750}
+.hero-play:hover{background:var(--dark);color:#fff}
+.hero-utilities{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;min-width:0}
+.music{width:auto;margin:0;padding:0;background:transparent;border:0;border-radius:0;min-width:0}
+.music-copy{display:flex;align-items:center;gap:0;justify-content:flex-start}
+.music h2{display:none}
+.audio-button,.share{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid var(--line);background:#fff;color:var(--dark);font:inherit;font-size:13px;font-weight:650;line-height:1.2;border-radius:10px;padding:10px 14px;margin:0;cursor:pointer}
+.audio-button:hover:not(:disabled),.share:hover{background:var(--pale);color:var(--dark)}
+.audio-button:disabled{color:var(--muted);background:#f8f8fa}
+.audio-status{max-width:310px;font-size:11px;line-height:1.4;text-align:left;margin:5px 0 0;color:var(--muted)}
+.music-panel{position:relative;max-width:310px}
+.hero-utilities .share-message{flex-basis:100%;text-align:right;font-size:12px}
+.sources{margin:10px 2px 24px}
+.sources summary{min-height:44px;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:9px;text-align:left;font-size:12px;color:var(--muted)}
+.sources summary:hover{background:#edeaf3}
+.sources .bottom{gap:12px;margin:0 0 10px}
+.panel{padding:20px;border-radius:13px;box-shadow:none}
+.panel p{font-size:13px;line-height:1.65}
+.game-card{margin-top:0;padding:32px 36px 28px;background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 12px 40px #28233908}
+.game-heading{align-items:flex-end;gap:14px}
+.game-heading .eyebrow{margin:0 0 6px}
+.game-heading h2{font-size:clamp(27px,3.4vw,35px);font-weight:820}
+.game-duration{background:transparent;color:var(--muted);border:0;border-radius:0;font-size:12px;font-weight:600;padding:0 0 5px}
+.game-description{font-size:14px;line-height:1.55;color:var(--muted);margin:9px 0 16px;max-width:none}
+.game-topline{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:20px;border-top:1px solid var(--line);padding-top:17px;margin-bottom:14px}
+.game-stage-header{display:block;margin:0}
+.game-stage-header>div>span{font-size:11px;letter-spacing:.025em;text-transform:none;color:var(--muted);margin-bottom:3px}
+.game-stage-header strong{font-size:21px;font-weight:780;letter-spacing:-.025em}
+#game-difficulty{display:block;font-size:11px;margin-top:4px;color:var(--muted);font-weight:500}
+.game-stage-clock{display:inline-block;margin-top:6px;background:transparent;padding:0;color:var(--muted);font-size:11px;font-weight:500}
+.game-scoreboard{display:grid;grid-template-columns:repeat(3,minmax(60px,1fr));gap:15px;margin:0;padding:0;min-width:275px;text-align:right}
+.game-scoreboard>div:last-child{margin:0}
+.game-scoreboard span{font-size:11px;letter-spacing:0;color:var(--muted);white-space:nowrap}
+.game-scoreboard strong{font-size:24px;font-weight:800;letter-spacing:-.045em}
+.game-passport-hud{padding:8px 0 12px;border:0;background:transparent;margin:0;border-radius:0}
+.game-passport-hud>div:first-child{font-size:12px;color:var(--muted)}
+.game-passport-hud strong{font-size:13px}
+.passport-track{height:4px;margin-top:8px;background:#efebf4}
+.game-viewport{border-radius:15px 15px 0 0;border-color:#e1e7ea}
+.game-overlay{background:#f7faf9e8}
+.game-overlay-badge{background:#eae5f1;color:var(--dark)}
+.game-controls{grid-template-columns:1.2fr 1fr 1fr;align-items:stretch;gap:10px;margin:15px 0 0}
+.game-controls button{min-height:48px;padding:12px 16px;font-size:14px;line-height:1.3;border-radius:10px}
+.game-controls #game-start{grid-column:auto;justify-self:stretch;width:100%;font-weight:650}
+.game-controls #game-jump{min-width:0}
+.game-card[data-run-state="running"] #game-jump{background:var(--purple);border-color:var(--purple);color:#fff}
+.game-card[data-run-state="running"] #game-start{background:#fff;border-color:var(--line);color:var(--muted)}
+.game-card:is([data-run-state="ready"],[data-run-state="over"]) #game-start{grid-column:1/-1;justify-self:center;width:min(100%,280px);background:var(--purple);border-color:var(--purple);color:#fff;font-weight:750}
+.game-card[data-run-state="paused"] #game-pause{grid-column:1/3;background:var(--purple);border-color:var(--purple);color:#fff}
+.game-hud{display:flex;align-items:center;flex-wrap:wrap;gap:8px 22px;margin:14px 0 0;padding:11px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.game-hud>div,.game-hud .pursuit-chip{display:flex;align-items:baseline;flex-wrap:wrap;gap:5px;width:auto;min-width:0;padding:0;border:0;border-radius:0;background:transparent}
+.game-hud span{font-size:11px;margin:0;color:var(--muted)}
+.game-hud strong{font-size:12px;color:var(--dark)}
+.game-instructions{margin:11px 0 0;font-size:12px;color:var(--muted)}
+.game-status{margin:8px 0 12px;min-height:0;font-size:12px;font-weight:550;line-height:1.5}
+.game-itinerary{margin:3px 0 0}
+.game-itinerary summary,.game-help summary,.game-guide summary{min-height:44px;display:flex;align-items:center;justify-content:space-between;padding:11px 2px;font-size:13px;font-weight:650;cursor:pointer}
+.game-itinerary,.game-help,.game-guide{border-top:1px solid var(--line);margin:0}
+.game-itinerary summary::after{margin:0 3px 0 auto}
+.game-help{padding-top:0}
+.game-guide{font-size:12px}
+.game-route{grid-template-columns:repeat(5,minmax(0,1fr));margin:3px 0 12px}
+.game-route li{padding:11px 8px;font-size:12px;gap:5px}
+.game-fiction{font-size:11px;line-height:1.5;margin:14px 0 0;color:var(--muted)}
+footer{padding:16px 0 22px;font-size:12px;line-height:1.65;color:var(--muted)}
+button:focus-visible,.hero-play:focus-visible,.nav-game:focus-visible,.game-itinerary summary:focus-visible{outline:3px solid #aa8bcf;outline-offset:3px}
+@media(max-width:760px){
+ .wrap{padding:0 15px 28px}
+ .site-header{padding:14px 2px;margin-bottom:14px}
+ .site-header nav{gap:8px}
+ .site-header nav>a:first-child{display:none}
+ .site-header nav .nav-game{padding:9px 7px}
+ .hero{grid-template-columns:minmax(0,1fr);grid-template-areas:"intro" "count" "portrait" "tools";text-align:left;gap:14px;padding:26px 22px 22px;border-radius:18px}
+ .hero-intro .eyebrow{justify-content:flex-start;margin-bottom:8px}
+ .hero h1{font-size:clamp(33px,8vw,43px)}
+ .counter-label{font-size:13px}
+ .count-satire{font-size:15px;margin:0 0 16px}
+ .counter{gap:7px}
+ .unit{padding:14px 3px 11px;border-radius:10px}
+ .digit{font-size:clamp(27px,8vw,37px)}
+ .unit-label{font-size:10px;margin-top:5px}
+ .target{font-size:11px;line-height:1.5;margin-top:10px}
+ .ring-wrap{position:relative;display:flex;flex-direction:row;align-items:center;justify-self:start;gap:13px;width:100%;height:auto;min-height:72px;margin:0;text-align:left}
+ .progress-ring{width:66px;padding:3px;flex:none}
+ .portrait{border-width:2px}
+ .percent-badge{position:static;transform:none;margin:0;border:0;box-shadow:none;background:transparent;padding:0;min-width:0}
+ .percent-badge strong{font-size:22px}
+ .percent-badge small{font-size:10px}
+ .ring-label{display:none}
+ .hero-tools{display:grid;grid-template-columns:1fr;gap:10px;margin:0;padding-top:15px}
+ .hero-play{width:100%;min-height:46px}
+ .hero-utilities{justify-content:space-between;gap:8px}
+ .audio-button,.share{font-size:12px;padding:9px 12px;min-height:44px}
+ .music{flex:1 1 auto}
+ .music-copy{flex-wrap:nowrap}
+ .hero-utilities .share-message{text-align:left}
+ .sources{margin:7px 0 18px}
+ .game-card{padding:23px 19px;border-radius:18px}
+ .game-heading{align-items:flex-start;gap:8px}
+ .game-heading h2{font-size:28px}
+ .game-duration{font-size:11px}
+ .game-description{font-size:13px;margin:9px 0 13px}
+ .game-topline{display:block;padding-top:13px;margin-bottom:10px}
+ .game-stage-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 12px}
+ .game-stage-header>div{min-width:0}
+ .game-stage-header strong{font-size:20px}
+ .game-stage-clock{font-size:11px;text-align:right;max-width:115px;line-height:1.4}
+ .game-scoreboard{width:100%;min-width:0;text-align:left;gap:12px}
+ .game-scoreboard>div:last-child{text-align:right}
+ .game-scoreboard span{font-size:10px}
+ .game-scoreboard strong{font-size:22px}
+ .game-passport-hud{padding:6px 0 9px}
+ .game-passport-hud>div:first-child{font-size:11px;gap:4px}
+ .game-controls{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+ .game-controls button{font-size:14px;min-height:48px;padding:11px 8px}
+ .game-controls #game-start{grid-column:1/-1;width:100%;justify-self:stretch}
+ .game-card[data-run-state="paused"] #game-pause{grid-column:1/-1}
+ .game-hud{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-top:13px}
+ .game-hud>div{display:flex;gap:4px}
+ .game-hud .pursuit-chip{grid-column:1/-1;display:flex;justify-content:flex-start;gap:7px}
+ .game-instructions{font-size:11px}
+ .game-status{font-size:12px}
+ .game-itinerary .game-route{display:flex;flex-direction:column}
+ .game-route li{gap:10px;padding:10px 13px}
+ .game-route li+li{border-top:1px solid var(--line);border-left:0}
+ .game-route small{font-size:11px}
+}
+@media(max-width:380px){
+ .wrap{padding:0 10px 24px}
+ .wordmark{font-size:19px}
+ .hero{padding:22px 15px 18px}
+ .hero h1{font-size:32px}
+ .unit{padding:13px 2px 10px}
+ .digit{font-size:28px}
+ .game-card{padding:20px 13px}
+ .game-duration{font-size:10px}
+ .game-scoreboard{gap:6px}
+ .game-scoreboard strong{font-size:21px}
+}
+
+/* No mobile, a porcentagem aparece ao lado do retrato, sem disputar o espaço dos números. */
+@media(max-width:760px){
+ .progress-ring .percent-badge{position:absolute;left:calc(100% + 14px);top:7px;bottom:auto;transform:none;min-width:122px;max-width:calc(100vw - 170px);margin:0;padding:0;border:0;box-shadow:none;background:transparent}
+ .progress-ring .percent-badge small{white-space:nowrap}
+}
+
+
+/* Refinamento após inspeção visual desktop/390 px: sem mensagens redundantes no topo. */
+.hero .audio-status{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.hero{padding-top:29px;padding-bottom:25px}
+.hero-tools{padding-top:15px}
+.progress-ring{width:146px}
+.sources{margin:5px 2px 16px}
+.sources summary{min-height:36px;padding:8px 12px}
+@media(max-width:760px){
+ .hero{gap:11px;padding:22px 20px 20px}
+ .hero h1{font-size:clamp(31px,7.5vw,40px)}
+ .count-satire{margin-bottom:11px}
+ .ring-wrap{min-height:59px}
+ .progress-ring{width:56px;padding:3px}
+ .progress-ring .percent-badge{left:calc(100% + 13px);top:5px}
+ .progress-ring .percent-badge strong{font-size:21px}
+ .hero-tools{padding-top:12px;gap:8px}
+ .hero-utilities{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);width:100%;gap:8px}
+ .hero-utilities .music,.hero-utilities .share{width:100%;min-width:0}
+ .hero-utilities .music-copy,.hero-utilities .audio-button{width:100%}
+ .hero-utilities .share-message{grid-column:1 / -1}
+ .hero-utilities .music:has(.music-panel:not([hidden])){grid-column:1 / -1}
+ .sources{margin:1px 0 11px}
+ .sources summary{min-height:34px;padding:7px 11px}
+}
+@media(max-width:380px){
+ .hero{padding:20px 15px 18px}
+ .hero h1{font-size:31px}
+ .hero-utilities .audio-button,.hero-utilities .share{padding:9px 6px;font-size:12px}
+}

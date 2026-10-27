@@ -76,7 +76,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
 @media(max-width:420px){.wrap{padding:12px 8px 25px}.hero{border-radius:18px;padding:24px 11px}h1{font-size:38px}h1 .title-followup{font-size:clamp(20px,6vw,26px)}.counter{gap:6px}.unit{padding:16px 2px 13px;border-radius:10px}.digit{font-size:clamp(24px,8vw,35px)}.unit-label{font-size:9px;letter-spacing:0}.music{padding:15px}.music-copy{justify-content:center}.music h2{text-align:center;flex-basis:100%}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
-  <link rel="stylesheet" href="enhancements.css?v=20261027-integrated-endless">
+  <link rel="stylesheet" href="enhancements.css?v=20261027-clean4">
   <script type="module" src="runner.mjs?v=20261027-integrated-endless"></script>
 </head>
 <body>
@@ -90,15 +90,8 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
 
       <section class="hero" id="contagem" aria-labelledby="titulo">
         <div class="hero-intro">
-        <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span> O relógio não para</p>
+        <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span> Contagem ao vivo</p>
         <h1 id="titulo">Tá na hora, <span class="title-name">Flávio…</span></h1>
-        </div>
-        <div class="ring-wrap">
-          <div class="progress-ring" id="progress-ring" role="img" aria-label="Porcentagem do intervalo restante para 1º de fevereiro de 2027">
-            <div class="portrait"><img src="retrato.webp" alt="Retrato ilustrativo em preto e branco" width="280" height="280" fetchpriority="high"></div>
-            <div class="percent-badge" aria-hidden="true"><strong id="percent-number">--%</strong><small>do prazo restante</small></div>
-          </div>
-          <div class="ring-label">Não eleito</div>
         </div>
         <div class="count-content">
         <h2 class="counter-label">Contagem para o fim do mandato</h2>
@@ -111,7 +104,18 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         </div>
         <div class="done" id="finished">O prazo do mandato chegou ao fim.</div>
         <p class="target">Fim do mandato: 31/01/2027 · Contagem até 01/02/2027, 00h (Brasília)</p>
+        </div>
         
+        <div class="ring-wrap">
+          <div class="progress-ring" id="progress-ring" role="img" aria-label="Porcentagem do intervalo restante para 1º de fevereiro de 2027">
+            <div class="portrait"><img src="retrato.webp" alt="Retrato ilustrativo em preto e branco" width="280" height="280" fetchpriority="high"></div>
+            <div class="percent-badge" aria-hidden="true"><strong id="percent-number">--%</strong><small>do prazo restante</small></div>
+          </div>
+          <div class="ring-label">Não eleito</div>
+        </div>
+        <div class="hero-tools">
+          <a href="#game" class="hero-play">Jogar agora <span aria-hidden="true">→</span></a>
+          <div class="hero-utilities">
         <section class="music" id="musica" aria-label="Música">
           <div class="music-copy">
             <h2>♫ Música</h2>
@@ -129,8 +133,10 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
             </div>
           </div>
         </section>
-        <button class="share" type="button" id="share">Compartilhar contagem</button>
+        <button class="share" type="button" id="share">Compartilhar</button>
         <div class="share-message" id="share-message" role="status" aria-live="polite"></div>
+
+          </div>
         </div>
       </section>
 
@@ -150,18 +156,11 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
 
       <section class="game-card" id="game" aria-labelledby="game-title">
         <div class="game-heading">
-          <div><p class="eyebrow">Enquanto o tempo passa…</p><h2 id="game-title">Corre, Flávio! <span aria-hidden="true">↗</span></h2></div>
-          <span class="game-duration">5 destinos · corrida infinita</span>
+          <div><p class="eyebrow">Minigame</p><h2 id="game-title">Corre, Flávio!</h2></div>
+          <span class="game-duration">Corrida infinita</span>
         </div>
-        <p class="game-description">A cada distância, a perseguição aumenta e os bônus ficam mais raros. Colete 100 passaportes para ganhar +1 vida.</p>
-        <details class="game-itinerary"><summary>Ver destinos e pontos turísticos</summary>
-        <ol class="game-route" aria-label="Rota da corrida">
-          <li class="is-current" data-stage="0" aria-current="step"><span class="route-number">01</span><span>Brasília <small>Congresso Nacional</small></span></li>
-          <li data-stage="1"><span class="route-number">02</span><span>Rio <small>Cristo Redentor e Pão de Açúcar</small></span></li>
-          <li data-stage="2"><span class="route-number">03</span><span>Argentina <small>Obelisco de Buenos Aires</small></span></li>
-          <li data-stage="3"><span class="route-number">04</span><span>Flórida <small>Miami Beach</small></span></li>
-          <li data-stage="4"><span class="route-number">05</span><span>Casa Branca <small>Washington, EUA</small></span></li>
-        </ol></details>
+        <p class="game-description">Corra o máximo que puder. A dificuldade aumenta com a distância.</p>
+        <div class="game-topline">
         <div class="game-stage-header">
           <div><span id="game-phase">Cenário 1 de 5</span><strong id="game-stage-name">Brasília</strong><small id="game-difficulty">Risco 1 · 0 m virtuais</small></div>
           <span class="game-stage-clock" id="game-stage-time">20 s para Rio</span>
@@ -171,10 +170,6 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
           <div><span>Vidas</span><strong id="game-lives">3</strong></div>
           <div><span>Tempo de corrida</span><strong id="game-time">00:00</strong></div>
         </div>
-        <div class="game-hud" aria-label="Perseguição e vantagens">
-          <div class="pursuit-chip"><span>Na perseguição</span><strong id="game-threat">1/5 · PF</strong></div>
-          <div><span>Vantagem ativa</span><strong id="game-power">Sem efeito ativo</strong></div>
-          <div><span>Chance extra</span><strong id="game-chance">0 guardada</strong></div>
         </div>
         <div class="game-passport-hud" aria-label="Passaportes para ganhar vida extra">
           <div><span>🛂 Passaportes <strong id="game-passports">0</strong></span><span>Faltam <strong id="game-passport-next">100</strong> para +1 vida</span></div>
@@ -190,15 +185,28 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
           <button type="button" id="game-pause" disabled>Pausar corrida</button>
           <button type="button" class="game-primary" id="game-start">Começar corrida</button>
         </div>
-        <p class="game-instructions" id="game-instructions">Toque na pista ou use <kbd>Espaço</kbd> para pular. <kbd>P</kbd> pausa a corrida.</p>
+        <div class="game-hud" aria-label="Perseguição e vantagens">
+          <div class="pursuit-chip"><span>Na perseguição</span><strong id="game-threat">1/5 · PF</strong></div>
+          <div><span>Vantagem ativa</span><strong id="game-power">Sem efeito ativo</strong></div>
+          <div><span>Chance extra</span><strong id="game-chance">0 guardada</strong></div>
+        </div>
+        <p class="game-instructions" id="game-instructions">Toque na pista ou pressione <kbd>Espaço</kbd> para pular; <kbd>P</kbd> para pausar.</p>
         <p class="game-status" id="game-status" role="status" aria-live="polite">Tudo pronto. A corrida começa quando você quiser.</p>
+        <details class="game-itinerary"><summary>Explorar os 5 destinos</summary>
+        <ol class="game-route" aria-label="Rota da corrida">
+          <li class="is-current" data-stage="0" aria-current="step"><span class="route-number">01</span><span>Brasília <small>Congresso Nacional</small></span></li>
+          <li data-stage="1"><span class="route-number">02</span><span>Rio <small>Cristo Redentor e Pão de Açúcar</small></span></li>
+          <li data-stage="2"><span class="route-number">03</span><span>Argentina <small>Obelisco de Buenos Aires</small></span></li>
+          <li data-stage="3"><span class="route-number">04</span><span>Flórida <small>Miami Beach</small></span></li>
+          <li data-stage="4"><span class="route-number">05</span><span>Casa Branca <small>Washington, EUA</small></span></li>
+        </ol></details>
         <details class="game-help"><summary>Como jogar e ganhar pontos</summary>
           <div class="game-legend"><span><i class="legend-bonus" aria-hidden="true"></i> Chocolate e recibo +25 · Mansão e passaporte +50</span><span><i class="legend-invisible" aria-hidden="true"></i> Fantasma: invisibilidade por 6 s</span><span><i class="legend-chance" aria-hidden="true"></i> Escudo +1: uma chance guardada</span></div>
           <p>Você começa com 3 vidas. A cada 100 passaportes, ganha mais uma vida. Passaportes, escudos e invisibilidade se tornam mais raros com a distância. Ao sofrer dano, recebe 2 s de proteção.</p>
           <p>Recorde pessoal: <strong id="game-best">0000</strong> pontos.</p>
         </details>
         <details class="game-guide"><summary>Quem entra na perseguição?</summary><p>PF → Xandão (15 s) → Janones (30 s) → “exército do Lula” (45 s) → Lula, o chefe (60 s). Adversários anteriores continuam surgindo; os obstáculos ficam mais frequentes conforme você avança.</p></details>
-        <p class="game-fiction">Sátira política. Perseguição, captura, personagens e objetos são ficção do jogo. Seu recorde fica apenas neste navegador.</p>
+        <p class="game-fiction">Jogo satírico e fictício. Recorde salvo neste navegador.</p>
         <noscript>Habilite o JavaScript para jogar.</noscript>
       </section>
 
