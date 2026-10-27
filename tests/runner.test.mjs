@@ -52,21 +52,30 @@ test("a pausa congela física e pontuação e permite retomar", () => {
   assert.ok(run.elapsed > snapshot.elapsed);
 });
 
-test("Rio muda para Argentina e depois EUA exatamente nas fronteiras", () => {
-  running();
-  for (const [seconds, name] of [[0,"Rio de Janeiro"],[24.999,"Rio de Janeiro"],[25,"Argentina"],[49.999,"Argentina"],[50,"Estados Unidos"],[75,"Estados Unidos"]]) {
+test("a corrida visita os cinco destinos e permanece na Casa Branca", () => {
+  for (const [seconds, name] of [[0,"Brasília"],[19.999,"Brasília"],[20,"Rio de Janeiro"],[40,"Argentina"],[60,"Flórida"],[80,"Casa Branca"],[999,"Casa Branca"]]) {
     assert.equal(core.stageAt(seconds).name, name);
   }
 });
 
-test("uma colisão no chão encerra e congela a partida", () => {
+test("uma colisão tira uma vida; a proteção evita perdas consecutivas", () => {
   const run = running();
-  run.obstacles.push({ x: 125, width: 34, height: 40, type: "barrier" });
+  assert.equal(run.lives, 3);
+  run.obstacles.push({ x: 125, width: 34, height: 44, type: "pf" });
+  frames(run, .02);
+  assert.equal(run.status, "running");
+  assert.equal(run.lives, 2);
+  frames(run, .15);
+  assert.equal(run.lives, 2);
+  run.graceFor = 0;
+  run.obstacles.push({ x: 125, width: 34, height: 44, type: "pf" });
+  frames(run, .02);
+  assert.equal(run.lives, 1);
+  run.graceFor = 0;
+  run.obstacles.push({ x: 125, width: 34, height: 44, type: "pf" });
   frames(run, .02);
   assert.equal(run.status, "over");
-  const score = core.scoreFor(run);
-  frames(run, 1);
-  assert.equal(core.scoreFor(run), score);
+  assert.equal(run.lives, 0);
 });
 
 test("saltar acima de um obstáculo não é colisão", () => {
@@ -97,15 +106,18 @@ test("um intervalo enorme ou inválido não teleporta o personagem", () => {
   assert.ok(run.distance < 20);
 });
 
-test("a rota termina aos 75 segundos e não ganha pontos depois", () => {
+test("a corrida não termina aos 75 segundos ou após a Casa Branca", () => {
   const run = running();
   run.elapsed = 74.99;
+  run.invisibleFor = 1000;
   core.advanceRun(run, .02, () => .5);
-  assert.equal(run.status, "won");
-  assert.equal(run.elapsed, 75);
+  assert.equal(run.status, "running");
+  assert.ok(run.elapsed > 75);
   const score = core.scoreFor(run);
-  frames(run, 5);
-  assert.equal(core.scoreFor(run), score);
+  frames(run, 35);
+  assert.equal(run.status, "running");
+  assert.equal(core.stageAt(run.elapsed).name, "Casa Branca");
+  assert.ok(core.scoreFor(run) > score);
 });
 
 test("os obstáculos chegam com tempo de reação e intervalo para aterrissar", () => {
@@ -140,11 +152,11 @@ test("a perseguição introduz PF, Xandão, Janones, exército e chefe em ordem"
 
 test("a dificuldade aumenta sem eliminar a janela entre pulos", () => {
   const early = running(), late = running();
-  late.elapsed = 60;
+  late.distance = 30000;
   early.nextObstacle = late.nextObstacle = 0;
   core.advanceRun(early, 1 / 120, () => 0);
   core.advanceRun(late, 1 / 120, () => 0);
-  assert.ok(late.distance > early.distance);
+  assert.ok(core.difficultyAt(late.distance).speed > core.difficultyAt(early.distance).speed);
   assert.ok(late.nextObstacle < early.nextObstacle);
   assert.ok(late.nextObstacle >= 1.09);
 });
@@ -165,12 +177,13 @@ test("a invisibilidade expira e não acumula duração infinita", () => {
   run.pickups.push({ x: 136, y: 35, value: 0, type: "invisible" });
   core.advanceRun(run, 1 / 120, () => .5);
   assert.equal(run.invisibleFor, 6);
-  run.nextObstacle = run.nextPickup = 100;
+  run.nextObstacle = run.nextPickup = run.nextPassport = 100;
   frames(run, 6.1);
   assert.equal(run.invisibleFor, 0);
   run.obstacles.push({ x: 125, width: 34, height: 44, type: "pf" });
   core.advanceRun(run, 1 / 120);
-  assert.equal(run.status, "over");
+  assert.equal(run.status, "running");
+  assert.equal(run.lives, 2);
 });
 
 test("uma chance extra absorve uma colisão e evita perda imediata por sobreposição", () => {
@@ -182,11 +195,12 @@ test("uma chance extra absorve uma colisão e evita perda imediata por sobreposi
   assert.equal(run.extraChance, false);
   assert.equal(run.saves, 1);
   assert.ok(run.graceFor > 1);
-  run.nextObstacle = run.nextPickup = 100;
+  run.nextObstacle = run.nextPickup = run.nextPassport = 100;
   frames(run, 1.3);
   run.obstacles.push({ x: 125, width: 34, height: 44, type: "pf" });
   core.advanceRun(run, 1 / 120);
-  assert.equal(run.status, "over");
+  assert.equal(run.status, "running");
+  assert.equal(run.lives, 2);
   assert.equal(run.saves, 1);
 });
 
@@ -232,4 +246,51 @@ test("os itens incluem os três objetos satíricos e oferecem ambas as vantagens
     }
   }
   for (const type of ["chocolate","mansion","receipt","invisible","chance"]) assert.ok(types.has(type), type);
+});
+
+test("100 passaportes somam uma vida e só concedem nova vida aos 200", () => {
+  const run = running();
+  run.nextObstacle = run.nextPickup = run.nextPassport = 1e9;
+  for (let i = 0; i < 100; i++) {
+    run.pickups.push({x:136,y:35,value:50,type:"passport"});
+    core.advanceRun(run,1/120,()=>.5);
+  }
+  assert.equal(run.passports,100);
+  assert.equal(run.lives,4);
+  core.advanceRun(run,1/120,()=>.5);
+  assert.equal(run.lives,4);
+  assert.equal(run.bonus,5000);
+});
+
+test("à medida que a distância cresce, as vantagens ficam mais raras", () => {
+  const start=core.difficultyAt(0), middle=core.difficultyAt(30000), late=core.difficultyAt(1000000);
+  assert.ok(start.level < middle.level && middle.level < late.level);
+  assert.ok(start.speed < middle.speed && middle.speed < late.speed);
+  assert.ok(start.obstacleGap > middle.obstacleGap && middle.obstacleGap > late.obstacleGap);
+  assert.ok(late.obstacleGap > 1);
+  for(const type of ["pickupGap","passportGap"]) {
+    assert.ok(start[type] < middle[type] && middle[type] < late[type],type);
+  }
+  const spawn = distance => {
+    const run=running();
+    run.distance=distance;
+    run.nextObstacle=run.nextPickup=run.nextPassport=0;
+    core.advanceRun(run,1/120,()=>.5);
+    return run;
+  };
+  const a=spawn(0), b=spawn(90000);
+  assert.ok(a.nextObstacle > b.nextObstacle);
+  assert.ok(a.nextPassport < b.nextPassport);
+  assert.ok(a.nextPickup < b.nextPickup);
+  assert.ok((480-core.PLAYER.x-core.PLAYER.width)/late.speed>.75);
+});
+
+test("uma nova corrida zera vidas, passaportes e vantagens", () => {
+  const old=running();
+  old.passports=100; old.lives=5; old.invisibleFor=5; old.extraChance=true;
+  const fresh=core.createRun();
+  assert.equal(fresh.passports,0);
+  assert.equal(fresh.lives,3);
+  assert.equal(fresh.invisibleFor,0);
+  assert.equal(fresh.extraChance,false);
 });

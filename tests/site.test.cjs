@@ -36,6 +36,23 @@ async function open(options = {}, init) {
   return { context, page, errors };
 }
 
+// Instrumentação exclusiva do teste: o produto não expõe APIs de depuração.
+async function openWithRun() {
+  const context = await browser.newContext();
+  await context.route(/^https:\/\//, route => route.abort());
+  const source = await fs.readFile(path.resolve(__dirname, '../tanahoraflavio/runner-core.mjs'), 'utf8');
+  await context.route('**/runner-core.mjs*', route => route.fulfill({
+    contentType: 'text/javascript',
+    body: source + '\nconst oldCreateRun=createRun; createRun=()=>{const run=oldCreateRun();globalThis.__testRun=run;return run;};'
+  }));
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto(base);
+  await page.waitForFunction(() => /^\d+$/.test(document.getElementById('days').textContent));
+  return {context,page,errors};
+}
+
 test('teclado inicia, pausa, retoma e contador continua funcionando', async () => {
   const {context,page,errors} = await open();
   try {
@@ -150,15 +167,26 @@ test('falha da música não deixa um quadro vazio na página', async () => {
   } finally { await context.close(); }
 });
 
-test('captura pela PF encerra a corrida e reinício limpa o placar e vantagens', async () => {
-  const {context,page,errors} = await open();
+test('a vida se perde antes da captura e reinício restaura 3 vidas', async () => {
+  const {context,page,errors} = await openWithRun();
   try {
     await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
-    await page.waitForFunction(() => document.getElementById('game').dataset.runState === 'over', undefined, {timeout:8000});
+    await page.evaluate(() => {
+      const run=globalThis.__testRun;
+      run.lives=1;
+      run.graceFor=0;
+      run.invisibleFor=0;
+      run.extraChance=false;
+      run.nextObstacle=run.nextPickup=run.nextPassport=1000;
+      run.obstacles=[{x:125,width:34,height:44,type:'pf'}];
+    });
+    await page.waitForFunction(() => document.getElementById('game').dataset.runState === 'over');
     assert.match(await page.locator('#game-overlay-title').textContent(), /Pego pela Polícia Federal/);
-    assert.equal(await page.getByRole('button',{name:'Pular',exact:true}).isDisabled(),true);
+    assert.equal(await page.locator('#game-lives').textContent(),'0');
     await page.getByRole('button',{name:'Tentar de novo',exact:true}).click();
     assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
+    assert.equal(await page.locator('#game-lives').textContent(),'3');
+    assert.equal(await page.locator('#game-passports').textContent(),'0');
     assert.match(await page.locator('#game-threat').textContent(), /Polícia Federal/);
     assert.match(await page.locator('#game-power').textContent(), /Sem efeito/);
     assert.match(await page.locator('#game-chance').textContent(), /0/);
@@ -166,29 +194,52 @@ test('captura pela PF encerra a corrida e reinício limpa o placar e vantagens',
   } finally { await context.close(); }
 });
 
-test('coletar invisibilidade atualiza o HUD e pausa conserva seu tempo', async () => {
-  // A semente fixa controla itens/intervalos; o motor, a física e os controles são reais.
-  const {context,page,errors} = await open({}, () => { Math.random = () => .5; });
+test('invisibilidade é mantida enquanto a partida está pausada', async () => {
+  const {context,page,errors} = await openWithRun();
   try {
-    await page.locator('#game').scrollIntoViewIfNeeded();
-    const clockStart = new Date('2026-10-27T16:00:00Z');
-    await page.clock.install({time:clockStart});
-    await page.clock.pauseAt(new Date(clockStart.getTime()+1000));
     await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
-    // Com esta semente, os oponentes cruzam o jogador em ~4,2 s e ~6 s.
-    await page.clock.runFor(3900);
-    await page.locator('#runner-canvas').press('Space');
-    await page.clock.runFor(1750);
-    await page.locator('#runner-canvas').press('Space');
-    await page.clock.runFor(1200);
-    // A segunda coleta (invisibilidade) chega perto de 7,2 s.
-    await page.locator('#runner-canvas').press('Space');
-    await page.clock.runFor(500);
-    assert.match(await page.locator('#game-power').textContent(), /Invisível/, await page.locator('#game-status').textContent());
+    await page.evaluate(() => {
+      const run=globalThis.__testRun;
+      run.nextObstacle=run.nextPickup=run.nextPassport=1000;
+      run.obstacles=[];
+      run.pickups.push({x:136,y:35,type:'invisible',value:0});
+    });
+    await page.waitForFunction(() => /Invisível/.test(document.getElementById('game-power').textContent));
     await page.locator('#runner-canvas').press('KeyP');
-    const remaining = await page.locator('#game-power').textContent();
-    await page.clock.runFor(4000);
+    await page.getByRole('button',{name:'Continuar corrida',exact:true}).waitFor();
+    const remaining=await page.locator('#game-power').textContent();
+    await page.waitForTimeout(200);
     assert.equal(await page.locator('#game-power').textContent(),remaining);
+    assert.deepEqual(errors,[]);
+  } finally { await context.close(); }
+});
+
+test('100 passaportes concedem +1 vida e a corrida permanece infinita', async () => {
+  const {context,page,errors} = await openWithRun();
+  try {
+    await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+    await page.evaluate(() => {
+      const run=globalThis.__testRun;
+      run.nextObstacle=run.nextPickup=run.nextPassport=1000;
+      run.obstacles=[];
+      run.passports=99;
+      run.pickups.push({x:136,y:35,type:'passport',value:50});
+    });
+    await page.waitForFunction(() => document.getElementById('game-passports').textContent === '100');
+    assert.equal(await page.locator('#game-lives').textContent(),'4');
+    assert.equal(await page.locator('#game-passport-next').textContent(),'100');
+    await page.evaluate(() => {
+      const run=globalThis.__testRun;
+      run.elapsed=85;
+      run.distance=90000;
+      run.invisibleFor=1000;
+      run.obstacles=[];
+    });
+    await page.waitForFunction(() => document.getElementById('game-stage-name').textContent === 'Casa Branca');
+    assert.match(await page.locator('#game-difficulty').textContent(),/Risco/);
+    assert.equal(await page.locator('#game-phase').textContent(),'Cenário 5 de 5');
+    assert.equal(await page.locator('#game-progress').isVisible(),false);
+    assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
     assert.deepEqual(errors,[]);
   } finally { await context.close(); }
 });

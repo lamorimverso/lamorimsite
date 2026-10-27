@@ -132,3 +132,69 @@ button:focus-visible,#runner-canvas:focus-visible{outline:3px solid #ac84d1;outl
  .game-controls button{font-size:10px;padding:11px 6px}.game-legend{font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+
+/* Versão integrada: menos ruído visual e recursos existentes preservados. */
+.skip-link{position:fixed;top:10px;left:12px;z-index:10;transform:translateY(-160%);padding:12px 18px;background:var(--dark);color:#fff;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none}
+.skip-link:focus{transform:translateY(0)}
+#conteudo:focus{outline:none}
+.game-description{margin:10px 0 12px}
+.game-itinerary{margin:0 0 12px}
+.game-itinerary summary{display:flex;align-items:center;gap:8px;min-height:44px;color:var(--dark);font-size:13px;font-weight:700;cursor:pointer;list-style:none}
+.game-itinerary summary::-webkit-details-marker{display:none}
+.game-itinerary summary::after{content:"⌄"}
+.game-itinerary[open] summary::after{content:"⌃"}
+.game-route{grid-template-columns:repeat(5,minmax(0,1fr));margin:3px 0 10px}
+.game-route li{padding:10px 7px;gap:6px;font-size:12px}
+.game-route small{font-size:10px}
+.game-stage-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:7px 0 15px}
+.game-stage-header>div{min-width:0}
+.game-stage-header>div>span{display:block;font-size:11px;font-weight:700;color:var(--purple);margin-bottom:3px}
+.game-stage-header strong{display:block;font-size:22px;letter-spacing:-.04em}
+#game-difficulty{display:block;color:var(--muted);font-size:12px;font-weight:600;margin-top:5px;font-variant-numeric:tabular-nums}
+.game-stage-clock{background:var(--pale);color:var(--dark);padding:9px 11px;border-radius:9px;font-size:12px;font-weight:650}
+.game-scoreboard{justify-content:space-between;gap:13px}
+.game-scoreboard>div:last-child{margin-left:0}
+.game-hud{gap:6px;margin-bottom:12px}
+.game-hud>div{padding:8px 10px;background:#fcfbfd}
+.game-passport-hud{margin:0 0 12px;padding:9px 12px;border-radius:11px;border:1px solid var(--line);background:#fbf9fd}
+.game-passport-hud>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.game-passport-hud strong{color:var(--dark);font-variant-numeric:tabular-nums}
+.passport-track{height:5px;background:#e7deef;margin-top:8px;border-radius:10px;overflow:hidden}
+.passport-track>span{display:block;width:0;height:100%;background:var(--purple)}
+.game-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:15px}
+.game-controls button{min-height:46px;font-size:14px;min-width:0;padding:12px 11px}
+.game-controls #game-start{grid-column:1 / -1;justify-self:center;width:min(100%,290px)}
+.game-controls #game-jump{min-width:0}
+.game-card[data-run-state="running"] #game-jump{background:var(--purple);border-color:var(--purple);color:#fff}
+.game-card[data-run-state="running"] #game-jump:hover{background:var(--dark);color:#fff}
+.game-card:is([data-run-state="ready"],[data-run-state="over"]) :is(#game-jump,#game-pause){display:none}
+.game-card[data-run-state="paused"] #game-jump{display:none}
+.game-card[data-run-state="paused"] #game-pause{grid-column:1/-1}
+.game-help{margin-top:14px;border-top:1px solid var(--line);padding-top:6px}
+.game-help summary,.game-guide summary{cursor:pointer;min-height:44px;padding:11px 0;font-size:13px;color:var(--dark);font-weight:700}
+.game-help p{color:var(--muted);font-size:12px;line-height:1.7;margin:7px 0}
+.game-help .game-legend{margin-top:0;padding-top:5px;border-top:0}
+@media(max-width:720px){
+  .hero{grid-template-areas:"intro" "count" "portrait";gap:18px}
+  .ring-wrap{display:block;position:relative;justify-self:center;width:min(100%,260px);height:92px;margin:0}
+  .progress-ring{width:84px;padding:4px}
+  .portrait{border-width:3px}
+  .percent-badge{left:102px;top:8px;bottom:auto;transform:none;min-width:140px;box-shadow:none;border:0;background:transparent}
+  .percent-badge strong{font-size:26px}
+  .ring-label{position:absolute;left:102px;top:62px;font-size:10px;margin:0}
+  .game-card{padding:20px 17px}
+  .game-itinerary .game-route{display:flex;flex-direction:column}
+  .game-route li{justify-content:flex-start;gap:10px;padding:9px 13px}
+  .game-route li+li{border-left:0;border-top:1px solid var(--line)}
+  .game-route small{font-size:11px}
+  .game-hud{grid-template-columns:1fr 1fr}
+  .game-hud .pursuit-chip{grid-column:1/-1}
+  .game-controls button{font-size:14px}
+}
+@media(max-width:380px){
+  .game-stage-header strong{font-size:20px}
+  .game-passport-hud>div:first-child{font-size:11px}
+  .game-scoreboard strong{font-size:20px}
+  .game-controls button{font-size:14px}
+}

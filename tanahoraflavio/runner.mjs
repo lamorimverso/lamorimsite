@@ -1,4 +1,4 @@
-import { WORLD, PLAYER, PURSUERS, PICKUPS, createRun, startRun, jumpRun, togglePause, advanceRun, stageAt, pursuitAt, scoreFor } from "./runner-core.mjs";
+import { WORLD, PLAYER, PURSUERS, PICKUPS, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, togglePause, advanceRun, stageAt, pursuitAt, scoreFor } from "./runner-core.mjs?v=20261027-integrated-endless";
 
 function initRunner() {
   const $ = id => document.getElementById(id);
@@ -19,6 +19,7 @@ function initRunner() {
   let run = createRun(), frameId = 0, lastFrame = 0, accumulator = 0;
   let lastStatus = "", lastStage = -1, virtualWidth = 900, measuredWidth = 0, measuredDpr = 0;
   let lastPursuit = -1, lastCollected = 0, lastSaves = 0, lastPower = "";
+  let lastLives = 3, lastEvents = 0;
   const portrait = new Image();
   portrait.src = new URL("./retrato.webp", import.meta.url).href;
   portrait.addEventListener("load", () => draw());
@@ -26,17 +27,29 @@ function initRunner() {
 
   function updateUI() {
     const stage = stageAt(run.elapsed), score = scoreFor(run), pursuit = pursuitAt(run.elapsed);
+    const difficulty = difficultyAt(run.distance);
     const power = run.invisibleFor > 0 ? "invisible" : run.graceFor > 0 ? "recovery" : "none";
     if ((run.status === "over" || run.status === "won") && score > best) {
       best = score;
       try { localStorage.setItem(recordKey, String(best)); } catch { /* Recorde da sessão permanece na memória. */ }
     }
     $("game-score").textContent = String(score).padStart(4, "0");
+    $("game-lives").textContent = String(run.lives);
+    $("game-passports").textContent = String(run.passports);
+    $("game-passport-next").textContent = String(100 - run.passports % 100);
+    $("game-passport-progress").style.width = `${run.passports % 100}%`;
+    $("game-phase").textContent = `Cenário ${stage.index + 1} de ${STAGES.length}`;
+    $("game-stage-name").textContent = stage.name;
+    $("game-difficulty").textContent = `Risco ${difficulty.level} · ${Math.floor(run.distance / 10).toLocaleString("pt-BR")} m virtuais`;
+    const remaining = Math.max(0, Math.ceil((stage.index + 1) * SCENE_SECONDS - run.elapsed));
+    $("game-stage-time").textContent = stage.index < STAGES.length - 1 ? `${remaining} s para ${STAGES[stage.index + 1].short}` : "Corrida sem fim";
     $("game-best").textContent = String(best).padStart(4, "0");
     $("game-time").textContent = `${pad(Math.floor(run.elapsed / 60))}:${pad(Math.floor(run.elapsed % 60))}`;
-    $("game-progress").setAttribute("aria-valuenow", String(Math.floor(run.elapsed)));
-    $("game-progress").setAttribute("aria-valuetext", `${Math.floor(run.elapsed)} de 75 segundos. ${stage.name}.`);
-    $("game-progress").firstElementChild.style.width = `${run.elapsed / 75 * 100}%`;
+    const sceneElapsed = Math.max(0, run.elapsed - stage.index * SCENE_SECONDS);
+    $("game-progress").hidden = stage.index === STAGES.length - 1;
+    $("game-progress").setAttribute("aria-valuenow", String(Math.floor(Math.min(SCENE_SECONDS, sceneElapsed))));
+    $("game-progress").setAttribute("aria-valuetext", `${stage.name}: próximo cenário em ${Math.max(0, Math.ceil(SCENE_SECONDS - sceneElapsed))} segundos.`);
+    $("game-progress").firstElementChild.style.width = `${Math.min(100, sceneElapsed / SCENE_SECONDS * 100)}%`;
     section.dataset.runState = run.status;
     section.dataset.power = power;
     $("game-threat").textContent = `${pursuit.index + 1}/5 · ${pursuit.name}`;
@@ -45,29 +58,28 @@ function initRunner() {
     $("game-jump").disabled = run.status !== "running";
     $("game-pause").disabled = run.status !== "running" && run.status !== "paused";
     $("game-pause").textContent = run.status === "paused" ? "Continuar corrida" : "Pausar corrida";
-    $("game-start").textContent = run.status === "ready" ? "Começar corrida" : run.status === "over" ? "Tentar de novo" : run.status === "won" ? "Jogar de novo" : "Recomeçar corrida";
+    $("game-start").textContent = run.status === "ready" ? "Começar corrida" : run.status === "over" ? "Tentar de novo" : "Recomeçar corrida";
     $("game-overlay").hidden = run.status === "running";
     const overlays = {
       ready: ["Passaporte na mão?", "Tem um longo caminho até o portão de embarque."],
       paused: ["Pausa no embarque", "Sua corrida está guardada. Continue quando quiser."],
-      over: ["Pego pela Polícia Federal!", `Fim da fuga fictícia. ${score} pontos · ${run.collected} ${run.collected === 1 ? "item coletado" : "itens coletados"}. Bora tentar outra vez?`],
-      won: ["Rota concluída!", `Do Rio aos EUA em 75 segundos. Você fez ${score} pontos!`]
+      over: ["Pego pela Polícia Federal!", `A fuga fictícia acabou. ${score} pontos · ${run.passports} passaportes. Tente novamente!`]
     };
     if (overlays[run.status]) {
       $("game-overlay-title").textContent = overlays[run.status][0];
       $("game-overlay-copy").textContent = overlays[run.status][1];
-      $("game-overlay-badge").textContent = run.status === "over" ? "Capturado · PF" : run.status === "paused" ? "Corrida pausada" : run.status === "won" ? "Embarque concluído" : "Perseguição fictícia";
+      $("game-overlay-badge").textContent = run.status === "over" ? "Capturado · PF" : run.status === "paused" ? "Corrida pausada" : "Perseguição fictícia";
     }
-    if (lastStatus !== run.status || lastStage !== stage.index || lastPursuit !== pursuit.index || lastCollected !== run.collected || lastSaves !== run.saves || lastPower !== power) {
+    if (lastStatus !== run.status || lastStage !== stage.index || lastPursuit !== pursuit.index || lastCollected !== run.collected || lastSaves !== run.saves || lastPower !== power || lastLives !== run.lives || lastEvents !== run.events) {
       const messages = {
         ready: "Tudo pronto. A corrida começa quando você quiser.",
-        running: `${stage.name} · ${pursuit.name} na perseguição. Pule os adversários e colete vantagens.`,
+        running: `${stage.name} · ${pursuit.name} na perseguição. Desvie e colete itens; risco ${difficulty.level}.`,
         paused: "Corrida pausada. Toque em Continuar corrida para retomar.",
-        over: `Pego pela Polícia Federal nesta fuga fictícia. ${score} pontos. Toque em Tentar de novo para jogar.`,
-        won: `Rota concluída! ${score} pontos. Você chegou aos Estados Unidos.`
+        over: `Pego pela Polícia Federal nesta fuga fictícia. ${score} pontos. Toque em Tentar de novo para jogar.`
       };
       if (run.status === "running") {
-        if (run.saves > lastSaves) messages.running = "Chance extra usada! Você escapou da colisão e ganhou um instante para se recuperar.";
+        if (run.events > lastEvents) messages.running = run.event;
+        else if (run.saves > lastSaves) messages.running = "Chance extra usada! Você escapou da colisão e ganhou um instante para se recuperar.";
         else if (run.collected > lastCollected) {
           const item = PICKUPS.find(item => item.type === run.lastPickup);
           messages.running = run.lastPickup === "invisible" ? "Invisibilidade ativada por 6 segundos. Atravesse os adversários!" : run.lastPickup === "chance" ? "Uma chance extra guardada. Ela protege você de uma colisão." : `${item?.name || "Item"} coletado: +${item?.value || 0} pontos.`;
@@ -76,13 +88,14 @@ function initRunner() {
       $("game-status").textContent = messages[run.status];
       section.querySelectorAll("[data-stage]").forEach((stop, index) => {
         stop.classList.toggle("is-current", index === stage.index);
-        stop.classList.toggle("is-done", index < stage.index || run.status === "won");
+        stop.classList.toggle("is-done", index < stage.index);
         if (index === stage.index) stop.setAttribute("aria-current", "step");
         else stop.removeAttribute("aria-current");
       });
       lastStage = stage.index;
       lastStatus = run.status;
       lastPursuit = pursuit.index; lastCollected = run.collected; lastSaves = run.saves; lastPower = power;
+      lastLives = run.lives; lastEvents = run.events;
     }
   }
 
@@ -106,13 +119,13 @@ function initRunner() {
   function begin() {
     cancelAnimationFrame(frameId); frameId = 0;
     run = createRun(); startRun(run);
-    lastCollected = 0; lastSaves = 0; lastPower = ""; lastStatus = "";
+    lastCollected = 0; lastSaves = 0; lastPower = ""; lastStatus = ""; lastEvents = 0; lastLives = 3;
     accumulator = 0; lastFrame = performance.now();
     updateUI(); draw(); schedule();
     canvas.focus({ preventScroll: true });
   }
   function jump() {
-    if (["ready", "over", "won"].includes(run.status)) begin();
+    if (["ready", "over"].includes(run.status)) begin();
     if (jumpRun(run)) draw();
   }
   function pause(message) {
@@ -178,21 +191,29 @@ function initRunner() {
   }
   function buildings(stage) {
     const base = 217;
-    ctx.fillStyle = stage.index === 1 ? "#cadcf1" : "#ded2e9";
+    ctx.fillStyle = stage.id === "argentina" ? "#cadcf1" : "#ded2e9";
     for (let index = 0; index < 11; index++) {
       const x = virtualWidth * .38 + index * 45;
       const height = [43,70,51,86,58,68][index % 6];
       ctx.fillRect(x,base-height,32,height);
       ctx.fillStyle = "#ffffff72";
       for(let y=base-height+10;y<base-6;y+=13) { ctx.fillRect(x+7,y,4,5);ctx.fillRect(x+20,y,4,5); }
-      ctx.fillStyle = stage.index === 1 ? "#cadcf1" : "#ded2e9";
+      ctx.fillStyle = stage.id === "argentina" ? "#cadcf1" : "#ded2e9";
     }
   }
   function scenery(stage) {
     ctx.fillStyle = stage.sky; ctx.fillRect(0,0,virtualWidth,WORLD.height);
     circle(virtualWidth-65,49,20,"#ebcc7880");
     for (let i=0;i<3;i++) cloud(((i*290 + 110 - run.distance*.07) % (virtualWidth+180) + virtualWidth+180) % (virtualWidth+180)-70, 65+(i%2)*30);
-    if (stage.index === 0) {
+    if (stage.id === "brasilia") {
+      const x = virtualWidth * .64;
+      ctx.fillStyle="#c1d9c8";ctx.fillRect(0,218,virtualWidth,28);
+      ctx.fillStyle="#bdcad8";ctx.fillRect(x-7,107,10,111);ctx.fillRect(x+7,107,10,111);
+      ctx.fillStyle="#fff";ctx.fillRect(x-99,207,201,15);
+      ctx.beginPath();ctx.arc(x-54,205,29,Math.PI,0);ctx.fill();
+      ctx.beginPath();ctx.arc(x+59,176,32,0,Math.PI);ctx.fill();
+      line([[x-89,225],[x+91,225]],"#a6c6c3",2);
+    } else if (stage.id === "rio") {
       ctx.fillStyle="#c9e4df";
       ctx.beginPath(); ctx.moveTo(virtualWidth*.35,218);ctx.bezierCurveTo(virtualWidth*.47,193,virtualWidth*.46,130,virtualWidth*.54,141);ctx.bezierCurveTo(virtualWidth*.64,143,virtualWidth*.6,200,virtualWidth*.71,218);ctx.fill();
       ctx.fillStyle="#b5d9d3";
@@ -203,23 +224,39 @@ function initRunner() {
       circle(virtualWidth*.53,110,4,"#83b5ac");
       ctx.fillStyle="#aed7d250";ctx.fillRect(0,215,virtualWidth,31);
       for(let x=0;x<virtualWidth;x+=65)line([[x,229],[x+23,229]],"#ffffff9c",2);
-    } else if (stage.index === 1) {
+    } else if (stage.id === "argentina") {
       buildings(stage);
       const x=virtualWidth*.64;
       ctx.fillStyle="#fffaf0";ctx.beginPath();ctx.moveTo(x-10,219);ctx.lineTo(x-6,108);ctx.lineTo(x,91);ctx.lineTo(x+6,108);ctx.lineTo(x+10,219);ctx.fill();
       line([[x,111],[x+1,214]],"#d4c9af",1);
       ctx.fillStyle="#b7cae1";ctx.fillRect(x-18,218,36,5);
-    } else {
-      buildings(stage);
-      const x=virtualWidth*.7;
-      ctx.fillStyle="#ad97c3";ctx.fillRect(x-17,138,34,83);ctx.fillRect(x-11,124,22,14);
-      line([[x,124],[x,104]],"#ad97c3",3);
-      const liberty=virtualWidth*.88;
-      ctx.fillStyle="#91b8ad";ctx.beginPath();ctx.moveTo(liberty-17,218);ctx.lineTo(liberty-5,162);ctx.lineTo(liberty+5,162);ctx.lineTo(liberty+15,218);ctx.fill();
-      circle(liberty,155,7,"#91b8ad");
-      line([[liberty+4,174],[liberty+18,145],[liberty+18,134]],"#91b8ad",6);
-      circle(liberty+18,130,4,"#d6b65e");
-      ctx.fillStyle="#b6b3bd";ctx.fillRect(liberty-20,218,40,9);
+    } else if (stage.id === "florida") {
+      ctx.fillStyle="#b3dcdf";ctx.fillRect(0,180,virtualWidth,66);
+      ctx.fillStyle="#efdeca";ctx.fillRect(0,228,virtualWidth,18);
+      for(let i=0;i<4;i++){
+        const x=virtualWidth*.42+i*49,h=38+i%2*23;
+        ctx.fillStyle=i%2?"#dfb7c6":"#c4d0e5";ctx.fillRect(x,215-h,38,h);
+        ctx.fillStyle="#fff4e9";ctx.fillRect(x+6,222-h,25,5);ctx.fillRect(x+6,234-h,25,5);
+      }
+      for(const x of [virtualWidth*.32,virtualWidth*.85]){
+        line([[x,231],[x-7,184],[x+2,132]],"#b89975",6);
+        line([[x-29,145],[x-14,126],[x+2,132],[x+21,124],[x+33,142]],"#8aaa85",7);
+        line([[x-20,161],[x-11,139],[x+2,132],[x+18,145],[x+25,164]],"#8aaa85",7);
+      }
+    } else if (stage.id === "casa-branca") {
+      const x=virtualWidth*.65,w=210;
+      ctx.fillStyle="#c1d7bb";ctx.fillRect(0,211,virtualWidth,35);
+      ctx.fillStyle="#e0e7ea";ctx.fillRect(x-w/2,144,w,74);
+      ctx.fillStyle="#fff";ctx.fillRect(x-w/2+3,147,w-6,66);
+      for(let row=0;row<2;row++)for(let col=0;col<10;col++){ctx.fillStyle="#a3b3c4";ctx.fillRect(x-w/2+12+col*19,158+row*25,7,12);}
+      ctx.fillStyle="#e7ebef";ctx.fillRect(x-44,151,88,63);
+      ctx.fillStyle="#fff";
+      for(let i=0;i<5;i++)ctx.fillRect(x-37+i*17,153,8,59);
+      ctx.beginPath();ctx.moveTo(x-53,151);ctx.lineTo(x,120);ctx.lineTo(x+53,151);ctx.closePath();ctx.fill();
+      line([[x-49,216],[x+49,216]],"#c2cdd6",5);
+      line([[x,123],[x,92]],"#8391a6",2);
+      for(let i=0;i<6;i++){ctx.fillStyle=i%2?"#fff":"#c5828c";ctx.fillRect(x+1,92+i*2.5,28,2.5);}
+      ctx.fillStyle="#637ba5";ctx.fillRect(x+1,92,12,8);
     }
     // Pequeno avião e linha pontilhada indicam a viagem sem distrair da pista.
     ctx.save(); ctx.translate(virtualWidth-135,83);ctx.fillStyle=stage.ink;ctx.globalAlpha=.45;
@@ -228,7 +265,7 @@ function initRunner() {
     line([[0,WORLD.ground],[virtualWidth,WORLD.ground]],stage.ink,2);
     const offset=run.distance%64;
     for(let x=-offset;x<virtualWidth;x+=64)line([[x,272],[x+25,272]],"#ffffffaa",3);
-    ctx.fillStyle=stage.ink;ctx.font='650 11px system-ui, sans-serif';ctx.fillText(stage.name.toLocaleUpperCase("pt-BR"),20,26);
+    ctx.fillStyle=stage.ink;ctx.font='650 11px system-ui, sans-serif';ctx.fillText(`${stage.index + 1}/${STAGES.length} · ${stage.name.toLocaleUpperCase("pt-BR")}`,20,26);
   }
   function character() {
     const stride = run.player.y === 0 && run.status === "running" ? Math.sin(run.elapsed*22)*9 : 4;

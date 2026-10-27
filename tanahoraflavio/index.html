@@ -76,16 +76,17 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
 @media(max-width:420px){.wrap{padding:12px 8px 25px}.hero{border-radius:18px;padding:24px 11px}h1{font-size:38px}h1 .title-followup{font-size:clamp(20px,6vw,26px)}.counter{gap:6px}.unit{padding:16px 2px 13px;border-radius:10px}.digit{font-size:clamp(24px,8vw,35px)}.unit-label{font-size:9px;letter-spacing:0}.music{padding:15px}.music-copy{justify-content:center}.music h2{text-align:center;flex-basis:100%}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
-  <link rel="stylesheet" href="enhancements.css">
-  <script type="module" src="runner.mjs"></script>
+  <link rel="stylesheet" href="enhancements.css?v=20261027-integrated-endless">
+  <script type="module" src="runner.mjs?v=20261027-integrated-endless"></script>
 </head>
 <body>
+  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
   <div class="wrap">
     <header class="site-header">
       <a class="wordmark" href="#contagem" aria-label="Tá na hora, Flávio — início"><span aria-hidden="true">◷</span> tá na hora<span class="wordmark-dot">.</span></a>
       <nav aria-label="Navegação principal"><a href="#contagem">Contagem</a><a class="nav-game" href="#game">Jogar agora <span aria-hidden="true">↗</span></a></nav>
     </header>
-<main>
+<main id="conteudo" tabindex="-1">
 
       <section class="hero" id="contagem" aria-labelledby="titulo">
         <div class="hero-intro">
@@ -133,45 +134,6 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         </div>
       </section>
 
-      <section class="game-card" id="game" aria-labelledby="game-title">
-        <div class="game-heading">
-          <div><p class="eyebrow">Enquanto o tempo passa…</p><h2 id="game-title">Corre, Flávio! <span aria-hidden="true">↗</span></h2></div>
-          <span class="game-duration">3 destinos · 75 segundos</span>
-        </div>
-        <p class="game-description">Quanto mais longe, maior a perseguição. Pule os adversários, colete vantagens e tente embarcar antes que a PF alcance você.</p>
-        <ol class="game-route" aria-label="Rota da corrida">
-          <li class="is-current" data-stage="0" aria-current="step"><span class="route-number">01</span><span>Rio <small>Brasil</small></span></li>
-          <li data-stage="1"><span class="route-number">02</span><span>Argentina <small>Próxima parada</small></span></li>
-          <li data-stage="2"><span class="route-number">03</span><span>EUA <small>Último voo</small></span></li>
-        </ol>
-        <div class="game-scoreboard" aria-label="Placar">
-          <div><span>Pontos</span><strong id="game-score">0000</strong></div>
-          <div><span>Seu recorde</span><strong id="game-best">0000</strong></div>
-          <div><span>Tempo de corrida</span><strong id="game-time">00:00</strong></div>
-        </div>
-        <div class="game-hud" aria-label="Perseguição e vantagens">
-          <div class="pursuit-chip"><span>Na perseguição</span><strong id="game-threat">1/5 · PF</strong></div>
-          <div><span>Vantagem ativa</span><strong id="game-power">Sem efeito ativo</strong></div>
-          <div><span>Chance extra</span><strong id="game-chance">0 guardada</strong></div>
-        </div>
-        <div class="game-viewport">
-          <canvas id="runner-canvas" width="900" height="300" tabindex="0" role="img" aria-label="Pista do jogo Corre, Flávio!" aria-describedby="game-instructions">Seu navegador não oferece Canvas. A contagem regressiva continua disponível acima.</canvas>
-          <div class="game-overlay" id="game-overlay"><span class="game-overlay-badge" id="game-overlay-badge">Perseguição fictícia</span><strong id="game-overlay-title">Passaporte na mão?</strong><p id="game-overlay-copy">Tem um longo caminho até o portão de embarque.</p></div>
-        </div>
-        <div class="route-meter" role="progressbar" aria-label="Progresso da corrida" aria-valuemin="0" aria-valuemax="75" aria-valuenow="0" id="game-progress"><span></span></div>
-        <div class="game-controls">
-          <button type="button" class="game-primary" id="game-start">Começar corrida</button>
-          <button type="button" id="game-jump" aria-label="Pular" disabled><span aria-hidden="true">↑</span> Pular</button>
-          <button type="button" id="game-pause" disabled>Pausar corrida</button>
-        </div>
-        <p class="game-instructions" id="game-instructions">Toque na pista ou em <strong>Pular</strong>. No teclado: <kbd>Espaço</kbd> / <kbd>↑</kbd> para pular e <kbd>P</kbd> para pausar.</p>
-        <p class="game-status" id="game-status" role="status" aria-live="polite">Tudo pronto. A corrida começa quando você quiser.</p>
-        <div class="game-legend"><span><i class="legend-bonus" aria-hidden="true"></i> Chocolate e recibo +25 · Mansão e passaporte +50</span><span><i class="legend-invisible" aria-hidden="true"></i> Fantasma: invisibilidade por 6 s</span><span><i class="legend-chance" aria-hidden="true"></i> Escudo +1: uma chance extra</span></div>
-        <details class="game-guide"><summary>Quem entra na perseguição?</summary><p>PF → Xandão (15 s) → Janones (30 s) → “exército do Lula” (45 s) → Lula, o chefe (60 s). A velocidade aumenta e os intervalos diminuem. Invisibilidade atravessa adversários; a chance extra protege de uma colisão. Guarde uma chance por vez.</p></details>
-        <p class="game-fiction">Sátira política. Perseguição, captura, personagens e objetos são ficção do jogo. Seu recorde fica apenas neste navegador.</p>
-        <noscript>Habilite o JavaScript para jogar.</noscript>
-      </section>
-
       <details class="sources">
         <summary>Fontes e informações jurídicas</summary>
         <section class="bottom" aria-label="Informações importantes">
@@ -185,6 +147,62 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         </div>
         </section>
       </details>
+
+      <section class="game-card" id="game" aria-labelledby="game-title">
+        <div class="game-heading">
+          <div><p class="eyebrow">Enquanto o tempo passa…</p><h2 id="game-title">Corre, Flávio! <span aria-hidden="true">↗</span></h2></div>
+          <span class="game-duration">5 destinos · corrida infinita</span>
+        </div>
+        <p class="game-description">A cada distância, a perseguição aumenta e os bônus ficam mais raros. Colete 100 passaportes para ganhar +1 vida.</p>
+        <details class="game-itinerary"><summary>Ver destinos e pontos turísticos</summary>
+        <ol class="game-route" aria-label="Rota da corrida">
+          <li class="is-current" data-stage="0" aria-current="step"><span class="route-number">01</span><span>Brasília <small>Congresso Nacional</small></span></li>
+          <li data-stage="1"><span class="route-number">02</span><span>Rio <small>Cristo Redentor e Pão de Açúcar</small></span></li>
+          <li data-stage="2"><span class="route-number">03</span><span>Argentina <small>Obelisco de Buenos Aires</small></span></li>
+          <li data-stage="3"><span class="route-number">04</span><span>Flórida <small>Miami Beach</small></span></li>
+          <li data-stage="4"><span class="route-number">05</span><span>Casa Branca <small>Washington, EUA</small></span></li>
+        </ol></details>
+        <div class="game-stage-header">
+          <div><span id="game-phase">Cenário 1 de 5</span><strong id="game-stage-name">Brasília</strong><small id="game-difficulty">Risco 1 · 0 m virtuais</small></div>
+          <span class="game-stage-clock" id="game-stage-time">20 s para Rio</span>
+        </div>
+        <div class="game-scoreboard" aria-label="Placar">
+          <div><span>Pontos</span><strong id="game-score">0000</strong></div>
+          <div><span>Vidas</span><strong id="game-lives">3</strong></div>
+          <div><span>Tempo de corrida</span><strong id="game-time">00:00</strong></div>
+        </div>
+        <div class="game-hud" aria-label="Perseguição e vantagens">
+          <div class="pursuit-chip"><span>Na perseguição</span><strong id="game-threat">1/5 · PF</strong></div>
+          <div><span>Vantagem ativa</span><strong id="game-power">Sem efeito ativo</strong></div>
+          <div><span>Chance extra</span><strong id="game-chance">0 guardada</strong></div>
+        </div>
+        <div class="game-passport-hud" aria-label="Passaportes para ganhar vida extra">
+          <div><span>🛂 Passaportes <strong id="game-passports">0</strong></span><span>Faltam <strong id="game-passport-next">100</strong> para +1 vida</span></div>
+          <div class="passport-track" aria-hidden="true"><span id="game-passport-progress"></span></div>
+        </div>
+        <div class="game-viewport">
+          <canvas id="runner-canvas" width="900" height="300" tabindex="0" role="img" aria-label="Pista do jogo Corre, Flávio!" aria-describedby="game-instructions">Seu navegador não oferece Canvas. A contagem regressiva continua disponível acima.</canvas>
+          <div class="game-overlay" id="game-overlay"><span class="game-overlay-badge" id="game-overlay-badge">Perseguição fictícia</span><strong id="game-overlay-title">Passaporte na mão?</strong><p id="game-overlay-copy">Tem um longo caminho até o portão de embarque.</p></div>
+        </div>
+        <div class="route-meter" role="progressbar" aria-label="Tempo no cenário atual" aria-valuemin="0" aria-valuemax="20" aria-valuenow="0" id="game-progress"><span></span></div>
+        <div class="game-controls">
+          <button type="button" id="game-jump" aria-label="Pular" disabled><span aria-hidden="true">↑</span> Pular</button>
+          <button type="button" id="game-pause" disabled>Pausar corrida</button>
+          <button type="button" class="game-primary" id="game-start">Começar corrida</button>
+        </div>
+        <p class="game-instructions" id="game-instructions">Toque na pista ou use <kbd>Espaço</kbd> para pular. <kbd>P</kbd> pausa a corrida.</p>
+        <p class="game-status" id="game-status" role="status" aria-live="polite">Tudo pronto. A corrida começa quando você quiser.</p>
+        <details class="game-help"><summary>Como jogar e ganhar pontos</summary>
+          <div class="game-legend"><span><i class="legend-bonus" aria-hidden="true"></i> Chocolate e recibo +25 · Mansão e passaporte +50</span><span><i class="legend-invisible" aria-hidden="true"></i> Fantasma: invisibilidade por 6 s</span><span><i class="legend-chance" aria-hidden="true"></i> Escudo +1: uma chance guardada</span></div>
+          <p>Você começa com 3 vidas. A cada 100 passaportes, ganha mais uma vida. Passaportes, escudos e invisibilidade se tornam mais raros com a distância. Ao sofrer dano, recebe 2 s de proteção.</p>
+          <p>Recorde pessoal: <strong id="game-best">0000</strong> pontos.</p>
+        </details>
+        <details class="game-guide"><summary>Quem entra na perseguição?</summary><p>PF → Xandão (15 s) → Janones (30 s) → “exército do Lula” (45 s) → Lula, o chefe (60 s). Adversários anteriores continuam surgindo; os obstáculos ficam mais frequentes conforme você avança.</p></details>
+        <p class="game-fiction">Sátira política. Perseguição, captura, personagens e objetos são ficção do jogo. Seu recorde fica apenas neste navegador.</p>
+        <noscript>Habilite o JavaScript para jogar.</noscript>
+      </section>
+
+
     </main>
     <footer>Projeto independente de humor. <span class="music-credit">♫ “Tá na Hora do Jair Já Ir Embora” — Tiago Doidão e Juliano Maderada. <a href="https://www.youtube.com/watch?v=RTMiC5WturY" target="_blank" rel="noopener noreferrer">Música no YouTube ↗</a></span></footer>
   </div>
