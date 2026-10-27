@@ -49,24 +49,19 @@ h1 .title-followup strong{color:var(--purple);font-weight:900}
 .done{display:none;margin:13px auto;padding:14px;background:var(--pale);border-radius:10px;color:var(--dark);font-weight:800}
 body.finished .counter{display:none}
 body.finished .done{display:block}
-.music{width:min(100%,555px);margin:17px auto 0;padding:13px 14px;background:#f9f6fd;border:1px solid var(--line);border-radius:13px}
-.music-copy{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
-.music h2{flex:1 1 auto;margin:0;font-size:14px;text-align:left}
-.audio-button{border:0;background:var(--purple);color:#fff;font-size:13px;font-weight:800;border-radius:10px;padding:12px 16px;cursor:pointer}
+
+.music{width:min(100%,555px);margin:16px auto 0;padding:12px 14px;background:#f9f6fd;border:1px solid var(--line);border-radius:12px}
+.music-copy{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.music h2{margin:0;font-size:14px;font-weight:850;white-space:nowrap}
+.audio-button{border:0;background:var(--purple);color:#fff;font-size:13px;font-weight:800;border-radius:10px;padding:11px 15px;cursor:pointer}
 .audio-button:hover{background:var(--dark)}
-.audio-button.secondary{background:#eee6f5;color:var(--dark);padding:10px 13px}
-.audio-button.secondary:hover{background:#e4d7ef}
-.audio-extra-controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
-.audio-extra-controls .audio-button{font-size:12px}
 .audio-button:focus-visible,.share:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid #b18ad4;outline-offset:3px}
-.audio-status{flex-basis:100%;font-size:11px;color:var(--muted);line-height:1.4;margin:0}
+.audio-status{font-size:11px;line-height:1.5;text-align:center;color:var(--muted);margin:8px 0 0}
 .audio-status:empty{display:none}
 .music-panel[hidden]{display:none}
-.music-panel{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
-.music-frame{aspect-ratio:16/9;width:min(100%,520px);min-height:200px;margin:auto;border-radius:12px;overflow:hidden;background:#1c1424}
+.music-panel{margin-top:10px;padding-top:12px;border-top:1px solid var(--line)}
+.music-frame{width:min(100%,310px);height:215px;margin:auto;background:#1c1424;border-radius:9px;overflow:hidden}
 .music-frame iframe{display:block;width:100%;height:100%;border:0}
-.music-caption{font-size:11px;line-height:1.6;color:var(--muted);margin:12px 0 0;text-align:center}
-.music a,.panel a{color:var(--dark);font-weight:700;text-underline-offset:3px}
 .sources{margin-top:14px}
 .sources summary{cursor:pointer;font-size:12px;color:var(--muted);padding:13px;text-align:center;list-style:none}
 .sources summary::-webkit-details-marker{display:none}
@@ -105,25 +100,21 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         <div class="done" id="finished">O prazo do mandato chegou ao fim.</div>
         <p class="target">Fim do mandato: 31/01/2027 · Contagem até 01/02/2027, 00h (Brasília)</p>
         <p class="legal-note">A perda do cargo não encerra automaticamente o foro em todos os processos. <a href="https://noticias.stf.jus.br/postsnoticias/acoes-contra-autoridades-permanecem-no-stf-mesmo-apos-saida-do-cargo/" target="_blank" rel="noopener noreferrer">Entenda no STF ↗</a></p>
-        <section class="music" id="musica" aria-label="Reprodução de música">
+        <section class="music" id="musica" aria-label="Música">
           <div class="music-copy">
-            <h2>♫ Música da contagem</h2>
+            <h2>♫ Música</h2>
             <button type="button" class="audio-button" id="music-toggle">▶ Tocar música</button>
-            <button type="button" id="music-mute" class="audio-button secondary" aria-pressed="false">🔇 Silenciar</button>
-            <button type="button" id="music-close" class="audio-button secondary">■ Parar</button>
-            <p class="audio-status" id="audio-status" role="status" aria-live="polite">Iniciando… Se não tocar com som, use ▶ Tocar música.</p>
           </div>
-          <audio id="music-native" preload="auto" loop aria-label="Música da contagem regressiva"></audio>
+          <p class="audio-status" id="audio-status" role="status" aria-live="polite">Preparando a música…</p>
+          <audio id="music-native" preload="auto" loop aria-label="Música da contagem"></audio>
           <div class="music-panel" id="music-panel" hidden>
             <div class="music-frame">
-              <iframe id="music-iframe" width="480" height="270" title="Tá na Hora do Jair Já Ir Embora — reprodução pelo YouTube"
+              <iframe id="music-iframe" width="310" height="215"
+                title="Tá na Hora do Jair Já Ir Embora — YouTube"
                 referrerpolicy="strict-origin-when-cross-origin"
                 allow="autoplay; encrypted-media; picture-in-picture"
                 allowfullscreen></iframe>
             </div>
-            <p class="music-caption">Se não ouvir, toque em ▶ no vídeo.
-              <a href="https://www.youtube.com/watch?v=RTMiC5WturY" target="_blank" rel="noopener noreferrer">Abrir no YouTube ↗</a>
-            </p>
           </div>
         </section>
         <button class="share" type="button" id="share">Compartilhar contagem</button>
@@ -146,8 +137,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         </section>
       </details>
     </main>
-    <footer>Projeto independente de contagem de tempo. Retrato ilustrativo recriado digitalmente. Não é comunicado oficial nem parecer jurídico.<br>
-      <span class="music-credit">🎵 Música: “Tá na Hora do Jair Já Ir Embora” — Tiago Doidão e Juliano Maderada. <a href="https://www.youtube.com/watch?v=RTMiC5WturY" target="_blank" rel="noopener noreferrer">Ouvir a música original no YouTube ↗</a></span></footer>
+    <footer>Projeto independente de humor. <span class="music-credit">♫ “Tá na Hora do Jair Já Ir Embora” — Tiago Doidão e Juliano Maderada. <a href="https://www.youtube.com/watch?v=RTMiC5WturY" target="_blank" rel="noopener noreferrer">Música no YouTube ↗</a></span></footer>
   </div>
   <noscript>Para ver a contagem regressiva funcionando, habilite o JavaScript no navegador.</noscript>
 
@@ -183,108 +173,122 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
       else {$("share-message").textContent="Copie o endereço da barra do navegador.";}
     } catch(e) {if(e.name!=="AbortError")$("share-message").textContent="Copie o endereço da barra do navegador.";}
   });
-  // Preferir o M4A hospedado neste diretório; se ainda não estiver publicado,
-  // manter o player oficial do YouTube, visível e com seus controles.
-  const button=$("music-toggle"), muteButton=$("music-mute"), closeButton=$("music-close");
-  const status=$("audio-status"), audio=$("music-native");
-  const panel=$("music-panel"), iframe=$("music-iframe");
-  let mode="checking", player=null, ready=false, closedByUser=false;
-  let requestedPlay=false, ytLoaded=false, fallbackStarted=false, ytMuted=false, userTouchedControls=false;
-  const message=text=>{status.textContent=text;};
-  const nativePlaying=()=>!audio.paused&&!audio.ended;
-  const youtubePlaying=()=>ready&&player&&player.getPlayerState()===YT.PlayerState.PLAYING;
-  function render(){
-    const playing=mode==="native"?nativePlaying():mode==="youtube"?youtubePlaying():false;
-    const isMuted=mode==="native"?audio.muted:ytMuted;
-    button.textContent=playing?(isMuted?"🔊 Ativar som":"⏸ Pausar música"):"▶ Tocar música";
-    muteButton.textContent=isMuted?"🔊 Ativar som":"🔇 Silenciar";
-    muteButton.setAttribute("aria-pressed",String(isMuted));
+  // A música local roda diretamente quando publicada em musica.m4a.
+  // Sem o arquivo local, usa o player visível do YouTube, respeitando as
+  // restrições do navegador para áudio automático e as regras de exibição.
+  const playButton=$("music-toggle");
+  const status=$("audio-status");
+  const audio=$("music-native");
+  const panel=$("music-panel");
+  const iframe=$("music-iframe");
+  let mode="checking",player=null,ready=false;
+  let requested=true, clicked=false, muteFallbackTried=false, browserBlocked=false;
+  let intersectionObserver=null;
+  const say=t=>{status.textContent=t;};
+  const audioPlaying=()=>!audio.paused&&!audio.ended;
+  const videoPlaying=()=>ready&&player&&player.getPlayerState()===YT.PlayerState.PLAYING;
+  function updateButton(){
+    if(mode==="native"){
+      playButton.textContent=audioPlaying()?"⏸ Pausar música":"▶ Tocar música";
+    }else if(mode==="youtube"&&ready){
+      const muted=player.isMuted();
+      playButton.textContent=videoPlaying()?(muted?"🔊 Ativar som":"⏸ Pausar música"):"▶ Tocar música";
+    }else{
+      playButton.textContent="▶ Tocar música";
+    }
   }
-  async function playNative(){
-    closedByUser=false;
-    requestedPlay=true;
+  async function playLocal(){
+    requested=true;
     audio.muted=false;
-    audio.volume=1;
     try{
       await audio.play();
-      message("♫ Música tocando.");
-    }catch(err){
-      render();
-      message("O navegador bloqueou o som automático. Toque em ▶ Tocar música para ouvir.");
+      say("");
+    }catch(error){
+      say("Toque em ▶ Tocar música para ouvir com som.");
     }
-    render();
+    updateButton();
   }
-  audio.addEventListener("playing",()=>{if(mode==="native"){render();message("♫ Música tocando.");}});
-  audio.addEventListener("pause",()=>{if(mode==="native"){render();message("Música pausada.");}});
-  audio.addEventListener("error",()=>{
-    if(mode==="native"){message("Não foi possível carregar o áudio local; abrindo YouTube.");startYouTube();}
-  });
+  audio.addEventListener("play",()=>{if(mode==="native"){updateButton();say("");}});
+  audio.addEventListener("pause",()=>{if(mode==="native")updateButton();});
+  audio.addEventListener("error",()=>{if(mode==="native"){startYouTube();}});
   function playYoutubeWithSound(){
-    if(!ready||!player){requestedPlay=true;message("Carregando o player do YouTube…");return;}
+    requested=true;
+    if(!ready||!player){say("Carregando…");return;}
+    panel.hidden=false;
     player.unMute();
     player.setVolume(100);
-    ytMuted=false;
     player.playVideo();
-    render();
-    message("Tentando tocar com som. Se necessário, use ▶ no vídeo.");
+    updateButton();
+    say("Se o navegador bloquear o som, toque em ▶ no vídeo.");
+  }
+  function tryVisibleAutoplay(){
+    if(!requested||clicked||!ready||panel.hidden||!document.hasFocus())return;
+    if(browserBlocked||videoPlaying())return;
+    // Reproduzir automaticamente somente quando o player estiver visível.
+    player.unMute();
+    player.setVolume(100);
+    player.playVideo();
+    say("");
+    setTimeout(()=>{
+      if(clicked||!requested||!ready||panel.hidden||videoPlaying()||muteFallbackTried)return;
+      muteFallbackTried=true;
+      player.mute();
+      player.playVideo();
+      say("Som automático bloqueado. Toque em 🔊 Ativar som.");
+      updateButton();
+    },2500);
   }
   function startYouTube(){
-    if(fallbackStarted)return;
-    fallbackStarted=true;
+    if(mode==="youtube")return;
+    audio.pause();
     mode="youtube";
     panel.hidden=false;
-    message("Usando o YouTube enquanto o arquivo de música não estiver publicado.");
-    render();
-    iframe.src="https://www.youtube-nocookie.com/embed/RTMiC5WturY?enablejsapi=1&autoplay=1&mute=1&playsinline=1&controls=1&loop=1&playlist=RTMiC5WturY&rel=0&origin="+encodeURIComponent(location.origin);
+    say("Se não ouvir a música, toque em ▶ Tocar música.");
+    iframe.src="https://www.youtube-nocookie.com/embed/RTMiC5WturY?enablejsapi=1&autoplay=0&playsinline=1&controls=1&loop=1&playlist=RTMiC5WturY&rel=0&origin="+encodeURIComponent(location.origin);
     window.onYouTubeIframeAPIReady=()=>{
       player=new YT.Player("music-iframe",{
         events:{
           onReady:event=>{
             ready=true;
-            ytMuted=event.target.isMuted();
-            render();
-            if(!closedByUser)playYoutubeWithSound();
-            // Em alguns navegadores o bloqueio não gera callback.
-            // Uma única tentativa muda é feita se não houver reprodução.
-            setTimeout(()=>{
-              if(!userTouchedControls&&!closedByUser&&ready&&player&&!youtubePlaying()&&!ytLoaded){
-                ytLoaded=true;
-                player.mute();
-                ytMuted=true;
-                player.playVideo();
-                render();
-                message("Reprodução com som bloqueada. Vídeo sem som: toque em 🔊 Ativar som.");
-              }
-            },5500);
+            updateButton();
+            if(!requested)return;
+            const frame=event.target.getIframe();
+            if("IntersectionObserver" in window){
+              intersectionObserver=new IntersectionObserver(entries=>{
+                if(entries.some(e=>e.intersectionRatio>=0.5)){
+                  tryVisibleAutoplay();
+                  intersectionObserver.disconnect();
+                }
+              },{threshold:[0.5,0.75]});
+              intersectionObserver.observe(frame);
+            }else{
+              // O botão manual permanece disponível em navegadores antigos.
+              say("Toque em ▶ Tocar música para ouvir.");
+            }
           },
           onStateChange:event=>{
             if(event.data===YT.PlayerState.PLAYING){
-              ytMuted=event.target.isMuted();
-              render();
-              message(ytMuted?"O vídeo está sem som. Toque em 🔊 Ativar som.":"♫ Música tocando.");
+              updateButton();
+              say(event.target.isMuted()?"Vídeo sem som. Toque em 🔊 Ativar som.":"");
             }else if(event.data===YT.PlayerState.PAUSED){
-              render();
-              message("Música pausada.");
-            }else if(event.data===YT.PlayerState.ENDED){
-              render();
+              updateButton();
+            }else if(event.data===YT.PlayerState.ENDED&&requested){
+              event.target.playVideo();
             }
           },
           onAutoplayBlocked:event=>{
-            if(closedByUser)return;
-            if(!ytLoaded){
-              ytLoaded=true;
+            browserBlocked=true;
+            if(!clicked&&!muteFallbackTried){
+              muteFallbackTried=true;
               event.target.mute();
-              ytMuted=true;
               event.target.playVideo();
-              render();
-              message("Som automático bloqueado. Toque em 🔊 Ativar som.");
-            }else{
-              render();
-              message("Reprodução automática bloqueada. Toque em ▶ no vídeo.");
             }
+            say("O navegador exige um toque para liberar o som.");
+            updateButton();
           },
           onError:()=>{
-            message("O YouTube não permitiu reproduzir aqui. Abra pelo link abaixo.");
+            say("Não foi possível reproduzir aqui. Use o link da música no rodapé.");
+            updateButton();
           }
         }
       });
@@ -292,68 +296,40 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
     const script=document.createElement("script");
     script.src="https://www.youtube.com/iframe_api";
     script.async=true;
-    script.onerror=()=>message("Falha ao carregar o player. Use o link do YouTube.");
+    script.onerror=()=>say("Não foi possível carregar a música. Veja o link no rodapé.");
     document.head.appendChild(script);
+    updateButton();
   }
-  button.addEventListener("click",()=>{
-    userTouchedControls=true;
-    closedByUser=false;
+  playButton.addEventListener("click",()=>{
+    clicked=true;
+    requested=true;
     if(mode==="native"){
-      if(nativePlaying()&&!audio.muted){
-        audio.pause();
-      }else{
-        playNative();
-      }
+      if(audioPlaying()){requested=false;audio.pause();}
+      else{playLocal();}
     }else if(mode==="youtube"){
-      if(youtubePlaying()&&!ytMuted){
+      if(ready&&videoPlaying()&&!player.isMuted()){
+        requested=false;
         player.pauseVideo();
+        say("Música pausada.");
       }else{
         playYoutubeWithSound();
       }
     }else{
-      // Um toque do visitante também conta como gesto de ativação do áudio.
-      requestedPlay=true;
-      message("Carregando música…");
+      // Primeiro gesto também solicita a reprodução quando a verificação terminar.
+      say("Preparando a música…");
     }
+    updateButton();
   });
-  muteButton.addEventListener("click",()=>{
-    userTouchedControls=true;
-    if(mode==="native"){
-      if(audio.muted){playNative();}else{audio.muted=true;render();message("Som silenciado.");}
-    }else if(mode==="youtube"){
-      if(!ready||!player){message("Player ainda carregando.");return;}
-      if(ytMuted){playYoutubeWithSound();}
-      else{player.mute();ytMuted=true;render();message("Som silenciado.");}
-    }
-  });
-  closeButton.addEventListener("click",()=>{
-    userTouchedControls=true;
-    closedByUser=true;
-    requestedPlay=false;
-    if(mode==="native"){
-      audio.pause();
-      audio.currentTime=0;
-    }else if(mode==="youtube"&&ready&&player){
-      player.stopVideo();
-    }
-    render();
-    message("Música parada. Toque em Tocar música para ouvir novamente.");
-  });
-  // GitHub Pages responde 404 enquanto musica.m4a não estiver no repositório.
-  // Não reproduzir uma página de erro HTML como se fosse áudio.
-  fetch("musica.m4a",{method:"HEAD",cache:"no-store"})
+  fetch("./musica.m4a",{method:"HEAD",cache:"no-store"})
     .then(response=>{
-      if(!response.ok)throw new Error("Áudio não publicado");
+      if(!response.ok)throw new Error("Áudio local indisponível");
       mode="native";
+      audio.src="./musica.m4a";
       panel.hidden=true;
-      audio.src="musica.m4a";
-      render();
-      if(!closedByUser||requestedPlay)playNative();
+      updateButton();
+      if(requested)playLocal();
     })
-    .catch(()=>{
-      if(!closedByUser)startYouTube();
-      else{mode="youtube";message("Música parada.");}
-    });
+    .catch(()=>{startYouTube();});
 })();
 </script>
 </body>
