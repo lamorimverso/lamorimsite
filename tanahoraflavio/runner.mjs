@@ -1,4 +1,4 @@
-import { WORLD, PLAYER, STAGES, createRun, startRun, jumpRun, togglePause, advanceRun, stageAt, scoreFor } from "./runner-core.mjs";
+import { WORLD, PLAYER, PURSUERS, PICKUPS, createRun, startRun, jumpRun, togglePause, advanceRun, stageAt, pursuitAt, scoreFor } from "./runner-core.mjs";
 
 function initRunner() {
   const $ = id => document.getElementById(id);
@@ -18,13 +18,15 @@ function initRunner() {
   } catch { /* O modo privado e o armazenamento bloqueado não impedem jogar. */ }
   let run = createRun(), frameId = 0, lastFrame = 0, accumulator = 0;
   let lastStatus = "", lastStage = -1, virtualWidth = 900, measuredWidth = 0, measuredDpr = 0;
+  let lastPursuit = -1, lastCollected = 0, lastSaves = 0, lastPower = "";
   const portrait = new Image();
   portrait.src = new URL("./retrato.webp", import.meta.url).href;
   portrait.addEventListener("load", () => draw());
   const pad = number => String(number).padStart(2, "0");
 
   function updateUI() {
-    const stage = stageAt(run.elapsed), score = scoreFor(run);
+    const stage = stageAt(run.elapsed), score = scoreFor(run), pursuit = pursuitAt(run.elapsed);
+    const power = run.invisibleFor > 0 ? "invisible" : run.graceFor > 0 ? "recovery" : "none";
     if ((run.status === "over" || run.status === "won") && score > best) {
       best = score;
       try { localStorage.setItem(recordKey, String(best)); } catch { /* Recorde da sessão permanece na memória. */ }
@@ -36,6 +38,10 @@ function initRunner() {
     $("game-progress").setAttribute("aria-valuetext", `${Math.floor(run.elapsed)} de 75 segundos. ${stage.name}.`);
     $("game-progress").firstElementChild.style.width = `${run.elapsed / 75 * 100}%`;
     section.dataset.runState = run.status;
+    section.dataset.power = power;
+    $("game-threat").textContent = `${pursuit.index + 1}/5 · ${pursuit.name}`;
+    $("game-power").textContent = power === "invisible" ? `Invisível · ${Math.ceil(run.invisibleFor)} s` : power === "recovery" ? `Recuperando · ${Math.ceil(run.graceFor)} s` : "Sem efeito ativo";
+    $("game-chance").textContent = run.extraChance ? "1 guardada" : "0 guardada";
     $("game-jump").disabled = run.status !== "running";
     $("game-pause").disabled = run.status !== "running" && run.status !== "paused";
     $("game-pause").textContent = run.status === "paused" ? "Continuar corrida" : "Pausar corrida";
@@ -44,21 +50,29 @@ function initRunner() {
     const overlays = {
       ready: ["Passaporte na mão?", "Tem um longo caminho até o portão de embarque."],
       paused: ["Pausa no embarque", "Sua corrida está guardada. Continue quando quiser."],
-      over: ["Barrado no caminho!", `${score} pontos · ${run.collected} ${run.collected === 1 ? "bônus coletado" : "bônus coletados"}. Bora tentar outra vez?`],
+      over: ["Pego pela Polícia Federal!", `Fim da fuga fictícia. ${score} pontos · ${run.collected} ${run.collected === 1 ? "item coletado" : "itens coletados"}. Bora tentar outra vez?`],
       won: ["Rota concluída!", `Do Rio aos EUA em 75 segundos. Você fez ${score} pontos!`]
     };
     if (overlays[run.status]) {
       $("game-overlay-title").textContent = overlays[run.status][0];
       $("game-overlay-copy").textContent = overlays[run.status][1];
+      $("game-overlay-badge").textContent = run.status === "over" ? "Capturado · PF" : run.status === "paused" ? "Corrida pausada" : run.status === "won" ? "Embarque concluído" : "Perseguição fictícia";
     }
-    if (lastStatus !== run.status || lastStage !== stage.index) {
+    if (lastStatus !== run.status || lastStage !== stage.index || lastPursuit !== pursuit.index || lastCollected !== run.collected || lastSaves !== run.saves || lastPower !== power) {
       const messages = {
         ready: "Tudo pronto. A corrida começa quando você quiser.",
-        running: `${stage.name}: desvie dos obstáculos e pegue os bônus.`,
+        running: `${stage.name} · ${pursuit.name} na perseguição. Pule os adversários e colete vantagens.`,
         paused: "Corrida pausada. Toque em Continuar corrida para retomar.",
-        over: `Fim da corrida. ${score} pontos. Toque em Tentar de novo para jogar.`,
+        over: `Pego pela Polícia Federal nesta fuga fictícia. ${score} pontos. Toque em Tentar de novo para jogar.`,
         won: `Rota concluída! ${score} pontos. Você chegou aos Estados Unidos.`
       };
+      if (run.status === "running") {
+        if (run.saves > lastSaves) messages.running = "Chance extra usada! Você escapou da colisão e ganhou um instante para se recuperar.";
+        else if (run.collected > lastCollected) {
+          const item = PICKUPS.find(item => item.type === run.lastPickup);
+          messages.running = run.lastPickup === "invisible" ? "Invisibilidade ativada por 6 segundos. Atravesse os adversários!" : run.lastPickup === "chance" ? "Uma chance extra guardada. Ela protege você de uma colisão." : `${item?.name || "Item"} coletado: +${item?.value || 0} pontos.`;
+        } else if (lastPower === "invisible" && power !== "invisible") messages.running = "A invisibilidade terminou. Volte a pular os adversários!";
+      }
       $("game-status").textContent = messages[run.status];
       section.querySelectorAll("[data-stage]").forEach((stop, index) => {
         stop.classList.toggle("is-current", index === stage.index);
@@ -68,6 +82,7 @@ function initRunner() {
       });
       lastStage = stage.index;
       lastStatus = run.status;
+      lastPursuit = pursuit.index; lastCollected = run.collected; lastSaves = run.saves; lastPower = power;
     }
   }
 
@@ -91,6 +106,7 @@ function initRunner() {
   function begin() {
     cancelAnimationFrame(frameId); frameId = 0;
     run = createRun(); startRun(run);
+    lastCollected = 0; lastSaves = 0; lastPower = ""; lastStatus = "";
     accumulator = 0; lastFrame = performance.now();
     updateUI(); draw(); schedule();
     canvas.focus({ preventScroll: true });
@@ -118,7 +134,7 @@ function initRunner() {
   canvas.addEventListener("click", () => { jump(); canvas.focus({ preventScroll: true }); });
   section.addEventListener("keydown", event => {
     // Espaço em um botão deve ativar aquele botão uma única vez.
-    if (event.target.closest("button,a,input,select,textarea") || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.target.closest("button,a,input,select,textarea,summary") || event.ctrlKey || event.metaKey || event.altKey) return;
     if (["Space", "ArrowUp", "KeyP", "Escape"].includes(event.code)) {
       event.preventDefault();
       if (event.repeat) return;
@@ -218,6 +234,11 @@ function initRunner() {
     const stride = run.player.y === 0 && run.status === "running" ? Math.sin(run.elapsed*22)*9 : 4;
     ctx.save();ctx.translate(PLAYER.x+17,WORLD.ground-run.player.y);
     ctx.fillStyle="#414052";ctx.globalAlpha=.09;ctx.beginPath();ctx.ellipse(0,run.player.y+3,21,4,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+    if (run.extraChance || run.invisibleFor > 0) {
+      ctx.strokeStyle = run.invisibleFor > 0 ? "#299b8b" : "#5984b7";ctx.lineWidth=2;
+      ctx.setLineDash(run.invisibleFor > 0 ? [4,4] : []);ctx.beginPath();ctx.ellipse(0,-34,25,42,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+    }
+    ctx.globalAlpha = run.invisibleFor > 0 ? .27 : run.graceFor > 0 ? .55 : 1;
     line([[-5,-21],[-8+stride,-10],[-8-stride,0]],"#383249",7);
     line([[5,-21],[8-stride,-10],[8+stride,0]],"#51405f",7);
     line([[-10-stride,0],[-2-stride,0]],"#272130",5);line([[7+stride,0],[14+stride,0]],"#272130",5);
@@ -233,32 +254,62 @@ function initRunner() {
     ctx.restore();ctx.restore();
   }
   function obstacle(item) {
-    const y=WORLD.ground-item.height;
-    if(item.type==="barrier"){
-      ctx.fillStyle="#b47861";ctx.fillRect(item.x+4,y+14,5,item.height-14);ctx.fillRect(item.x+item.width-9,y+14,5,item.height-14);
-      ctx.fillStyle="#d58b64";ctx.fillRect(item.x,y,item.width,19);
-      ctx.save();ctx.beginPath();ctx.rect(item.x,y,item.width,19);ctx.clip();
-      for(let x=item.x-9;x<item.x+item.width;x+=18)line([[x,y+19],[x+12,y]],"#fff4e5",6);
-      ctx.restore();
-    }else if(item.type==="papers"){
-      ctx.fillStyle="#b7a5c9";ctx.fillRect(item.x,y,item.width,item.height);
-      ctx.fillStyle="#fbf8ff";ctx.fillRect(item.x+3,y+3,item.width-6,item.height-5);
-      for(let row=0;row<4;row++)line([[item.x+8,y+9+row*6],[item.x+item.width-7,y+9+row*6]],"#c6b6d5",2);
-    }else{
-      line([[item.x+11,y],[item.x+11,y-5],[item.x+25,y-5],[item.x+25,y]],"#7b645b",3);
-      ctx.fillStyle="#b88e76";ctx.fillRect(item.x,y,item.width,item.height-3);
-      line([[item.x+10,y+3],[item.x+10,y+item.height-7]],"#e0bca0",3);line([[item.x+28,y+3],[item.x+28,y+item.height-7]],"#e0bca0",3);
-      circle(item.x+7,WORLD.ground-1,3,"#6c5a60");circle(item.x+item.width-7,WORLD.ground-1,3,"#6c5a60");
+    const foe = PURSUERS.find(foe => foe.type === item.type);
+    if (!foe) return;
+    const x=item.x+item.width/2, y=WORLD.ground;
+    ctx.save();ctx.translate(x,y);ctx.scale(item.width/34,item.height/54);
+    const stride=run.status==="running" ? Math.sin(run.elapsed*18+x*.02)*5 : 2;
+    line([[-5,-18],[-7+stride,-8],[-8-stride,0]],"#343847",6);
+    line([[5,-18],[7-stride,-8],[8+stride,0]],"#444556",6);
+    ctx.fillStyle=foe.color;
+    ctx.beginPath();ctx.moveTo(-10,-36);ctx.lineTo(10,-36);ctx.lineTo(item.type==="xandao"?15:11,-15);ctx.lineTo(item.type==="xandao"?-15:-11,-15);ctx.closePath();ctx.fill();
+    line([[-9,-32],[-15,-24],[-11,-19]],foe.color,5);
+    line([[9,-32],[15,-25],[12,-20]],foe.color,5);
+    circle(0,-43,9,"#dab494");
+    circle(-3,-44,1,"#3e3333");circle(3,-44,1,"#3e3333");
+    line([[-3,-38],[3,-38]],"#8e6555",1);
+    if(item.type==="pf" || item.type==="army") {
+      ctx.fillStyle=foe.color;ctx.fillRect(-10,-53,20,7);ctx.fillRect(-12,-48,24,3);
+      ctx.fillStyle=item.type==="pf"?"#efd67e":"#d7ddb0";ctx.font="800 7px system-ui";ctx.textAlign="center";ctx.fillText(item.type==="pf"?"PF":"★",0,-24);
+      if(item.type==="army")line([[-8,-34],[8,-20]],"#b8bf91",3);
+    } else if(item.type==="xandao") {
+      line([[-4,-35],[0,-28],[4,-35]],"#f7f3ed",3);
+      ctx.fillStyle="#a18562";ctx.fillRect(-18,-29,7,4);line([[-14,-29],[-14,-20]],"#a18562",2);
+    } else if(item.type==="janones") {
+      ctx.fillStyle="#463e39";ctx.fillRect(-8,-52,16,5);
+      ctx.fillStyle="#233b51";ctx.fillRect(11,-39,7,13);ctx.fillStyle="#bce4ef";ctx.fillRect(12,-37,5,8);
+    } else {
+      circle(-7,-48,3,"#e4dfd5");circle(7,-48,3,"#e4dfd5");
+      ctx.fillStyle="#f2eee5";ctx.beginPath();ctx.arc(0,-41,8,0,Math.PI);ctx.lineTo(-6,-34);ctx.lineTo(0,-31);ctx.lineTo(6,-34);ctx.closePath();ctx.fill();
+      line([[-7,-35],[8,-18]],"#e7ce65",5);line([[-7,-35],[8,-18]],"#4d8967",2);
     }
+    ctx.restore();
+    ctx.save();ctx.font='750 10px system-ui';ctx.textAlign="center";
+    const labelWidth=ctx.measureText(foe.short).width+12;
+    ctx.fillStyle=foe.color;ctx.fillRect(x-labelWidth/2,y-item.height-24,labelWidth,17);
+    ctx.fillStyle="#fff";ctx.fillText(foe.short,x,y-item.height-12);ctx.restore();
   }
   function pickup(item) {
     const x=item.x,y=WORLD.ground-item.y;
-    if(item.type==="miles"){
-      circle(x,y,12,"#e5c56d");circle(x,y,8,"#f9df93");ctx.fillStyle="#91742e";ctx.font='bold 15px system-ui';ctx.fillText("+",x-6,y+5);
+    if(item.type==="invisible"){
+      circle(x,y,19,"#dbf2eb");ctx.strokeStyle="#238575";ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(x,y-3,10,Math.PI,0);ctx.lineTo(x+10,y+12);ctx.lineTo(x+5,y+8);ctx.lineTo(x,y+12);ctx.lineTo(x-5,y+8);ctx.lineTo(x-10,y+12);ctx.closePath();ctx.fillStyle="#fff";ctx.fill();ctx.stroke();
+      circle(x-4,y-3,1.5,"#238575");circle(x+4,y-3,1.5,"#238575");
+    }else if(item.type==="chance"){
+      circle(x,y,19,"#e3ecf8");ctx.fillStyle="#5984b7";ctx.beginPath();ctx.moveTo(x,y-15);ctx.lineTo(x+12,y-10);ctx.lineTo(x+10,y+6);ctx.lineTo(x,y+15);ctx.lineTo(x-10,y+6);ctx.lineTo(x-12,y-10);ctx.closePath();ctx.fill();
+      ctx.save();ctx.fillStyle="#fff";ctx.font="800 12px system-ui";ctx.textAlign="center";ctx.fillText("+1",x,y+4);ctx.restore();
+    }else if(item.type==="chocolate"){
+      ctx.fillStyle="#744c3c";ctx.fillRect(x-11,y-15,22,29);
+      ctx.fillStyle="#b68158";for(let i=0;i<2;i++)for(let j=0;j<2;j++)ctx.fillRect(x-8+i*9,y-12+j*8,7,6);
+      ctx.fillStyle="#d9b4cf";ctx.fillRect(x-12,y+1,24,14);line([[x-7,y+7],[x+7,y+7]],"#fff2f9",2);
+    }else if(item.type==="mansion"){
+      ctx.fillStyle="#e9c278";ctx.fillRect(x-15,y-3,30,18);ctx.fillStyle="#9a7257";ctx.beginPath();ctx.moveTo(x-18,y-4);ctx.lineTo(x,y-18);ctx.lineTo(x+18,y-4);ctx.closePath();ctx.fill();
+      ctx.fillStyle="#6b718d";ctx.fillRect(x-3,y+4,6,11);ctx.fillRect(x-11,y+1,5,6);ctx.fillRect(x+6,y+1,5,6);
     }else if(item.type==="passport"){
       ctx.fillStyle="#79609c";ctx.fillRect(x-10,y-14,20,28);circle(x,y-1,5,"#e2c87f");line([[x-5,y+8],[x+5,y+8]],"#e2c87f",1);
     }else{
-      ctx.fillStyle="#92bc9b";ctx.fillRect(x-14,y-9,28,18);ctx.strokeStyle="#d4ebd7";ctx.lineWidth=1;ctx.strokeRect(x-11,y-6,22,12);circle(x,y,5,"#d4ebd7");
+      ctx.fillStyle="#e9dfcb";ctx.fillRect(x-10,y-15,20,30);ctx.fillStyle="#fffaf1";ctx.fillRect(x-8,y-13,16,26);
+      for(let i=0;i<3;i++)line([[x-5,y-7+i*6],[x+5,y-7+i*6]],"#ad9b80",1.5);
     }
   }
   function draw() {

@@ -87,6 +87,22 @@ test('sair da aba pausa a partida e exige retomada explícita', async () => {
   } finally { await context.close(); }
 });
 
+test('Espaço abre as instruções expansíveis sem iniciar nem reiniciar a corrida', async () => {
+  const {context,page} = await open();
+  try {
+    await page.locator('.game-guide summary').focus();
+    await page.locator('.game-guide summary').press('Space');
+    assert.equal(await page.locator('.game-guide').getAttribute('open'),'');
+    assert.equal(await page.locator('#game').getAttribute('data-run-state'),'ready');
+    await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+    await page.getByRole('button',{name:'Pausar corrida',exact:true}).click();
+    const score=await page.locator('#game-score').textContent();
+    await page.locator('.game-guide summary').press('Space');
+    assert.equal(await page.locator('#game').getAttribute('data-run-state'),'paused');
+    assert.equal(await page.locator('#game-score').textContent(),score);
+  } finally { await context.close(); }
+});
+
 test('layout e controles cabem em 320, 390, 768 e 1440 pixels', async () => {
   const {context,page} = await open();
   try {
@@ -100,6 +116,14 @@ test('layout e controles cabem em 320, 390, 768 e 1440 pixels', async () => {
     }
     await page.locator('.sources summary').click();
     assert.equal(await page.getByRole('heading',{name:'Atenção: ressalva jurídica'}).isVisible(),true);
+    await page.getByRole('button',{name:'Começar corrida',exact:true}).hover();
+    const contrast = await page.locator('#game-start').evaluate(button => {
+      const style=getComputedStyle(button);
+      const luminance=color=>color.match(/[\d.]+/g).slice(0,3).map(Number).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4}).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
+      const fg=luminance(style.color),bg=luminance(style.backgroundColor);
+      return (Math.max(fg,bg)+.05)/(Math.min(fg,bg)+.05);
+    });
+    assert.ok(contrast>=4.5,`Contraste do botão ao passar o mouse: ${contrast}`);
   } finally { await context.close(); }
 });
 
@@ -122,6 +146,49 @@ test('falha da música não deixa um quadro vazio na página', async () => {
     assert.equal(await page.locator('#music-toggle').isDisabled(),true);
     assert.equal(await page.locator('#music-toggle').textContent(),'Música indisponível');
     assert.equal(await page.getByRole('button',{name:'Começar corrida',exact:true}).isEnabled(),true);
+    assert.deepEqual(errors,[]);
+  } finally { await context.close(); }
+});
+
+test('captura pela PF encerra a corrida e reinício limpa o placar e vantagens', async () => {
+  const {context,page,errors} = await open();
+  try {
+    await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+    await page.waitForFunction(() => document.getElementById('game').dataset.runState === 'over', undefined, {timeout:8000});
+    assert.match(await page.locator('#game-overlay-title').textContent(), /Pego pela Polícia Federal/);
+    assert.equal(await page.getByRole('button',{name:'Pular',exact:true}).isDisabled(),true);
+    await page.getByRole('button',{name:'Tentar de novo',exact:true}).click();
+    assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
+    assert.match(await page.locator('#game-threat').textContent(), /Polícia Federal/);
+    assert.match(await page.locator('#game-power').textContent(), /Sem efeito/);
+    assert.match(await page.locator('#game-chance').textContent(), /0/);
+    assert.deepEqual(errors,[]);
+  } finally { await context.close(); }
+});
+
+test('coletar invisibilidade atualiza o HUD e pausa conserva seu tempo', async () => {
+  // A semente fixa controla itens/intervalos; o motor, a física e os controles são reais.
+  const {context,page,errors} = await open({}, () => { Math.random = () => .5; });
+  try {
+    await page.locator('#game').scrollIntoViewIfNeeded();
+    const clockStart = new Date('2026-10-27T16:00:00Z');
+    await page.clock.install({time:clockStart});
+    await page.clock.pauseAt(new Date(clockStart.getTime()+1000));
+    await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+    // Com esta semente, os oponentes cruzam o jogador em ~4,2 s e ~6 s.
+    await page.clock.runFor(3900);
+    await page.locator('#runner-canvas').press('Space');
+    await page.clock.runFor(1750);
+    await page.locator('#runner-canvas').press('Space');
+    await page.clock.runFor(1200);
+    // A segunda coleta (invisibilidade) chega perto de 7,2 s.
+    await page.locator('#runner-canvas').press('Space');
+    await page.clock.runFor(500);
+    assert.match(await page.locator('#game-power').textContent(), /Invisível/, await page.locator('#game-status').textContent());
+    await page.locator('#runner-canvas').press('KeyP');
+    const remaining = await page.locator('#game-power').textContent();
+    await page.clock.runFor(4000);
+    assert.equal(await page.locator('#game-power').textContent(),remaining);
     assert.deepEqual(errors,[]);
   } finally { await context.close(); }
 });

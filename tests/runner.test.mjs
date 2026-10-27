@@ -126,3 +126,110 @@ test("os obstáculos chegam com tempo de reação e intervalo para aterrissar", 
   }
   assert.ok(saw >= 4);
 });
+
+test("a perseguição introduz PF, Xandão, Janones, exército e chefe em ordem", () => {
+  for (const [elapsed, expected] of [[0,"pf"],[15,"xandao"],[30,"janones"],[45,"army"],[60,"lula"]]) {
+    const run = running();
+    run.elapsed = elapsed;
+    run.nextObstacle = 0;
+    core.advanceRun(run, 1 / 120, () => .99);
+    assert.equal(run.obstacles[0].type, expected);
+    assert.ok(run.obstacles[0].height <= 58, "O adversário deve continuar saltável");
+  }
+});
+
+test("a dificuldade aumenta sem eliminar a janela entre pulos", () => {
+  const early = running(), late = running();
+  late.elapsed = 60;
+  early.nextObstacle = late.nextObstacle = 0;
+  core.advanceRun(early, 1 / 120, () => 0);
+  core.advanceRun(late, 1 / 120, () => 0);
+  assert.ok(late.distance > early.distance);
+  assert.ok(late.nextObstacle < early.nextObstacle);
+  assert.ok(late.nextObstacle >= 1.09);
+});
+
+test("invisibilidade coletada no frame de uma colisão protege imediatamente", () => {
+  const run = running();
+  run.pickups.push({ x: 136, y: 35, value: 0, type: "invisible" });
+  run.obstacles.push({ x: 125, width: 34, height: 44, type: "pf" });
+  core.advanceRun(run, 1 / 120, () => .5);
+  assert.equal(run.status, "running");
+  assert.equal(run.invisibleFor, 6);
+  assert.equal(run.collected, 1);
+});
+
+test("a invisibilidade expira e não acumula duração infinita", () => {
+  const run = running();
+  run.invisibleFor = 4;
+  run.pickups.push({ x: 136, y: 35, value: 0, type: "invisible" });
+  core.advanceRun(run, 1 / 120, () => .5);
+  assert.equal(run.invisibleFor, 6);
+  run.nextObstacle = run.nextPickup = 100;
+  frames(run, 6.1);
+  assert.equal(run.invisibleFor, 0);
+  run.obstacles.push({ x: 125, width: 34, height: 44, type: "pf" });
+  core.advanceRun(run, 1 / 120);
+  assert.equal(run.status, "over");
+});
+
+test("uma chance extra absorve uma colisão e evita perda imediata por sobreposição", () => {
+  const run = running();
+  run.pickups.push({ x: 136, y: 35, value: 0, type: "chance" });
+  run.obstacles.push({ x: 125, width: 34, height: 44, type: "pf" }, { x: 133, width: 34, height: 48, type: "xandao" });
+  core.advanceRun(run, 1 / 120, () => .5);
+  assert.equal(run.status, "running");
+  assert.equal(run.extraChance, false);
+  assert.equal(run.saves, 1);
+  assert.ok(run.graceFor > 1);
+  run.nextObstacle = run.nextPickup = 100;
+  frames(run, 1.3);
+  run.obstacles.push({ x: 125, width: 34, height: 44, type: "pf" });
+  core.advanceRun(run, 1 / 120);
+  assert.equal(run.status, "over");
+  assert.equal(run.saves, 1);
+});
+
+test("a pausa congela a invisibilidade e a recuperação", () => {
+  const run = running();
+  run.pickups.push({ x: 136, y: 35, value: 0, type: "invisible" });
+  core.advanceRun(run, 1 / 120);
+  run.graceFor = .7;
+  core.togglePause(run);
+  const before = structuredClone(run);
+  frames(run, 8);
+  assert.deepEqual(run, before);
+  core.togglePause(run);
+  core.advanceRun(run, .05);
+  assert.ok(run.invisibleFor < 6);
+  assert.ok(run.graceFor < .7);
+});
+
+test("a proteção invisível não gasta a chance guardada e nova partida limpa vantagens", () => {
+  const run = running();
+  run.extraChance = true;
+  run.invisibleFor = 2;
+  run.obstacles.push({ x: 125, width: 34, height: 44, type: "lula" });
+  core.advanceRun(run, 1 / 120);
+  assert.equal(run.status, "running");
+  assert.equal(run.extraChance, true);
+  const fresh = core.createRun();
+  assert.equal(fresh.extraChance, false);
+  assert.equal(fresh.invisibleFor, 0);
+  assert.equal(fresh.graceFor, 0);
+  assert.equal(fresh.saves, 0);
+});
+
+test("os itens incluem os três objetos satíricos e oferecem ambas as vantagens regularmente", () => {
+  const types = new Set();
+  for (const rng of [0,.4,.7,.99]) {
+    const run = running();
+    for (let i = 0; i < 10; i++) {
+      run.nextPickup = 0;
+      core.advanceRun(run, 1 / 120, () => rng);
+      for (const item of run.pickups) types.add(item.type);
+      run.pickups = [];
+    }
+  }
+  for (const type of ["chocolate","mansion","receipt","invisible","chance"]) assert.ok(types.has(type), type);
+});

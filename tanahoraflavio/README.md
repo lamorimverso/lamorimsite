@@ -20,10 +20,13 @@ Site estático em `tanahoraflavio/`, atualmente no repositório público `lamori
 
 - Corrida fictícia e satírica: **Rio (0–25 s) → Argentina (25–50 s) → EUA (50–75 s)**. Completar 75 segundos encerra a rota com vitória.
 - Toque na pista ou em **Pular**; teclado: Espaço ou seta para cima. **P** pausa/retoma e Esc pausa quando a pista está focada. Não há início automático.
-- Desvie de barreiras, malas e pilhas de papéis. Colete milhas e notas (+25) ou passaportes (+50). Os objetos e a história são fictícios.
-- Colisão encerra a partida e permite tentar novamente. A corrida pausa ao sair da aba, perder foco ou rolar a pista para fora da tela.
+- A perseguição começa com a **PF**. Entram **Xandão aos 15 s**, **Janones aos 30 s**, o **“exército do Lula” aos 45 s** e **Lula como chefe aos 60 s**. Os adversários anteriores continuam aparecendo. A velocidade aumenta e o intervalo entre adversários diminui até um mínimo de 1,1 s; todos podem ser saltados.
+- Colete **chocolate e recibos (+25)** ou **mansão e passaporte (+50)**. Os objetos são símbolos da sátira; não constituem alegações factuais.
+- O **fantasma** concede **6 segundos de invisibilidade**, permitindo atravessar adversários. Uma nova coleta renova o efeito, sem somar durações. O **escudo +1** guarda **uma chance extra**, consumida automaticamente em uma colisão; há 1,2 s de recuperação para evitar perda imediata. As vantagens aparecem no HUD e seus tempos congelam durante a pausa.
+- Colisão sem proteção mostra **“Pego pela Polícia Federal!”**, encerra a fuga fictícia e permite tentar novamente. Reiniciar limpa os efeitos e a chance guardada. A corrida pausa ao sair da aba, perder foco ou rolar a pista para fora da tela.
 - Recorde em `localStorage`, somente no navegador. Se o armazenamento estiver bloqueado, o jogo funciona e conserva o recorde durante a sessão.
 - `runner-core.mjs` contém a física e as regras sem DOM; `runner.mjs` desenha cenários e controles; `enhancements.css` ajusta o visual da página. Nenhuma dependência de runtime foi adicionada.
+- A frase satírica sobre foro e desemprego fica junto à contagem, abaixo do seu subtítulo. A ressalva jurídica permanece disponível nas fontes.
 
 ### Verificação
 
