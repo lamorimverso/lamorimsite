@@ -104,19 +104,19 @@ test('sair da aba pausa a partida e exige retomada explícita', async () => {
   } finally { await context.close(); }
 });
 
-test('Espaço abre as instruções expansíveis sem iniciar nem reiniciar a corrida', async () => {
+test('o teclado pausa e retoma a corrida sem expor painéis informativos', async () => {
   const {context,page} = await open();
   try {
-    await page.locator('.game-guide summary').focus();
-    await page.locator('.game-guide summary').press('Space');
-    assert.equal(await page.locator('.game-guide').getAttribute('open'),'');
-    assert.equal(await page.locator('#game').getAttribute('data-run-state'),'ready');
+    assert.equal(await page.locator('.game-guide').isVisible(), false);
+    assert.equal(await page.locator('.game-help').isVisible(), false);
     await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
-    await page.getByRole('button',{name:'Pausar corrida',exact:true}).click();
+    await page.locator('#runner-canvas').press('KeyP');
+    await page.getByRole('button',{name:'Continuar corrida',exact:true}).waitFor();
     const score=await page.locator('#game-score').textContent();
-    await page.locator('.game-guide summary').press('Space');
-    assert.equal(await page.locator('#game').getAttribute('data-run-state'),'paused');
+    await page.waitForTimeout(150);
     assert.equal(await page.locator('#game-score').textContent(),score);
+    await page.locator('#runner-canvas').press('KeyP');
+    assert.equal(await page.getByRole('button',{name:'Pausar corrida',exact:true}).isEnabled(),true);
   } finally { await context.close(); }
 });
 
@@ -298,7 +298,7 @@ test('desktop replica a coluna única do celular sem excesso de texto exposto', 
     assert.equal(await page.locator('#game').getAttribute('data-chance'),'none');
     assert.equal(await page.locator('.game-hud .power-chip').isVisible(),false);
     assert.equal(await page.locator('.game-hud .chance-chip').isVisible(),false);
-    assert.equal(await page.locator('#game-stage-name').isVisible(),true);
+    assert.equal(await page.locator('#game-stage-name').isVisible(),false);
     assert.equal(await page.locator('#game-lives').isVisible(),true);
     assert.equal(await page.locator('#game-passports').isVisible(),true);
     assert.equal(await page.locator('.sources summary').isVisible(),true);
@@ -342,6 +342,31 @@ test('referência minimalista mantém mesma hierarquia no desktop e celular sem 
     assert.equal(await page.locator('#share').count(),1);
     assert.equal(await page.locator('.sources').evaluate(x=>x.open),false);
     assert.equal(await page.locator('.game-help').evaluate(x=>x.open),false);
+    assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+});
+
+test('jogo minimalista mostra só a pista, placar essencial e controles em todas as telas', async () => {
+  const {context,page,errors}=await open();
+  try {
+    for(const width of [320,390,768,1024,1440]){
+      await page.setViewportSize({width,height:900});
+      await page.locator('#runner-canvas').waitFor({state:'visible'});
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`sem rolagem horizontal em ${width}`);
+      for(const hidden of [
+        '.game-stage-header','.game-hud','.game-itinerary','.game-help',
+        '.game-guide','.game-duration','.route-meter','.game-instructions'
+      ]) assert.equal(await page.locator(hidden).isVisible(),false,`${hidden} oculto em ${width}`);
+      for(const visible of ['#game-score','#game-lives','#game-passports','#runner-canvas','#game-start']){
+        assert.equal(await page.locator(visible).isVisible(),true,`${visible} visível em ${width}`);
+      }
+      const game=await page.locator('#game').boundingBox(), canvas=await page.locator('#runner-canvas').boundingBox();
+      assert.ok(canvas.y>game.y && canvas.height>=150,`pista legível em ${width}`);
+    }
+    await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+    assert.equal(await page.locator('#game-start').isVisible(),false);
+    assert.equal(await page.locator('#game-jump').isEnabled(),true);
+    assert.equal(await page.locator('#game-pause').isEnabled(),true);
     assert.deepEqual(errors,[]);
   }finally{await context.close();}
 });
