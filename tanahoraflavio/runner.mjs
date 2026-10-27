@@ -298,6 +298,24 @@ function initRunner() {
     circle(x-9,y-44,2.5,"#352e2e");
     circle(x+9,y-44,2.5,"#352e2e");
     line([[x-8,y-33],[x+8,y-33]],"#a66c5d",2);
+    // Acessórios originais diferenciam os três novos chefes entre si.
+    if(boss.type==="haddad"){
+      ctx.strokeStyle="#324750";ctx.lineWidth=2.5;
+      ctx.strokeRect(x-20,y-52,15,10);ctx.strokeRect(x+5,y-52,15,10);
+      line([[x-5,y-47],[x+5,y-47]],"#324750",2);
+      ctx.fillStyle="#fff";ctx.fillRect(x-5,y-14,10,21);
+      line([[x,y-14],[x,y+7]],"#497f93",2.5);
+    }else if(boss.type==="boulos"){
+      ctx.fillStyle="#5a475e";ctx.fillRect(x-25,y-65,50,7);
+      ctx.fillRect(x-16,y-80,32,16);
+      ctx.fillStyle="#f0e5f5";ctx.fillRect(x-14,y+5,28,7);
+    }else if(boss.type==="dino"){
+      ctx.fillStyle="#f3e4d0";
+      ctx.fillRect(x-16,y-13,32,11);
+      ctx.strokeStyle="#9e836c";ctx.lineWidth=2;
+      ctx.strokeRect(x-19,y-52,16,10);ctx.strokeRect(x+3,y-52,16,10);
+      line([[x-3,y-47],[x+3,y-47]],"#9e836c",2);
+    }
     if(boss.supreme){
       ctx.fillStyle="#dfba52";
       ctx.beginPath();ctx.moveTo(x-23,y-71);ctx.lineTo(x-21,y-89);
@@ -363,6 +381,18 @@ function initRunner() {
     } else if(item.type==="janones") {
       ctx.fillStyle="#463e39";ctx.fillRect(-8,-52,16,5);
       ctx.fillStyle="#233b51";ctx.fillRect(11,-39,7,13);ctx.fillStyle="#bce4ef";ctx.fillRect(12,-37,5,8);
+    } else if(item.type==="haddad") {
+      ctx.strokeStyle="#324750";ctx.lineWidth=2;
+      ctx.strokeRect(-10,-49,8,6);ctx.strokeRect(2,-49,8,6);
+      ctx.fillStyle="#f0ece4";ctx.fillRect(-4,-34,8,9);
+      line([[0,-34],[0,-23]],"#a2bec4",2);
+    } else if(item.type==="boulos") {
+      ctx.fillStyle="#5a475e";ctx.fillRect(-11,-54,22,6);ctx.fillRect(-8,-61,16,9);
+      ctx.fillStyle="#ded0e7";ctx.fillRect(-8,-34,16,4);
+    } else if(item.type==="dino") {
+      ctx.strokeStyle="#614b3e";ctx.lineWidth=2;
+      ctx.strokeRect(-11,-49,9,6);ctx.strokeRect(2,-49,9,6);
+      ctx.fillStyle="#d4b38b";ctx.fillRect(-6,-32,12,6);
     } else {
       circle(-7,-48,3,"#e4dfd5");circle(7,-48,3,"#e4dfd5");
       ctx.fillStyle="#f2eee5";ctx.beginPath();ctx.arc(0,-41,8,0,Math.PI);ctx.lineTo(-6,-34);ctx.lineTo(0,-31);ctx.lineTo(6,-34);ctx.closePath();ctx.fill();
