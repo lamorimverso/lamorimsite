@@ -59,14 +59,22 @@ test("uma corrida visita Brasília, Rio, Argentina, Flórida e Casa Branca, sem 
   }
 });
 
-test("uma colisão no chão encerra e congela a partida", () => {
+test("colisões consomem vidas sem dano repetido durante a proteção", () => {
   const run = running();
+  assert.equal(run.lives, 3);
   run.obstacles.push({ x: 125, width: 34, height: 40, type: "barrier" });
   frames(run, .02);
+  assert.equal(run.status, "running");
+  assert.equal(run.lives, 2);
+  frames(run, .1);
+  assert.equal(run.lives, 2);
+  run.invulnerableFor = 0;
+  frames(run, .02);
+  assert.equal(run.lives, 1);
+  run.invulnerableFor = 0;
+  frames(run, .02);
+  assert.equal(run.lives, 0);
   assert.equal(run.status, "over");
-  const score = core.scoreFor(run);
-  frames(run, 1);
-  assert.equal(core.scoreFor(run), score);
 });
 
 test("saltar acima de um obstáculo não é colisão", () => {
@@ -148,4 +156,32 @@ test("cada cenário recebe os obstáculos e bônus da viagem", () => {
     assert.equal(run.obstacles[0].type,obstacle);
     assert.equal(run.pickups[0].type,bonus);
   }
+});
+
+test("100 passaportes concedem uma vida extra, sem bônus duplicado", () => {
+  const run = running();
+  run.nextObstacle = run.nextPickup = run.nextPassport = run.nextShield = 1e9;
+  for (let i = 0; i < 100; i++) {
+    run.pickups.push({x:136,y:35,type:"passport",value:50});
+    core.advanceRun(run, 1/120, () => .5);
+  }
+  assert.equal(run.passports, 100);
+  assert.equal(run.lives, 4);
+  assert.equal(run.bonus, 5000);
+  core.advanceRun(run, 1/120, () => .5);
+  assert.equal(run.lives, 4);
+});
+
+test("escudo preserva vidas durante colisões e expira", () => {
+  const run = running();
+  run.nextObstacle = run.nextPickup = run.nextPassport = run.nextShield = 1e9;
+  run.pickups.push({x:136,y:35,type:"shield",value:0});
+  core.advanceRun(run, 1/120, () => .5);
+  assert.ok(run.shieldFor > 5);
+  run.obstacles.push({x:125,width:34,height:40,type:"barrier"});
+  core.advanceRun(run, 1/120, () => .5);
+  assert.equal(run.lives, 3);
+  run.shieldFor = 0;
+  core.advanceRun(run, 1/120, () => .5);
+  assert.equal(run.lives, 2);
 });
