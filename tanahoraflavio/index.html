@@ -108,10 +108,10 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         <section class="music" id="musica" aria-label="Reprodução da música">
           <div class="music-copy">
             <h2>♫ Música da contagem</h2>
-            <button type="button" class="audio-button" id="music-toggle" aria-controls="music-panel" aria-expanded="false">▶ Tocar música com som</button>
-            <p class="audio-status" id="audio-status" role="status" aria-live="polite">Toque para ouvir a música aqui no site.</p>
+            <button type="button" class="audio-button" id="music-toggle" aria-controls="music-panel" aria-expanded="true">🔊 Ativar som</button>
+            <p class="audio-status" id="audio-status" role="status" aria-live="polite">Abrindo a música automaticamente…</p>
           </div>
-          <div class="music-panel" id="music-panel" hidden>
+          <div class="music-panel" id="music-panel">
             <div class="audio-extra-controls" aria-label="Controles de reprodução">
               <button type="button" id="music-mute" class="audio-button secondary" aria-pressed="false">🔇 Silenciar</button>
               <button type="button" id="music-close" class="audio-button secondary">■ Fechar e parar</button>
@@ -183,8 +183,9 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
       else {$("share-message").textContent="Copie o endereço da barra do navegador.";}
     } catch(e) {if(e.name!=="AbortError")$("share-message").textContent="Copie o endereço da barra do navegador.";}
   });
-  // A API fica pronta antes do clique, mas só começa a tocar com player visível.
-  // Nunca usamos o vídeo do YouTube como um player de áudio invisível.
+  // O YouTube deve permanecer visível durante a reprodução.
+  // Tenta iniciar com som. Se o navegador bloquear, tenta autoplay mudo
+  // e mostra um botão de ativação de áudio (uma interação do visitante).
   const playButton=$("music-toggle");
   const muteButton=$("music-mute");
   const closeButton=$("music-close");
@@ -193,66 +194,68 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
   const iframe=$("music-iframe");
   let player=null;
   let ready=false;
-  let wantsPlay=false;
   let muted=false;
+  let triedMutedFallback=false;
+  let closedByUser=false;
+  let playRequestedBeforeReady=false;
   const showStatus=text=>{status.textContent=text;};
-  const updatePlayButton=playing=>{
-    playButton.textContent=playing?"⏸ Pausar música":"▶ Tocar música com som";
-  };
-  const updateMuteButton=()=>{
+  const isPlaying=()=>ready&&player&&player.getPlayerState()===YT.PlayerState.PLAYING;
+  const updateControls=()=>{
     muteButton.textContent=muted?"🔊 Ativar som":"🔇 Silenciar";
     muteButton.setAttribute("aria-pressed",String(muted));
+    if(panel.hidden)playButton.textContent="▶ Abrir e tocar música";
+    else if(isPlaying())playButton.textContent=muted?"🔊 Ativar som":"⏸ Pausar música";
+    else playButton.textContent="▶ Tocar música com som";
+    playButton.setAttribute("aria-expanded",String(!panel.hidden));
   };
-  function requestPlay(){
-    panel.hidden=false;
-    playButton.setAttribute("aria-expanded","true");
-    // O player deve estar visível antes do comando playVideo().
-    panel.scrollIntoView({block:"center",behavior:"instant"});
-    wantsPlay=true;
+  function playWithSound(){
+    if(panel.hidden)panel.hidden=false;
     if(!ready||!player){
-      showStatus("Carregando a música… se não iniciar, toque em ▶ no player.");
+      playRequestedBeforeReady=true;
+      showStatus("Carregando player… caso não inicie, use ▶ no vídeo.");
+      updateControls();
       return;
     }
     player.unMute();
-    player.setVolume(85);
+    player.setVolume(100);
     muted=false;
-    updateMuteButton();
     player.playVideo();
-    showStatus("Reprodução solicitada. Se o som não iniciar, toque em ▶ no vídeo.");
+    updateControls();
+    showStatus("Tentando tocar com som… Caso seja bloqueado, toque em ▶ no vídeo.");
   }
   playButton.addEventListener("click",()=>{
-    if(ready&&player&&!panel.hidden&&player.getPlayerState()===YT.PlayerState.PLAYING){
+    closedByUser=false;
+    if(panel.hidden){
+      playWithSound();
+    }else if(ready&&player&&isPlaying()&&!player.isMuted()){
       player.pauseVideo();
-      wantsPlay=false;
-      updatePlayButton(false);
       showStatus("Música pausada.");
+      updateControls();
     }else{
-      requestPlay();
+      playWithSound();
     }
   });
   muteButton.addEventListener("click",()=>{
-    if(!ready||!player){showStatus("O player ainda está carregando.");return}
-    if(player.isMuted()){
-      player.unMute();
-      player.setVolume(85);
-      muted=false;
-    }else{
+    if(!ready||!player){showStatus("O player ainda está carregando.");return;}
+    if(player.isMuted()) {
+      playWithSound();
+    }else {
       player.mute();
       muted=true;
+      updateControls();
+      showStatus("Som silenciado.");
     }
-    updateMuteButton();
-    showStatus(muted?"Som silenciado.":"Som ativado.");
   });
   closeButton.addEventListener("click",()=>{
-    wantsPlay=false;
+    closedByUser=true;
+    playRequestedBeforeReady=false;
     if(ready&&player)player.stopVideo();
     panel.hidden=true;
-    playButton.setAttribute("aria-expanded","false");
-    updatePlayButton(false);
-    showStatus("Música parada. Toque para ouvir novamente.");
+    updateControls();
+    showStatus("Música parada. Toque para abrir novamente.");
   });
-  // Usa a versão disponibilizada pela distribuidora no YouTube.
-  // O parâmetro origin acompanha o domínio atual, inclusive um futuro domínio próprio.
+  // Este vídeo tem publicação disponível no YouTube; nenhuma cópia de áudio
+  // é hospedada no repositório.
   iframe.src="https://www.youtube-nocookie.com/embed/RTMiC5WturY?enablejsapi=1&autoplay=0&mute=0&playsinline=1&controls=1&loop=1&playlist=RTMiC5WturY&rel=0&origin="+encodeURIComponent(location.origin);
   window.onYouTubeIframeAPIReady=()=>{
     player=new YT.Player("music-iframe",{
@@ -260,29 +263,42 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         onReady:event=>{
           ready=true;
           muted=event.target.isMuted();
-          updateMuteButton();
-          if(wantsPlay&&!panel.hidden)requestPlay();
+          updateControls();
+          if(!closedByUser&&!panel.hidden){
+            // Autoplay solicitado assim que o player carrega.
+            playRequestedBeforeReady=false;
+            playWithSound();
+          }
         },
         onStateChange:event=>{
           if(event.data===YT.PlayerState.PLAYING){
-            updatePlayButton(true);
             muted=event.target.isMuted();
-            updateMuteButton();
-            showStatus(muted?"Reproduzindo sem som. Toque em Ativar som.":"♫ Música reproduzindo.");
+            updateControls();
+            showStatus(muted?"O vídeo iniciou sem som. Toque em 🔊 Ativar som.":"♫ Música tocando com som.");
           }else if(event.data===YT.PlayerState.PAUSED){
-            updatePlayButton(false);
+            updateControls();
             showStatus("Música pausada.");
           }else if(event.data===YT.PlayerState.ENDED){
-            updatePlayButton(false);
+            updateControls();
           }
         },
-        onAutoplayBlocked:()=>{
-          updatePlayButton(false);
-          showStatus("Seu navegador bloqueou a reprodução. Toque em ▶ dentro do vídeo para iniciar com som.");
+        onAutoplayBlocked:event=>{
+          if(closedByUser||panel.hidden)return;
+          if(!triedMutedFallback){
+            triedMutedFallback=true;
+            event.target.mute();
+            muted=true;
+            updateControls();
+            showStatus("Som automático bloqueado. Tentando vídeo sem som… Toque em 🔊 Ativar som.");
+            event.target.playVideo();
+          }else{
+            updateControls();
+            showStatus("O navegador bloqueou a reprodução automática. Toque em 🔊 Ativar som ou em ▶ no vídeo.");
+          }
         },
         onError:()=>{
-          updatePlayButton(false);
-          showStatus("O YouTube não permitiu reproduzir aqui. Use o link Abrir no YouTube.");
+          updateControls();
+          showStatus("O YouTube não permitiu reproduzir aqui. Abra a música no YouTube pelo link abaixo.");
         }
       }
     });
@@ -290,7 +306,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
   const ytScript=document.createElement("script");
   ytScript.src="https://www.youtube.com/iframe_api";
   ytScript.async=true;
-  ytScript.onerror=()=>showStatus("Falha ao carregar o YouTube. Use o link para abrir a música.");
+  ytScript.onerror=()=>showStatus("Não foi possível carregar o YouTube. Use o link abaixo.");
   document.head.appendChild(ytScript);
 })();
 </script>
