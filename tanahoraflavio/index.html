@@ -91,7 +91,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
       <section class="hero" id="contagem" aria-labelledby="titulo">
         <div class="hero-intro">
         <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span> O relógio não para</p>
-        <h1 id="titulo">Tá na hora, <span class="title-name">Flávio…</span><span class="title-followup">de perder o <strong>foro privilegiado</strong> e <strong>ficar desempregado!</strong></span></h1>
+        <h1 id="titulo">Tá na hora, <span class="title-name">Flávio!</span></h1>
         </div>
         <div class="ring-wrap">
           <div class="progress-ring" id="progress-ring" role="img" aria-label="Porcentagem do intervalo restante para 1º de fevereiro de 2027">
@@ -101,7 +101,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
           <div class="ring-label">Não eleito</div>
         </div>
         <div class="count-content">
-        <h2 class="counter-label">Contagem para o fim do mandato</h2>
+        <h2 class="counter-label">Contagem para o fim do mandato</h2><p class="count-subtitle">de perder o foro privilegiado e ficar desempregado!</p>
         <div class="counter" role="timer" aria-label="Contagem regressiva">
           <div class="unit"><div class="digit" id="days">--</div><span class="unit-label">Dias</span></div>
           <div class="unit"><div class="digit" id="hours">--</div><span class="unit-label">Horas</span></div>
@@ -154,16 +154,16 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
       <section class="game-card" id="game" aria-labelledby="game-title">
         <div class="game-heading">
           <div><p class="eyebrow">Enquanto o tempo passa…</p><h2 id="game-title">Corre, Flávio! <span aria-hidden="true">↗</span></h2></div>
-          <span class="game-duration">Uma corrida · 5 cenários</span>
+          <span class="game-duration">5 destinos · corrida sem fim</span>
         </div>
-        <p class="game-description">Uma fuga fictícia de Brasília à Casa Branca. Pule os obstáculos e pegue os bônus: o cenário muda, a corrida continua.</p>
-        <ol class="game-route" aria-label="Rota da corrida">
-          <li class="is-current" data-stage="0" aria-current="step"><span class="route-number">01</span><span>Brasília <small>Brasil</small></span></li>
-          <li data-stage="1"><span class="route-number">02</span><span>Rio <small>Brasil</small></span></li>
-          <li data-stage="2"><span class="route-number">03</span><span>Argentina <small>Buenos Aires</small></span></li>
-          <li data-stage="3"><span class="route-number">04</span><span>Flórida <small>EUA</small></span></li>
+        <p class="game-description">Uma viagem satírica por cinco cenários. Pule, colete passaportes e ganhe vidas extras.</p>
+        <details class="game-itinerary"><summary>Ver os 5 destinos e pontos turísticos</summary><ol class="game-route" aria-label="Rota da corrida">
+          <li class="is-current" data-stage="0" aria-current="step"><span class="route-number">01</span><span>Brasília <small>Congresso Nacional</small></span></li>
+          <li data-stage="1"><span class="route-number">02</span><span>Rio <small>Cristo Redentor e Pão de Açúcar</small></span></li>
+          <li data-stage="2"><span class="route-number">03</span><span>Argentina <small>Obelisco de Buenos Aires</small></span></li>
+          <li data-stage="3"><span class="route-number">04</span><span>Flórida <small>Miami Beach</small></span></li>
           <li data-stage="4"><span class="route-number">05</span><span>Casa Branca <small>Washington, EUA</small></span></li>
-        </ol>
+        </ol></details>
         <div class="game-stage-header">
           <div><span id="game-phase">Cenário 1 de 5</span><strong id="game-stage-name">Brasília</strong></div>
           <span class="game-stage-clock" id="game-stage-time">20 s para Rio</span>
@@ -171,9 +171,10 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         <p class="game-stage-mission" id="game-stage-mission">Pule as barreiras e colete milhas para seguir viagem.</p>
         <div class="game-scoreboard" aria-label="Placar">
           <div><span>Pontos</span><strong id="game-score">0000</strong></div>
-          <div><span>Seu recorde</span><strong id="game-best">0000</strong></div>
+          <div><span>Vidas</span><strong id="game-lives">3</strong></div>
           <div><span>Tempo</span><strong id="game-time">00:00</strong></div>
         </div>
+        <div class="game-passport-hud" aria-label="Progresso de passaportes para ganhar vida extra"><div><span>🛂 Passaportes <strong id="game-passports">0</strong></span><span>Faltam <strong id="game-passport-next">100</strong> para +1 vida</span></div><div class="passport-track"><span id="game-passport-progress"></span></div><small id="game-protection" role="status" aria-live="polite"></small></div>
         <div class="game-viewport">
           <canvas id="runner-canvas" width="900" height="300" tabindex="0" role="img" aria-label="Pista do jogo Corre, Flávio!" aria-describedby="game-instructions">Seu navegador não oferece Canvas. A contagem regressiva continua disponível acima.</canvas>
           <div class="game-overlay" id="game-overlay"><strong id="game-overlay-title">Passaporte na mão?</strong><p id="game-overlay-copy">Tem um longo caminho até o portão de embarque.</p></div>
@@ -188,7 +189,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         <p class="game-status" id="game-status" role="status" aria-live="polite">Tudo pronto. A corrida começa quando você quiser.</p>
         <details class="game-help"><summary>Como jogar e ganhar pontos</summary>
         <p class="game-instructions" id="game-instructions">Toque na pista ou em <strong>Pular</strong>. No teclado: <kbd>Espaço</kbd> / <kbd>↑</kbd> para pular e <kbd>P</kbd> para pausar.</p>
-        <div class="game-legend"><span><i class="legend-obstacle" aria-hidden="true"></i> Desvie de barreiras, malas e papéis.</span><span><i class="legend-bonus" aria-hidden="true"></i> Milhas e notas +25 · Passaporte +50</span></div>
+        <div class="game-legend"><span><i class="legend-obstacle" aria-hidden="true"></i> Obstáculos tiram 1 vida; proteção por 2 s.</span><span><i class="legend-bonus" aria-hidden="true"></i> Milhas e notas +25 · Passaporte +50 · 100 passaportes = +1 vida · Escudo raro por 6 s</span></div><p class="game-instructions">Recorde nesta sessão/navegador: <strong id="game-best">0000</strong> pontos. Você começa com 3 vidas.</p>
         </details>
         <p class="game-fiction">Jogo de humor. Roteiro, fuga e itens são fictícios. Seu recorde fica apenas neste navegador.</p>
         <noscript>Habilite o JavaScript para jogar.</noscript>
