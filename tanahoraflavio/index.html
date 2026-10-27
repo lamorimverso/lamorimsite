@@ -54,6 +54,10 @@ body.finished .done{display:block}
 .music h2{flex:1 1 auto;margin:0;font-size:14px;text-align:left}
 .audio-button{border:0;background:var(--purple);color:#fff;font-size:13px;font-weight:800;border-radius:10px;padding:12px 16px;cursor:pointer}
 .audio-button:hover{background:var(--dark)}
+.audio-button.secondary{background:#eee6f5;color:var(--dark);padding:10px 13px}
+.audio-button.secondary:hover{background:#e4d7ef}
+.audio-extra-controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+.audio-extra-controls .audio-button{font-size:12px}
 .audio-button:focus-visible,.share:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid #b18ad4;outline-offset:3px}
 .audio-status{flex-basis:100%;font-size:11px;color:var(--muted);line-height:1.4;margin:0}
 .audio-status:empty{display:none}
@@ -101,16 +105,25 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         <div class="done" id="finished">O prazo do mandato chegou ao fim.</div>
         <p class="target">Fim do mandato: 31/01/2027 · Contagem até 01/02/2027, 00h (Brasília)</p>
         <p class="legal-note">A perda do cargo não encerra automaticamente o foro em todos os processos. <a href="https://noticias.stf.jus.br/postsnoticias/acoes-contra-autoridades-permanecem-no-stf-mesmo-apos-saida-do-cargo/" target="_blank" rel="noopener noreferrer">Entenda no STF ↗</a></p>
-        <section class="music" id="musica" aria-label="Reprodução de música">
+        <section class="music" id="musica" aria-label="Reprodução da música">
           <div class="music-copy">
-            <h2>♫ Música</h2>
+            <h2>♫ Música da contagem</h2>
             <button type="button" class="audio-button" id="music-toggle" aria-controls="music-panel" aria-expanded="false">▶ Tocar música com som</button>
-            <p class="audio-status" id="audio-status" role="status" aria-live="polite"></p>
+            <p class="audio-status" id="audio-status" role="status" aria-live="polite">Toque para ouvir a música aqui no site.</p>
           </div>
           <div class="music-panel" id="music-panel" hidden>
-            <div id="music-video" class="music-frame"></div>
-            <p class="music-caption">Se o navegador não iniciar o áudio, toque em ▶ no próprio vídeo.
-              <a href="https://www.youtube.com/watch?v=NarAz1hRvbI" target="_blank" rel="noopener noreferrer">Abrir no YouTube ↗</a>
+            <div class="audio-extra-controls" aria-label="Controles de reprodução">
+              <button type="button" id="music-mute" class="audio-button secondary" aria-pressed="false">🔇 Silenciar</button>
+              <button type="button" id="music-close" class="audio-button secondary">■ Fechar e parar</button>
+            </div>
+            <div class="music-frame">
+              <iframe id="music-iframe" width="480" height="270" title="Tá na Hora do Jair Já Ir Embora — reprodução pelo YouTube"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowfullscreen></iframe>
+            </div>
+            <p class="music-caption">Música: Tiago Doidão e Juliano Maderada. Se o navegador bloquear o som, use ▶ no próprio vídeo.
+              <a href="https://www.youtube.com/watch?v=RTMiC5WturY" target="_blank" rel="noopener noreferrer">Abrir no YouTube ↗</a>
             </p>
           </div>
         </section>
@@ -170,36 +183,115 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
       else {$("share-message").textContent="Copie o endereço da barra do navegador.";}
     } catch(e) {if(e.name!=="AbortError")$("share-message").textContent="Copie o endereço da barra do navegador.";}
   });
-  // O YouTube proíbe reproduzir seus vídeos como áudio oculto.
-  // A reprodução só é solicitada quando o player completo estiver visível.
-  const button=$("music-toggle"), panel=$("music-panel"), container=$("music-video"),status=$("audio-status");
-  button.addEventListener("click", () => {
-    if(!panel.hidden){
-      // Nunca mantenha um player invisível tocando: ao recolher, removemos o iframe.
-      container.replaceChildren();
-      panel.hidden=true;
-      button.textContent="▶ Tocar música com som";
-      button.setAttribute("aria-expanded","false");
-      status.textContent="";
+  // A API fica pronta antes do clique, mas só começa a tocar com player visível.
+  // Nunca usamos o vídeo do YouTube como um player de áudio invisível.
+  const playButton=$("music-toggle");
+  const muteButton=$("music-mute");
+  const closeButton=$("music-close");
+  const panel=$("music-panel");
+  const status=$("audio-status");
+  const iframe=$("music-iframe");
+  let player=null;
+  let ready=false;
+  let wantsPlay=false;
+  let muted=false;
+  const showStatus=text=>{status.textContent=text;};
+  const updatePlayButton=playing=>{
+    playButton.textContent=playing?"⏸ Pausar música":"▶ Tocar música com som";
+  };
+  const updateMuteButton=()=>{
+    muteButton.textContent=muted?"🔊 Ativar som":"🔇 Silenciar";
+    muteButton.setAttribute("aria-pressed",String(muted));
+  };
+  function requestPlay(){
+    panel.hidden=false;
+    playButton.setAttribute("aria-expanded","true");
+    // O player deve estar visível antes do comando playVideo().
+    panel.scrollIntoView({block:"center",behavior:"instant"});
+    wantsPlay=true;
+    if(!ready||!player){
+      showStatus("Carregando a música… se não iniciar, toque em ▶ no player.");
       return;
     }
-    // Primeiro torna o player visível; depois tenta iniciar a música.
-    // Autoplay com áudio depende da política do navegador (especialmente no Android).
-    panel.hidden=false;
-    button.setAttribute("aria-expanded","true");
-    button.textContent="■ Parar música";
-    const frame=document.createElement("iframe");
-    frame.title="Tá na Hora do Jair Já Ir Embora — YouTube";
-    frame.allow="autoplay; encrypted-media; picture-in-picture";
-    frame.allowFullscreen=true;
-    frame.referrerPolicy="strict-origin-when-cross-origin";
-    frame.loading="eager";
-    frame.src="https://www.youtube-nocookie.com/embed/NarAz1hRvbI?autoplay=1&mute=0&playsinline=1&controls=1&loop=1&playlist=NarAz1hRvbI&rel=0";
-    container.replaceChildren(frame);
-    // Exibir o vídeo evita tentar reproduzir quando ele está fora da área visível.
-    panel.scrollIntoView({block:"center",behavior:"instant"});
-    status.textContent="Player aberto. Se não ouvir, pressione ▶ no vídeo.";
+    player.unMute();
+    player.setVolume(85);
+    muted=false;
+    updateMuteButton();
+    player.playVideo();
+    showStatus("Reprodução solicitada. Se o som não iniciar, toque em ▶ no vídeo.");
+  }
+  playButton.addEventListener("click",()=>{
+    if(ready&&player&&!panel.hidden&&player.getPlayerState()===YT.PlayerState.PLAYING){
+      player.pauseVideo();
+      wantsPlay=false;
+      updatePlayButton(false);
+      showStatus("Música pausada.");
+    }else{
+      requestPlay();
+    }
   });
+  muteButton.addEventListener("click",()=>{
+    if(!ready||!player){showStatus("O player ainda está carregando.");return}
+    if(player.isMuted()){
+      player.unMute();
+      player.setVolume(85);
+      muted=false;
+    }else{
+      player.mute();
+      muted=true;
+    }
+    updateMuteButton();
+    showStatus(muted?"Som silenciado.":"Som ativado.");
+  });
+  closeButton.addEventListener("click",()=>{
+    wantsPlay=false;
+    if(ready&&player)player.stopVideo();
+    panel.hidden=true;
+    playButton.setAttribute("aria-expanded","false");
+    updatePlayButton(false);
+    showStatus("Música parada. Toque para ouvir novamente.");
+  });
+  // Usa a versão disponibilizada pela distribuidora no YouTube.
+  // O parâmetro origin acompanha o domínio atual, inclusive um futuro domínio próprio.
+  iframe.src="https://www.youtube-nocookie.com/embed/RTMiC5WturY?enablejsapi=1&autoplay=0&mute=0&playsinline=1&controls=1&loop=1&playlist=RTMiC5WturY&rel=0&origin="+encodeURIComponent(location.origin);
+  window.onYouTubeIframeAPIReady=()=>{
+    player=new YT.Player("music-iframe",{
+      events:{
+        onReady:event=>{
+          ready=true;
+          muted=event.target.isMuted();
+          updateMuteButton();
+          if(wantsPlay&&!panel.hidden)requestPlay();
+        },
+        onStateChange:event=>{
+          if(event.data===YT.PlayerState.PLAYING){
+            updatePlayButton(true);
+            muted=event.target.isMuted();
+            updateMuteButton();
+            showStatus(muted?"Reproduzindo sem som. Toque em Ativar som.":"♫ Música reproduzindo.");
+          }else if(event.data===YT.PlayerState.PAUSED){
+            updatePlayButton(false);
+            showStatus("Música pausada.");
+          }else if(event.data===YT.PlayerState.ENDED){
+            updatePlayButton(false);
+          }
+        },
+        onAutoplayBlocked:()=>{
+          updatePlayButton(false);
+          showStatus("Seu navegador bloqueou a reprodução. Toque em ▶ dentro do vídeo para iniciar com som.");
+        },
+        onError:()=>{
+          updatePlayButton(false);
+          showStatus("O YouTube não permitiu reproduzir aqui. Use o link Abrir no YouTube.");
+        }
+      }
+    });
+  };
+  const ytScript=document.createElement("script");
+  ytScript.src="https://www.youtube.com/iframe_api";
+  ytScript.async=true;
+  ytScript.onerror=()=>showStatus("Falha ao carregar o YouTube. Use o link para abrir a música.");
+  document.head.appendChild(ytScript);
 })();
 </script>
 </body>
