@@ -103,7 +103,8 @@ body {
 }
 .target { margin: 16px 0 0; font-size: 11px; color: var(--muted); }
 .ring-wrap {
-  width: auto;
+  width: 100%;
+  align-self: stretch;
   height: 50px;
   min-height: 0;
   margin: 0;
