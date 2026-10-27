@@ -243,3 +243,29 @@ test('100 passaportes concedem +1 vida e a corrida permanece infinita', async ()
     assert.deepEqual(errors,[]);
   } finally { await context.close(); }
 });
+
+test('interface clean mantém a contagem prioritária e o jogo acessível no celular e desktop', async () => {
+  const {context,page,errors} = await open();
+  try {
+    for (const width of [320,390,768,1440]) {
+      await page.setViewportSize({width,height:900});
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `overflow em ${width}px`);
+      const counter = await page.locator('.counter').boundingBox();
+      const portrait = await page.locator('.progress-ring').boundingBox();
+      assert.ok(counter && portrait);
+      if (width <= 760) assert.ok(counter.y < portrait.y, `contagem deve vir antes do retrato em ${width}px`);
+      const play = await page.locator('.hero-play').boundingBox();
+      assert.ok(play.height >= 44 && play.width >= 44);
+      assert.equal(await page.locator('.game-itinerary').evaluate(x => x.open),false);
+      assert.equal(await page.locator('.game-help').evaluate(x => x.open),false);
+      const game = await page.locator('#runner-canvas').boundingBox();
+      const stage = await page.locator('.game-topline').boundingBox();
+      assert.ok(stage.y < game.y, `HUD e cenário devem anteceder a pista em ${width}px`);
+    }
+    await page.locator('.hero-play').click();
+    assert.ok(await page.locator('#game').isVisible());
+    assert.equal(await page.locator('#music-toggle').count(),1);
+    assert.equal(await page.locator('#share').count(),1);
+    assert.deepEqual(errors,[]);
+  } finally { await context.close(); }
+});
