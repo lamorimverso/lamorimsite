@@ -21,9 +21,11 @@ jobs:
           node-version: '22'
       - name: Install Playwright
         run: npm install --no-save --ignore-scripts playwright@1.56.1
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Verify preinstalled Chrome
+        run: test -x /usr/bin/google-chrome
       - name: Test runner and desktop/mobile UI
+        env:
+          PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/google-chrome
         run: node --test tests/*.test.*
       - name: Capture desktop and mobile screens
         if: success()
@@ -31,8 +33,8 @@ jobs:
           mkdir -p ux-captures
           python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/site-http.log 2>&1 &
           for i in $(seq 1 20); do if curl -fsS http://127.0.0.1:8765/tanahoraflavio/ >/dev/null; then break; fi; sleep 1; done
-          npx playwright screenshot --browser chromium --viewport-size "390,844" --wait-for-timeout 1000 http://127.0.0.1:8765/tanahoraflavio/ ux-captures/mobile-390.png
-          npx playwright screenshot --browser chromium --viewport-size "1440,900" --wait-for-timeout 1000 http://127.0.0.1:8765/tanahoraflavio/ ux-captures/desktop-1440.png
+          npx playwright screenshot --channel chrome --viewport-size "390,844" --wait-for-timeout 1000 http://127.0.0.1:8765/tanahoraflavio/ ux-captures/mobile-390.png
+          npx playwright screenshot --channel chrome --viewport-size "1440,900" --wait-for-timeout 1000 http://127.0.0.1:8765/tanahoraflavio/ ux-captures/desktop-1440.png
       - uses: actions/upload-artifact@v4
         if: success()
         with:
