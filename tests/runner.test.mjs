@@ -312,17 +312,23 @@ test("o primeiro chefe só aparece ao alcançar 1.500 pontos", () => {
   assert.equal(run.nextBossScore,core.BOSS_SCORE_STEP);
 });
 
-test("as cinco rodadas de chefes terminam em Lula supremo e o ciclo volta mais forte", () => {
-  const names=["pf","xandao","janones","army","lula"];
-  for(let i=0;i<10;i++){
+test("oito chefes em ordem, com Lula supremo no final de cada ciclo", () => {
+  const names=["pf","xandao","janones","army","haddad","boulos","dino","lula"];
+  assert.deepEqual(core.BOSS_ROSTER,names);
+  for(let i=0;i<names.length*3;i++){
     const c=core.bossAtRound(i);
-    assert.equal(c.foe.type,names[i%5]);
-    assert.equal(c.level,Math.floor(i/5)+1);
-    if(i%5===4){assert.equal(c.supreme,true); assert.ok(c.attacks>core.bossAtRound(i-1).attacks);}
+    assert.equal(c.foe.type,names[i%8]);
+    assert.equal(c.level,Math.floor(i/8)+1);
+    if(i%8===7){assert.equal(c.supreme,true);assert.ok(c.attacks>core.bossAtRound(i-1).attacks);}
     else assert.equal(c.supreme,false);
-    assert.ok(c.interval>=1.18,"janela de salto segura");
+    assert.ok(c.interval>=1.18,"intervalo justo");
+    assert.ok(c.attacks<=9,"limite de ataques");
+    assert.ok(c.foe.height<=58,"saltável");
   }
-  assert.ok(core.bossAtRound(9).attacks>core.bossAtRound(4).attacks);
+  assert.ok(core.bossAtRound(15).attacks>=core.bossAtRound(7).attacks);
+  for(const [secs,type] of [[0,"pf"],[15,"xandao"],[30,"janones"],[45,"army"],[60,"lula"]]){
+    assert.equal(core.pursuitAt(secs).type,type,"perseguição comum permanece");
+  }
 });
 
 test("chefe avisa antes do primeiro ataque e substitui a chuva de obstáculos comuns", () => {
@@ -378,7 +384,7 @@ test("vida extra por 100 passaportes permanece independente dos chefes", () => {
 
 test("vencer Lula concede um escudo e abre o próximo ciclo sem finalizar a corrida", () => {
   const run=running();
-  run.bossesDefeated=4;run.nextBossScore=5*core.BOSS_SCORE_STEP;
+  run.bossesDefeated=7;run.nextBossScore=8*core.BOSS_SCORE_STEP;
   run.bonus=run.nextBossScore;run.nextObstacle=run.nextPickup=run.nextPassport=1e8;
   core.advanceRun(run,1/120,()=>.5);
   assert.equal(run.boss.type,"lula");
@@ -387,7 +393,41 @@ test("vencer Lula concede um escudo e abre o próximo ciclo sem finalizar a corr
   for(let i=0;i<120*25&&run.boss;i++)core.advanceRun(run,1/120,()=>.5);
   assert.equal(run.boss,null);
   assert.equal(run.status,"running");
-  assert.equal(run.bossesDefeated,5);
+  assert.equal(run.bossesDefeated,8);
   assert.equal(run.extraChance,true);
   assert.equal(core.bossAtRound(run.bossesDefeated).level,2);
+});
+
+test("Haddad, Boulos e Dino aparecem nos marcos e seus ataques podem ser vencidos", () => {
+  for(const [index,type] of [[4,"haddad"],[5,"boulos"],[6,"dino"]]){
+    const run=running();
+    run.bossesDefeated=index;
+    run.nextBossScore=(index+1)*core.BOSS_SCORE_STEP;
+    run.bonus=run.nextBossScore;
+    run.nextObstacle=run.nextPickup=run.nextPassport=100000;
+    core.advanceRun(run,1/120,()=>.5);
+    assert.equal(run.boss.type,type);
+    assert.equal(run.boss.level,1);
+    assert.equal(run.boss.supreme,false);
+    assert.ok(run.boss.nextAttack>1);
+    run.graceFor=100;
+    for(let i=0;i<120*26&&run.boss;i++)core.advanceRun(run,1/120,()=>.5);
+    assert.equal(run.boss,null);
+    assert.equal(run.bossesDefeated,index+1);
+    assert.equal(run.nextBossScore,(index+2)*core.BOSS_SCORE_STEP);
+    assert.equal(run.status,"running");
+  }
+});
+
+test("Lula encerra sempre a sequência de oito chefes em todos os níveis", () => {
+  for(let level=1;level<=5;level++){
+    const last=core.bossAtRound(level*8-1);
+    const first=core.bossAtRound(level*8);
+    assert.equal(last.foe.type,"lula");
+    assert.equal(last.supreme,true);
+    assert.equal(last.level,level);
+    assert.equal(first.foe.type,"pf");
+    assert.equal(first.supreme,false);
+    assert.equal(first.level,level+1);
+  }
 });

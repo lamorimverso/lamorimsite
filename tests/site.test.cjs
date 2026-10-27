@@ -406,3 +406,30 @@ test("HUD do chefe surge por pontuação e some ao vencer sem poluir a pista", a
     assert.deepEqual(errors,[]);
   }finally{await context.close();}
 });
+
+test("os novos chefes aparecem no HUD sem mudar o visual limpo da página", async () => {
+  const {context,page,errors}=await openWithRun();
+  try {
+    await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+    for(const [index,name] of [[4,"Fernando Haddad"],[5,"Guilherme Boulos"],[6,"Flávio Dino"],[7,"Lula"]]){
+      await page.evaluate(index=>{
+        const run=globalThis.__testRun;
+        run.boss=null;
+        run.obstacles=[];
+        run.bossesDefeated=index;
+        run.nextBossScore=(index+1)*1500;
+        run.bonus=(index+1)*1500;
+        run.bossCooldown=0;
+        run.graceFor=500;
+        run.nextObstacle=run.nextPickup=run.nextPassport=100000;
+      },index);
+      await page.waitForFunction(name=>document.getElementById('game-boss-name').textContent.includes(name),name);
+      assert.equal(await page.locator('#game-boss').isVisible(),true);
+      assert.equal(await page.locator('.game-help').isVisible(),false);
+      assert.equal(await page.locator('.game-itinerary').isVisible(),false);
+      assert.equal(await page.locator('#runner-canvas').isVisible(),true);
+    }
+    assert.equal(await page.locator('#game').getAttribute('data-boss'),'lula');
+    assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+});
