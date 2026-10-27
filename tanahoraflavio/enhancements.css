@@ -373,3 +373,9 @@ button:focus-visible,.hero-play:focus-visible,.nav-game:focus-visible,.game-itin
  .game-scoreboard{gap:6px}
  .game-scoreboard strong{font-size:21px}
 }
+
+/* No mobile, a porcentagem aparece ao lado do retrato, sem disputar o espaço dos números. */
+@media(max-width:760px){
+ .progress-ring .percent-badge{position:absolute;left:calc(100% + 14px);top:7px;bottom:auto;transform:none;min-width:122px;max-width:calc(100vw - 170px);margin:0;padding:0;border:0;box-shadow:none;background:transparent}
+ .progress-ring .percent-badge small{white-space:nowrap}
+}
