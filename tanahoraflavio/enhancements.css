@@ -182,3 +182,8 @@ button:focus-visible,#runner-canvas:focus-visible{outline:3px solid #ac84d1;outl
  .game-scoreboard strong{font-size:21px}
  .game-passport-hud>div:first-child{font-size:11px}
 }
+
+/* Indicador secundário discreto: deixa clara a progressão sem poluir o jogo. */
+.game-stage-header .game-difficulty{display:block;margin-top:6px;font-size:12px;line-height:1.5;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.game-stage-header>div{min-width:0}
+@media(max-width:420px){.game-stage-clock{font-size:11px}.game-stage-header .game-difficulty{font-size:11px}}
