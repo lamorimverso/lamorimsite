@@ -40,7 +40,7 @@ function initRunner() {
     $("game-passport-progress").style.width = `${run.passports % 100}%`;
     $("game-phase").textContent = `Cenário ${stage.index + 1} de ${STAGES.length}`;
     $("game-stage-name").textContent = stage.name;
-    $("game-difficulty").textContent = `Risco ${difficulty.level} · ${Math.floor(run.distance / 10).toLocaleString("pt-BR")} m virtuais`;
+    $("game-difficulty").textContent = `Risco ${difficulty.level} · ${Math.floor(run.distance / 10).toLocaleString("pt-BR")} m`;
     const remaining = Math.max(0, Math.ceil((stage.index + 1) * SCENE_SECONDS - run.elapsed));
     $("game-stage-time").textContent = stage.index < STAGES.length - 1 ? `${remaining} s para ${STAGES[stage.index + 1].short}` : "Corrida sem fim";
     $("game-best").textContent = String(best).padStart(4, "0");
@@ -52,6 +52,7 @@ function initRunner() {
     $("game-progress").firstElementChild.style.width = `${Math.min(100, sceneElapsed / SCENE_SECONDS * 100)}%`;
     section.dataset.runState = run.status;
     section.dataset.power = power;
+    section.dataset.chance = run.extraChance ? "held" : "none";
     $("game-threat").textContent = `${pursuit.index + 1}/5 · ${pursuit.name}`;
     $("game-power").textContent = power === "invisible" ? `Invisível · ${Math.ceil(run.invisibleFor)} s` : power === "recovery" ? `Recuperando · ${Math.ceil(run.graceFor)} s` : "Sem efeito ativo";
     $("game-chance").textContent = run.extraChance ? "1 guardada" : "0 guardada";
@@ -61,8 +62,8 @@ function initRunner() {
     $("game-start").textContent = run.status === "ready" ? "Começar corrida" : run.status === "over" ? "Tentar de novo" : "Recomeçar corrida";
     $("game-overlay").hidden = run.status === "running";
     const overlays = {
-      ready: ["Passaporte na mão?", "Tem um longo caminho até o portão de embarque."],
-      paused: ["Pausa no embarque", "Sua corrida está guardada. Continue quando quiser."],
+      ready: ["Pronto para correr?", "Pule e sobreviva."],
+      paused: ["Pausado", "Continue quando quiser."],
       over: ["Pego pela Polícia Federal!", `A fuga fictícia acabou. ${score} pontos · ${run.passports} passaportes. Tente novamente!`]
     };
     if (overlays[run.status]) {
