@@ -1,4 +1,4 @@
-import { WORLD, PLAYER, STAGES, SCENE_SECONDS, createRun, startRun, jumpRun, togglePause, advanceRun, stageAt, scoreFor } from "./runner-core.mjs?v=20261027-continuous1";
+import { WORLD, PLAYER, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, togglePause, advanceRun, stageAt, scoreFor } from "./runner-core.mjs?v=20261027-continuous1";
 
 function initRunner() {
   const $ = id => document.getElementById(id);
@@ -25,11 +25,13 @@ function initRunner() {
 
   function updateUI() {
     const stage = stageAt(run.elapsed), score = scoreFor(run);
+    const difficulty = difficultyAt(run.distance);
     const phase = `Cenário ${stage.index + 1} de ${STAGES.length}`;
     const remaining = Math.max(0, Math.ceil((stage.index + 1) * SCENE_SECONDS - run.elapsed));
     $("game-phase").textContent = phase;
     $("game-stage-name").textContent = stage.name;
     $("game-stage-mission").textContent = stage.mission;
+    $("game-difficulty").textContent = `Risco ${difficulty.level} · ${Math.floor(run.distance / 10).toLocaleString("pt-BR")} m virtuais`;
     $("game-stage-time").textContent = stage.index < STAGES.length - 1 ? `${remaining} s para ${STAGES[stage.index + 1].short}` : "Corrida contínua";
     if ((run.status === "over" || run.status === "paused") && score > best) {
       best = score;
@@ -58,7 +60,7 @@ function initRunner() {
     const overlays = {
       ready: ["Passaporte na mão?", "De Brasília à Casa Branca, em uma corrida contínua e fictícia."],
       paused: ["Pausa no embarque", "Sua corrida está guardada. Continue quando quiser."],
-      over: ["Barrado no caminho!", `${score} pontos · ${run.collected} ${run.collected === 1 ? "bônus coletado" : "bônus coletados"}. Bora tentar outra vez?`]
+      over: ["Pego pela Polícia Federal!", `${score} pontos · ${run.passports} passaportes. Fuga fictícia encerrada — tente novamente!`]
     };
     if (overlays[run.status]) {
       $("game-overlay-title").textContent = overlays[run.status][0];
