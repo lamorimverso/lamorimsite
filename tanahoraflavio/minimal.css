@@ -1,0 +1,278 @@
+/*
+ * Referência visual 1 — minimalista.
+ * Camada de apresentação deliberadamente isolada e reversível.
+ * Não copia código, imagens nem assets de terceiros.
+ */
+:root {
+  --purple: #55419a;
+  --dark: #35285c;
+  --ink: #22232b;
+  --muted: #696a74;
+  --line: #e8e8eb;
+  --pale: #f7f7f9;
+}
+html { scroll-padding-top: 16px; }
+body {
+  background: #fff;
+  color: var(--ink);
+  font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 570px; padding: 0 18px 28px; }
+.site-header {
+  margin: 0 0 12px;
+  padding: 13px 0 12px;
+  border-bottom: 1px solid var(--line);
+}
+.wordmark { color: var(--ink); font-size: 17px; font-weight: 750; letter-spacing: -.045em; }
+.wordmark > span:first-child { font-size: 21px; color: var(--purple); }
+.site-header nav .nav-game {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  border: 0;
+  padding: 6px 2px;
+  color: var(--dark);
+  font-size: 13px;
+  font-weight: 680;
+  background: transparent;
+}
+.hero, .game-card {
+  width: 100%;
+  margin: 0;
+  padding: 21px 0 25px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  text-align: left;
+}
+.hero { display: flex; flex-direction: column; gap: 15px; border-bottom: 1px solid var(--line); }
+.hero h1 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(34px, 6vw, 44px);
+  line-height: 1.05;
+  font-weight: 820;
+  letter-spacing: -.065em;
+}
+.hero h1 .title-name { color: var(--ink); }
+.counter-label { margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 600; }
+.count-satire {
+  margin: 0 0 19px;
+  max-width: none;
+  font-size: 14px;
+  line-height: 1.45;
+  letter-spacing: 0;
+  font-weight: 430;
+  color: var(--muted);
+}
+.count-satire strong { font-weight: 680; color: var(--dark); }
+.counter {
+  display: grid;
+  width: 100%;
+  max-width: none;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 0;
+  margin: 0;
+}
+.unit {
+  min-width: 0;
+  padding: 4px 4px 4px 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  text-align: center;
+}
+.unit:first-child { padding-left: 0; }
+.unit + .unit { border-left: 1px solid var(--line); }
+.digit {
+  font-size: clamp(29px, 5.5vw, 43px);
+  line-height: 1.12;
+  letter-spacing: -.06em;
+  font-weight: 780;
+  color: var(--ink);
+}
+.unit-label {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 530;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+.target { margin: 16px 0 0; font-size: 11px; color: var(--muted); }
+.ring-wrap {
+  width: auto;
+  height: 50px;
+  min-height: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+}
+.progress-ring {
+  position: relative;
+  width: 48px;
+  min-width: 48px;
+  padding: 2px;
+}
+.portrait { border: 2px solid white; }
+.progress-ring .percent-badge {
+  position: absolute;
+  left: calc(100% + 13px);
+  top: 5px;
+  bottom: auto;
+  min-width: 140px;
+  margin: 0;
+  padding: 0;
+  transform: none;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  text-align: left;
+}
+.percent-badge strong { font-size: 21px; color: var(--ink); font-weight: 750; }
+.percent-badge small { margin-top: 2px; font-size: 10px; color: var(--muted); }
+.hero-tools {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.hero-play {
+  display: flex;
+  min-height: 48px;
+  width: 100%;
+  padding: 12px 18px;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 9px;
+  border: 1px solid var(--dark);
+  background: var(--dark);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 720;
+  text-decoration: none;
+  box-shadow: none;
+}
+.hero-play:hover, .hero-play:focus-visible { background: #251c41; color: #fff; }
+.hero-utilities {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 8px;
+}
+.hero-utilities .music, .hero-utilities .share { width: 100%; min-width: 0; }
+.hero-utilities .audio-button, .hero-utilities .share {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 10px;
+  color: var(--dark);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 610;
+  box-shadow: none;
+}
+.hero-utilities .audio-button:hover:not(:disabled),
+.hero-utilities .share:hover { background: #f7f7fa; }
+.hero-utilities .share-message { grid-column: 1/-1; }
+.hero .audio-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.game-card { margin: 0; padding-top: 25px; border-bottom: 1px solid var(--line); }
+.game-heading { display: flex; align-items: baseline; justify-content: space-between; }
+.game-heading h2 {
+  font-size: 27px;
+  letter-spacing: -.052em;
+  line-height: 1.1;
+  font-weight: 785;
+  color: var(--ink);
+}
+.game-duration {
+  display: inline-flex;
+  flex: none;
+  justify-content: center;
+  align-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 19px;
+  font-weight: 500;
+}
+.game-topline { margin: 13px 0 13px; padding: 14px 0 0; border-top: 1px solid var(--line); }
+.game-stage-header { margin-bottom: 14px; gap: 8px; }
+.game-stage-header strong { font-size: 18px; color: var(--ink); }
+.game-stage-clock, #game-difficulty { font-size: 11px; font-weight: 500; color: var(--muted); }
+.game-scoreboard { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 9px; }
+.game-scoreboard span { color: var(--muted); font-size: 10px; }
+.game-scoreboard strong { color: var(--ink); font-size: 21px; }
+.game-passport-hud { margin: 0 0 9px; padding: 0; }
+.game-passport-hud > div:first-child { font-size: 11px; color: var(--muted); }
+.game-passport-hud strong { color: var(--ink); }
+.passport-track { height: 3px; margin-top: 7px; background: #eeeeef; }
+.passport-track > span { background: var(--purple); }
+.game-viewport { border-radius: 10px 10px 0 0; border-color: #e4e8e9; }
+.game-overlay { background: #ffffffdf; }
+.game-overlay strong { font-size: 24px; color: var(--ink); font-weight: 760; }
+.game-overlay p { color: var(--muted); font-size: 12px; }
+.game-overlay-badge { display: none; }
+.game-controls { margin: 12px 0 0; gap: 8px; }
+.game-controls button { min-height: 46px; font-size: 13px; border-radius: 9px; }
+.game-card:is([data-run-state="ready"],[data-run-state="over"]) #game-start {
+  background: var(--dark);
+  border-color: var(--dark);
+  color: #fff;
+  font-weight: 710;
+  width: 100%;
+}
+.game-card[data-run-state="running"] #game-jump { background: var(--dark); border-color: var(--dark); }
+.game-hud { padding: 0; margin: 11px 0 0; gap: 6px; border: 0; }
+.game-hud > div, .game-hud .pursuit-chip {
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 5px 9px;
+  border-radius: 7px;
+}
+.game-hud strong { color: var(--muted); font-size: 11px; }
+.game-hud .power-chip, .game-hud .chance-chip { display: none; }
+.game-card:is([data-power="invisible"],[data-power="recovery"]) .game-hud .power-chip,
+.game-card[data-chance="held"] .game-hud .chance-chip { display: inline-flex; }
+.game-instructions { font-size: 11px; margin-top: 10px; color: var(--muted); }
+.game-itinerary { margin-top: 16px; }
+.game-itinerary, .game-help, .game-guide { border-top: 1px solid var(--line); }
+.game-itinerary summary, .game-help summary, .game-guide summary {
+  padding: 12px 2px;
+  min-height: 44px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.game-itinerary summary::after { color: var(--muted); }
+.sources { margin: 3px 0 0; }
+.sources summary { display: flex; align-items: center; min-height: 44px; font-size: 12px; color: var(--muted); padding: 8px 2px; }
+.sources .bottom { grid-template-columns: 1fr; margin-bottom: 12px; }
+.panel { background: #fafafa; border-color: var(--line); }
+footer { padding: 17px 2px 22px; color: var(--muted); font-size: 10px; }
+button:focus-visible, .hero-play:focus-visible, a:focus-visible,
+summary:focus-visible, #runner-canvas:focus-visible { outline: 3px solid #a994c8; outline-offset: 3px; }
+@media (max-width:380px) {
+  .wrap { padding: 0 12px 24px; }
+  .hero, .game-card { padding-left: 0; padding-right: 0; }
+  .hero h1 { font-size: 34px; }
+  .digit { font-size: 28px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  *,*::before,*::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
