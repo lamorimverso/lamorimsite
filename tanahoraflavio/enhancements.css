@@ -410,3 +410,115 @@ button:focus-visible,.hero-play:focus-visible,.nav-game:focus-visible,.game-itin
  .hero h1{font-size:31px}
  .hero-utilities .audio-button,.hero-utilities .share{padding:9px 6px;font-size:12px}
 }
+
+
+/* Interface de coluna única em TODAS as telas, inclusive desktop.
+   É um patch de apresentação reversível; nada no motor do jogo é alterado. */
+.sr-only{
+ position:absolute!important;width:1px!important;height:1px!important;
+ padding:0!important;margin:-1px!important;overflow:hidden!important;
+ clip:rect(0,0,0,0)!important;clip-path:inset(50%)!important;
+ white-space:nowrap!important;border:0!important;
+}
+:root{--purple:#6940a8;--dark:#4a3074;--ink:#222330;--muted:#66697a;--line:#e8e9f1;--pale:#f7f5fa}
+body{background:#f7f8fb}
+.wrap{max-width:550px;margin:0 auto;padding:0 14px 30px}
+.site-header{margin:0 0 15px;padding:13px 2px;border-bottom:1px solid var(--line);gap:8px}
+.wordmark{font-size:19px}
+.site-header nav{gap:0}
+.site-header nav .nav-game{min-height:44px;border:0;padding:9px 5px;background:transparent;font-size:13px}
+.hero,.game-card{width:100%;margin:0;padding:22px 20px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 5px 20px #31274906;text-align:left}
+.hero{display:flex;flex-direction:column;gap:11px;align-items:stretch}
+.hero-intro,.count-content,.ring-wrap,.hero-tools{width:100%;min-width:0;margin:0}
+.hero h1{font-size:clamp(31px,6.8vw,36px);line-height:1.08;letter-spacing:-.055em;font-weight:820}
+.counter-label{font-size:12px;font-weight:650;line-height:1.35;color:var(--muted);margin:0 0 4px}
+.count-satire{font-size:14px;line-height:1.4;font-weight:500;color:var(--dark);margin:0 0 14px;max-width:none}
+.count-satire strong{font-weight:700}
+.counter{width:100%;max-width:none;margin:0;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.unit{padding:13px 3px 11px;border-radius:10px;background:#f6f3fa;border:1px solid #f0edf5}
+.digit{font-size:clamp(28px,6.5vw,35px);line-height:1.05;font-weight:800}
+.unit-label{font-size:10px;margin-top:6px;color:var(--muted)}
+.target{font-size:11px;line-height:1.4;margin:10px 0 0;color:var(--muted)}
+.ring-wrap{position:relative;display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:14px;height:62px;min-height:0;text-align:left}
+.progress-ring{position:relative;display:block;width:60px;min-width:60px;padding:3px;flex:none}
+.portrait{border-width:2px}
+.progress-ring .percent-badge{position:absolute;top:8px;left:calc(100% + 14px);bottom:auto;transform:none;min-width:128px;max-width:none;padding:0;margin:0;background:transparent;box-shadow:none;border:0;text-align:left}
+.percent-badge strong{font-size:22px;font-weight:800}
+.percent-badge small{font-size:10px;line-height:1.4;margin-top:3px;white-space:nowrap}
+.ring-label{display:none}
+.hero-tools{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:9px;border-top:1px solid var(--line);margin:0;padding-top:14px}
+.hero-play{display:flex;width:100%;min-height:46px;align-items:center;justify-content:center;gap:12px;text-decoration:none;font-size:14px;line-height:1.25;font-weight:750;padding:10px 18px;background:var(--purple);border-radius:10px;color:white}
+.hero-utilities{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;justify-content:stretch;gap:8px;width:100%}
+.hero-utilities .music,.hero-utilities .share{width:100%;margin:0;min-width:0}
+.hero-utilities .music-copy,.hero-utilities .audio-button{width:100%}
+.hero-utilities .audio-button,.hero-utilities .share{min-height:43px;padding:9px 6px;font-size:12px;font-weight:650;background:#fff;color:var(--dark);border:1px solid var(--line);border-radius:10px;white-space:normal}
+.hero-utilities .audio-button:disabled{color:#767486;background:#f9f9fb}
+.hero-utilities .music:has(.music-panel:not([hidden])){grid-column:1/-1}
+.hero-utilities .share-message{grid-column:1/-1;text-align:left}
+.hero .audio-status{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.sources{margin:13px 0 0}
+.sources summary{display:flex;min-height:43px;align-items:center;padding:10px 12px;font-size:12px;border-radius:8px;color:var(--muted)}
+.sources .bottom{grid-template-columns:1fr;gap:10px;margin:0 0 9px}
+.panel{padding:16px;border-radius:11px;box-shadow:none}
+.panel h2{font-size:13px}
+.panel p{font-size:12px}
+.game-card{margin-top:14px;padding:22px 20px}
+.game-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.game-heading h2{font-size:27px;line-height:1.15;letter-spacing:-.04em;margin:0}
+.game-duration{display:inline-flex;align-items:center;justify-content:center;width:29px;height:29px;flex:none;padding:0;border-radius:50%;background:#f4f0fa;color:var(--dark);font-size:23px;font-weight:650}
+.game-topline{display:block;padding:12px 0 0;margin:14px 0 12px;border-top:1px solid var(--line)}
+.game-stage-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 13px}
+.game-stage-header>div{min-width:0}
+.game-stage-header strong{font-size:19px;font-weight:770;letter-spacing:-.025em}
+#game-difficulty{display:block;margin:3px 0 0;font-size:11px;font-weight:500;color:var(--muted)}
+.game-stage-clock{display:inline-block;max-width:128px;margin:0;padding:0;text-align:right;white-space:normal;background:transparent;font-size:11px;font-weight:550;line-height:1.35;color:var(--muted)}
+.game-scoreboard{display:grid;width:100%;min-width:0;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:left;margin:0;padding:0}
+.game-scoreboard>div:last-child{text-align:right}
+.game-scoreboard span{display:block;font-size:10px;margin:0 0 3px;letter-spacing:0;color:var(--muted)}
+.game-scoreboard strong{font-size:22px;font-weight:800;line-height:1.1;letter-spacing:-.045em}
+.game-passport-hud{margin:0 0 10px;padding:0;border:0;border-radius:0;background:transparent}
+.game-passport-hud>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+.game-passport-hud strong{font-size:13px}
+.passport-track{margin-top:7px;height:4px;background:#efebf5}
+.game-viewport{border-radius:12px 12px 0 0}
+#runner-canvas{width:100%;height:auto;touch-action:manipulation}
+.game-overlay strong{font-size:clamp(21px,4.8vw,27px)}
+.game-overlay p{font-size:12px;line-height:1.4;margin-top:5px}
+.game-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0 0}
+.game-controls button{min-height:46px;padding:10px 9px;font-size:14px;border-radius:10px}
+.game-controls #game-start{grid-column:1/-1;width:100%;justify-self:stretch}
+.game-card[data-run-state="running"] #game-start{display:none}
+.game-card[data-run-state="paused"] #game-pause{grid-column:1/-1}
+.game-card:is([data-run-state="ready"],[data-run-state="over"]) #game-start{width:100%;min-width:0}
+.game-hud{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:11px 0 0;padding:0;border:0}
+.game-hud>div,.game-hud .pursuit-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;min-width:0;width:auto;background:#f7f5fb;border:1px solid #eeeaf3;border-radius:100px}
+.game-hud .pursuit-chip{grid-column:auto;justify-content:flex-start}
+.game-hud strong{font-size:11px;font-weight:650;color:var(--dark)}
+.game-hud .power-chip{display:none}
+.game-hud .chance-chip{display:none}
+.game-card:is([data-power="invisible"],[data-power="recovery"]) .game-hud .power-chip{display:inline-flex}
+.game-card[data-chance="held"] .game-hud .chance-chip{display:inline-flex}
+.game-instructions{margin:9px 0 0;font-size:11px;line-height:1.5;color:var(--muted)}
+.game-status.sr-only{color:var(--muted)}
+.game-itinerary,.game-help,.game-guide{margin:0;border-top:1px solid var(--line);padding:0}
+.game-itinerary{margin-top:13px}
+.game-itinerary summary,.game-help summary,.game-guide summary{min-height:44px;padding:11px 1px;font-size:12px;font-weight:650;color:var(--dark)}
+.game-itinerary .game-route{display:flex;flex-direction:column;margin:0 0 10px}
+.game-route li{padding:10px 12px;gap:8px;font-size:12px}
+.game-route li+li{border-left:0;border-top:1px solid var(--line)}
+.game-route small{font-size:10px}
+.game-help p,.game-guide p{font-size:12px;line-height:1.55}
+footer{padding:15px 5px 20px;font-size:11px;text-align:center;color:var(--muted)}
+@media(max-width:380px){
+ .wrap{padding:0 10px 24px}
+ .hero,.game-card{padding:19px 15px}
+ .hero h1{font-size:30px}
+ .digit{font-size:28px}
+ .game-stage-header strong{font-size:18px}
+ .game-scoreboard strong{font-size:21px}
+}
+
+
+/* O primeiro (e único) link do menu continua acessível em telas estreitas. */
+.site-header nav>a:first-child{display:inline-flex}
+.game-overlay-badge{display:none}
