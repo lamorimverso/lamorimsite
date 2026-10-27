@@ -253,10 +253,13 @@ test("os itens incluem os três objetos satíricos e oferecem ambas as vantagens
   for (const rng of [0,.4,.7,.99]) {
     const run = running();
     for (let i = 0; i < 10; i++) {
-      run.nextPickup = 0;
+      run.nextObstacle = run.nextPickup = 0;
+      run.nextPassport = 1e9;
+      run.nextPower = i % 3 === 1 ? 0 : 1e9;
       core.advanceRun(run, 1 / 120, () => rng);
       for (const item of run.pickups) types.add(item.type);
       run.pickups = [];
+      run.obstacles = [];
     }
   }
   for (const type of ["chocolate","mansion","receipt","invisible","chance"]) assert.ok(types.has(type), type);
@@ -282,20 +285,23 @@ test("à medida que a distância cresce, as vantagens ficam mais raras", () => {
   assert.ok(start.speed < middle.speed && middle.speed < late.speed);
   assert.ok(start.obstacleGap > middle.obstacleGap && middle.obstacleGap > late.obstacleGap);
   assert.ok(late.obstacleGap > 1);
-  for(const type of ["pickupGap","passportGap"]) {
+  for(const type of ["pickupGap","passportGap","powerGap"]) {
     assert.ok(start[type] < middle[type] && middle[type] < late[type],type);
   }
-  const spawn = distance => {
+  const spawn = (distance, timer) => {
     const run=running();
     run.distance=distance;
-    run.nextObstacle=run.nextPickup=run.nextPassport=0;
+    run.nextBossScore=Infinity;
+    run.nextPickup=run.nextPassport=run.nextPower=1e9;
+    run.nextObstacle=run[timer]=0;
     core.advanceRun(run,1/120,()=>.5);
     return run;
   };
-  const a=spawn(0), b=spawn(90000);
-  assert.ok(a.nextObstacle > b.nextObstacle);
-  assert.ok(a.nextPassport < b.nextPassport);
-  assert.ok(a.nextPickup < b.nextPickup);
+  for (const timer of ['nextPickup','nextPassport','nextPower']) {
+    const a=spawn(0,timer), b=spawn(90000,timer);
+    assert.ok(a.nextObstacle > b.nextObstacle);
+    assert.ok(a[timer] < b[timer], timer);
+  }
   assert.ok((480-core.PLAYER.x-core.PLAYER.width)/late.speed>.75);
 });
 

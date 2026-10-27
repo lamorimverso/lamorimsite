@@ -158,6 +158,8 @@ test('o contador encerra sem números negativos após a data final', async () =>
 test('falha da música não deixa um quadro vazio na página', async () => {
   const {context,page,errors} = await open();
   try {
+    assert.equal(await page.locator('#music-panel').isVisible(),false);
+    await page.getByRole('button',{name:'▶ Tocar música',exact:true}).click();
     await page.waitForFunction(() => document.getElementById('audio-status').textContent.includes('Não foi possível carregar'));
     assert.equal(await page.locator('#music-panel').isVisible(),false);
     assert.equal(await page.locator('#music-toggle').isDisabled(),true);
@@ -205,6 +207,7 @@ test('invisibilidade é mantida enquanto a partida está pausada', async () => {
       run.pickups.push({x:136,y:35,type:'invisible',value:0});
     });
     await page.waitForFunction(() => /Invisível/.test(document.getElementById('game-power').textContent));
+    assert.equal(await page.locator('#game-power').isVisible(),true, 'poder ativo precisa ser visível');
     await page.locator('#runner-canvas').press('KeyP');
     await page.getByRole('button',{name:'Continuar corrida',exact:true}).waitFor();
     const remaining=await page.locator('#game-power').textContent();
@@ -244,7 +247,7 @@ test('100 passaportes concedem +1 vida e a corrida permanece infinita', async ()
   } finally { await context.close(); }
 });
 
-test('interface clean mantém a contagem prioritária e o jogo acessível no celular e desktop', async () => {
+test('interface clean destaca retrato e percentual no celular e desktop', async () => {
   const {context,page,errors} = await open();
   try {
     for (const width of [320,390,768,1440]) {
@@ -253,7 +256,8 @@ test('interface clean mantém a contagem prioritária e o jogo acessível no cel
       const counter = await page.locator('.counter').boundingBox();
       const portrait = await page.locator('.progress-ring').boundingBox();
       assert.ok(counter && portrait);
-      if (width <= 760) assert.ok(counter.y < portrait.y, `contagem deve vir antes do retrato em ${width}px`);
+      assert.ok(portrait.y < counter.y, `retrato em destaque antes da contagem em ${width}px`);
+      assert.ok(portrait.width >= 190, `retrato legível em ${width}px`);
       const play = await page.locator('.hero-play').boundingBox();
       assert.ok(play.height >= 44 && play.width >= 44);
       assert.equal(await page.locator('.game-itinerary').evaluate(x => x.open),false);
@@ -294,7 +298,7 @@ test('desktop replica a coluna única do celular sem excesso de texto exposto', 
       assert.ok(geometry.hero.width <= 540,`hero não deve virar grade desktop em ${width}: ${geometry.hero.width}`);
       assert.ok(Math.abs(geometry.hero.width-geometry.game.width)<3,`larguras das seções incoerentes: ${width}`);
       assert.ok(Math.abs(geometry.hero.x-geometry.game.x)<3,`colunas desalinhadas: ${width}`);
-      assert.ok(geometry.counterY < geometry.photoY,`contagem deve anteceder retrato: ${width}`);
+      assert.ok(geometry.photoY < geometry.counterY,`retrato deve anteceder contagem: ${width}`);
       assert.ok(geometry.viewportWidth >= 240 && geometry.viewportHeight >= 150,`pista legível em ${width}: ${JSON.stringify({w:geometry.viewportWidth,h:geometry.viewportHeight})}`);
       assert.equal(await page.locator('.game-itinerary').evaluate(e=>e.open),false);
       assert.equal(await page.locator('.game-help').evaluate(e=>e.open),false);
@@ -340,7 +344,7 @@ test('referência minimalista mantém mesma hierarquia no desktop e celular sem 
       assert.ok(v.portrait.x + v.portrait.width <= width, `retrato precisa caber em ${width}px`);
       assert.ok(v.hero.width<=540,`coluna única não deve esticar em ${width}px`);
       assert.ok(Math.abs(v.hero.x-v.game.x)<3,`seções alinhadas em ${width}px`);
-      assert.ok(v.counter.y<v.portrait.y,`contagem deve vir primeiro em ${width}px`);
+      assert.ok(v.portrait.y<v.counter.y,`retrato deve vir primeiro em ${width}px`);
       assert.ok(v.button.height>=44,`CTA tocável em ${width}px`);
     }
     assert.equal(await page.locator('#music-toggle').count(),1);
@@ -483,6 +487,32 @@ test('uma vida extra coletada permite sobreviver exatamente a mais uma colisão'
     });
     await page.waitForFunction(()=>document.getElementById('game').dataset.runState==='over');
     assert.equal(await page.locator('#game-lives').textContent(),'0');
+    assert.deepEqual(errors,[]);
+  } finally {await context.close();}
+});
+
+
+test('escudo e invisibilidade aparecem somente quando ativos, sem deslocar a pista', async () => {
+  const {context,page,errors}=await openWithRun();
+  try {
+    assert.equal(await page.locator('.game-hud').isVisible(),false);
+    await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+    const before=await page.locator('#runner-canvas').boundingBox();
+    await page.evaluate(()=>{
+      const run=globalThis.__testRun;
+      run.nextObstacle=run.nextPassport=run.nextPickup=run.nextPower=10000;
+      run.obstacles=[];
+      run.extraChance=true;
+    });
+    await page.waitForFunction(()=>document.getElementById('game').dataset.chance==='held');
+    assert.equal(await page.locator('#game-chance').isVisible(),true);
+    assert.equal(await page.locator('#game-power').isVisible(),false);
+    const after=await page.locator('#runner-canvas').boundingBox();
+    assert.ok(Math.abs(before.y-after.y)<1, 'placar de poder não desloca a pista');
+    await page.evaluate(()=>{globalThis.__testRun.extraChance=false;globalThis.__testRun.invisibleFor=6;});
+    await page.waitForFunction(()=>document.getElementById('game').dataset.power==='invisible');
+    assert.equal(await page.locator('#game-power').isVisible(),true);
+    assert.equal(await page.locator('#game-chance').isVisible(),false);
     assert.deepEqual(errors,[]);
   } finally {await context.close();}
 });
