@@ -153,6 +153,8 @@ test("a perseguição introduz PF, Xandão, Janones, exército e chefe em ordem"
 test("a dificuldade aumenta sem eliminar a janela entre pulos", () => {
   const early = running(), late = running();
   late.distance = 30000;
+  // Mantém o foco do teste na curva normal, sem ativar o novo chefe de 1.500 pontos.
+  early.bossCooldown = late.bossCooldown = 999;
   early.nextObstacle = late.nextObstacle = 0;
   core.advanceRun(early, 1 / 120, () => 0);
   core.advanceRun(late, 1 / 120, () => 0);
