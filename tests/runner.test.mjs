@@ -187,3 +187,50 @@ test("escudo preserva vidas durante colisões e expira", () => {
   core.advanceRun(run, 1/120, () => .5);
   assert.equal(run.lives, 2);
 });
+
+
+test("a dificuldade aumenta com a distância sem tornar o salto impossível", () => {
+  const start = core.difficultyAt(0);
+  const middle = core.difficultyAt(30000);
+  const far = core.difficultyAt(10000000);
+  assert.ok(start.level < middle.level && middle.level < far.level);
+  assert.ok(start.speed < middle.speed && middle.speed < far.speed);
+  assert.ok(start.obstacleGap > middle.obstacleGap && middle.obstacleGap > far.obstacleGap);
+  // O intervalo mínimo continua superior à duração (~0,70 s) de um salto.
+  assert.ok(far.obstacleGap > 1);
+  // No celular o obstáculo permanece visível antes de alcançar o personagem.
+  assert.ok((480 - core.PLAYER.x - core.PLAYER.width) / far.speed > .75);
+});
+
+test("quanto mais longe, mais raros são passaportes, escudos e outros bônus", () => {
+  const start = core.difficultyAt(0);
+  const middle = core.difficultyAt(30000);
+  const far = core.difficultyAt(10000000);
+  for (const key of ["pickupGap", "passportGap", "shieldGap"]) {
+    assert.ok(start[key] < middle[key] && middle[key] < far[key], key);
+    assert.ok(Number.isFinite(far[key]), key);
+  }
+  const spawn = distance => {
+    const run = running();
+    run.distance = distance;
+    run.nextObstacle = run.nextPickup = run.nextPassport = run.nextShield = 0;
+    core.advanceRun(run, 1/120, () => .5);
+    return run;
+  };
+  const early = spawn(0), late = spawn(90000);
+  assert.ok(late.nextObstacle < early.nextObstacle);
+  for (const key of ["nextPickup", "nextPassport", "nextShield"]) {
+    assert.ok(late[key] > early[key], key);
+  }
+});
+
+test("a corrida não tem linha de chegada, mesmo após longa distância", () => {
+  const run = running();
+  run.invulnerableFor = 1000000;
+  for (let i = 0; i < 240 * 120; i++) core.advanceRun(run, 1/120, () => .5);
+  assert.equal(run.status, "running");
+  assert.ok(run.distance > 50000);
+  assert.equal(core.stageAt(run.elapsed).name, "Casa Branca");
+  assert.ok(core.difficultyAt(run.distance).level > 1);
+  assert.ok(core.scoreFor(run) > 0);
+});
