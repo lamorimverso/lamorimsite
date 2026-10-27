@@ -290,7 +290,7 @@ test('desktop replica a coluna única do celular sem excesso de texto exposto', 
       assert.ok(Math.abs(geometry.hero.width-geometry.game.width)<3,`larguras das seções incoerentes: ${width}`);
       assert.ok(Math.abs(geometry.hero.x-geometry.game.x)<3,`colunas desalinhadas: ${width}`);
       assert.ok(geometry.counterY < geometry.photoY,`contagem deve anteceder retrato: ${width}`);
-      assert.ok(geometry.viewportWidth >= 240 && geometry.viewportHeight >= 150,`pista legível em ${width}`);
+      assert.ok(geometry.viewportWidth >= 240 && geometry.viewportHeight >= 150,`pista legível em ${width}: ${JSON.stringify({w:geometry.viewportWidth,h:geometry.viewportHeight})}`);
       assert.equal(await page.locator('.game-itinerary').evaluate(e=>e.open),false);
       assert.equal(await page.locator('.game-help').evaluate(e=>e.open),false);
       assert.equal(await page.locator('.game-guide').evaluate(e=>e.open),false);
@@ -302,6 +302,46 @@ test('desktop replica a coluna única do celular sem excesso de texto exposto', 
     assert.equal(await page.locator('#game-lives').isVisible(),true);
     assert.equal(await page.locator('#game-passports').isVisible(),true);
     assert.equal(await page.locator('.sources summary').isVisible(),true);
+    assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+});
+
+
+test('referência minimalista mantém mesma hierarquia no desktop e celular sem blocos coloridos', async () => {
+  const {context,page,errors}=await open();
+  try {
+    for(const width of [320,390,768,1440]){
+      await page.setViewportSize({width,height:940});
+      const v=await page.evaluate(()=>{
+        const rect=sel=>{const r=document.querySelector(sel).getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height}};
+        const computed=sel=>getComputedStyle(document.querySelector(sel));
+        return {
+          body:computed('body').backgroundColor,
+          counterCell:computed('.unit').backgroundColor,
+          heroShadow:computed('.hero').boxShadow,
+          heroBorder:computed('.hero').borderTopWidth,
+          hero:rect('.hero'),game:rect('.game-card'),counter:rect('.counter'),
+          portrait:rect('.progress-ring'),button:rect('.hero-play'),
+          overflow:document.documentElement.scrollWidth>innerWidth,
+          stylesheet:[...document.styleSheets].some(x=>x.href?.includes('minimal.css'))
+        };
+      });
+      assert.equal(v.body,'rgb(255, 255, 255)', 'fundo branco');
+      assert.equal(v.counterCell,'rgba(0, 0, 0, 0)', 'sem cartões coloridos');
+      assert.equal(v.heroShadow,'none','sem sombra de cartão');
+      assert.equal(v.heroBorder,'0px','sem borda externa');
+      assert.equal(v.stylesheet,true,'camada minimalista carregada');
+      assert.equal(v.overflow,false,`overflow em ${width}px`);
+      assert.ok(v.portrait.x + v.portrait.width <= width, `retrato precisa caber em ${width}px`);
+      assert.ok(v.hero.width<=540,`coluna única não deve esticar em ${width}px`);
+      assert.ok(Math.abs(v.hero.x-v.game.x)<3,`seções alinhadas em ${width}px`);
+      assert.ok(v.counter.y<v.portrait.y,`contagem deve vir primeiro em ${width}px`);
+      assert.ok(v.button.height>=44,`CTA tocável em ${width}px`);
+    }
+    assert.equal(await page.locator('#music-toggle').count(),1);
+    assert.equal(await page.locator('#share').count(),1);
+    assert.equal(await page.locator('.sources').evaluate(x=>x.open),false);
+    assert.equal(await page.locator('.game-help').evaluate(x=>x.open),false);
     assert.deepEqual(errors,[]);
   }finally{await context.close();}
 });
