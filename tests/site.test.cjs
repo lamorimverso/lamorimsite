@@ -290,7 +290,7 @@ test('desktop replica a coluna única do celular sem excesso de texto exposto', 
       assert.ok(Math.abs(geometry.hero.width-geometry.game.width)<3,`larguras das seções incoerentes: ${width}`);
       assert.ok(Math.abs(geometry.hero.x-geometry.game.x)<3,`colunas desalinhadas: ${width}`);
       assert.ok(geometry.counterY < geometry.photoY,`contagem deve anteceder retrato: ${width}`);
-      assert.ok(geometry.viewportWidth >= 240 && geometry.viewportHeight >= 150,`pista legível em ${width}`);
+      assert.ok(geometry.viewportWidth >= 240 && geometry.viewportHeight >= 150,`pista legível em ${width}: ${JSON.stringify({w:geometry.viewportWidth,h:geometry.viewportHeight})}`);
       assert.equal(await page.locator('.game-itinerary').evaluate(e=>e.open),false);
       assert.equal(await page.locator('.game-help').evaluate(e=>e.open),false);
       assert.equal(await page.locator('.game-guide').evaluate(e=>e.open),false);
