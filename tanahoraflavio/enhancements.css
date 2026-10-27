@@ -1,0 +1,115 @@
+:root{--purple:#7544ab;--dark:#4f2a79;--ink:#292333;--muted:#6f657a;--line:#e9e3ed;--pale:#f5f0fa}
+html{scroll-behavior:smooth;scroll-padding-top:18px}
+body{background:#f8f7fa}
+.wrap{max-width:1032px;padding:0 24px 32px}
+.site-header{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:25px 3px}
+.wordmark{font-size:20px;font-weight:850;letter-spacing:-.06em;color:var(--ink);text-decoration:none;white-space:nowrap}
+.wordmark>span:first-child{display:inline-block;color:var(--purple);font-size:26px;vertical-align:-1px;margin-right:5px}
+.wordmark-dot{color:var(--purple)}
+.site-header nav{display:flex;align-items:center;gap:22px}
+.site-header nav a{font-size:13px;text-decoration:none;color:var(--muted);font-weight:650}
+.site-header nav .nav-game{color:var(--dark);border:1px solid #e1d7ed;border-radius:100px;padding:10px 15px;background:#f0e9f7}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) 218px;grid-template-areas:"intro portrait" "count portrait";gap:26px 34px;padding:36px;text-align:left;border-radius:24px;box-shadow:0 5px 24px #30213b03}
+.hero-intro{grid-area:intro}
+.eyebrow{display:flex;align-items:center;gap:7px;font-size:11px;text-transform:uppercase;letter-spacing:.12em;font-weight:750;color:var(--muted);margin:0 0 15px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--purple)}
+h1{font-size:clamp(35px,4.5vw,48px);letter-spacing:-.055em;margin:0;line-height:1.07}
+h1 .title-followup{font-size:22px;line-height:1.4;margin:12px 0 0;letter-spacing:-.025em;font-weight:600;max-width:490px}
+h1 .title-followup strong{font-weight:750}
+.ring-wrap{grid-area:portrait;align-self:center;gap:18px;margin:0 0 35px}
+.progress-ring{width:208px;padding:7px}
+.portrait{border-width:5px}
+.percent-badge{min-width:121px;padding:9px 13px;border-radius:12px;box-shadow:0 5px 12px #4927660e}
+.percent-badge strong{font-size:25px}
+.percent-badge small{font-size:11px}
+.ring-label{font-size:10px;letter-spacing:.11em;margin-top:2px;color:var(--muted)}
+.count-content{grid-area:count;min-width:0}
+.counter-label{font-size:13px;color:var(--muted);font-weight:650;margin-bottom:10px}
+.counter{width:100%;gap:8px}
+.unit{padding:17px 4px 13px;border:0;border-radius:12px;background:#f5f1f9;text-align:center}
+.digit{font-size:clamp(29px,4vw,41px);letter-spacing:-.045em;font-weight:800}
+.unit-label{font-size:10px;margin-top:8px;color:#74667e}
+.target{font-size:12px;margin-top:12px;line-height:1.65}
+.music{width:100%;margin-top:20px;padding:13px 0 0;background:transparent;border:0;border-top:1px solid var(--line);border-radius:0}
+.music-copy{justify-content:space-between;flex-wrap:wrap;gap:8px}
+.music h2{font-size:13px;flex-basis:auto;text-align:left;color:var(--muted);font-weight:650}
+.audio-button{padding:10px 13px;border-radius:9px;font-size:12px;min-height:40px}
+.audio-button:disabled{opacity:.65;cursor:default}
+.audio-status{font-size:12px;line-height:1.6;text-align:left}
+.share{background:transparent;border:1px solid var(--line);border-radius:9px;min-height:40px;font-size:12px;padding:9px 14px;margin-top:14px}
+.share-message{font-size:12px;margin-top:5px;min-height:0}
+.share-message:empty{display:none}
+.game-card{background:white;border:1px solid var(--line);border-radius:24px;margin-top:22px;padding:30px;scroll-margin-top:18px}
+.game-heading{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.game-heading .eyebrow{margin-bottom:8px}
+.game-heading h2{font-size:30px;letter-spacing:-.045em;line-height:1.15;margin:0;font-weight:800}
+.game-heading h2>span{color:var(--purple)}
+.game-duration{font-size:11px;font-weight:650;white-space:nowrap;border-radius:100px;background:#f6f2fa;color:var(--dark);padding:9px 12px}
+.game-description{max-width:630px;font-size:14px;line-height:1.65;color:var(--muted);margin:13px 0 22px}
+.game-route{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));list-style:none;padding:0;margin:0 0 20px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fcfbfd}
+.game-route li{display:flex;gap:10px;align-items:center;padding:13px 16px;font-size:13px;font-weight:700;color:#797080;min-width:0}
+.game-route li+li{border-left:1px solid var(--line)}
+.game-route small{display:block;font-size:10px;font-weight:450;margin-top:3px;color:var(--muted)}
+.route-number{display:grid;place-items:center;font-size:10px;font-weight:750;width:26px;height:26px;flex-shrink:0;background:#eeeaf2;border-radius:50%;color:#8b7c99}
+.game-route .is-current{background:#f1eaf8;color:var(--dark)}
+.is-current .route-number{background:var(--purple);color:white}
+.game-route .is-done .route-number{background:#dceee8;color:#2e7060}
+.game-scoreboard{display:flex;align-items:center;gap:28px;margin-bottom:13px;padding:0 2px}
+.game-scoreboard>div:last-child{margin-left:auto;text-align:right}
+.game-scoreboard span{display:block;font-size:10px;letter-spacing:.04em;color:var(--muted);margin-bottom:3px}
+.game-scoreboard strong{font-size:21px;line-height:1.2;font-weight:750;font-variant-numeric:tabular-nums;letter-spacing:-.04em}
+.game-viewport{position:relative;overflow:hidden;border-radius:12px 12px 0 0;background:#edf8f7;border:1px solid #d9e8e5;border-bottom:0}
+#runner-canvas{display:block;width:100%;height:auto;aspect-ratio:3 / 1;touch-action:manipulation;cursor:pointer}
+.game-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:18px;text-align:center;background:#f9fcfae8;pointer-events:none}
+.game-overlay[hidden]{display:none}
+.game-overlay strong{font-size:clamp(22px,3vw,34px);font-weight:850;letter-spacing:-.045em;color:var(--dark)}
+.game-overlay p{max-width:350px;font-size:13px;color:var(--muted);line-height:1.6;margin:8px 0 0}
+.route-meter{height:5px;background:#e6dfed;border-radius:0 0 8px 8px;overflow:hidden}
+.route-meter>span{display:block;width:0;height:100%;background:var(--purple)}
+.game-controls{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap}
+.game-controls button{font:inherit;font-size:12px;font-weight:700;padding:12px 15px;min-height:44px;border:1px solid var(--line);border-radius:10px;color:var(--dark);background:white;cursor:pointer}
+.game-controls button:hover:not(:disabled){background:var(--pale)}
+.game-controls .game-primary{background:var(--purple);color:white;border-color:var(--purple);min-width:150px}
+.game-controls .game-primary:hover{background:var(--dark)}
+.game-controls button:disabled{color:#9b939f;background:#faf9fb;cursor:default}
+.game-controls #game-jump{min-width:94px}
+.game-controls #game-jump>span{margin-right:5px}
+.game-instructions{font-size:12px;color:var(--muted);line-height:1.8;margin:13px 0 0}
+kbd{font:inherit;font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:1px 5px;color:var(--ink);background:#faf9fc}
+.game-status{font-size:12px;color:var(--dark);line-height:1.6;margin:8px 0 0;min-height:20px;font-weight:600}
+.game-legend{display:flex;flex-wrap:wrap;gap:7px 22px;padding-top:16px;margin-top:16px;border-top:1px solid var(--line);font-size:11px;line-height:1.7;color:var(--muted)}
+.game-legend>span{display:flex;gap:6px;align-items:baseline}
+.game-legend i{width:7px;height:7px;display:inline-block;flex-shrink:0;border-radius:2px}
+.legend-obstacle{background:#d18463}.legend-bonus{background:#c3a23c}
+.game-fiction{font-size:11px;line-height:1.7;color:var(--muted);margin:11px 0 0}
+.sources{margin-top:17px}.sources summary{font-size:12px;padding:14px}
+.panel h2{font-size:14px}.panel p{font-size:13px}
+.panel a{color:var(--dark);text-underline-offset:3px}
+footer{font-size:11px;line-height:1.8;margin-top:12px;padding:0 10px}
+button:focus-visible,#runner-canvas:focus-visible{outline:3px solid #ac84d1;outline-offset:4px}
+@media(max-width:720px){
+ .wrap{padding:0 16px 24px}
+ .site-header{padding:20px 0}.site-header nav{gap:12px}.site-header nav>a:first-child{display:none}
+ .hero{grid-template-columns:1fr;grid-template-areas:"intro" "portrait" "count";gap:23px;padding:28px 24px;text-align:center;border-radius:20px}
+ .hero-intro .eyebrow{justify-content:center;margin-bottom:13px}
+ h1{font-size:39px}h1 .title-followup{font-size:21px;line-height:1.35;max-width:420px;margin:12px auto 0}
+ .ring-wrap{margin:0 0 5px;gap:16px}.progress-ring{width:174px;padding:6px}.portrait{border-width:4px}
+ .percent-badge{padding:7px 11px;min-width:110px;bottom:-9px}.percent-badge strong{font-size:23px}.percent-badge small{font-size:10px}
+ .ring-label{font-size:10px;margin-top:3px}
+ .counter-label{font-size:12px}.digit{font-size:35px}.unit{padding:16px 3px 12px}.unit-label{font-size:10px;letter-spacing:.03em}
+ .target{font-size:11px;line-height:1.65}.music{margin-top:16px}.music h2{flex-basis:auto;text-align:left}.share{width:100%;margin-top:12px}
+ .game-card{padding:22px;margin-top:18px;border-radius:20px}.game-heading{align-items:flex-start;flex-wrap:wrap;gap:10px}
+ .game-heading h2{font-size:28px}.game-duration{font-size:10px;padding:7px 10px}.game-description{font-size:13px;margin-top:12px}
+ .game-route li{gap:7px;padding:11px 9px;font-size:12px}.game-route small{font-size:9px}.route-number{width:23px;height:23px;font-size:9px}
+ .game-scoreboard{gap:20px}.game-scoreboard strong{font-size:19px}.game-scoreboard span{font-size:9px}
+ #runner-canvas{aspect-ratio:1.6 / 1}
+ .game-controls{gap:7px}.game-controls button{font-size:11px;padding:11px 10px;flex:1;min-width:0}.game-controls .game-primary{flex:1.45;min-width:0}.game-controls #game-jump{min-width:0}
+ .game-instructions{font-size:11px}.game-overlay p{font-size:12px;max-width:260px}
+}
+@media(max-width:380px){
+ .wrap{padding:0 12px 20px}.wordmark{font-size:18px}.site-header nav .nav-game{padding:9px 12px;font-size:12px}
+ .hero{padding:24px 17px;gap:22px}h1{font-size:35px}h1 .title-followup{font-size:19px}.counter{gap:6px}.digit{font-size:30px}
+ .game-card{padding:19px 14px}.game-route li{padding:10px 6px;gap:5px;font-size:11px}.route-number{width:21px;height:21px}.game-scoreboard{gap:17px}
+ .game-controls button{font-size:10px;padding:11px 6px}.game-legend{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}

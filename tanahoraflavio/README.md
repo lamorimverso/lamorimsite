@@ -10,10 +10,24 @@ Site estático em `tanahoraflavio/`, atualmente no repositório público `lamori
 
 ## Experiência e música
 - O contador e aro de porcentagem são calculados no navegador.
-- O player do YouTube fica **recolhido**, sem carregar o YouTube até a interação do visitante.
-- Ao clicar em **Tocar com som**, o vídeo aparece e tenta tocar com áudio. O navegador pode bloquear o início automático; o visitante então usa o botão Play do próprio YouTube.
-- Ao clicar em **Ocultar e parar**, o iframe é removido e o som é interrompido.
+- A página verifica se `musica.m4a` está disponível; caso não esteja, carrega o player visível do YouTube como alternativa.
+- O navegador pode bloquear a reprodução automática com som. O botão **Tocar música** e o Play do próprio YouTube continuam disponíveis.
+- O mesmo botão pausa a música que estiver tocando. O arquivo de áudio local não está incluído neste repositório.
+- Se a API ou o vídeo falhar, o quadro vazio é recolhido e o controle fica indisponível; o link original no rodapé permanece acessível.
 - Para manter a música tocando sem exibir vídeo, é necessário **um arquivo de áudio devidamente licenciado** e um player HTML `audio`; usar YouTube apenas como fonte invisível de áudio não é a implementação recomendada e contraria regras de exibição do player.
+
+## Minigame: Corre, Flávio!
+
+- Corrida fictícia e satírica: **Rio (0–25 s) → Argentina (25–50 s) → EUA (50–75 s)**. Completar 75 segundos encerra a rota com vitória.
+- Toque na pista ou em **Pular**; teclado: Espaço ou seta para cima. **P** pausa/retoma e Esc pausa quando a pista está focada. Não há início automático.
+- Desvie de barreiras, malas e pilhas de papéis. Colete milhas e notas (+25) ou passaportes (+50). Os objetos e a história são fictícios.
+- Colisão encerra a partida e permite tentar novamente. A corrida pausa ao sair da aba, perder foco ou rolar a pista para fora da tela.
+- Recorde em `localStorage`, somente no navegador. Se o armazenamento estiver bloqueado, o jogo funciona e conserva o recorde durante a sessão.
+- `runner-core.mjs` contém a física e as regras sem DOM; `runner.mjs` desenha cenários e controles; `enhancements.css` ajusta o visual da página. Nenhuma dependência de runtime foi adicionada.
+
+### Verificação
+
+`node --test tests/runner.test.mjs` executa os testes da física a partir da raiz do repositório. `tests/site.test.cjs` usa Playwright e Chromium para verificar teclado, toque, pausa, armazenamento bloqueado, contador e larguras de 320, 390, 768 e 1440 px. Com Playwright e seu Chromium instalados, execute `node --test tests/*.test.*`. Para um Chromium já disponível, defina `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` com o caminho do executável.
 
 ## Próxima etapa: domínio próprio
 1. Confirmar **a grafia** antes de pagar: a marca atual é `tanahoraflavio`, enquanto `tanahroaflavio` apareceu na solicitação original.

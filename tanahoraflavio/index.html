@@ -16,7 +16,7 @@
   <meta property="og:image" content="https://lamorimverso.github.io/lamorimsite/tanahoraflavio/retrato.webp">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='.9em' font-size='54'%3E%E2%8F%B3%3C/text%3E%3C/svg%3E">
   <link rel="canonical" href="https://lamorimverso.github.io/lamorimsite/tanahoraflavio/">
-  <title>tanahoraflavio</title>
+  <title>Tá na hora, Flávio! · Contagem e minigame</title>
   <style>
 :root{--purple:#7b43ba;--dark:#4d267b;--ink:#241b2b;--muted:#746d7b;--line:#ece6f0;--pale:#f7f2fb;--white:#fff;color-scheme:light}
 *{box-sizing:border-box}
@@ -76,13 +76,22 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
 @media(max-width:420px){.wrap{padding:12px 8px 25px}.hero{border-radius:18px;padding:24px 11px}h1{font-size:38px}h1 .title-followup{font-size:clamp(20px,6vw,26px)}.counter{gap:6px}.unit{padding:16px 2px 13px;border-radius:10px}.digit{font-size:clamp(24px,8vw,35px)}.unit-label{font-size:9px;letter-spacing:0}.music{padding:15px}.music-copy{justify-content:center}.music h2{text-align:center;flex-basis:100%}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
+  <link rel="stylesheet" href="enhancements.css">
+  <script type="module" src="runner.mjs"></script>
 </head>
 <body>
   <div class="wrap">
+    <header class="site-header">
+      <a class="wordmark" href="#contagem" aria-label="Tá na hora, Flávio — início"><span aria-hidden="true">◷</span> tá na hora<span class="wordmark-dot">.</span></a>
+      <nav aria-label="Navegação principal"><a href="#contagem">Contagem</a><a class="nav-game" href="#game">Jogar agora <span aria-hidden="true">↗</span></a></nav>
+    </header>
 <main>
 
-      <section class="hero" aria-labelledby="titulo">
+      <section class="hero" id="contagem" aria-labelledby="titulo">
+        <div class="hero-intro">
+        <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span> O relógio não para</p>
         <h1 id="titulo">Tá na hora, <span class="title-name">Flávio…</span><span class="title-followup">de perder o <strong>foro privilegiado</strong> e <strong>ficar desempregado!</strong></span></h1>
+        </div>
         <div class="ring-wrap">
           <div class="progress-ring" id="progress-ring" role="img" aria-label="Porcentagem do intervalo restante para 1º de fevereiro de 2027">
             <div class="portrait"><img src="retrato.webp" alt="Retrato ilustrativo em preto e branco" width="280" height="280" fetchpriority="high"></div>
@@ -90,6 +99,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
           </div>
           <div class="ring-label">Não eleito</div>
         </div>
+        <div class="count-content">
         <h2 class="counter-label">Contagem para o fim do mandato</h2>
         <div class="counter" role="timer" aria-label="Contagem regressiva">
           <div class="unit"><div class="digit" id="days">--</div><span class="unit-label">Dias</span></div>
@@ -119,9 +129,41 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         </section>
         <button class="share" type="button" id="share">Compartilhar contagem</button>
         <div class="share-message" id="share-message" role="status" aria-live="polite"></div>
+        </div>
       </section>
 
-
+      <section class="game-card" id="game" aria-labelledby="game-title">
+        <div class="game-heading">
+          <div><p class="eyebrow">Enquanto o tempo passa…</p><h2 id="game-title">Corre, Flávio! <span aria-hidden="true">↗</span></h2></div>
+          <span class="game-duration">3 destinos · 75 segundos</span>
+        </div>
+        <p class="game-description">Uma fuga fictícia do Rio até os EUA. Pule os obstáculos, pegue os bônus e tente chegar ao último voo.</p>
+        <ol class="game-route" aria-label="Rota da corrida">
+          <li class="is-current" data-stage="0" aria-current="step"><span class="route-number">01</span><span>Rio <small>Brasil</small></span></li>
+          <li data-stage="1"><span class="route-number">02</span><span>Argentina <small>Próxima parada</small></span></li>
+          <li data-stage="2"><span class="route-number">03</span><span>EUA <small>Último voo</small></span></li>
+        </ol>
+        <div class="game-scoreboard" aria-label="Placar">
+          <div><span>Pontos</span><strong id="game-score">0000</strong></div>
+          <div><span>Seu recorde</span><strong id="game-best">0000</strong></div>
+          <div><span>Tempo de corrida</span><strong id="game-time">00:00</strong></div>
+        </div>
+        <div class="game-viewport">
+          <canvas id="runner-canvas" width="900" height="300" tabindex="0" role="img" aria-label="Pista do jogo Corre, Flávio!" aria-describedby="game-instructions">Seu navegador não oferece Canvas. A contagem regressiva continua disponível acima.</canvas>
+          <div class="game-overlay" id="game-overlay"><strong id="game-overlay-title">Passaporte na mão?</strong><p id="game-overlay-copy">Tem um longo caminho até o portão de embarque.</p></div>
+        </div>
+        <div class="route-meter" role="progressbar" aria-label="Progresso da corrida" aria-valuemin="0" aria-valuemax="75" aria-valuenow="0" id="game-progress"><span></span></div>
+        <div class="game-controls">
+          <button type="button" class="game-primary" id="game-start">Começar corrida</button>
+          <button type="button" id="game-jump" aria-label="Pular" disabled><span aria-hidden="true">↑</span> Pular</button>
+          <button type="button" id="game-pause" disabled>Pausar corrida</button>
+        </div>
+        <p class="game-instructions" id="game-instructions">Toque na pista ou em <strong>Pular</strong>. No teclado: <kbd>Espaço</kbd> / <kbd>↑</kbd> para pular e <kbd>P</kbd> para pausar.</p>
+        <p class="game-status" id="game-status" role="status" aria-live="polite">Tudo pronto. A corrida começa quando você quiser.</p>
+        <div class="game-legend"><span><i class="legend-obstacle" aria-hidden="true"></i> Desvie de barreiras, malas e papéis.</span><span><i class="legend-bonus" aria-hidden="true"></i> Milhas e notas +25 · Passaporte +50</span></div>
+        <p class="game-fiction">Jogo de humor. Roteiro, fuga e itens são fictícios. Seu recorde fica apenas neste navegador.</p>
+        <noscript>Habilite o JavaScript para jogar.</noscript>
+      </section>
 
       <details class="sources">
         <summary>Fontes e informações jurídicas</summary>
@@ -187,7 +229,17 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
   const say=t=>{status.textContent=t;};
   const audioPlaying=()=>!audio.paused&&!audio.ended;
   const videoPlaying=()=>ready&&player&&player.getPlayerState()===YT.PlayerState.PLAYING;
+  function musicUnavailable(message){
+    mode="unavailable";
+    requested=false;
+    panel.hidden=true;
+    playButton.disabled=true;
+    playButton.textContent="Música indisponível";
+    say(message);
+    if(ready&&player)player.pauseVideo();
+  }
   function updateButton(){
+    if(mode==="unavailable")return;
     if(mode==="native"){
       playButton.textContent=audioPlaying()?"⏸ Pausar música":"▶ Tocar música";
     }else if(mode==="youtube"&&ready){
@@ -249,6 +301,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
       player=new YT.Player("music-iframe",{
         events:{
           onReady:event=>{
+            if(mode==="unavailable")return;
             ready=true;
             updateButton();
             if(!requested)return;
@@ -267,6 +320,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
             }
           },
           onStateChange:event=>{
+            if(mode==="unavailable")return;
             if(event.data===YT.PlayerState.PLAYING){
               updateButton();
               say(event.target.isMuted()?"Vídeo sem som. Toque em 🔊 Ativar som.":"");
@@ -277,6 +331,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
             }
           },
           onAutoplayBlocked:event=>{
+            if(mode==="unavailable")return;
             browserBlocked=true;
             if(!clicked&&!muteFallbackTried){
               muteFallbackTried=true;
@@ -287,8 +342,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
             updateButton();
           },
           onError:()=>{
-            say("Não foi possível reproduzir aqui. Use o link da música no rodapé.");
-            updateButton();
+            musicUnavailable("Não foi possível reproduzir aqui. Use o link da música no rodapé.");
           }
         }
       });
@@ -296,7 +350,9 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
     const script=document.createElement("script");
     script.src="https://www.youtube.com/iframe_api";
     script.async=true;
-    script.onerror=()=>say("Não foi possível carregar a música. Veja o link no rodapé.");
+    script.onerror=()=>{
+      musicUnavailable("Não foi possível carregar a música. Veja o link no rodapé.");
+    };
     document.head.appendChild(script);
     updateButton();
   }
