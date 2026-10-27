@@ -76,16 +76,17 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
 @media(max-width:420px){.wrap{padding:12px 8px 25px}.hero{border-radius:18px;padding:24px 11px}h1{font-size:38px}h1 .title-followup{font-size:clamp(20px,6vw,26px)}.counter{gap:6px}.unit{padding:16px 2px 13px;border-radius:10px}.digit{font-size:clamp(24px,8vw,35px)}.unit-label{font-size:9px;letter-spacing:0}.music{padding:15px}.music-copy{justify-content:center}.music h2{text-align:center;flex-basis:100%}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
-  <link rel="stylesheet" href="enhancements.css">
-  <script type="module" src="runner.mjs"></script>
+  <link rel="stylesheet" href="enhancements.css?v=20261027-continuous1">
+  <script type="module" src="runner.mjs?v=20261027-continuous1"></script>
 </head>
 <body>
+  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
   <div class="wrap">
     <header class="site-header">
       <a class="wordmark" href="#contagem" aria-label="Tá na hora, Flávio — início"><span aria-hidden="true">◷</span> tá na hora<span class="wordmark-dot">.</span></a>
       <nav aria-label="Navegação principal"><a href="#contagem">Contagem</a><a class="nav-game" href="#game">Jogar agora <span aria-hidden="true">↗</span></a></nav>
     </header>
-<main>
+<main id="conteudo" tabindex="-1">
 
       <section class="hero" id="contagem" aria-labelledby="titulo">
         <div class="hero-intro">
@@ -109,7 +110,13 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         </div>
         <div class="done" id="finished">O prazo do mandato chegou ao fim.</div>
         <p class="target">Fim do mandato: 31/01/2027 · Contagem até 01/02/2027, 00h (Brasília)</p>
-        
+        </div>
+        <div class="hero-tools">
+        <div class="hero-actions">
+          <button class="share" type="button" id="share">Compartilhar contagem <span aria-hidden="true">↗</span></button>
+          <a class="hero-play" href="#game">Jogar minigame <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="share-message" id="share-message" role="status" aria-live="polite"></div>
         <section class="music" id="musica" aria-label="Música">
           <div class="music-copy">
             <h2>♫ Música</h2>
@@ -127,42 +134,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
             </div>
           </div>
         </section>
-        <button class="share" type="button" id="share">Compartilhar contagem</button>
-        <div class="share-message" id="share-message" role="status" aria-live="polite"></div>
         </div>
-      </section>
-
-      <section class="game-card" id="game" aria-labelledby="game-title">
-        <div class="game-heading">
-          <div><p class="eyebrow">Enquanto o tempo passa…</p><h2 id="game-title">Corre, Flávio! <span aria-hidden="true">↗</span></h2></div>
-          <span class="game-duration">3 destinos · 75 segundos</span>
-        </div>
-        <p class="game-description">Uma fuga fictícia do Rio até os EUA. Pule os obstáculos, pegue os bônus e tente chegar ao último voo.</p>
-        <ol class="game-route" aria-label="Rota da corrida">
-          <li class="is-current" data-stage="0" aria-current="step"><span class="route-number">01</span><span>Rio <small>Brasil</small></span></li>
-          <li data-stage="1"><span class="route-number">02</span><span>Argentina <small>Próxima parada</small></span></li>
-          <li data-stage="2"><span class="route-number">03</span><span>EUA <small>Último voo</small></span></li>
-        </ol>
-        <div class="game-scoreboard" aria-label="Placar">
-          <div><span>Pontos</span><strong id="game-score">0000</strong></div>
-          <div><span>Seu recorde</span><strong id="game-best">0000</strong></div>
-          <div><span>Tempo de corrida</span><strong id="game-time">00:00</strong></div>
-        </div>
-        <div class="game-viewport">
-          <canvas id="runner-canvas" width="900" height="300" tabindex="0" role="img" aria-label="Pista do jogo Corre, Flávio!" aria-describedby="game-instructions">Seu navegador não oferece Canvas. A contagem regressiva continua disponível acima.</canvas>
-          <div class="game-overlay" id="game-overlay"><strong id="game-overlay-title">Passaporte na mão?</strong><p id="game-overlay-copy">Tem um longo caminho até o portão de embarque.</p></div>
-        </div>
-        <div class="route-meter" role="progressbar" aria-label="Progresso da corrida" aria-valuemin="0" aria-valuemax="75" aria-valuenow="0" id="game-progress"><span></span></div>
-        <div class="game-controls">
-          <button type="button" class="game-primary" id="game-start">Começar corrida</button>
-          <button type="button" id="game-jump" aria-label="Pular" disabled><span aria-hidden="true">↑</span> Pular</button>
-          <button type="button" id="game-pause" disabled>Pausar corrida</button>
-        </div>
-        <p class="game-instructions" id="game-instructions">Toque na pista ou em <strong>Pular</strong>. No teclado: <kbd>Espaço</kbd> / <kbd>↑</kbd> para pular e <kbd>P</kbd> para pausar.</p>
-        <p class="game-status" id="game-status" role="status" aria-live="polite">Tudo pronto. A corrida começa quando você quiser.</p>
-        <div class="game-legend"><span><i class="legend-obstacle" aria-hidden="true"></i> Desvie de barreiras, malas e papéis.</span><span><i class="legend-bonus" aria-hidden="true"></i> Milhas e notas +25 · Passaporte +50</span></div>
-        <p class="game-fiction">Jogo de humor. Roteiro, fuga e itens são fictícios. Seu recorde fica apenas neste navegador.</p>
-        <noscript>Habilite o JavaScript para jogar.</noscript>
       </section>
 
       <details class="sources">
@@ -178,6 +150,51 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         </div>
         </section>
       </details>
+
+      <section class="game-card" id="game" aria-labelledby="game-title">
+        <div class="game-heading">
+          <div><p class="eyebrow">Enquanto o tempo passa…</p><h2 id="game-title">Corre, Flávio! <span aria-hidden="true">↗</span></h2></div>
+          <span class="game-duration">Uma corrida · 5 cenários</span>
+        </div>
+        <p class="game-description">Uma fuga fictícia de Brasília à Casa Branca. Pule os obstáculos e pegue os bônus: o cenário muda, a corrida continua.</p>
+        <ol class="game-route" aria-label="Rota da corrida">
+          <li class="is-current" data-stage="0" aria-current="step"><span class="route-number">01</span><span>Brasília <small>Brasil</small></span></li>
+          <li data-stage="1"><span class="route-number">02</span><span>Rio <small>Brasil</small></span></li>
+          <li data-stage="2"><span class="route-number">03</span><span>Argentina <small>Buenos Aires</small></span></li>
+          <li data-stage="3"><span class="route-number">04</span><span>Flórida <small>EUA</small></span></li>
+          <li data-stage="4"><span class="route-number">05</span><span>Casa Branca <small>Washington, EUA</small></span></li>
+        </ol>
+        <div class="game-stage-header">
+          <div><span id="game-phase">Cenário 1 de 5</span><strong id="game-stage-name">Brasília</strong></div>
+          <span class="game-stage-clock" id="game-stage-time">20 s para Rio</span>
+        </div>
+        <p class="game-stage-mission" id="game-stage-mission">Pule as barreiras e colete milhas para seguir viagem.</p>
+        <div class="game-scoreboard" aria-label="Placar">
+          <div><span>Pontos</span><strong id="game-score">0000</strong></div>
+          <div><span>Seu recorde</span><strong id="game-best">0000</strong></div>
+          <div><span>Tempo</span><strong id="game-time">00:00</strong></div>
+        </div>
+        <div class="game-viewport">
+          <canvas id="runner-canvas" width="900" height="300" tabindex="0" role="img" aria-label="Pista do jogo Corre, Flávio!" aria-describedby="game-instructions">Seu navegador não oferece Canvas. A contagem regressiva continua disponível acima.</canvas>
+          <div class="game-overlay" id="game-overlay"><strong id="game-overlay-title">Passaporte na mão?</strong><p id="game-overlay-copy">Tem um longo caminho até o portão de embarque.</p></div>
+        </div>
+        <div class="route-meter" role="progressbar" aria-label="Tempo no cenário atual" aria-valuemin="0" aria-valuemax="20" aria-valuenow="0" id="game-progress"><span></span></div>
+        <div class="game-controls">
+          <button type="button" id="game-jump" aria-label="Pular" disabled><span aria-hidden="true">↑</span> Pular</button>
+          <button type="button" id="game-pause" disabled>Pausar corrida</button>
+          <button type="button" class="game-primary" id="game-start">Começar corrida</button>
+        </div>
+        <p class="game-quick-tip">Toque na pista ou use <kbd>Espaço</kbd> para pular.</p>
+        <p class="game-status" id="game-status" role="status" aria-live="polite">Tudo pronto. A corrida começa quando você quiser.</p>
+        <details class="game-help"><summary>Como jogar e ganhar pontos</summary>
+        <p class="game-instructions" id="game-instructions">Toque na pista ou em <strong>Pular</strong>. No teclado: <kbd>Espaço</kbd> / <kbd>↑</kbd> para pular e <kbd>P</kbd> para pausar.</p>
+        <div class="game-legend"><span><i class="legend-obstacle" aria-hidden="true"></i> Desvie de barreiras, malas e papéis.</span><span><i class="legend-bonus" aria-hidden="true"></i> Milhas e notas +25 · Passaporte +50</span></div>
+        </details>
+        <p class="game-fiction">Jogo de humor. Roteiro, fuga e itens são fictícios. Seu recorde fica apenas neste navegador.</p>
+        <noscript>Habilite o JavaScript para jogar.</noscript>
+      </section>
+
+
     </main>
     <footer>Projeto independente de humor. <span class="music-credit">♫ “Tá na Hora do Jair Já Ir Embora” — Tiago Doidão e Juliano Maderada. <a href="https://www.youtube.com/watch?v=RTMiC5WturY" target="_blank" rel="noopener noreferrer">Música no YouTube ↗</a></span></footer>
   </div>

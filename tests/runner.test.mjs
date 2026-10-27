@@ -52,9 +52,9 @@ test("a pausa congela física e pontuação e permite retomar", () => {
   assert.ok(run.elapsed > snapshot.elapsed);
 });
 
-test("Rio muda para Argentina e depois EUA exatamente nas fronteiras", () => {
+test("uma corrida visita Brasília, Rio, Argentina, Flórida e Casa Branca, sem São Paulo", () => {
   running();
-  for (const [seconds, name] of [[0,"Rio de Janeiro"],[24.999,"Rio de Janeiro"],[25,"Argentina"],[49.999,"Argentina"],[50,"Estados Unidos"],[75,"Estados Unidos"]]) {
+  for (const [seconds, name] of [[0,"Brasília"],[19.999,"Brasília"],[20,"Rio de Janeiro"],[40,"Argentina"],[60,"Flórida"],[80,"Casa Branca"],[200,"Casa Branca"]]) {
     assert.equal(core.stageAt(seconds).name, name);
   }
 });
@@ -93,19 +93,30 @@ test("um intervalo enorme ou inválido não teleporta o personagem", () => {
   for (const dt of [-1, NaN, Infinity]) core.advanceRun(run, dt, () => .5);
   assert.equal(run.elapsed, 0);
   core.advanceRun(run, 120, () => .5);
-  assert.ok(run.elapsed > 0 && run.elapsed <= .05);
-  assert.ok(run.distance < 20);
+  assert.equal(run.elapsed, 0);
+  assert.equal(run.status, "paused");
 });
 
-test("a rota termina aos 75 segundos e não ganha pontos depois", () => {
+test("a corrida continua após a Casa Branca, sem vitória ou reinício automático", () => {
   const run = running();
-  run.elapsed = 74.99;
+  run.elapsed = 100;
   core.advanceRun(run, .02, () => .5);
-  assert.equal(run.status, "won");
-  assert.equal(run.elapsed, 75);
+  assert.equal(run.status, "running");
+  assert.ok(run.elapsed > 100);
+  assert.equal(core.stageAt(run.elapsed).name, "Casa Branca");
   const score = core.scoreFor(run);
-  frames(run, 5);
-  assert.equal(core.scoreFor(run), score);
+  frames(run, .2);
+  assert.ok(core.scoreFor(run) > score);
+});
+
+test("os cenários duram o mesmo em 10, 15, 30 e 60 fps", () => {
+  for (const fps of [10,15,30,60]) {
+    const run = running();
+    run.nextObstacle = run.nextPickup = 1e9;
+    for (let i = 0; i < 20 * fps; i++) core.advanceRun(run, 1 / fps, () => .5);
+    assert.ok(Math.abs(run.elapsed - 20) < 1e-7, fps + " fps: " + run.elapsed);
+    assert.equal(core.stageAt(run.elapsed).name, "Rio de Janeiro");
+  }
 });
 
 test("os obstáculos chegam com tempo de reação e intervalo para aterrissar", () => {
@@ -125,4 +136,16 @@ test("os obstáculos chegam com tempo de reação e intervalo para aterrissar", 
     run.obstacles = run.obstacles.filter(o => o.x > 250);
   }
   assert.ok(saw >= 4);
+});
+
+test("cada cenário recebe os obstáculos e bônus da viagem", () => {
+  for (const [elapsed, obstacle, bonus] of [[0,"barrier","miles"],[20,"barrier","miles"],[40,"case","note"],[60,"papers","passport"],[80,"papers","passport"]]) {
+    const run = running();
+    run.elapsed = elapsed;
+    run.nextObstacle = 0;
+    run.nextPickup = 0;
+    core.advanceRun(run,1/120,()=>.99);
+    assert.equal(run.obstacles[0].type,obstacle);
+    assert.equal(run.pickups[0].type,bonus);
+  }
 });

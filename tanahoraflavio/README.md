@@ -18,12 +18,15 @@ Site estático em `tanahoraflavio/`, atualmente no repositório público `lamori
 
 ## Minigame: Corre, Flávio!
 
-- Corrida fictícia e satírica: **Rio (0–25 s) → Argentina (25–50 s) → EUA (50–75 s)**. Completar 75 segundos encerra a rota com vitória.
+- Corrida contínua, fictícia e satírica: **Brasília (0–20 s) → Rio (20–40 s) → Argentina (40–60 s) → Flórida (60–80 s) → Casa Branca (a partir de 80 s)**. São Paulo não faz parte da rota. O último cenário permanece e a corrida só termina na colisão.
 - Toque na pista ou em **Pular**; teclado: Espaço ou seta para cima. **P** pausa/retoma e Esc pausa quando a pista está focada. Não há início automático.
-- Desvie de barreiras, malas e pilhas de papéis. Colete milhas e notas (+25) ou passaportes (+50). Os objetos e a história são fictícios.
-- Colisão encerra a partida e permite tentar novamente. A corrida pausa ao sair da aba, perder foco ou rolar a pista para fora da tela.
+- Brasília e Rio usam barreiras e milhas; Argentina usa malas e notas; Flórida e Casa Branca usam papéis e passaportes. Milhas e notas valem +25; passaportes valem +50. Os objetos e a história são fictícios.
+- O cenário atual, a missão e o tempo até o próximo destino ficam visíveis. A passagem mantém o placar e o personagem na mesma corrida, sem tela de vitória ou reinício automático.
+- Colisão encerra a partida e permite tentar novamente. A corrida pausa ao sair da aba, perder foco, rolar a pista para fora da tela ou quando um quadro fica suspenso por mais de 250 ms.
+- A simulação usa subpassos de 1/120 s para preservar o tempo de percurso e a física em taxas menores de quadros.
 - Recorde em `localStorage`, somente no navegador. Se o armazenamento estiver bloqueado, o jogo funciona e conserva o recorde durante a sessão.
 - `runner-core.mjs` contém a física e as regras sem DOM; `runner.mjs` desenha cenários e controles; `enhancements.css` ajusta o visual da página. Nenhuma dependência de runtime foi adicionada.
+- No celular, o contador vem antes do retrato. Os controles têm rótulos legíveis e alvos de toque de pelo menos 44 px; Pular ganha destaque durante a partida, com Recomeçar separado abaixo. Instruções completas ficam em **Como jogar e ganhar pontos**. Fontes ficam próximas da contagem, e o primeiro Tab oferece um atalho para o conteúdo.
 
 ### Verificação
 
