@@ -1,4 +1,4 @@
-import { WORLD, PLAYER, PURSUERS, PICKUPS, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, togglePause, advanceRun, stageAt, pursuitAt, scoreFor } from "./runner-core.mjs";
+import { WORLD, PLAYER, PURSUERS, PICKUPS, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, togglePause, advanceRun, stageAt, pursuitAt, scoreFor } from "./runner-core.mjs?v=20261027-integrated-endless";
 
 function initRunner() {
   const $ = id => document.getElementById(id);
