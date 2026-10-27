@@ -49,16 +49,16 @@ h1 .title-followup strong{color:var(--purple);font-weight:900}
 .done{display:none;margin:13px auto;padding:14px;background:var(--pale);border-radius:10px;color:var(--dark);font-weight:800}
 body.finished .counter{display:none}
 body.finished .done{display:block}
-.music{margin-top:13px;padding:17px 21px;background:#fff;border:1px solid var(--line);border-radius:17px}
+.music{width:min(100%,555px);margin:17px auto 0;padding:13px 14px;background:#f9f6fd;border:1px solid var(--line);border-radius:13px}
 .music-copy{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
-.music h2{flex:1 1 auto;margin:0;font-size:16px}
+.music h2{flex:1 1 auto;margin:0;font-size:14px;text-align:left}
 .audio-button{border:0;background:var(--purple);color:#fff;font-size:13px;font-weight:800;border-radius:10px;padding:12px 16px;cursor:pointer}
 .audio-button:hover{background:var(--dark)}
 .audio-button:focus-visible,.share:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid #b18ad4;outline-offset:3px}
 .audio-status{flex-basis:100%;font-size:11px;color:var(--muted);line-height:1.4;margin:0}
 .audio-status:empty{display:none}
 .music-panel[hidden]{display:none}
-.music-panel{margin-top:16px;padding-top:15px;border-top:1px solid var(--line)}
+.music-panel{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
 .music-frame{aspect-ratio:16/9;width:min(100%,520px);min-height:200px;margin:auto;border-radius:12px;overflow:hidden;background:#1c1424}
 .music-frame iframe{display:block;width:100%;height:100%;border:0}
 .music-caption{font-size:11px;line-height:1.6;color:var(--muted);margin:12px 0 0;text-align:center}
@@ -101,24 +101,25 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         <div class="done" id="finished">O prazo do mandato chegou ao fim.</div>
         <p class="target">Fim do mandato: 31/01/2027 · Contagem até 01/02/2027, 00h (Brasília)</p>
         <p class="legal-note">A perda do cargo não encerra automaticamente o foro em todos os processos. <a href="https://noticias.stf.jus.br/postsnoticias/acoes-contra-autoridades-permanecem-no-stf-mesmo-apos-saida-do-cargo/" target="_blank" rel="noopener noreferrer">Entenda no STF ↗</a></p>
-<button class="share" type="button" id="share">Compartilhar contagem</button>
+        <section class="music" id="musica" aria-label="Reprodução de música">
+          <div class="music-copy">
+            <h2>♫ Música</h2>
+            <button type="button" class="audio-button" id="music-toggle" aria-controls="music-panel" aria-expanded="false">▶ Tocar música com som</button>
+            <p class="audio-status" id="audio-status" role="status" aria-live="polite"></p>
+          </div>
+          <div class="music-panel" id="music-panel" hidden>
+            <div id="music-video" class="music-frame"></div>
+            <p class="music-caption">Se o navegador não iniciar o áudio, toque em ▶ no próprio vídeo.
+              <a href="https://www.youtube.com/watch?v=NarAz1hRvbI" target="_blank" rel="noopener noreferrer">Abrir no YouTube ↗</a>
+            </p>
+          </div>
+        </section>
+        <button class="share" type="button" id="share">Compartilhar contagem</button>
         <div class="share-message" id="share-message" role="status" aria-live="polite"></div>
       </section>
 
 
-      <section class="music" aria-label="Música">
-        <div class="music-copy">
-          <h2>♫ Trilha sonora</h2>
-          <button type="button" class="audio-button" id="music-toggle" aria-controls="music-panel" aria-expanded="false">▶ Tocar com som</button>
-          <p id="audio-status" class="audio-status" role="status" aria-live="polite"></p>
-        </div>
-        <div class="music-panel" id="music-panel" hidden>
-          <div id="music-video" class="music-frame"></div>
-          <p class="music-caption">“Tá na Hora do Jair Já Ir Embora” — Juliano Maderada e Tiago Doidão. 
-            <a href="https://www.youtube.com/watch?v=NarAz1hRvbI" target="_blank" rel="noopener noreferrer">Ver no YouTube</a>
-          </p>
-        </div>
-      </section>
+
       <details class="sources">
         <summary>Fontes e informações jurídicas</summary>
         <section class="bottom" aria-label="Informações importantes">
@@ -174,24 +175,30 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
   const button=$("music-toggle"), panel=$("music-panel"), container=$("music-video"),status=$("audio-status");
   button.addEventListener("click", () => {
     if(!panel.hidden){
-      container.replaceChildren(); // Ao ocultar o vídeo, interrompe o áudio.
+      // Nunca mantenha um player invisível tocando: ao recolher, removemos o iframe.
+      container.replaceChildren();
       panel.hidden=true;
-      button.textContent="▶ Tocar com som";
+      button.textContent="▶ Tocar música com som";
       button.setAttribute("aria-expanded","false");
       status.textContent="";
       return;
     }
+    // Primeiro torna o player visível; depois tenta iniciar a música.
+    // Autoplay com áudio depende da política do navegador (especialmente no Android).
     panel.hidden=false;
+    button.setAttribute("aria-expanded","true");
+    button.textContent="■ Parar música";
     const frame=document.createElement("iframe");
     frame.title="Tá na Hora do Jair Já Ir Embora — YouTube";
     frame.allow="autoplay; encrypted-media; picture-in-picture";
     frame.allowFullscreen=true;
     frame.referrerPolicy="strict-origin-when-cross-origin";
-    frame.src="https://www.youtube-nocookie.com/embed/NarAz1hRvbI?autoplay=1&playsinline=1&controls=1&loop=1&playlist=NarAz1hRvbI&rel=0";
+    frame.loading="eager";
+    frame.src="https://www.youtube-nocookie.com/embed/NarAz1hRvbI?autoplay=1&mute=0&playsinline=1&controls=1&loop=1&playlist=NarAz1hRvbI&rel=0";
     container.replaceChildren(frame);
-    button.textContent="■ Ocultar e parar";
-    button.setAttribute("aria-expanded","true");
-    status.textContent="Se o som não iniciar, toque em ▶ no vídeo.";
+    // Exibir o vídeo evita tentar reproduzir quando ele está fora da área visível.
+    panel.scrollIntoView({block:"center",behavior:"instant"});
+    status.textContent="Player aberto. Se não ouvir, pressione ▶ no vídeo.";
   });
 })();
 </script>
