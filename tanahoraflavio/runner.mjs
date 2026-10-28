@@ -334,7 +334,9 @@ function initRunner() {
       }else if(label==='COVID-19'){
         circle(0,-16,10,"#c68d8d");
         ctx.strokeStyle="#b57b83";ctx.lineWidth=2;
-        for(let n=0;n<8;n++){const a=n*Math.PI/4;line([[Math.cos(a)*11,Math.sin(a)*11-16],[Math.cos(a)*16,Math.sin(a)*16-16]],"#b57b83",2);}
+        for(const [x,y] of [[-16,-16],[16,-16],[0,-32],[0,0]]){
+          line([[x*.68,(y+16)*.68-16],[x,y]],"#b57b83",2);
+        }
       }else if(label==='IVERMECTINA'){
         ctx.save();ctx.translate(0,-16);ctx.rotate(-.35);
         ctx.fillStyle="#f4efe7";ctx.fillRect(-16,-7,32,14);
