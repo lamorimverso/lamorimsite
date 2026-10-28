@@ -1,4 +1,4 @@
-import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, difficultyAt, createRun, startRun, jumpRun, advanceRun, stageAt, stageTransitionAt, scoreFor } from "./runner-core.mjs?v=20261028-dodge-km-v1";
+import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, difficultyAt, createRun, startRun, jumpRun, crouchRun, advanceRun, stageAt, stageTransitionAt, scoreFor } from "./runner-core.mjs?v=20261028-dodge-km-v1";
 import { RAID_FACTS } from "./runner-core.mjs?v=20261028-dodge-km-v1";
 import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor } from "./runner-art.mjs?v=20261028-dodge-km-v1";
 import { createGameAudio } from "./runner-audio.mjs?v=20261028-aimed-shots-v1";
@@ -93,6 +93,8 @@ function initRunner() {
       if(raidKey!==lastRaidKey){audio.event(raid.phase,fact);lastRaidKey=raidKey;}
     }else if(lastRaidKey){audio.stop();lastRaidKey="";}
     $("game-jump").disabled=run.status!=="running";
+    $("game-crouch").disabled=run.status!=="running";
+    $("game-crouch").setAttribute("aria-pressed",String(run.player.crouching));
     $("game-start").disabled=!spritesReady&&!spritesFailed;
     $("game-start").textContent=!spritesReady?(spritesFailed?"Tentar carregar desenhos":"Carregando desenhos · "+loadedSprites+"/2"):run.status==="ready"?"Começar corrida":run.status==="over"?"Tentar de novo":"Recomeçar corrida";
     $("game-loading-note").hidden=spritesReady;
@@ -175,6 +177,11 @@ function initRunner() {
     if(["ready","over"].includes(run.status))begin();
     if(jumpRun(run)){audio.effect("jump");draw();}
   }
+  function crouch(active){
+    if(crouchRun(run,active)){draw();}
+    else if(!active)draw();
+    $("game-crouch").setAttribute("aria-pressed",String(run.player.crouching));
+  }
   $("game-start").addEventListener("click",begin);
   $("game-sound").addEventListener("click",()=>{
     const enabled=audio.toggle();$("game-sound").textContent=enabled?"Som ligado":"Som desligado";
@@ -189,15 +196,36 @@ function initRunner() {
     target.addEventListener("click",event=>{if(!("PointerEvent" in window)||event.detail===0)activate();});
   }
   bindJump($("game-jump"));bindJump(canvas);
+  const crouchButton=$("game-crouch");
+  // Segure para abaixar, solte para voltar a correr (celular/mouse/caneta).
+  crouchButton.addEventListener("pointerdown",event=>{
+    if(event.button!==0||run.status!=="running")return;
+    event.preventDefault();resumeFromGesture();
+    crouchButton.setPointerCapture?.(event.pointerId);crouch(true);
+  });
+  const releaseCrouch=()=>crouch(false);
+  crouchButton.addEventListener("pointerup",releaseCrouch);
+  crouchButton.addEventListener("pointercancel",releaseCrouch);
+  crouchButton.addEventListener("lostpointercapture",releaseCrouch);
+  // Enter/Espaço no botão: alternância acessível sem exigir manter tecla.
+  crouchButton.addEventListener("click",event=>{
+    if(event.detail===0)crouch(!run.player.crouching);
+  });
   section.addEventListener("keydown", event => {
     if (event.target.closest("button,a,input,select,textarea,summary") || event.ctrlKey || event.metaKey || event.altKey) return;
     if (["Space","ArrowUp"].includes(event.code)) {
       event.preventDefault();
       if (!event.repeat) jump();
+    } else if(["ArrowDown","KeyS"].includes(event.code)) {
+      event.preventDefault();
+      crouch(true);
     }
   });
-  document.addEventListener("visibilitychange", syncActivity);
-  window.addEventListener("blur", () => { windowFocused=false; syncActivity(); });
+  section.addEventListener("keyup",event=>{
+    if(["ArrowDown","KeyS"].includes(event.code)){event.preventDefault();crouch(false);}
+  });
+  document.addEventListener("visibilitychange",()=>{if(document.hidden)crouch(false);syncActivity();});
+  window.addEventListener("blur", () => { crouch(false);windowFocused=false; syncActivity(); });
   window.addEventListener("focus", () => { windowFocused=true; syncActivity(); });
   if ("IntersectionObserver" in window) {
     new IntersectionObserver(entries => {
@@ -374,7 +402,11 @@ function initRunner() {
       drawItem(ctx,{type:"shield",x:PLAYER.x+17,y:WORLD.ground-run.player.y-91,scale:.38});
     }
     // O Canvas espelha os quadros originais para o Flávio fugir olhando para +X (direita).
-    drawActor(ctx,{type:"flavio",x:PLAYER.x+17,y:WORLD.ground-run.player.y-bounce,scale:.95,phase,airborne,landing:run.elapsed<landingUntil,hurt:run.status==="over",alpha:run.shieldFor>0?.27:run.graceFor>0?.55:1});
+    const feet=WORLD.ground-run.player.y-bounce;
+    ctx.save();
+    if(run.player.crouching&&!airborne){ctx.translate(0,feet);ctx.scale(1,.47);ctx.translate(0,-feet);}
+    drawActor(ctx,{type:"flavio",x:PLAYER.x+17,y:feet,scale:.95,phase,airborne,landing:run.elapsed<landingUntil,hurt:run.status==="over",alpha:run.shieldFor>0?.27:run.graceFor>0?.55:1});
+    ctx.restore();
   }
   function obstacle(item){
     if(item.projectile){
