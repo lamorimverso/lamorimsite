@@ -174,7 +174,7 @@ test('uma colisão sem poder encerra e reinício restaura uma vida', async () =>
     assert.equal(await page.locator('#game-passports').textContent(),'0');
     assert.match(await page.locator('#game-threat').textContent(), /Inimigos sorteados/);
     assert.match(await page.locator('#game-power').textContent(), /Sem efeito/);
-    assert.match(await page.locator('#game-ammo').textContent(), /0/);
+    assert.equal(await page.locator('#game-ammo').textContent(),'Sem arma');
     assert.deepEqual(errors,[]);
   } finally { await context.close(); }
 });
@@ -222,7 +222,7 @@ test('100 passaportes concedem +1 vida e a corrida permanece infinita', async ()
     assert.equal(await page.locator('#game-passport-next').textContent(),'100');
     await page.evaluate(() => {
       const run=globalThis.__testRun;
-      run.elapsed=85;run.routeDistance=21000;run.nextBossAt=Infinity;
+      run.elapsed=85;run.routeDistance=29000;run.nextBossAt=Infinity;
       run.distance=90000;
       run.shieldFor=1000;
       run.obstacles=[];
@@ -385,17 +385,16 @@ test("HUD do chefe surge pela distância e some ao vencer sem poluir a pista", a
     });
     await page.waitForFunction(()=>document.getElementById('game-boss').hidden===false);
     assert.match(await page.locator('#game-boss-name').textContent(),/(Xandão|Haddad|Lula).*rodada 1/);
-    const expectedHP=({xandao:'14',haddad:'16',lula:'20'})[await page.locator('#game').getAttribute('data-boss')];
-    assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuenow'),expectedHP);
-    assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuemax'),expectedHP);
+    const total=({xandao:'4',haddad:'5',lula:'6'})[await page.locator('#game').getAttribute('data-boss')];
+    assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuenow'),'0');
+    assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuemax'),total);
+    assert.match(await page.locator('.game-boss-heading span').textContent(),/CHEFÃO/);
     assert.equal(await page.locator('.game-help').count(),0);
     assert.equal(await page.locator('#runner-canvas').isVisible(),true);
     await page.evaluate(()=>{
       const run=globalThis.__testRun;
       run.boss.fired=run.boss.total;
       run.boss.remaining=1;
-      run.boss.health=0;
-      run.shots=[];
       run.obstacles=[{x:45,width:34,height:44,type:'pf',bossAttack:true,counted:false}];
     });
     await page.waitForFunction(()=>document.getElementById('game-boss').hidden===true);
@@ -462,17 +461,17 @@ test('uma vida extra coletada permite sobreviver exatamente a mais uma colisão'
 });
 
 
-test('escudo e munição só aparecem ativos e não deslocam a pista',async()=>{
+test('escudo aparece somente quando ativo, sem munição nem deslocamento da pista',async()=>{
  const {context,page,errors}=await openWithRun();
  try{
   assert.equal(await page.locator('.game-hud').isVisible(),false);
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
   const before=await page.locator('#runner-canvas').boundingBox();
-  await page.evaluate(()=>{const r=globalThis.__testRun;r.nextObstacle=1000;r.obstacles=[];r.shieldFor=6;r.bibleCharges=3;});
+  await page.evaluate(()=>{const r=globalThis.__testRun;r.nextObstacle=1000;r.obstacles=[];r.shieldFor=6;});
   await page.waitForFunction(()=>document.getElementById('game').dataset.power==='shield');
-  assert.equal(await page.locator('#game-power').isVisible(),true);assert.equal(await page.locator('#game-ammo').isVisible(),true);
+  assert.equal(await page.locator('#game-power').isVisible(),true);assert.equal(await page.locator('#game-ammo').isVisible(),false);
   const after=await page.locator('#runner-canvas').boundingBox();assert.ok(Math.abs(before.y-after.y)<1);
-  await page.evaluate(()=>{const r=globalThis.__testRun;r.shieldFor=0;r.bibleCharges=0;});
+  await page.evaluate(()=>{const r=globalThis.__testRun;r.shieldFor=0;});
   await page.waitForFunction(()=>document.getElementById('game').dataset.power==='none');
   assert.equal(await page.locator('.game-hud').isVisible(),false);assert.deepEqual(errors,[]);
  }finally{await context.close();}
@@ -517,25 +516,29 @@ test('movimento reduzido retira animações decorativas sem paralisar a corrida'
   } finally { await context.close(); }
 });
 
-test('armas caricaturais aparecem durante chefes sem impedir o salto', async () => {
-  const {context,page,errors}=await openWithRun();
-  try {
-    await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
-    await page.evaluate(()=>{
-      const run=globalThis.__testRun;
-      run.nextBossAt=0;
-      run.nextObstacle=run.nextPickup=run.nextPassport=run.nextPower=10000;
-      run.graceFor=30;
-    });
-    await page.waitForFunction(()=>document.getElementById('game-boss').hidden===false);
-    assert.equal(await page.locator('#game-pause').count(),0);
-    await page.evaluate(()=>{globalThis.__testRun.pickups.push({x:136,y:35,type:'biblia',value:0});});
-    await page.waitForFunction(()=>globalThis.__testRun.boss.shotsFired>=3,null,{timeout:10000});
-    assert.match(await page.locator('#game-boss-weapon').textContent(),/Bíblia evangélica/);
-    assert.ok(await page.evaluate(()=>globalThis.__testRun.boss.health<globalThis.__testRun.boss.maxHealth));
-    assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
-    assert.deepEqual(errors,[]);
-  }finally{await context.close();}
+test('Flávio não atira, e o botão Abaixar permite desviar no celular',async()=>{
+ const {context,page,errors}=await openWithRun({viewport:{width:390,height:844}});
+ try{
+  await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+  await page.evaluate(()=>{
+   const r=globalThis.__testRun;r.nextBossAt=0;r.nextRaid=Infinity;
+   r.nextObstacle=r.nextPickup=r.nextPassport=r.nextPower=1e8;
+   r.graceFor=25;
+  });
+  await page.waitForFunction(()=>document.getElementById('game-boss').hidden===false);
+  assert.equal(await page.locator('#game-crouch').isVisible(),true);
+  assert.equal(await page.locator('#game-crouch').isEnabled(),true);
+  assert.equal(await page.locator('#game-jump').isEnabled(),true);
+  assert.equal(await page.locator('#game-ammo').isVisible(),false);
+  assert.equal(await page.evaluate(()=>Object.prototype.hasOwnProperty.call(globalThis.__testRun,'shots')),false);
+  await page.locator('#game-crouch').dispatchEvent('pointerdown',{button:0,pointerId:1});
+  await page.waitForFunction(()=>globalThis.__testRun.player.crouching);
+  assert.equal(await page.locator('#game-crouch').getAttribute('aria-pressed'),'true');
+  await page.locator('#game-crouch').dispatchEvent('pointerup',{pointerId:1});
+  await page.waitForFunction(()=>!globalThis.__testRun.player.crouching);
+  assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
 });
 
 test('fusão de paisagens e aviso de destino sem perder a jogabilidade', async () => {
@@ -550,7 +553,7 @@ test('fusão de paisagens e aviso de destino sem perder a jogabilidade', async (
       run.shieldFor=100;
     });
     const sample=async elapsed=>{
-      await page.evaluate(elapsed=>{globalThis.__testRun.routeDistance=elapsed*250;},elapsed);
+      await page.evaluate(elapsed=>{globalThis.__testRun.routeDistance=elapsed*350;},elapsed);
       await page.waitForTimeout(95);
       return page.evaluate(()=>{
         const c=document.getElementById('runner-canvas');
