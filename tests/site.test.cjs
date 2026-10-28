@@ -53,26 +53,21 @@ async function openWithRun(options = {}) {
   return {context,page,errors};
 }
 
-test('teclado inicia, pausa, retoma e contador continua funcionando', async () => {
-  const {context,page,errors} = await open();
+test('teclado mantém a corrida sem botão ou atalho de pausa', async () => {
+  const {context,page,errors}=await open();
   try {
-    const start = page.getByRole('button', {name:'Começar corrida',exact:true});
-    await start.waitFor({state:'visible',timeout:1500});
-    await start.click();
-    await page.waitForTimeout(350);
-    assert.ok(Number(await page.locator('#game-score').textContent()) > 0);
+    await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+    assert.equal(await page.locator('#game-pause').count(),0);
     await page.locator('#runner-canvas').press('KeyP');
-    await page.getByRole('button',{name:'Continuar corrida',exact:true}).waitFor();
-    const score = await page.locator('#game-score').textContent();
-    await page.waitForTimeout(250);
-    assert.equal(await page.locator('#game-score').textContent(),score);
-    await page.getByRole('button',{name:'Continuar corrida',exact:true}).click();
+    await page.locator('#runner-canvas').press('Escape');
+    const before=Number(await page.locator('#game-score').textContent());
+    await page.waitForTimeout(320);
+    assert.ok(Number(await page.locator('#game-score').textContent())>before);
+    assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
     await page.locator('#runner-canvas').press('Space');
-    assert.equal(await page.getByRole('button',{name:'Pausar corrida',exact:true}).isEnabled(),true);
-    assert.equal(await page.locator('.sources summary').isVisible(),true);
-    assert.equal(await page.locator('#music-toggle').isVisible(),true);
+    assert.equal(await page.locator('#game-jump').isEnabled(),true);
     assert.deepEqual(errors,[]);
-  } finally { await context.close(); }
+  }finally{await context.close();}
 });
 
 test('toque funciona em celular sem armazenamento disponível', async () => {
@@ -89,35 +84,26 @@ test('toque funciona em celular sem armazenamento disponível', async () => {
   } finally { await context.close(); }
 });
 
-test('sair da aba pausa a partida e exige retomada explícita', async () => {
-  const {context,page} = await open();
+test('aba oculta congela sem exibir pausa e retoma automaticamente', async () => {
+  const {context,page,errors}=await open();
   try {
-    await page.getByRole('button',{name:'Começar corrida',exact:true}).click({timeout:1500});
+    await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
     await page.evaluate(() => {
       Object.defineProperty(document,'hidden',{configurable:true,value:true});
       document.dispatchEvent(new Event('visibilitychange'));
     });
-    await page.getByRole('button',{name:'Continuar corrida',exact:true}).waitFor();
-    const score = await page.locator('#game-score').textContent();
-    await page.waitForTimeout(200);
-    assert.equal(await page.locator('#game-score').textContent(),score);
-  } finally { await context.close(); }
-});
-
-test('o teclado pausa e retoma a corrida sem expor painéis informativos', async () => {
-  const {context,page} = await open();
-  try {
-    assert.equal(await page.locator('.game-guide').isVisible(), false);
-    assert.equal(await page.locator('.game-help').isVisible(), false);
-    await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
-    await page.locator('#runner-canvas').press('KeyP');
-    await page.getByRole('button',{name:'Continuar corrida',exact:true}).waitFor();
     const score=await page.locator('#game-score').textContent();
-    await page.waitForTimeout(150);
+    await page.waitForTimeout(240);
     assert.equal(await page.locator('#game-score').textContent(),score);
-    await page.locator('#runner-canvas').press('KeyP');
-    assert.equal(await page.getByRole('button',{name:'Pausar corrida',exact:true}).isEnabled(),true);
-  } finally { await context.close(); }
+    assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
+    await page.evaluate(() => {
+      Object.defineProperty(document,'hidden',{configurable:true,value:false});
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await page.waitForFunction(previous=>Number(document.getElementById('game-score').textContent)>Number(previous),score);
+    assert.equal(await page.locator('#game-pause').count(),0);
+    assert.deepEqual(errors,[]);
+  }finally{await context.close();}
 });
 
 test('layout e controles cabem em 320, 390, 768 e 1440 pixels', async () => {
@@ -196,8 +182,8 @@ test('uma colisão sem poder encerra e reinício restaura uma vida', async () =>
   } finally { await context.close(); }
 });
 
-test('invisibilidade é mantida enquanto a partida está pausada', async () => {
-  const {context,page,errors} = await openWithRun();
+test('invisibilidade congela com aba oculta e retoma sem intervenção', async () => {
+  const {context,page,errors}=await openWithRun();
   try {
     await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
     await page.evaluate(() => {
@@ -206,15 +192,21 @@ test('invisibilidade é mantida enquanto a partida está pausada', async () => {
       run.obstacles=[];
       run.pickups.push({x:136,y:35,type:'invisible',value:0});
     });
-    await page.waitForFunction(() => /Invisível/.test(document.getElementById('game-power').textContent));
-    assert.equal(await page.locator('#game-power').isVisible(),true, 'poder ativo precisa ser visível');
-    await page.locator('#runner-canvas').press('KeyP');
-    await page.getByRole('button',{name:'Continuar corrida',exact:true}).waitFor();
+    await page.waitForFunction(()=>/Invisível/.test(document.getElementById('game-power').textContent));
+    await page.evaluate(()=>{
+      Object.defineProperty(document,'hidden',{configurable:true,value:true});
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
     const remaining=await page.locator('#game-power').textContent();
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(220);
     assert.equal(await page.locator('#game-power').textContent(),remaining);
+    await page.evaluate(()=>{
+      Object.defineProperty(document,'hidden',{configurable:true,value:false});
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await page.waitForFunction(()=>globalThis.__testRun.invisibleFor<5.5);
     assert.deepEqual(errors,[]);
-  } finally { await context.close(); }
+  }finally{await context.close();}
 });
 
 test('100 passaportes concedem +1 vida e a corrida permanece infinita', async () => {
@@ -375,7 +367,7 @@ test('jogo minimalista mostra só a pista, placar essencial e controles em todas
     await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
     assert.equal(await page.locator('#game-start').isVisible(),false);
     assert.equal(await page.locator('#game-jump').isEnabled(),true);
-    assert.equal(await page.locator('#game-pause').isEnabled(),true);
+    assert.equal(await page.locator('#game-pause').count(),0);
     assert.deepEqual(errors,[]);
   }finally{await context.close();}
 });
@@ -394,14 +386,16 @@ test("HUD do chefe surge por pontuação e some ao vencer sem poluir a pista", a
     });
     await page.waitForFunction(()=>document.getElementById('game-boss').hidden===false);
     assert.match(await page.locator('#game-boss-name').textContent(),/Polícia Federal.*Nível 1/);
-    assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuenow'),'3');
-    assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuemax'),'3');
+    assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuenow'),'6');
+    assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuemax'),'6');
     assert.equal(await page.locator('.game-help').isVisible(),false);
     assert.equal(await page.locator('#runner-canvas').isVisible(),true);
     await page.evaluate(()=>{
       const run=globalThis.__testRun;
       run.boss.fired=run.boss.total;
       run.boss.remaining=1;
+      run.boss.health=0;
+      run.shots=[];
       run.obstacles=[{x:45,width:34,height:44,type:'pf',bossAttack:true,counted:false}];
     });
     await page.waitForFunction(()=>document.getElementById('game-boss').hidden===true);
@@ -555,4 +549,24 @@ test('movimento reduzido retira animações decorativas sem paralisar a corrida'
     assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
     assert.deepEqual(errors,[]);
   } finally { await context.close(); }
+});
+
+test('armas caricaturais aparecem durante chefes sem impedir o salto', async () => {
+  const {context,page,errors}=await openWithRun();
+  try {
+    await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+    await page.evaluate(()=>{
+      const run=globalThis.__testRun;
+      run.bonus=1500;
+      run.nextObstacle=run.nextPickup=run.nextPassport=run.nextPower=10000;
+      run.graceFor=30;
+    });
+    await page.waitForFunction(()=>document.getElementById('game-boss').hidden===false);
+    assert.equal(await page.locator('#game-pause').count(),0);
+    await page.waitForFunction(()=>globalThis.__testRun.boss.shotsFired>=3,null,{timeout:10000});
+    assert.match(await page.locator('#game-boss-weapon').textContent(),/Bíblia evangélica/);
+    assert.ok(await page.evaluate(()=>globalThis.__testRun.boss.health<globalThis.__testRun.boss.maxHealth));
+    assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
+    assert.deepEqual(errors,[]);
+  }finally{await context.close();}
 });
