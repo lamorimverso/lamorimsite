@@ -135,7 +135,7 @@ function advanceBoss(run,dt,rng){
   projectile:true,launchX:x+width/2,targetX:PLAYER.x+PLAYER.width/2,
   // Mandado, mão em L e recibos passam mais alto: abaixar evita estes;
   // o martelo vai baixo e precisa ser superado com salto.
-  launchY:77,targetY:attackType==='hammer'?PLAYER.height/2:73,y:77};
+  launchY:77,targetY:attackType==='hammer'?PLAYER.height/2:70,y:77};
  run.obstacles.push(attack);
  boss.attackFlashFor=.26;boss.fired++;
  boss.nextAttack+=boss.interval+random(rng)*.22;
