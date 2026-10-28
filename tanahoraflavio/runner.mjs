@@ -289,7 +289,7 @@ function initRunner() {
       }else if(stage.id==="argentina"){
         ctx.fillRect(x+20,206,29,18);ctx.fillRect(x+54,197,22,27);
       }else{
-        ctx.beginPath();ctx.ellipse(x+28,220,22,6,0,Math.PI*2);ctx.fill();
+        ctx.beginPath();ctx.ellipse(x+28,220,22,6,0,0,Math.PI*2);ctx.fill();
         ctx.fillRect(x+25,206,6,16);
       }
     }
