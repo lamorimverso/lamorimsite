@@ -84,8 +84,9 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
   <link rel="stylesheet" href="enhancements.css?v=20261027-mobile-desktop5">
-  <link rel="stylesheet" href="minimal.css?v=20261028-sprites-v3" >
-  <script type="module" src="runner.mjs?v=20261028-sprites-v4"></script>
+  <link rel="stylesheet" href="minimal.css?v=20261028-election-playlist-v1" >
+  <script type="module" src="runner.mjs?v=20261028-aimed-shots-v1"></script>
+  <script type="module" src="runner-playlist.mjs?v=20261028-election-playlist-v1"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -212,11 +213,28 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
           <div class="game-legend"><span><i class="legend-bonus" aria-hidden="true"></i> Passaportes: a cada 100, +1 vida</span><span><i class="legend-shield" aria-hidden="true"></i> Escudo das Américas: invisível por 6 s</span><span><i class="legend-bible" aria-hidden="true"></i> Bíblia: próximos 3 tiros com dano 3</span></div>
           <p>Toque na pista ou em Pular; no teclado, use Espaço ou ↑. Contra chefões, o personagem dispara automaticamente ivermectina simbólica (dano 1). A Bíblia coletada fortalece três disparos (dano 3). Os objetos são elementos de ficção, sem recomendação médica.</p>
           <p>Você começa com 1 vida. Uma colisão sem proteção encerra a partida; 100 passaportes concedem +1 vida. O Escudo das Américas permite atravessar inimigos por 6 s: ele não guarda uma colisão extra. Ao consumir uma vida conquistada, 1,2 s de recuperação impedem dano repetido pela mesma barreira.</p>
+          <p>Os chefões aparecem depois de um período inicial de corrida. Seus objetos seguem a direção do Flávio e tiram vida quando atingem; salte para escapar. O jogo tem efeitos sonoros de salto, arremesso, coleta e impacto, controlados por Som ligado/desligado.</p>
           <p>Os eventos da Joice têm aviso de 2 s, perseguição de 8 s e retorno gradual de 2 s. Som opcional; as legendas funcionam sem áudio. Falas da personagem são roteiro ficcional, não gravações autênticas.</p>
           <p>Contexto das notícias: o <a href="https://www.mprj.mp.br/web/guest/visualizar?noticiaId=96203" target="_blank" rel="noopener noreferrer">MP-RJ apresentou denúncia em 2020</a>; o <a href="https://portal.stf.jus.br/noticias/verNoticiaDetalhe.asp?idConteudo=477496" target="_blank" rel="noopener noreferrer">STF anulou quatro relatórios do Coaf em 2021</a>. Denúncia não equivale a condenação.</p>
           <p>Recorde pessoal: <strong id="game-best">0000</strong> pontos.</p>
         </details>
-        <details class="game-guide"><summary>Destinos, chefões e Joice</summary><p>Brasília → Rio → Argentina → Flórida → Casa Branca → nova volta. Xandão, Haddad e Lula aparecem por sorteio, sem repetir antes dos três. Cada um tem ataques próprios. Joice Hasselmann é uma personagem satírica: anuncia o meme da PF, que intensifica a perseguição por 8 s e depois termina.</p></details>
+        <details class="game-guide"><summary>Destinos, chefões e Joice</summary><p>Brasília → Rio → Argentina → Flórida → Casa Branca → nova volta. Xandão, Haddad e Lula aparecem por sorteio, sem repetir antes dos três; o primeiro só chega depois de aproximadamente 34 segundos de corrida. Seus projéteis vão em direção ao jogador, causam dano ao atingir e podem ser evitados com saltos. Joice Hasselmann anuncia uma perseguição especial por 8 s.</p></details>
+        <details class="game-playlist" id="game-playlist">
+          <summary>♫ Playlist de músicas das eleições de 2026</summary>
+          <p>Escolha uma faixa para ouvi-la no player do YouTube. O som não começa sem seu clique. As músicas são de campanhas e repercussões eleitorais distintas; a seleção não representa apoio a candidatos.</p>
+          <div class="game-playlist-choices" role="group" aria-label="Escolher música eleitoral">
+            <button type="button" data-election-track="lula" aria-pressed="false">Rap do Silva — Lula</button>
+            <button type="button" data-election-track="bota" aria-pressed="false">Bota Pra Virar — Igor Kannário</button>
+            <button type="button" data-election-track="flavio" aria-pressed="false">Vem com Fé — Flávio Bolsonaro</button>
+            <button type="button" data-election-track="renan" aria-pressed="false">A Vingança do Povo — Renan Santos</button>
+          </div>
+          <p id="game-playlist-status" role="status" aria-live="polite">Selecione uma das músicas para começar.</p>
+          <div id="game-playlist-player" hidden>
+            <iframe id="game-playlist-frame" title="Playlist eleitoral de 2026" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            <button id="game-playlist-stop" type="button">■ Parar playlist</button>
+          </div>
+          <p class="game-playlist-notice">Os vídeos são disponibilizados pelo YouTube e podem ter anúncios ou restrições do titular dos direitos. Nenhum áudio é hospedado pelo jogo.</p>
+        </details>
         <noscript>Habilite o JavaScript para jogar.</noscript>
       </section>
 
@@ -416,6 +434,12 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
     document.head.appendChild(script);
     updateButton();
   }
+  window.addEventListener("game-playlist-start",()=>{
+    requested=false;
+    audio.pause();
+    if(ready&&player)player.pauseVideo();
+    updateButton();
+  });
   playButton.addEventListener("click",()=>{
     clicked=true;
     requested=true;
