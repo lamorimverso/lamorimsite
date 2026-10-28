@@ -1,6 +1,6 @@
-import { WORLD, PLAYER, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, advanceRun, stageAt, stageTransitionAt, scoreFor } from "./runner-core.mjs?v=20261028-aimed-shots-v1";
+import { WORLD, PLAYER, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, advanceRun, stageAt, stageTransitionAt, scoreFor } from "./runner-core.mjs?v=20261028-fugindo-v1";
 import { RAID_FACTS } from "./runner-core.mjs?v=20261028-aimed-shots-v1";
-import { drawActor, drawItem, drawThreat, drawShot, loadSprites, drawSpritePortrait } from "./runner-art.mjs?v=20261028-aimed-shots-v1";
+import { drawActor, drawItem, drawThreat, drawShot, loadSprites, drawSpritePortrait, enemyMotionFor } from "./runner-art.mjs?v=20261028-fugindo-v1";
 import { createGameAudio } from "./runner-audio.mjs?v=20261028-aimed-shots-v1";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=20261028-aimed-shots-v1";
 
@@ -98,12 +98,12 @@ function initRunner() {
     $("game-loading-note").textContent=spritesFailed?"Os desenhos não carregaram. Toque no botão para tentar novamente.":"Preparando os personagens…";
     $("game-overlay").hidden=run.status==="running";
     if(run.status==="over"){
-      $("game-overlay-title").textContent="Bateu, perdeu!";
+      $("game-overlay-title").textContent="Foi pego pela Polícia Federal!";
       $("game-overlay-copy").textContent=score+" pontos · "+run.passports+" passaportes. Tente novamente!";
       $("game-overlay-badge").textContent="Perseguição fictícia";audio.stop();
     }
     if(lastStatus!==run.status||lastStage!==stage.index||lastCollected!==run.collected||lastPower!==power||lastLives!==run.lives||lastEvents!==run.events){
-      let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="over"?"Bateu, perdeu! "+score+" pontos. Toque em Tentar de novo.":stage.name+" · continue pulando os perigos.";
+      let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="over"?"Foi pego pela Polícia Federal! "+score+" pontos. Toque em Tentar de novo.":stage.name+" · continue pulando os perigos.";
       if(run.status==="running"){
         if(run.events>lastEvents)message=run.event;
         else if(lastCollected!==run.collected)message="Passaporte coletado. Faltam "+(100-run.passports%100)+" para uma vida.";
@@ -352,7 +352,12 @@ function initRunner() {
   function bossFigure(){
     const b=run.boss;if(!b)return;
     const phase=prefersReducedMotion()?0:run.elapsed*6;
-    drawActor(ctx,{type:b.type,x:virtualWidth-72,y:WORLD.ground-3,scale:1.62,phase,attacking:b.attackFlashFor>0,hurt:b.hitFlashFor>0});
+    // Balanço sutil e passos para o chefe não parecer congelado.
+    const bossX=virtualWidth-72,bossY=WORLD.ground-3;
+    const motion=enemyMotionFor(b.type,phase,bossX);
+    ctx.save();ctx.translate(bossX,bossY+motion.bob);ctx.rotate(motion.lean);
+    drawActor(ctx,{type:b.type,x:0,y:0,scale:1.62,phase,attacking:b.attackFlashFor>0,hurt:b.hitFlashFor>0});
+    ctx.restore();
     if(b.nextAttack<.65&&(b.health>0||b.fired<b.total)){
       ctx.fillStyle="#a33e4b";ctx.font="900 11px system-ui";ctx.textAlign="center";
       ctx.fillText("PREPARE O SALTO",virtualWidth-86,62);ctx.textAlign="start";
@@ -367,7 +372,7 @@ function initRunner() {
       ctx.save();ctx.strokeStyle="#bda15b";ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.beginPath();ctx.ellipse(PLAYER.x+17,WORLD.ground-run.player.y-35,27,47,0,0,Math.PI*2);ctx.stroke();ctx.restore();
       drawItem(ctx,{type:"shield",x:PLAYER.x+17,y:WORLD.ground-run.player.y-91,scale:.38});
     }
-    // Os quadros originais já estão orientados para +X (frente da corrida).
+    // O Canvas espelha os quadros originais para o Flávio fugir olhando para +X (direita).
     drawActor(ctx,{type:"flavio",x:PLAYER.x+17,y:WORLD.ground-run.player.y-bounce,scale:.95,phase,airborne,landing:run.elapsed<landingUntil,hurt:run.status==="over",alpha:run.shieldFor>0?.27:run.graceFor>0?.55:1});
   }
   function obstacle(item){
