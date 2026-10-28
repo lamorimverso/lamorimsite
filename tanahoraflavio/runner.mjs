@@ -1,4 +1,7 @@
-import { WORLD, PLAYER, PURSUERS, PICKUPS, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, advanceRun, stageAt, stageTransitionAt, pursuitAt, scoreFor } from "./runner-core.mjs?v=20261028-scenery-crossfade";
+import { WORLD, PLAYER, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, advanceRun, stageAt, stageTransitionAt, scoreFor } from "./runner-core.mjs?v=20261028-functional-v2";
+import { RAID_FACTS } from "./runner-core.mjs?v=20261028-functional-v2";
+import { drawActor, drawItem, drawThreat, drawShot } from "./runner-art.mjs?v=20261028-functional-v2";
+import { createGameAudio } from "./runner-audio.mjs?v=20261028-functional-v2";
 
 function initRunner() {
   const $ = id => document.getElementById(id);
@@ -19,106 +22,90 @@ function initRunner() {
   let run = createRun(), frameId = 0, lastFrame = 0, accumulator = 0;
   let windowFocused = true, inView = true;
   let lastStatus = "", lastStage = -1, virtualWidth = 900, measuredWidth = 0, measuredDpr = 0;
-  let lastPursuit = -1, lastCollected = 0, lastSaves = 0, lastPower = "";
+  let lastCollected=0,lastPower="";
   let lastLives = 1, lastEvents = 0;
-  const portrait = new Image();
-  portrait.src = new URL("./retrato.webp", import.meta.url).href;
-  portrait.addEventListener("load", () => draw());
+  const audio=createGameAudio();
+  let lastRaidKey="";
+  const routeSeconds=()=>run.routeDistance/250;
   const pad = number => String(number).padStart(2, "0");
   // A preferência pode mudar enquanto o jogo está aberto.
   const motionPreference = window.matchMedia?.("(prefers-reduced-motion: reduce)");
   const prefersReducedMotion = () => motionPreference?.matches === true;
 
   function updateUI() {
-    const stage = stageAt(run.elapsed), score = scoreFor(run), pursuit = pursuitAt(run.elapsed);
-    const transition = stageTransitionAt(run.elapsed);
-    const banner = $("game-transition");
-    banner.hidden = run.status !== "running" || !transition.active;
-    if (!banner.hidden) {
-      const isApproaching = run.elapsed < transition.to.index * SCENE_SECONDS;
-      $("game-transition-label").textContent = isApproaching ? "PRÓXIMA PARADA" : "CHEGANDO EM";
-      $("game-transition-name").textContent = transition.to.name;
-      $("game-transition-progress").style.width = `${Math.round(transition.progress*100)}%`;
+    const clock=routeSeconds(),stage=stageAt(clock),score=scoreFor(run),difficulty=difficultyAt(run.distance);
+    const transition=stageTransitionAt(clock),banner=$("game-transition");
+    banner.hidden=run.status!=="running"||!transition.active||!!run.raid;
+    if(!banner.hidden){
+      $("game-transition-label").textContent=transition.progress<.5?"PRÓXIMA PARADA":"CHEGANDO EM";
+      $("game-transition-name").textContent=transition.to.name;
+      $("game-transition-progress").style.width=Math.round(transition.progress*100)+"%";
     }
-    const difficulty = difficultyAt(run.distance);
-    const power = run.invisibleFor > 0 ? "invisible" : run.graceFor > 0 ? "recovery" : "none";
-    if ((run.status === "over" || run.status === "won") && score > best) {
-      best = score;
-      try { localStorage.setItem(recordKey, String(best)); } catch { /* Recorde da sessão permanece na memória. */ }
+    if(run.status==="over"&&score>best){best=score;try{localStorage.setItem(recordKey,String(best));}catch{}}
+    $("game-score").textContent=String(score).padStart(4,"0");
+    $("game-lives").textContent=String(run.lives);
+    $("game-passports").textContent=String(run.passports);
+    $("game-passport-next").textContent=String(100-run.passports%100);
+    $("game-passport-progress").style.width=run.passports%100+"%";
+    const lap=Math.floor(run.routeDistance/25000)+1,sceneElapsed=clock%SCENE_SECONDS;
+    $("game-phase").textContent="Cenário "+(stage.index+1)+" de 5 · Volta "+lap;
+    $("game-stage-name").textContent=stage.name;
+    $("game-difficulty").textContent="Risco "+difficulty.level+" · "+Math.floor(run.distance/10).toLocaleString("pt-BR")+" m";
+    $("game-stage-time").textContent=run.boss?"Enfrente o chefão":Math.ceil((SCENE_SECONDS-sceneElapsed)*25)+" m para "+STAGES[(stage.index+1)%5].short;
+    $("game-best").textContent=String(best).padStart(4,"0");
+    $("game-time").textContent=pad(Math.floor(run.elapsed/60))+":"+pad(Math.floor(run.elapsed%60));
+    $("game-progress").hidden=false;
+    $("game-progress").setAttribute("aria-valuenow",String(Math.floor(sceneElapsed)));
+    $("game-progress").setAttribute("aria-valuetext",stage.name+" · volta "+lap);
+    $("game-progress").firstElementChild.style.width=sceneElapsed/SCENE_SECONDS*100+"%";
+    section.dataset.runState=run.status;
+    const power=run.shieldFor>0?"shield":run.graceFor>0?"recovery":"none";
+    section.dataset.power=power;section.dataset.ammo=run.bibleCharges>0?"held":"none";
+    $("game-power").textContent=power==="shield"?"Escudo das Américas · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo";
+    $("game-ammo").textContent="Bíblia · "+run.bibleCharges+" tiros × 3";
+    $("game-ammo").parentElement.hidden=run.bibleCharges===0;
+    $("game-boss").hidden=!run.boss;section.dataset.boss=run.boss?.type||"none";
+    if(run.boss){
+      const b=run.boss;
+      $("game-boss-name").textContent=b.name+" · rodada "+b.level;
+      $("game-boss-health").setAttribute("aria-valuemax",String(b.maxHealth));
+      $("game-boss-health").setAttribute("aria-valuenow",String(b.health));
+      $("game-boss-progress").style.width=100*b.health/b.maxHealth+"%";
+      $("game-boss-weapon").textContent="Disparo automático: "+b.lastWeapon+(run.bibleCharges?" · "+run.bibleCharges+" cargas":"");
+      $("game-boss").style.setProperty("--boss-accent",b.color);
     }
-    $("game-score").textContent = String(score).padStart(4, "0");
-    $("game-lives").textContent = String(run.lives);
-    $("game-passports").textContent = String(run.passports);
-    $("game-passport-next").textContent = String(100 - run.passports % 100);
-    $("game-passport-progress").style.width = `${run.passports % 100}%`;
-    $("game-phase").textContent = `Cenário ${stage.index + 1} de ${STAGES.length}`;
-    $("game-stage-name").textContent = stage.name;
-    $("game-difficulty").textContent = `Risco ${difficulty.level} · ${Math.floor(run.distance / 10).toLocaleString("pt-BR")} m`;
-    const remaining = Math.max(0, Math.ceil((stage.index + 1) * SCENE_SECONDS - run.elapsed));
-    $("game-stage-time").textContent = stage.index < STAGES.length - 1 ? `${remaining} s para ${STAGES[stage.index + 1].short}` : "Corrida sem fim";
-    $("game-best").textContent = String(best).padStart(4, "0");
-    $("game-time").textContent = `${pad(Math.floor(run.elapsed / 60))}:${pad(Math.floor(run.elapsed % 60))}`;
-    const sceneElapsed = Math.max(0, run.elapsed - stage.index * SCENE_SECONDS);
-    $("game-progress").hidden = stage.index === STAGES.length - 1;
-    $("game-progress").setAttribute("aria-valuenow", String(Math.floor(Math.min(SCENE_SECONDS, sceneElapsed))));
-    $("game-progress").setAttribute("aria-valuetext", `${stage.name}: próximo cenário em ${Math.max(0, Math.ceil(SCENE_SECONDS - sceneElapsed))} segundos.`);
-    $("game-progress").firstElementChild.style.width = `${Math.min(100, sceneElapsed / SCENE_SECONDS * 100)}%`;
-    section.dataset.runState = run.status;
-    section.dataset.power = power;
-    section.dataset.chance = run.extraChance ? "held" : "none";
-    const bossPanel = $("game-boss");
-    bossPanel.hidden = !run.boss;
-    section.dataset.boss = run.boss?.type || "none";
-    if (run.boss) {
-      const boss = run.boss;
-      $("game-boss-name").textContent = `${boss.name} · Nível ${boss.level}`;
-      $("game-boss-health").setAttribute("aria-valuemax", String(boss.maxHealth));
-      $("game-boss-health").setAttribute("aria-valuenow", String(boss.health));
-      $("game-boss-progress").style.width = `${100 * boss.health / boss.maxHealth}%`;
-      $("game-boss-weapon").textContent = `Disparo automático: ${boss.lastWeapon}`;
-      bossPanel.style.setProperty("--boss-accent", boss.color);
+    $("game-threat").textContent=run.raid?.phase==="active"?"PF em operação":"Inimigos sorteados · "+stage.short;
+    $("game-objective").textContent=run.boss?"Desvie e colete a Bíblia para fortalecer os tiros":"Faltam "+(100-run.passports%100)+" passaportes para +1 vida";
+    const raid=run.status==="running"?run.raid:null;
+    $("game-raid").hidden=!raid;section.dataset.raid=raid?.phase||"none";
+    if(raid){
+      const fact=RAID_FACTS[raid.factIndex];
+      $("game-raid-title").textContent=raid.phase==="warning"?"JOICE AVISA · "+Math.ceil(raid.remaining)+" s":raid.phase==="active"?"É A POLÍCIA FEDERAL! · "+Math.ceil(raid.remaining)+" s":"RITMO NORMAL VOLTANDO";
+      $("game-raid-copy").textContent=raid.phase==="warning"?"Toc, toc, toc… prepare o salto!":fact.text;
+      $("game-raid-source").textContent=raid.phase==="warning"?"Joice Hasselmann · personagem satírica":fact.source;
+      $("game-raid-source").href=fact.url;
+      const raidKey=raid.id+":"+raid.phase;
+      if(raidKey!==lastRaidKey){audio.event(raid.phase,fact);lastRaidKey=raidKey;}
+    }else if(lastRaidKey){audio.stop();lastRaidKey="";}
+    $("game-jump").disabled=run.status!=="running";
+    $("game-start").textContent=run.status==="ready"?"Começar corrida":run.status==="over"?"Tentar de novo":"Recomeçar corrida";
+    $("game-overlay").hidden=run.status==="running";
+    if(run.status==="over"){
+      $("game-overlay-title").textContent="Bateu, perdeu!";
+      $("game-overlay-copy").textContent=score+" pontos · "+run.passports+" passaportes. Tente novamente!";
+      $("game-overlay-badge").textContent="Perseguição fictícia";audio.stop();
     }
-    $("game-threat").textContent = `${pursuit.index + 1}/5 · ${pursuit.name}`;
-    $("game-power").textContent = power === "invisible" ? `Invisível · ${Math.ceil(run.invisibleFor)} s` : power === "recovery" ? `Recuperando · ${Math.ceil(run.graceFor)} s` : "Sem efeito ativo";
-    $("game-chance").textContent = run.extraChance ? "Escudo pronto" : "0 guardada";
-    $("game-jump").disabled = run.status !== "running";
-    $("game-start").textContent = run.status === "ready" ? "Começar corrida" : run.status === "over" ? "Tentar de novo" : "Recomeçar corrida";
-    $("game-overlay").hidden = run.status === "running";
-    const overlays = {
-      ready: ["Pronto para correr?", "Pule e sobreviva."],
-      over: ["Bateu, perdeu!", `${score} pontos · ${run.passports} passaportes. Tente novamente!`]
-    };
-    if (overlays[run.status]) {
-      $("game-overlay-title").textContent = overlays[run.status][0];
-      $("game-overlay-copy").textContent = overlays[run.status][1];
-      $("game-overlay-badge").textContent = run.status === "over" ? "Capturado · PF" : "Perseguição fictícia";
-    }
-    if (lastStatus !== run.status || lastStage !== stage.index || lastPursuit !== pursuit.index || lastCollected !== run.collected || lastSaves !== run.saves || lastPower !== power || lastLives !== run.lives || lastEvents !== run.events) {
-      const messages = {
-        ready: "Tudo pronto. A corrida começa quando você quiser.",
-        running: `${stage.name} · ${pursuit.name} na perseguição. Desvie e colete itens; risco ${difficulty.level}.`,
-        over: `Bateu, perdeu! ${score} pontos. Toque em Tentar de novo para jogar.`
-      };
-      if (run.status === "running") {
-        if (run.events > lastEvents) messages.running = run.event;
-        else if (run.saves > lastSaves) messages.running = "Chance extra usada! Você escapou da colisão e ganhou um instante para se recuperar.";
-        else if (run.collected > lastCollected) {
-          const item = PICKUPS.find(item => item.type === run.lastPickup);
-          messages.running = run.lastPickup === "invisible" ? "Invisibilidade ativada por 6 segundos. Atravesse os adversários!" : run.lastPickup === "chance" ? "Uma chance extra guardada. Ela protege você de uma colisão." : `${item?.name || "Item"} coletado: +${item?.value || 0} pontos.`;
-        } else if (lastPower === "invisible" && power !== "invisible") messages.running = "A invisibilidade terminou. Volte a pular os adversários!";
-        if (lastStage >= 0 && stage.index !== lastStage) messages.running = `Chegamos a ${stage.name}! A corrida não para: continue desviando.`;
+    if(lastStatus!==run.status||lastStage!==stage.index||lastCollected!==run.collected||lastPower!==power||lastLives!==run.lives||lastEvents!==run.events){
+      let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="over"?"Bateu, perdeu! "+score+" pontos. Toque em Tentar de novo.":stage.name+" · continue pulando os perigos.";
+      if(run.status==="running"){
+        if(run.events>lastEvents)message=run.event;
+        else if(lastCollected!==run.collected)message="Passaporte coletado. Faltam "+(100-run.passports%100)+" para uma vida.";
+        else if(lastPower==="shield"&&power!=="shield")message="O Escudo das Américas terminou. Volte a desviar!";
+        if(lastStage>=0&&lastStage!==stage.index)message="Chegamos a "+stage.name+"! A corrida continua.";
       }
-      $("game-status").textContent = messages[run.status];
-      section.querySelectorAll("[data-stage]").forEach((stop, index) => {
-        stop.classList.toggle("is-current", index === stage.index);
-        stop.classList.toggle("is-done", index < stage.index);
-        if (index === stage.index) stop.setAttribute("aria-current", "step");
-        else stop.removeAttribute("aria-current");
-      });
-      lastStage = stage.index;
-      lastStatus = run.status;
-      lastPursuit = pursuit.index; lastCollected = run.collected; lastSaves = run.saves; lastPower = power;
-      lastLives = run.lives; lastEvents = run.events;
+      $("game-status").textContent=message;
+      section.querySelectorAll("[data-stage]").forEach((stop,i)=>{stop.classList.toggle("is-current",i===stage.index);stop.classList.toggle("is-done",i<stage.index);if(i===stage.index)stop.setAttribute("aria-current","step");else stop.removeAttribute("aria-current");});
+      lastStatus=run.status;lastStage=stage.index;lastCollected=run.collected;lastPower=power;lastLives=run.lives;lastEvents=run.events;
     }
   }
 
@@ -129,6 +116,7 @@ function initRunner() {
   function syncActivity() {
     cancelAnimationFrame(frameId);frameId=0;
     accumulator=0;lastFrame=performance.now();
+    if(document.hidden||!windowFocused||!inView||run.status!=="running")audio.stop();
     schedule();
   }
   function frame(now) {
@@ -147,8 +135,9 @@ function initRunner() {
   }
   function begin() {
     cancelAnimationFrame(frameId); frameId = 0;
+    audio.stop();audio.prime();lastRaidKey="";
     run = createRun(); startRun(run);
-    lastCollected = 0; lastSaves = 0; lastPower = ""; lastStatus = ""; lastEvents = 0; lastLives = 1;
+    lastCollected = 0; lastPower = ""; lastStatus = ""; lastEvents = 0; lastLives = 1;
     accumulator = 0; lastFrame = performance.now();
     updateUI(); draw(); syncActivity();
     canvas.focus({ preventScroll: true });
@@ -158,6 +147,13 @@ function initRunner() {
     if (jumpRun(run)) draw();
   }
   $("game-start").addEventListener("click", begin);
+  $("game-sound").addEventListener("click",()=>{
+    const enabled=audio.toggle();$("game-sound").textContent=enabled?"Som ligado":"Som desligado";
+    $("game-sound").setAttribute("aria-pressed",String(enabled));lastRaidKey="";updateUI();
+  });
+  const portraitContext=$("game-joice-portrait").getContext("2d");
+  if(portraitContext)drawActor(portraitContext,{type:"joice",x:39,y:91,scale:1.05});
+
   $("game-jump").addEventListener("click", () => { jump(); canvas.focus({ preventScroll: true }); });
   canvas.addEventListener("click", () => { jump(); canvas.focus({ preventScroll: true }); });
   section.addEventListener("keydown", event => {
@@ -320,192 +316,41 @@ function initRunner() {
     ctx.font='650 11px system-ui, sans-serif';
     ctx.fillText(`${stage.index + 1}/${STAGES.length} · ${stage.name.toLocaleUpperCase("pt-BR")}`,20,26);
   }
-  function bossFigure() {
-    const boss = run.boss;
-    if (!boss) return;
-    const idleMotion = prefersReducedMotion();
-    const bob = idleMotion ? 0 : Math.sin(run.elapsed * 4) * 3;
-    const x = virtualWidth - 76, y = 155 + bob;
-    ctx.save();
-    ctx.globalAlpha = .83;
-    circle(x, y - 35, 40, "#ffffffb9");
-    circle(x, y - 35, 37, boss.color + "20");
-    const stride=idleMotion?0:Math.sin(run.elapsed*18)*11;
-    line([[x-15,y+30],[x-21+stride,y+59]],"#384251",8);
-    line([[x+15,y+30],[x+21-stride,y+59]],"#414351",8);
-    line([[x-24,y],[x-36-stride*.35,y+16]],boss.color,9);
-    line([[x+24,y],[x+36+stride*.35,y+8]],boss.color,9);
-    ctx.fillStyle=boss.hitFlashFor>0?"#e4b748":boss.color;
-    ctx.beginPath();ctx.roundRect(x-29,y-16,58,54,15);ctx.fill();
-    circle(x, y-45, 25, "#e8c7aa");
-    ctx.strokeStyle="#3e2f30";ctx.lineWidth=3;
-    line([[x-17,y-54],[x-6,y-50]],"#3e2f30",3);
-    line([[x+6,y-50],[x+17,y-54]],"#3e2f30",3);
-    circle(x-9,y-44,2.5,"#352e2e");
-    circle(x+9,y-44,2.5,"#352e2e");
-    line([[x-8,y-33],[x+8,y-33]],"#a66c5d",2);
-    // Acessórios originais diferenciam os três novos chefes entre si.
-    if(boss.type==="haddad"){
-      ctx.strokeStyle="#324750";ctx.lineWidth=2.5;
-      ctx.strokeRect(x-20,y-52,15,10);ctx.strokeRect(x+5,y-52,15,10);
-      line([[x-5,y-47],[x+5,y-47]],"#324750",2);
-      ctx.fillStyle="#fff";ctx.fillRect(x-5,y-14,10,21);
-      line([[x,y-14],[x,y+7]],"#497f93",2.5);
-    }else if(boss.type==="boulos"){
-      ctx.fillStyle="#5a475e";ctx.fillRect(x-25,y-65,50,7);
-      ctx.fillRect(x-16,y-80,32,16);
-      ctx.fillStyle="#f0e5f5";ctx.fillRect(x-14,y+5,28,7);
-    }else if(boss.type==="dino"){
-      ctx.fillStyle="#f3e4d0";
-      ctx.fillRect(x-16,y-13,32,11);
-      ctx.strokeStyle="#9e836c";ctx.lineWidth=2;
-      ctx.strokeRect(x-19,y-52,16,10);ctx.strokeRect(x+3,y-52,16,10);
-      line([[x-3,y-47],[x+3,y-47]],"#9e836c",2);
-    }
-    if(boss.supreme){
-      ctx.fillStyle="#dfba52";
-      ctx.beginPath();ctx.moveTo(x-23,y-71);ctx.lineTo(x-21,y-89);
-      ctx.lineTo(x-9,y-80);ctx.lineTo(x,y-96);ctx.lineTo(x+9,y-80);
-      ctx.lineTo(x+21,y-89);ctx.lineTo(x+23,y-71);ctx.closePath();ctx.fill();
-    }
-    ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="800 13px system-ui";
-    ctx.fillText(boss.supreme?"SUPREMO":"CHEFE",x,y+18);
-    ctx.restore();
-  }
-
-  function character() {
-    const sprinting=run.status==="running" && run.player.y===0 && !prefersReducedMotion();
-    const stride=sprinting?Math.sin(run.elapsed*23)*13:0;
-    const bounce=sprinting?Math.abs(Math.sin(run.elapsed*23))*3:0;
-    if(sprinting){
-      const dust=6+(run.distance%26);
-      circle(PLAYER.x-dust,WORLD.ground-3,2.7,"#a6b6bf85");
-      circle(PLAYER.x-dust-13,WORLD.ground-5,1.7,"#b8c7cb9c");
-    }
-    ctx.save();ctx.translate(PLAYER.x+17,WORLD.ground-run.player.y-bounce);
-    ctx.fillStyle="#414052";ctx.globalAlpha=.09;ctx.beginPath();ctx.ellipse(0,run.player.y+3,21,4,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
-    if (run.extraChance || run.invisibleFor > 0) {
-      ctx.strokeStyle = run.invisibleFor > 0 ? "#299b8b" : "#5984b7";ctx.lineWidth=2;
-      ctx.setLineDash(run.invisibleFor > 0 ? [4,4] : []);ctx.beginPath();ctx.ellipse(0,-34,25,42,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
-    }
-    ctx.globalAlpha = run.invisibleFor > 0 ? .27 : run.graceFor > 0 ? .55 : 1;
-    line([[-5,-21],[-8+stride,-10],[-8-stride,0]],"#383249",7);
-    line([[5,-21],[8-stride,-10],[8+stride,0]],"#51405f",7);
-    line([[-10-stride,0],[-2-stride,0]],"#272130",5);line([[7+stride,0],[14+stride,0]],"#272130",5);
-    ctx.fillStyle="#694790";ctx.beginPath();ctx.moveTo(-10,-39);ctx.lineTo(9,-39);ctx.lineTo(12,-18);ctx.lineTo(-11,-18);ctx.closePath();ctx.fill();
-    ctx.fillStyle="#f4ecf8";ctx.beginPath();ctx.moveTo(-5,-39);ctx.lineTo(5,-39);ctx.lineTo(0,-27);ctx.fill();
-    line([[0,-36],[2,-28]],"#d7b45a",3);
-    line([[-8,-35],[-15,-27],[-17-stride*.4,-20]],"#694790",5);
-    line([[8,-35],[14,-27],[20+stride*.4,-29]],"#694790",5);
-    circle(20+stride*.4,-29,3,"#ddbb9d");
-    ctx.save();
-    // Leve inclinação do retrato acompanha o movimento (sem alterar a imagem).
-    if(!prefersReducedMotion()) {
-      const tilt = run.player.y > 0 ? -.075 : Math.sin(run.elapsed*9)*.035;
-      ctx.translate(0,-52);ctx.rotate(tilt);ctx.translate(0,52);
-    }
-    ctx.beginPath();ctx.ellipse(0,-52,15,18,0,0,Math.PI*2);ctx.clip();
-    if(portrait.complete&&portrait.naturalWidth)ctx.drawImage(portrait,portrait.width*.2,portrait.height*.04,portrait.width*.6,portrait.height*.76,-15,-70,30,36);
-    else{ctx.fillStyle="#dfbda0";ctx.fillRect(-15,-70,30,36);ctx.fillStyle="#423631";ctx.fillRect(-15,-70,30,9);}
-    ctx.restore();ctx.restore();
-  }
-  function obstacle(item) {
-    const foe = PURSUERS.find(foe => foe.type === item.type);
-    if (!foe) return;
-    const x=item.x+item.width/2, y=WORLD.ground;
-    ctx.save();ctx.translate(x,y);ctx.scale(item.width/34,item.height/54);
-    const stride=prefersReducedMotion()?0:run.status==="running"?Math.sin(run.elapsed*21+x*.02)*11:0;
-    line([[-5,-18],[-7+stride,-8],[-8-stride,0]],"#343847",6);
-    line([[5,-18],[7-stride,-8],[8+stride,0]],"#444556",6);
-    ctx.fillStyle=foe.color;
-    ctx.beginPath();ctx.moveTo(-10,-36);ctx.lineTo(10,-36);ctx.lineTo(item.type==="xandao"?15:11,-15);ctx.lineTo(item.type==="xandao"?-15:-11,-15);ctx.closePath();ctx.fill();
-    line([[-9,-32],[-15,-24],[-11,-19]],foe.color,5);
-    line([[9,-32],[15,-25],[12,-20]],foe.color,5);
-    circle(0,-43,9,"#dab494");
-    circle(-3,-44,1,"#3e3333");circle(3,-44,1,"#3e3333");
-    line([[-3,-38],[3,-38]],"#8e6555",1);
-    if(item.type==="pf" || item.type==="army") {
-      ctx.fillStyle=foe.color;ctx.fillRect(-10,-53,20,7);ctx.fillRect(-12,-48,24,3);
-      ctx.fillStyle=item.type==="pf"?"#efd67e":"#d7ddb0";ctx.font="800 7px system-ui";ctx.textAlign="center";ctx.fillText(item.type==="pf"?"PF":"★",0,-24);
-      if(item.type==="army")line([[-8,-34],[8,-20]],"#b8bf91",3);
-    } else if(item.type==="xandao") {
-      line([[-4,-35],[0,-28],[4,-35]],"#f7f3ed",3);
-      ctx.fillStyle="#a18562";ctx.fillRect(-18,-29,7,4);line([[-14,-29],[-14,-20]],"#a18562",2);
-    } else if(item.type==="janones") {
-      ctx.fillStyle="#463e39";ctx.fillRect(-8,-52,16,5);
-      ctx.fillStyle="#233b51";ctx.fillRect(11,-39,7,13);ctx.fillStyle="#bce4ef";ctx.fillRect(12,-37,5,8);
-    } else if(item.type==="haddad") {
-      ctx.strokeStyle="#324750";ctx.lineWidth=2;
-      ctx.strokeRect(-10,-49,8,6);ctx.strokeRect(2,-49,8,6);
-      ctx.fillStyle="#f0ece4";ctx.fillRect(-4,-34,8,9);
-      line([[0,-34],[0,-23]],"#a2bec4",2);
-    } else if(item.type==="boulos") {
-      ctx.fillStyle="#5a475e";ctx.fillRect(-11,-54,22,6);ctx.fillRect(-8,-61,16,9);
-      ctx.fillStyle="#ded0e7";ctx.fillRect(-8,-34,16,4);
-    } else if(item.type==="dino") {
-      ctx.strokeStyle="#614b3e";ctx.lineWidth=2;
-      ctx.strokeRect(-11,-49,9,6);ctx.strokeRect(2,-49,9,6);
-      ctx.fillStyle="#d4b38b";ctx.fillRect(-6,-32,12,6);
-    } else {
-      circle(-7,-48,3,"#e4dfd5");circle(7,-48,3,"#e4dfd5");
-      ctx.fillStyle="#f2eee5";ctx.beginPath();ctx.arc(0,-41,8,0,Math.PI);ctx.lineTo(-6,-34);ctx.lineTo(0,-31);ctx.lineTo(6,-34);ctx.closePath();ctx.fill();
-      line([[-7,-35],[8,-18]],"#e7ce65",5);line([[-7,-35],[8,-18]],"#4d8967",2);
-    }
-    ctx.restore();
-    ctx.save();ctx.font='750 10px system-ui';ctx.textAlign="center";
-    const labelWidth=ctx.measureText(foe.short).width+12;
-    ctx.fillStyle=foe.color;ctx.fillRect(x-labelWidth/2,y-item.height-24,labelWidth,17);
-    ctx.fillStyle="#fff";ctx.fillText(foe.short,x,y-item.height-12);ctx.restore();
-  }
-  function pickup(item) {
-    const x=item.x,y=WORLD.ground-item.y;
-    if(item.type==="invisible"){
-      circle(x,y,19,"#dbf2eb");ctx.strokeStyle="#238575";ctx.lineWidth=2;
-      ctx.beginPath();ctx.arc(x,y-3,10,Math.PI,0);ctx.lineTo(x+10,y+12);ctx.lineTo(x+5,y+8);ctx.lineTo(x,y+12);ctx.lineTo(x-5,y+8);ctx.lineTo(x-10,y+12);ctx.closePath();ctx.fillStyle="#fff";ctx.fill();ctx.stroke();
-      circle(x-4,y-3,1.5,"#238575");circle(x+4,y-3,1.5,"#238575");
-    }else if(item.type==="chance"){
-      circle(x,y,19,"#e3ecf8");ctx.fillStyle="#5984b7";ctx.beginPath();ctx.moveTo(x,y-15);ctx.lineTo(x+12,y-10);ctx.lineTo(x+10,y+6);ctx.lineTo(x,y+15);ctx.lineTo(x-10,y+6);ctx.lineTo(x-12,y-10);ctx.closePath();ctx.fill();
-      ctx.save();ctx.fillStyle="#fff";ctx.font="800 12px system-ui";ctx.textAlign="center";ctx.fillText("+1",x,y+4);ctx.restore();
-    }else if(item.type==="chocolate"){
-      ctx.fillStyle="#744c3c";ctx.fillRect(x-11,y-15,22,29);
-      ctx.fillStyle="#b68158";for(let i=0;i<2;i++)for(let j=0;j<2;j++)ctx.fillRect(x-8+i*9,y-12+j*8,7,6);
-      ctx.fillStyle="#d9b4cf";ctx.fillRect(x-12,y+1,24,14);line([[x-7,y+7],[x+7,y+7]],"#fff2f9",2);
-    }else if(item.type==="mansion"){
-      ctx.fillStyle="#e9c278";ctx.fillRect(x-15,y-3,30,18);ctx.fillStyle="#9a7257";ctx.beginPath();ctx.moveTo(x-18,y-4);ctx.lineTo(x,y-18);ctx.lineTo(x+18,y-4);ctx.closePath();ctx.fill();
-      ctx.fillStyle="#6b718d";ctx.fillRect(x-3,y+4,6,11);ctx.fillRect(x-11,y+1,5,6);ctx.fillRect(x+6,y+1,5,6);
-    }else if(item.type==="passport"){
-      ctx.fillStyle="#79609c";ctx.fillRect(x-10,y-14,20,28);circle(x,y-1,5,"#e2c87f");line([[x-5,y+8],[x+5,y+8]],"#e2c87f",1);
-    }else{
-      ctx.fillStyle="#e9dfcb";ctx.fillRect(x-10,y-15,20,30);ctx.fillStyle="#fffaf1";ctx.fillRect(x-8,y-13,16,26);
-      for(let i=0;i<3;i++)line([[x-5,y-7+i*6],[x+5,y-7+i*6]],"#ad9b80",1.5);
+  function bossFigure(){
+    const b=run.boss;if(!b)return;
+    const phase=prefersReducedMotion()?0:run.elapsed*15;
+    drawActor(ctx,{type:b.type,x:virtualWidth-72,y:WORLD.ground-3,scale:1.62,phase,attacking:b.nextAttack<.45,hurt:b.hitFlashFor>0});
+    if(b.nextAttack<.45&&b.fired<b.total){
+      ctx.fillStyle="#a33e4b";ctx.font="900 11px system-ui";ctx.textAlign="center";
+      ctx.fillText("PREPARE O SALTO",virtualWidth-86,62);ctx.textAlign="start";
     }
   }
-  function projectile(shot) {
-    const start=PLAYER.x+PLAYER.width+9,end=virtualWidth-76;
-    const x=start+(end-start)*shot.progress;
+  function character(){
+    const active=run.status==="running"&&!prefersReducedMotion(),airborne=run.player.y>0;
+    const phase=active?run.elapsed*23:0,bounce=active&&!airborne?Math.abs(Math.sin(phase))*2:0;
+    if(active&&!airborne){circle(PLAYER.x-8-run.distance%19,WORLD.ground-2,2.8,"#a6a7aa70");circle(PLAYER.x-30,WORLD.ground-4,1.7,"#aaa2a660");}
+    ctx.save();ctx.globalAlpha=.12;ctx.fillStyle="#292337";ctx.beginPath();ctx.ellipse(PLAYER.x+17,WORLD.ground+4,22,4,0,0,Math.PI*2);ctx.fill();ctx.restore();
+    if(run.shieldFor>0){
+      ctx.save();ctx.strokeStyle="#bda15b";ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.beginPath();ctx.ellipse(PLAYER.x+17,WORLD.ground-run.player.y-35,27,47,0,0,Math.PI*2);ctx.stroke();ctx.restore();
+      drawItem(ctx,{type:"shield",x:PLAYER.x+17,y:WORLD.ground-run.player.y-91,scale:.38});
+    }
+    drawActor(ctx,{type:"flavio",x:PLAYER.x+17,y:WORLD.ground-run.player.y-bounce,scale:.95,phase,airborne,alpha:run.shieldFor>0?.27:run.graceFor>0?.55:1});
+  }
+  function obstacle(item){
+    drawThreat(ctx,item,WORLD.ground,prefersReducedMotion()?0:run.elapsed*21+item.x*.02);
+  }
+  function pickup(item){
+    drawItem(ctx,{type:item.type,x:item.x,y:WORLD.ground-item.y,scale:item.type==="shield"?.86:.8});
+  }
+  function projectile(shot){
+    const start=PLAYER.x+PLAYER.width+9,end=virtualWidth-76,x=start+(end-start)*shot.progress;
     const arc=prefersReducedMotion()?0:Math.sin(Math.PI*shot.progress)*13;
-    const y=WORLD.ground-47-shot.launchY*(1-shot.progress)-arc;
-    ctx.save();ctx.translate(x,y);
-    if(shot.type==="ivermectina"){
-      ctx.rotate(-.35);ctx.fillStyle="#fcfcfe";ctx.strokeStyle="#19827c";ctx.lineWidth=2;
-      ctx.beginPath();ctx.roundRect(-19,-8,38,16,8);ctx.fill();ctx.stroke();
-      ctx.fillStyle="#3eb7aa";ctx.beginPath();ctx.roundRect(-19,-8,19,16,[8,0,0,8]);ctx.fill();
-      ctx.fillStyle="#174c50";ctx.font="800 7px system-ui";ctx.textAlign="center";ctx.fillText("IV",10,2);
-    }else{
-      const bible=shot.type==="biblia";
-      ctx.rotate(-.16);ctx.fillStyle=bible?"#6f4b9b":"#dfbb68";
-      ctx.beginPath();ctx.roundRect(-14,-18,28,36,3);ctx.fill();
-      ctx.fillStyle="#fff6df";ctx.fillRect(10,-15,3,30);
-      ctx.strokeStyle=bible?"#e3c47f":"#95672e";ctx.lineWidth=2;ctx.strokeRect(-12,-16,22,32);
-      ctx.fillStyle=bible?"#fff1bd":"#5d4023";ctx.font="900 11px system-ui";ctx.textAlign="center";
-      ctx.fillText(bible?"✝":"CF",-1,5);
-    }
-    ctx.restore();
+    drawShot(ctx,shot,x,WORLD.ground-47-shot.launchY*(1-shot.progress)-arc);
   }
   function draw() {
     ctx.setTransform(canvas.width/virtualWidth,0,0,canvas.height/WORLD.height,0,0);
-    const stage = stageAt(run.elapsed);
-    const transition = stageTransitionAt(run.elapsed);
+    const stage = stageAt(routeSeconds());
+    const transition = stageTransitionAt(routeSeconds());
     if (transition.active && !prefersReducedMotion()) {
       scenery(transition.from);
       ctx.save();

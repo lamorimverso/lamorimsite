@@ -1,299 +1,215 @@
-// Coordenadas lógicas fixas: a física independe do tamanho e da densidade da tela.
-export const WORLD = Object.freeze({ width: 900, height: 300, ground: 246 });
-export const PLAYER = Object.freeze({ x: 120, width: 34, height: 58 });
+// Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
+export const WORLD = Object.freeze({width:900,height:300,ground:246});
+export const PLAYER = Object.freeze({x:120,width:34,height:58});
 export const SCENE_SECONDS = 20;
+export const SCENE_DISTANCE = 5000;
 export const PASSPORTS_PER_LIFE = 100;
 export const STARTING_LIVES = 1;
 export const RECOVERY_AFTER_EXTRA = 1.2;
-export const BOSS_SCORE_STEP = 1500;
 export const STAGES = Object.freeze([
-  Object.freeze({ id: "brasilia", obstacle: "barrier", bonus: "miles", mission: "Pule as barreiras e colete milhas para seguir viagem.", name: "Brasília", short: "Brasília", index: 0, sky: "#edf5fa", ink: "#557b85", accent: "#477b81", ground: "#dae9de" }),
-  Object.freeze({ id: "rio", obstacle: "barrier", bonus: "miles", mission: "Pule as barreiras da orla e colete milhas.", name: "Rio de Janeiro", short: "Rio", index: 1, sky: "#edf8f7", ink: "#3c7c79", accent: "#2c8379", ground: "#d9eeea" }),
-  Object.freeze({ id: "argentina", obstacle: "case", bonus: "note", mission: "Desvie das malas no terminal e colete as notas.", name: "Argentina", short: "Argentina", index: 2, sky: "#edf5ff", ink: "#527ba8", accent: "#3570ac", ground: "#dce9f8" }),
-  Object.freeze({ id: "florida", obstacle: "papers", bonus: "passport", mission: "Pule os papéis e colete passaportes na Flórida.", name: "Flórida", short: "Flórida", index: 3, sky: "#fff3ec", ink: "#a47364", accent: "#ba8178", ground: "#f0dfc8" }),
-  Object.freeze({ id: "casa-branca", obstacle: "papers", bonus: "passport", mission: "A corrida continua: desvie dos papéis e some pontos.", name: "Casa Branca", short: "Casa Branca", index: 4, sky: "#eff3fb", ink: "#64768f", accent: "#6876a0", ground: "#dfe9d9" })
-]);
+ {id:'brasilia',name:'Brasília',short:'Brasília',sky:'#e5f2ff',ink:'#456b85',accent:'#52889c',ground:'#cbdcc1'},
+ {id:'rio',name:'Rio de Janeiro',short:'Rio',sky:'#dff7fa',ink:'#287b82',accent:'#238e85',ground:'#e4d7a9'},
+ {id:'argentina',name:'Argentina',short:'Argentina',sky:'#e8efff',ink:'#4b6e9f',accent:'#397ab7',ground:'#ccd9ea'},
+ {id:'florida',name:'Flórida',short:'Flórida',sky:'#ffece0',ink:'#a86765',accent:'#bd7378',ground:'#e9cfac'},
+ {id:'casa-branca',name:'Casa Branca',short:'Casa Branca',sky:'#e7eafa',ink:'#596d8c',accent:'#7777a9',ground:'#c9dcb9'}
+].map((s,index)=>Object.freeze({...s,index})));
 export const PURSUERS = Object.freeze([
-  Object.freeze({ type: "pf", name: "Polícia Federal", short: "PF", index: 0, width: 34, height: 44, color: "#354d69" }),
-  Object.freeze({ type: "xandao", name: "Xandão", short: "Xandão", index: 1, width: 36, height: 49, color: "#454051" }),
-  Object.freeze({ type: "janones", name: "Janones", short: "Janones", index: 2, width: 38, height: 46, color: "#397ba0" }),
-  Object.freeze({ type: "army", name: "Exército do Lula", short: "Exército", index: 3, width: 44, height: 48, color: "#65714b" }),
-  Object.freeze({ type: "lula", name: "Lula · chefe supremo", short: "Lula", index: 4, width: 50, height: 56, color: "#b64250" }),
-  Object.freeze({ type: "haddad", name: "Fernando Haddad", short: "Haddad", index: 5, width: 38, height: 49, color: "#346c75" }),
-  Object.freeze({ type: "boulos", name: "Guilherme Boulos", short: "Boulos", index: 6, width: 39, height: 50, color: "#7b598c" }),
-  Object.freeze({ type: "dino", name: "Flávio Dino", short: "Dino", index: 7, width: 42, height: 52, color: "#8b623f" })
-]);
-// A lista de chefes é independente dos perseguidores normais.
-export const BOSS_ROSTER = Object.freeze(["pf","xandao","janones","army","haddad","boulos","dino","lula"]);
+ {type:'pf',name:'Polícia Federal',short:'PF',width:34,height:44,color:'#284c70'},
+ {type:'janones',name:'Janones',short:'Janones',width:36,height:46,color:'#346a9c'},
+ {type:'army',name:'Exército',short:'Exército',width:40,height:47,color:'#64734c'},
+ {type:'boulos',name:'Boulos',short:'Boulos',width:38,height:46,color:'#765488'},
+ {type:'dino',name:'Flávio Dino',short:'Dino',width:40,height:48,color:'#8a6247'},
+ {type:'xandao',name:'Xandão',short:'Xandão',width:40,height:49,color:'#493f62'},
+ {type:'haddad',name:'Haddad',short:'Haddad',width:40,height:48,color:'#286779'},
+ {type:'lula',name:'Lula',short:'Lula',width:46,height:50,color:'#aa3c50'},
+ {type:'barrier',name:'Barreira',short:'Barreira',width:44,height:32,color:'#c48845'},
+ {type:'case',name:'Mala',short:'Mala',width:38,height:36,color:'#906490'}
+].map((p,index)=>Object.freeze({...p,index})));
+export const BOSS_ROSTER = Object.freeze(['xandao','haddad','lula']);
 export const PICKUPS = Object.freeze([
-  Object.freeze({ type: "chocolate", name: "Chocolate", value: 25 }),
-  Object.freeze({ type: "mansion", name: "Mansão", value: 50 }),
-  Object.freeze({ type: "receipt", name: "Recibo", value: 25 }),
-  Object.freeze({ type: "passport", name: "Passaporte", value: 10 }),
-  Object.freeze({ type: "invisible", name: "Invisibilidade", value: 0 }),
-  Object.freeze({ type: "chance", name: "Chance extra", value: 0 })
+ Object.freeze({type:'passport',name:'Passaporte',value:10,purpose:'100 passaportes = +1 vida'}),
+ Object.freeze({type:'shield',name:'Escudo das Américas',value:0,purpose:'Invisibilidade por 6 segundos'}),
+ Object.freeze({type:'biblia',name:'Bíblia evangélica',value:0,purpose:'Próximos 3 disparos com dano 3'})
 ]);
-/* Armamento puramente simbólico do jogo satírico. */
 export const BOSS_WEAPONS = Object.freeze([
-  Object.freeze({type:"ivermectina",name:"Ivermectina",damage:1}),
-  Object.freeze({type:"constituicao",name:"Constituição",damage:2}),
-  Object.freeze({type:"biblia",name:"Bíblia evangélica",damage:3})
+ Object.freeze({type:'ivermectina',name:'Ivermectina',damage:1}),
+ Object.freeze({type:'biblia',name:'Bíblia evangélica',damage:3})
 ]);
+// Texto de roteiro ficcional, sem atribuir gravações/falas autênticas à personagem.
+export const RAID_FACTS = Object.freeze([
+ {title:'Denúncia · 2020',text:'Em 2020, o MP-RJ apresentou denúncia contra Flávio no caso das rachadinhas.',source:'MP-RJ · 04/11/2020',url:'https://www.mprj.mp.br/web/guest/visualizar?noticiaId=96203'},
+ {title:'Decisão · 2021',text:'Em 2021, o STF anulou quatro relatórios do Coaf usados no caso.',source:'STF · 30/11/2021',url:'https://portal.stf.jus.br/noticias/verNoticiaDetalhe.asp?idConteudo=477496'},
+ {title:'Arquivo · 2020',text:'Fabrício Queiroz e outros 15 investigados também foram denunciados pelo MP-RJ.',source:'MP-RJ · 04/11/2020',url:'https://www.mprj.mp.br/web/guest/visualizar?noticiaId=96203'}
+].map(Object.freeze));
+const POOLS = [
+ ['pf','barrier','janones'],['janones','boulos','barrier','pf'],
+ ['pf','dino','case'],['army','pf','case','boulos'],['pf','janones','army','boulos','dino','case']
+];
+const random = rng => Math.max(0,Math.min(.999999999,Number(rng())||0));
+const foeFor = type => PURSUERS.find(p=>p.type===type);
+const routeClock = run => run.routeDistance / 250;
+const announce = (run,text) => {run.event=text;run.events++;};
 
-/**
- * Dificuldade guiada pela distância da própria partida, não pelo tempo do navegador.
- * A curva aproxima-se de limites seguros: o salto continua capaz de superar
- * obstáculos e os bônus tornam-se raros, mas nunca desaparecem.
- */
 export function difficultyAt(distance) {
-  const traveled = Number.isFinite(distance) ? Math.max(0, distance) : 0;
-  const progression = traveled / (traveled + 25000);
-  return {
-    level: 1 + Math.floor(traveled / 8000),
-    speed: 250 + 130 * progression,
-    obstacleGap: 1.95 - .6 * progression,
-    pickupGap: 7.3 + 4.2 * progression,
-    passportGap: 4.6 + 2.4 * progression,
-    powerGap: 24 + 32 * progression
-  };
+ const d=Number.isFinite(distance)?Math.max(0,distance):0,p=d/(d+25000);
+ return {level:1+Math.floor(d/8000),speed:250+130*p,obstacleGap:1.95-.6*p,
+  pickupGap:12+8*p,passportGap:4.6+.8*p,powerGap:24+32*p};
 }
-
-export function pursuitAt(seconds) {
-  return PURSUERS[Math.max(0, Math.min(4, Math.floor(seconds / 15)))];
-}
-
 export function stageAt(seconds) {
-  return STAGES[Math.max(0, Math.min(STAGES.length - 1, Math.floor((seconds + 1e-7) / SCENE_SECONDS)))];
+ const s=Number.isFinite(seconds)?Math.max(0,seconds):0;
+ return STAGES[Math.floor((s+1e-7)/SCENE_SECONDS)%STAGES.length];
 }
-
-/**
- * Faz a passagem entre destinos nos 4 s ao redor de cada marco de 20 s.
- * É uma função pura: o crossfade não altera a física, colisões ou pontuação.
- */
 export function stageTransitionAt(seconds) {
-  const elapsed = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
-  const current = stageAt(elapsed);
-  const nextIndex = Math.round(elapsed / SCENE_SECONDS);
-  const boundary = nextIndex * SCENE_SECONDS;
-  const halfWindow = 2;
-  if (nextIndex < 1 || nextIndex >= STAGES.length || Math.abs(elapsed - boundary) >= halfWindow) {
-    return {from:current,to:current,progress:1,active:false};
-  }
-  const linear = Math.max(0, Math.min(1, (elapsed - boundary + halfWindow) / (2 * halfWindow)));
-  const progress = linear * linear * (3 - 2 * linear); // smoothstep
-  return {from:STAGES[nextIndex-1],to:STAGES[nextIndex],progress,active:true};
+ const s=Number.isFinite(seconds)?Math.max(0,seconds):0,current=stageAt(s);
+ const index=Math.round(s/SCENE_SECONDS),boundary=index*SCENE_SECONDS;
+ if(index<1||Math.abs(s-boundary)>=2)return {from:current,to:current,progress:1,active:false};
+ const linear=Math.max(0,Math.min(1,(s-boundary+2)/4));
+ return {from:STAGES[(index-1)%5],to:STAGES[index%5],progress:linear*linear*(3-2*linear),active:true};
 }
-
+export function pursuitAt(seconds,rng=()=>.5) {
+ const pool=POOLS[stageAt(seconds).index];return foeFor(pool[Math.floor(random(rng)*pool.length)]);
+}
 export function createRun() {
-  return {
-    status: "ready", elapsed: 0, distance: 0, bonus: 0, collected: 0,
-    passports: 0, lives: STARTING_LIVES, event: "", events: 0,
-    player: { y: 0, velocity: 0 }, obstacles: [], pickups: [], shots: [],
-    nextObstacle: 1.5, nextPickup: 4.2, nextPassport: 3.5, nextPower: 7,
-    invisibleFor: 0, graceFor: 0, extraChance: false, saves: 0,
-    lastPickup: null, spawnedObstacles: 0, spawnedPickups: 0, spawnedPowers: 0,
-    boss: null, bossesDefeated: 0, nextBossScore: BOSS_SCORE_STEP, bossCooldown: 0
-  };
+ return {status:'ready',elapsed:0,distance:0,routeDistance:0,bonus:0,collected:0,passports:0,lives:1,
+  event:'',events:0,player:{y:0,velocity:0},obstacles:[],pickups:[],shots:[],
+  nextObstacle:1.5,nextPickup:0,nextPassport:3.5,nextPower:7,shieldFor:0,graceFor:0,bibleCharges:0,
+  lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,
+  boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:null,bossCooldown:0,
+  raid:null,nextRaid:null,raids:0,lastFact:-1};
 }
-
-export function startRun(run) {
-  if (run.status === "ready") run.status = "running";
+export function startRun(run){if(run.status==='ready')run.status='running';}
+export function jumpRun(run){
+ if(run.status!=='running'||run.player.y>0||run.player.velocity>0)return false;
+ run.player.velocity=610;return true;
 }
-
-export function jumpRun(run) {
-  if (run.status !== "running" || run.player.y > 0 || run.player.velocity > 0) return false;
-  run.player.velocity = 610;
-  return true;
+// Interno ao motor/testes; não há comando de pausa na interface.
+export function togglePause(run){if(run.status==='running')run.status='paused';else if(run.status==='paused')run.status='running';}
+export function scoreFor(run){return Math.floor(run.distance/20)+run.bonus;}
+export function bossAtRound(round,type) {
+ const safe=Math.max(0,Math.floor(Number.isFinite(round)?round:0)),level=Math.floor(safe/3)+1;
+ const foe=foeFor(type||BOSS_ROSTER[safe%3]),supreme=foe.type==='lula';
+ return {foe,level,supreme,round:safe+1,attacks:Math.min(7,3+Math.min(level-1,3)+(supreme?1:0)),
+  interval:Math.max(1.25,1.65-Math.min(level-1,4)*.07),health:8+Math.min(level-1,4)*2+(supreme?2:0)};
 }
-
-export function togglePause(run) {
-  if (run.status === "running") run.status = "paused";
-  else if (run.status === "paused") run.status = "running";
+function nextBossDistance(count,rng){return Math.floor(count/3)*25000+[3500,13500,23500][count%3]+random(rng)*700;}
+function takeBoss(run,rng){
+ if(!run.bossBag.length){
+  run.bossBag=[...BOSS_ROSTER];
+  for(let i=2;i>0;i--){const j=Math.floor(random(rng)*(i+1));[run.bossBag[i],run.bossBag[j]]=[run.bossBag[j],run.bossBag[i]];}
+  if(run.bossBag.at(-1)===run.lastBoss)[run.bossBag[0],run.bossBag[2]]=[run.bossBag[2],run.bossBag[0]];
+ }
+ return run.bossBag.pop();
 }
-
-export function scoreFor(run) {
-  return Math.floor(run.distance / 20) + run.bonus;
+function beginBoss(run,rng){
+ const conf=bossAtRound(run.bossesDefeated,takeBoss(run,rng));
+ run.boss={type:conf.foe.type,name:conf.foe.name,color:conf.foe.color,level:conf.level,supreme:conf.supreme,
+  round:conf.round,total:conf.attacks,remaining:conf.attacks,fired:0,interval:conf.interval,nextAttack:1.3,
+  health:conf.health,maxHealth:conf.health,nextShot:.45,shotsFired:0,lastWeapon:'Ivermectina',hitFlashFor:0};
+ run.obstacles=[];run.shots=[];run.nextObstacle=Math.max(1.8,run.nextObstacle);
+ announce(run,conf.foe.name+' apareceu! Desvie dos ataques e continue correndo.');
 }
-
-
-/** Encontros fictícios: um salto para evitar cada ataque, sem golpes extras. */
-export function bossAtRound(round) {
-  const safe=Math.max(0,Math.floor(Number.isFinite(round)?round:0));
-  const index=safe%BOSS_ROSTER.length, level=Math.floor(safe/BOSS_ROSTER.length)+1;
-  const supreme=index===BOSS_ROSTER.length-1;
-  const foe=PURSUERS.find(p=>p.type===BOSS_ROSTER[index]);
-  const attacks=Math.min(9,3+Math.min(index,3)+Math.min(level-1,2)+(supreme?2:0));
-  return {foe,level,supreme,round:safe+1,attacks,
-    interval:Math.max(1.18,1.55-index*.052-Math.min(level-1,3)*.035)};
+function advanceBoss(run,dt,rng){
+ const boss=run.boss;if(!boss)return;
+ boss.nextShot-=dt;
+ if(boss.nextShot<=0&&boss.health>0){
+  const weapon=BOSS_WEAPONS[run.bibleCharges>0?1:0];if(run.bibleCharges>0)run.bibleCharges--;
+  run.shots.push({type:weapon.type,damage:weapon.damage,progress:0,launchY:run.player.y});
+  boss.lastWeapon=weapon.name;boss.shotsFired++;boss.nextShot+=.9;
+ }
+ boss.nextAttack-=dt;
+ if(boss.fired<boss.total&&boss.nextAttack<=0){
+  const attackType={xandao:'stamp',haddad:'receipts',lula:'sound'}[boss.type];
+  const [width,height]={stamp:[42,32],receipts:[44,40],sound:[48,38]}[attackType];
+  const attack={x:WORLD.width+50,width,height,type:attackType,owner:boss.type,bossAttack:true,counted:false};
+  run.obstacles.push(attack);boss.fired++;boss.nextAttack+=boss.interval+random(rng)*.25;return attack;
+ }
 }
-function beginBoss(run) {
-  const conf=bossAtRound(run.bossesDefeated);
-  run.boss={type:conf.foe.type,name:conf.foe.name,color:conf.foe.color,
-    level:conf.level,supreme:conf.supreme,round:conf.round,total:conf.attacks,
-    remaining:conf.attacks,fired:0,interval:conf.interval,nextAttack:1.3,
-    health:conf.attacks*2,maxHealth:conf.attacks*2,nextShot:.45,shotsFired:0,
-    lastWeapon:"Ivermectina",hitFlashFor:0};
-  run.obstacles=[]; // A arena abre sem ataques comuns encavalados.
-  run.shots=[];
-  run.nextObstacle=Math.max(1.8,run.nextObstacle);
-  run.events++;
-  run.event=`Chefe ${conf.foe.short} · nível ${conf.level}! Desvie dos ataques.`;
+function advanceShots(run,dt){
+ if(!run.boss){run.shots=[];return;}const boss=run.boss;boss.hitFlashFor=Math.max(0,boss.hitFlashFor-dt);
+ for(const shot of run.shots){shot.progress+=dt/.55;if(shot.progress>=1){boss.health=Math.max(0,boss.health-shot.damage);boss.hitFlashFor=.15;}}
+ run.shots=run.shots.filter(s=>s.progress<1);
 }
-function advanceBoss(run,dt) {
-  const boss=run.boss;if(!boss)return;
-  boss.nextShot-=dt;
-  if(boss.nextShot<=0 && boss.health>0){
-    const weapon=BOSS_WEAPONS[boss.shotsFired++%BOSS_WEAPONS.length];
-    run.shots.push({type:weapon.type,damage:weapon.damage,progress:0,launchY:run.player.y});
-    boss.lastWeapon=weapon.name;
-    boss.nextShot+=.9;
+function resolveBossDodges(run,rng){
+ if(!run.boss)return;
+ for(const o of run.obstacles)if(o.bossAttack&&!o.counted&&o.x+o.width<PLAYER.x){o.counted=true;run.boss.remaining--;}
+ const boss=run.boss;if(boss.fired<boss.total||boss.remaining>0||boss.health>0)return;
+ run.lastBoss=boss.type;run.boss=null;run.shots=[];run.bossesDefeated++;run.bossCooldown=4;
+ run.nextBossAt=nextBossDistance(run.bossesDefeated,rng);run.nextObstacle=Math.max(1.8,run.nextObstacle);
+ run.pickups=run.pickups.filter(p=>p.type!=='biblia');
+ announce(run,boss.name+' vencido! '+(run.bossesDefeated%3===0?'Rodada completa; os três chefões serão sorteados novamente.':'A viagem continua.'));
+}
+function advanceRaid(run,dt,rng){
+ if(run.raid){
+  const raid=run.raid;raid.remaining=Math.max(0,raid.remaining-dt);
+  if(raid.remaining<=1e-8){
+   if(raid.phase==='warning'){raid.phase='active';raid.remaining=8;announce(run,'Toc, toc, toc… é a Polícia Federal! Oito segundos de perseguição.');}
+   else if(raid.phase==='active'){raid.phase='recovery';raid.remaining=2;announce(run,'A perseguição especial terminou. O ritmo normal está voltando.');}
+   else{run.raid=null;run.nextRaid=35+random(rng)*25;}
+  }return;
+ }
+ if(run.boss||run.bossCooldown>0||stageTransitionAt(routeClock(run)).active)return;
+ run.nextRaid-=dt;
+ if(run.nextRaid<=0&&run.nextBossAt-run.routeDistance>1500){
+  const choices=RAID_FACTS.map((_,i)=>i).filter(i=>i!==run.lastFact);
+  const factIndex=choices[Math.floor(random(rng)*choices.length)];run.lastFact=factIndex;
+  run.raid={phase:'warning',remaining:2,factIndex,id:++run.raids};
+  announce(run,'Joice apareceu. Atenção: vem aí uma perseguição especial da PF.');
+ }
+}
+function rewardForObstacle(run,obstacle,balance,rng){
+ if(!obstacle)return;let item,count=1;
+ const has=type=>run.pickups.some(p=>p.type===type);
+ if(run.boss&&run.boss.health>0&&run.bibleCharges===0&&run.nextPickup<=0&&!has('biblia')){
+  item=PICKUPS[2];run.nextPickup=balance.pickupGap+random(rng)*4;
+ }else if(run.nextPower<=0&&run.shieldFor<=0&&!has('shield')){
+  item=PICKUPS[1];run.spawnedPowers++;run.nextPower=balance.powerGap+random(rng)*4;
+ }else if(run.nextPassport<=0){item=PICKUPS[0];count=3;run.nextPassport=balance.passportGap+random(rng)*.7;}
+ else return;
+ run.spawnedPickups++;const center=obstacle.x+obstacle.width/2;
+ for(let i=0;i<count;i++)run.pickups.push({x:center+(i-(count-1)/2)*35,y:100,type:item.type,value:item.value});
+}
+export function advanceRun(run,seconds,rng=Math.random){
+ if(run.status!=='running'||!Number.isFinite(seconds)||seconds<=0)return;
+ const dt=Math.min(seconds,.05);run.elapsed+=dt;
+ if(run.nextBossAt===null)run.nextBossAt=nextBossDistance(0,rng);
+ if(run.nextRaid===null)run.nextRaid=35+random(rng)*25;
+ const balance=difficultyAt(run.distance),travel=balance.speed*dt;run.distance+=travel;
+ if(!run.boss&&!run.raid)run.routeDistance+=travel;
+ run.bossCooldown=Math.max(0,run.bossCooldown-dt);
+ run.player.velocity-=1750*dt;run.player.y=Math.max(0,run.player.y+run.player.velocity*dt);
+ if(run.player.y===0)run.player.velocity=0;
+ run.shieldFor=Math.max(0,run.shieldFor-dt);run.graceFor=Math.max(0,run.graceFor-dt);
+ for(const obstacle of run.obstacles)obstacle.x-=travel;
+ for(const pickup of run.pickups)pickup.x-=travel;
+ advanceShots(run,dt);resolveBossDodges(run,rng);
+ run.obstacles=run.obstacles.filter(o=>o.x+o.width>-20);run.pickups=run.pickups.filter(p=>p.x>-30);
+ if(!run.boss&&!run.raid&&run.bossCooldown<=0&&run.routeDistance>=run.nextBossAt&&!stageTransitionAt(routeClock(run)).active)beginBoss(run,rng);
+ advanceRaid(run,dt,rng);
+ let anchor;
+ if(run.boss)anchor=advanceBoss(run,dt,rng);
+ else{
+  run.nextObstacle-=dt;
+  if(run.nextObstacle<=0){
+   const opponent=run.raid?.phase==='active'?foeFor('pf'):pursuitAt(routeClock(run),rng);
+   anchor={x:WORLD.width+40,width:opponent.width,height:opponent.height,type:opponent.type};run.obstacles.push(anchor);run.spawnedObstacles++;
+   const factor=run.raid?.phase==='active'?.84:run.raid?.phase==='recovery'?1-.16*run.raid.remaining/2:1;
+   run.nextObstacle+=Math.max(1.15,balance.obstacleGap*factor)+random(rng)*.4;
   }
-  boss.nextAttack-=dt;
-  if(boss.fired<boss.total && boss.nextAttack<=0){
-    const foe=PURSUERS.find(p=>p.type===boss.type);
-    const attack={x:WORLD.width+50,width:foe.width,height:foe.height,type:foe.type,bossAttack:true,counted:false};
-    run.obstacles.push(attack);
-    boss.fired++;
-    boss.nextAttack+=boss.interval;
-    return attack;
-  }
-}
-
-// Tiros atingem o chefe sem eliminar os obstáculos que exigem salto.
-function advanceShots(run,dt) {
-  if(!run.boss){run.shots=[];return;}
-  const boss=run.boss;
-  boss.hitFlashFor=Math.max(0,boss.hitFlashFor-dt);
-  for(const shot of run.shots){
-    shot.progress+=dt/.55;
-    if(shot.progress>=1){
-      boss.health=Math.max(0,boss.health-shot.damage);
-      boss.hitFlashFor=.15;
-    }
-  }
-  run.shots=run.shots.filter(shot=>shot.progress<1);
-}
-
-// Um salto, um grupo: os itens acompanham o arco sobre o adversário.
-// Os três relógios têm ritmos próprios, mas nunca geram ondas sobrepostas.
-function rewardForObstacle(run, obstacle, balance, rng) {
-  if (!obstacle) return;
-  let item, count = 1;
-  if (run.nextPower <= 0) {
-    const shield = run.spawnedPowers++ % 2 === 0 && !run.extraChance;
-    item = PICKUPS[shield ? 5 : 4];
-    run.nextPower = balance.powerGap + rng() * 2;
-  } else if (run.nextPassport <= 0) {
-    item = PICKUPS[3]; count = 3;
-    run.nextPassport = balance.passportGap + rng() * .5;
-  } else if (run.nextPickup <= 0) {
-    item = PICKUPS[Math.min(2, Math.floor(rng() * 3))];
-    run.nextPickup = balance.pickupGap + rng() * .7;
-  } else return;
-  run.spawnedPickups++;
-  const center = obstacle.x + obstacle.width / 2;
-  for (let i = 0; i < count; i++) {
-    run.pickups.push({x: center + (i - (count - 1) / 2) * 35, y: 100, type: item.type, value: item.value});
-  }
-}
-function resolveBossDodges(run) {
-  if(!run.boss)return;
-  for(const obstacle of run.obstacles) {
-    if(obstacle.bossAttack&&!obstacle.counted&&obstacle.x+obstacle.width<PLAYER.x){
-      obstacle.counted=true;run.boss.remaining--;
-    }
-  }
-  if(run.boss.fired<run.boss.total||run.boss.remaining>0||run.boss.health>0)return;
-  const boss=run.boss;run.boss=null;run.shots=[];run.bossesDefeated++;
-  run.nextBossScore+=BOSS_SCORE_STEP;
-  run.bossCooldown=4;
-  run.nextObstacle=Math.max(1.75,run.nextObstacle);
-  if(boss.supreme)run.extraChance=true;
-  run.events++;
-  run.event=boss.supreme?`Lula · chefe supremo vencido no nível ${boss.level}! Escudo extra conquistado.`:`${boss.name} vencido! Próximo confronto: ${run.nextBossScore} pontos.`;
-}
-
-export function advanceRun(run, seconds, rng = Math.random) {
-  if (run.status !== "running" || !Number.isFinite(seconds) || seconds <= 0) return;
-  // Não há limite de duração: o jogo termina apenas quando acabam as vidas.
-  const dt = Math.min(seconds, .05);
-  run.elapsed += dt;
-  const balance = difficultyAt(run.distance);
-  const speed = balance.speed;
-  const travel = speed * dt;
-  run.distance += travel;
-  run.bossCooldown=Math.max(0,run.bossCooldown-dt);
-  run.player.velocity -= 1750 * dt;
-  run.player.y = Math.max(0, run.player.y + run.player.velocity * dt);
-  if (run.player.y === 0) run.player.velocity = 0;
-  run.invisibleFor = Math.max(0, run.invisibleFor - dt);
-  run.graceFor = Math.max(0, run.graceFor - dt);
-
-  for (const obstacle of run.obstacles) obstacle.x -= travel;
-  for (const pickup of run.pickups) pickup.x -= travel;
-  advanceShots(run,dt);
-  resolveBossDodges(run);
-  run.obstacles = run.obstacles.filter(o => o.x + o.width > -20);
-  run.pickups = run.pickups.filter(p => p.x > -30);
-
-  if(!run.boss && run.bossCooldown<=0 && scoreFor(run)>=run.nextBossScore)beginBoss(run);
-  let rewardAnchor;
-  if(run.boss)rewardAnchor=advanceBoss(run,dt);
-  else {
-    run.nextObstacle -= dt;
-    if (run.nextObstacle <= 0) {
-      const current = pursuitAt(run.elapsed);
-      // O novo adversário aparece com frequência; os anteriores continuam na perseguição.
-      const opponent = run.spawnedObstacles++ % 3 === 2
-        ? PURSUERS[Math.min(current.index, Math.floor(rng() * (current.index + 1)))] : current;
-      rewardAnchor={ x: WORLD.width + 40, width: opponent.width, height: opponent.height, type: opponent.type };
-      run.obstacles.push(rewardAnchor);
-      // Sempre maior que o tempo completo de um pulo (~0,7 s).
-      run.nextObstacle += balance.obstacleGap + rng() * .4;
-    }
-  }
-  run.nextPickup -= dt;
-  run.nextPassport -= dt;
-  run.nextPower -= dt;
-  rewardForObstacle(run, rewardAnchor, balance, rng);
-
-  // Hitbox menor que o desenho: pernas e braços não geram colisões injustas.
-  const left = PLAYER.x + 5, right = PLAYER.x + PLAYER.width - 3;
-  const bottom = run.player.y + 3, top = run.player.y + PLAYER.height - 5;
-  // Coletar antes de resolver colisões permite usar a vantagem já neste frame.
-  run.pickups = run.pickups.filter(pickup => {
-    const hit = right > pickup.x - 12 && left < pickup.x + 12 && top > pickup.y - 12 && bottom < pickup.y + 12;
-    if (hit) {
-      run.bonus += pickup.value; run.collected++; run.lastPickup = pickup.type;
-      if (pickup.type === "invisible") run.invisibleFor = 6;
-      if (pickup.type === "chance") run.extraChance = true;
-      if (pickup.type === "passport") {
-        run.passports++;
-        if (run.passports % PASSPORTS_PER_LIFE === 0) {
-          run.lives++;
-          run.events++;
-          run.event = `100 passaportes! Você ganhou uma vida extra. Total: ${run.lives}.`;
-        }
-      }
-    }
-    return !hit;
-  });
-  if (run.invisibleFor <= 0 && run.graceFor <= 0) {
-    const collision = run.obstacles.some(obstacle => right > obstacle.x + 3 && left < obstacle.x + obstacle.width - 3 && bottom < obstacle.height && top > 0);
-    if (collision) {
-      if (run.extraChance) {
-        run.extraChance = false; run.graceFor = RECOVERY_AFTER_EXTRA; run.saves++;
-      } else {
-        run.lives--;
-        run.events++;
-        run.event = run.lives > 0
-          ? `Vida extra usada! Restam ${run.lives} ${run.lives === 1 ? "vida" : "vidas"}.`
-          : "Bateu, perdeu! A fuga fictícia terminou.";
-        if (run.lives <= 0) { run.status = "over"; return; }
-        // Recuperação apenas depois de gastar uma vida extra já conquistada.
-        // Impede que a mesma barreira consuma duas vidas por sobreposição.
-        run.graceFor = RECOVERY_AFTER_EXTRA;
-      }
-    }
-  }
+ }
+ run.nextPickup-=dt;run.nextPassport-=dt;run.nextPower-=dt;rewardForObstacle(run,anchor,balance,rng);
+ const left=PLAYER.x+5,right=PLAYER.x+PLAYER.width-3,bottom=run.player.y+3,top=run.player.y+PLAYER.height-5;
+ // Coleta antes do impacto: o escudo ou o centésimo passaporte já valem neste frame.
+ run.pickups=run.pickups.filter(p=>{
+  const hit=right>p.x-12&&left<p.x+12&&top>p.y-12&&bottom<p.y+12;
+  if(hit){
+   run.bonus+=p.value;run.collected++;run.lastPickup=p.type;
+   if(p.type==='shield'){run.shieldFor=6;announce(run,'Escudo das Américas! Invisibilidade por 6 segundos.');}
+   if(p.type==='biblia'){run.bibleCharges=3;announce(run,'Bíblia coletada: próximos três disparos com dano 3.');}
+   if(p.type==='passport'&&++run.passports%100===0){run.lives++;announce(run,'100 passaportes! Uma vida extra; total: '+run.lives+'.');}
+  }return !hit;
+ });
+ if(run.shieldFor<=0&&run.graceFor<=0&&run.obstacles.some(o=>right>o.x+3&&left<o.x+o.width-3&&bottom<o.height&&top>0)){
+  run.lives--;announce(run,run.lives>0?'Vida extra usada! Restam '+run.lives+'.':'Bateu, perdeu! A fuga fictícia terminou.');
+  if(run.lives<=0){run.status='over';return;}run.graceFor=RECOVERY_AFTER_EXTRA;
+ }
 }

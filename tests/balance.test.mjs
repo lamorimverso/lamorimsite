@@ -16,7 +16,7 @@ test('recompensas simultâneas ocupam um único grupo por obstáculo', () => {
 test('itens gerados ficam na trajetória do salto sobre o obstáculo', () => {
   for (const seed of [1, 92, 800]) {
     const run = running(), rng = seeded(seed);
-    run.nextBossScore = Infinity;
+    run.nextBossAt = Infinity; run.nextRaid = Infinity;
     let groups = 0;
     for (let i = 0; i < 120 * 50; i++) {
       const old = new Set(run.pickups);
@@ -35,24 +35,24 @@ test('itens gerados ficam na trajetória do salto sobre o obstáculo', () => {
       run.obstacles = run.obstacles.filter(o => o.x > 250);
       run.pickups = run.pickups.filter(p => p.x > 250);
     }
-    assert.ok(groups >= 12);
+    assert.ok(groups >= 8, "coletas úteis continuam presentes sem os itens só de pontos");
   }
 });
 
 test('poderes não se acumulam em uma sequência que torna o jogador sempre invencível', () => {
   const run = running(), rng = seeded(71);
-  run.nextBossScore = Infinity;
+  run.nextBossAt = Infinity; run.nextRaid = Infinity;
   const powers = [], types = new Set();
   for (let i = 0; i < 120 * 180; i++) {
     const old = new Set(run.pickups);
     advanceRun(run, 1 / 120, rng);
-    for (const p of run.pickups) if (!old.has(p) && ['invisible','chance'].includes(p.type)) {
+    for (const p of run.pickups) if (!old.has(p) && ['shield'].includes(p.type)) {
       powers.push(run.elapsed); types.add(p.type);
     }
     run.obstacles = run.obstacles.filter(o => o.x > 250);
     run.pickups = run.pickups.filter(p => p.x > 250);
   }
-  assert.deepEqual([...types].sort(), ['chance','invisible']);
+  assert.deepEqual([...types].sort(), ['shield']);
   assert.ok(powers.length >= 4 && powers.length <= 11);
   for (let i = 1; i < powers.length; i++) assert.ok(powers[i] - powers[i-1] >= 12);
 });

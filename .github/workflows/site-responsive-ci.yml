@@ -1,6 +1,11 @@
 name: Responsive site checks
 
 on:
+  push:
+    paths:
+      - 'tanahoraflavio/**'
+      - 'tests/**'
+      - '.github/workflows/site-responsive-ci.yml'
   pull_request:
     paths:
       - 'tanahoraflavio/**'
