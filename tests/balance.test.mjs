@@ -66,7 +66,7 @@ test('passaportes mais raros ainda permitem conquistar vida extra em até 260 se
       if (next && next.x - (PLAYER.x + PLAYER.width) <= speed * .19) jumpRun(run);
       advanceRun(run, 1 / 120, rng);
     }
-    assert.equal(run.status, 'running', `saltos viáveis na sequência ${seed}`);
+    assert.equal(run.status, 'running', `saltos viáveis na sequência ${seed}: t=${run.elapsed.toFixed(2)} y=${run.player.y.toFixed(1)} boss=${run.boss?.type||'none'} attack=${JSON.stringify(run.obstacles.filter(o=>o.x<300).map(o=>({x:Math.round(o.x),y:o.y,type:o.type,projectile:o.projectile})))}`);
     assert.ok(run.passports >= 100, `vida extra alcançável na sequência ${seed}: ${run.passports}`);
     assert.ok(run.lives >= 2);
     assert.ok(run.bossesDefeated >= 1, 'o piloto também enfrenta chefes');
