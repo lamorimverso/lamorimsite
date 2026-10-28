@@ -305,6 +305,48 @@ function initRunner() {
     }
     ctx.restore();
   }
+  // Cartazes e caricaturas ao fundo: referências históricas e memes satíricos.
+  // São decorações sem colisão, baixa opacidade e paralaxe suave.
+  function backdropMemes(stage,distance){
+    const samples={
+      brasilia:['PAPUDA','PAPUDINHA','JAIR · MEME','PF'],
+      rio:['CHUPETINHA','POLÍCIA','IVERMECTINA','COVID-19'],
+      argentina:['COVID-19','IVERMECTINA','JAIR · MEME','PAPUDA'],
+      florida:['CHUPETINHA','PAPUDINHA','JAIR · MEME','PF'],
+      'casa-branca':['PF','PAPUDA','IVERMECTINA','CHUPETINHA']
+    }[stage.id]||[];
+    ctx.save();ctx.globalAlpha=.62;ctx.textAlign="center";
+    const width=1200;
+    for(let i=0;i<samples.length;i++){
+      const x=((130+i*295-distance*.09)%width+width)%width-70;
+      if(x< -115||x>virtualWidth+115)continue;
+      const label=samples[i],base=213-(i%2)*12;
+      ctx.save();ctx.translate(x,base);
+      ctx.fillStyle=stage.ink+"30";ctx.fillRect(-49,-54,98,54);
+      ctx.fillStyle="#f6f4eea8";ctx.fillRect(-42,-50,84,19);
+      ctx.strokeStyle=stage.ink+"66";ctx.lineWidth=1;ctx.strokeRect(-42,-50,84,19);
+      ctx.font="800 8px system-ui";ctx.fillStyle="#515168";ctx.fillText(label,0,-37,82);
+      if(label.includes('JAIR')){
+        // Caricatura memorial/satírica, não representação da situação atual.
+        circle(0,-17,8,"#e8bb8d");ctx.fillStyle="#5c6586";ctx.fillRect(-11,-10,22,10);
+        ctx.strokeStyle="#63728c";ctx.lineWidth=2;
+        for(const bar of [-21,-7,7,21]){ctx.beginPath();ctx.moveTo(bar,-32);ctx.lineTo(bar,0);ctx.stroke();}
+      }else if(label==='COVID-19'){
+        circle(0,-16,10,"#c68d8d");
+        ctx.strokeStyle="#b57b83";ctx.lineWidth=2;
+        for(let n=0;n<8;n++){const a=n*Math.PI/4;line([[Math.cos(a)*11,Math.sin(a)*11-16],[Math.cos(a)*16,Math.sin(a)*16-16]],"#b57b83",2);}
+      }else if(label==='IVERMECTINA'){
+        ctx.save();ctx.translate(0,-16);ctx.rotate(-.35);
+        ctx.fillStyle="#f4efe7";ctx.fillRect(-16,-7,32,14);
+        ctx.fillStyle="#88b5b2";ctx.fillRect(0,-7,16,14);ctx.restore();
+      }else{
+        // Silhuetas / placas alusivas à política; ficam ao fundo da pista.
+        circle(0,-17,8,"#d8b99c");ctx.fillStyle=stage.ink+"88";ctx.fillRect(-9,-9,18,9);
+      }
+      ctx.restore();
+    }
+    ctx.restore();
+  }
   function scenery(stage) {
     // Mantém obstáculos e salto em movimento; congela somente a decoração.
     const decorativeDistance = prefersReducedMotion() ? 0 : run.distance;
@@ -365,6 +407,7 @@ function initRunner() {
       for(let i=0;i<6;i++){ctx.fillStyle=i%2?"#fff":"#c5828c";ctx.fillRect(x+1,92+i*2.5,28,2.5);}
       ctx.fillStyle="#637ba5";ctx.fillRect(x+1,92,12,8);
     }
+    backdropMemes(stage,decorativeDistance);
     // Pequeno avião e linha pontilhada indicam a viagem sem distrair da pista.
     ctx.save(); ctx.translate(virtualWidth-135,83);ctx.fillStyle=stage.ink;ctx.globalAlpha*=.45;
     ctx.beginPath();ctx.moveTo(0,-9);ctx.lineTo(4,-1);ctx.lineTo(15,4);ctx.lineTo(15,7);ctx.lineTo(3,4);ctx.lineTo(2,12);ctx.lineTo(6,15);ctx.lineTo(6,17);ctx.lineTo(0,15);ctx.lineTo(-6,17);ctx.lineTo(-6,15);ctx.lineTo(-2,12);ctx.lineTo(-3,4);ctx.lineTo(-15,7);ctx.lineTo(-15,4);ctx.lineTo(-4,-1);ctx.closePath();ctx.fill();ctx.restore();
@@ -387,9 +430,9 @@ function initRunner() {
     ctx.save();ctx.translate(bossX,bossY+motion.bob);ctx.rotate(motion.lean);
     drawActor(ctx,{type:b.type,x:0,y:0,scale:1.62,phase,attacking:b.attackFlashFor>0,hurt:b.hitFlashFor>0});
     ctx.restore();
-    if(b.nextAttack<.65&&(b.health>0||b.fired<b.total)){
+    if(b.nextAttack<.65&&b.fired<b.total){
       ctx.fillStyle="#a33e4b";ctx.font="900 11px system-ui";ctx.textAlign="center";
-      ctx.fillText("PREPARE O SALTO",virtualWidth-86,62);ctx.textAlign="start";
+      ctx.fillText(b.type==='xandao'&&b.fired%2===0?"PREPARE O SALTO":"PREPARE O AGACHAMENTO",virtualWidth-86,62);ctx.textAlign="start";
     }
   }
   function character(){
