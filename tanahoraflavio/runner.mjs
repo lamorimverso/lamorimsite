@@ -201,7 +201,8 @@ function initRunner() {
   crouchButton.addEventListener("pointerdown",event=>{
     if(event.button!==0||run.status!=="running")return;
     event.preventDefault();resumeFromGesture();
-    crouchButton.setPointerCapture?.(event.pointerId);crouch(true);
+    try{crouchButton.setPointerCapture?.(event.pointerId);}catch{/* navegador pode não reconhecer eventos de teste/assistivos */}
+    crouch(true);
   });
   const releaseCrouch=()=>crouch(false);
   crouchButton.addEventListener("pointerup",releaseCrouch);
