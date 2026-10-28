@@ -54,6 +54,28 @@ async function openWithRun(options = {}, init) {
   return {context,page,errors};
 }
 
+test('o fundo usa a assinatura completa de Canvas ellipse, sem travar a inicialização',async()=>{
+ const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner.mjs'),'utf8');
+ const calls=[...source.matchAll(/ctx\\.ellipse\\(([^)]*)\\)/g)].map(match=>match[1]);
+ assert.ok(calls.length>=4,'o desenho contém elipses decorativas e da personagem');
+ for(const args of calls){
+  assert.equal(args.split(',').length,7,'ellipse exige x, y, raioX, raioY, rotação, início e fim: '+args);
+ }
+});
+
+test('o carregamento dos personagens libera Começar corrida sem erros no fundo',async()=>{
+ const {context,page,errors}=await open();
+ try{
+  await page.waitForFunction(()=>{
+   const button=document.getElementById('game-start'),game=document.getElementById('game');
+   return button&&!button.disabled&&button.textContent==='Começar corrida'&&game.dataset.art==='loaded';
+  },null,{timeout:12000});
+  assert.deepEqual(errors,[],'o desenho da paisagem não pode lançar exceção durante o carregamento');
+  await page.locator('#game-start').click();
+  assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
+ }finally{await context.close();}
+});
+
 test('teclado mantém a corrida sem botão ou atalho de pausa', async () => {
   const {context,page,errors}=await open();
   try {
