@@ -530,6 +530,7 @@ test('armas caricaturais aparecem durante chefes sem impedir o salto', async () 
     });
     await page.waitForFunction(()=>document.getElementById('game-boss').hidden===false);
     assert.equal(await page.locator('#game-pause').count(),0);
+    await page.evaluate(()=>{globalThis.__testRun.pickups.push({x:136,y:35,type:'biblia',value:0});});
     await page.waitForFunction(()=>globalThis.__testRun.boss.shotsFired>=3,null,{timeout:10000});
     assert.match(await page.locator('#game-boss-weapon').textContent(),/Bíblia evangélica/);
     assert.ok(await page.evaluate(()=>globalThis.__testRun.boss.health<globalThis.__testRun.boss.maxHealth));
