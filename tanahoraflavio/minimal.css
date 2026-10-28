@@ -372,3 +372,8 @@ summary:focus-visible, #runner-canvas:focus-visible { outline: 3px solid #a994c8
 @media(max-width:380px){
   .game-boss-heading strong { font-size: 11px; }
 }
+
+
+/* Corrida contínua: botão único de salto durante a partida. */
+.game-card[data-run-state="running"] #game-jump { grid-column: 1 / -1; }
+.game-boss-weapon { display:block; margin-top:6px; color:var(--muted); font-size:10px; }
