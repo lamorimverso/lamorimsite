@@ -20,7 +20,7 @@ test('primeiro chefe só chega depois de um trecho substancial de corrida',()=>{
  step(r,120*25);
  assert.equal(r.boss,null,'sem chefão antes dos 25 segundos iniciais');
  step(r,120*18);
- assert.ok(r.boss,'o chefão deve aparecer depois do período inicial');
+ assert.ok(r.boss||r.bossesDefeated>=1,'o chefão precisa surgir após o período inicial, mesmo se já foi vencido');
 });
 test('objeto sai da mão do chefão e viaja em linha reta até o Flávio',()=>{
  const r=bossRun(),shot=r.obstacles.at(-1);
