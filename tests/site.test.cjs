@@ -169,7 +169,7 @@ test('uma colisão sem poder encerra e reinício restaura uma vida', async () =>
       run.obstacles=[{x:125,width:34,height:44,type:'pf'}];
     });
     await page.waitForFunction(() => document.getElementById('game').dataset.runState === 'over');
-    assert.match(await page.locator('#game-overlay-title').textContent(), /Bateu, perdeu!/);
+    assert.match(await page.locator('#game-overlay-title').textContent(), /Foi pego pela Polícia Federal!/);
     assert.equal(await page.locator('#game-lives').textContent(),'0');
     await page.getByRole('button',{name:'Tentar de novo',exact:true}).click();
     assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
