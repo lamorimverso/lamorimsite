@@ -1,5 +1,5 @@
 // Atlas criados a partir da prancha escolhida pelo usuário, sem redesenho geométrico.
-const VERSION='20261028-sprites-v3';
+const VERSION='20261028-sprites-v4';
 const definitions={
  hero:{url:new URL('./assets/flavio-run.png',import.meta.url).href+'?v='+VERSION,cols:3,rows:2},
  cast:{url:new URL('./assets/characters-2026.png',import.meta.url).href+'?v='+VERSION,cols:4,rows:4}
@@ -54,15 +54,24 @@ export function spriteFrameFor(type,{phase=0,airborne=false,landing=false,hurt=f
  const group=actorGroups[type]||actorGroups.pf;
  return {sheet:'cast',index:group.length===3?group[attacking?2:Math.floor(Math.max(0,phase))%2]:group[0]};
 }
+// Cada atlas tem resolução própria. As poses do Flávio vindas do atlas
+// de elenco devem manter a altura aparente dos quadros de corrida.
+export function spriteScaleFor(type,sheetName,frames,scale=1){
+ const indices=type==='flavio'&&sheetName==='cast'?[13,14,15]:(actorGroups[type]||actorGroups.pf);
+ const sourceHeight=Math.max(...indices.map(i=>frames[i]?.height||0));
+ return sourceHeight>0?(type==='joice'?90:94)*scale/sourceHeight:0;
+}
+export function portraitCropFor(frame){
+ // O microfone da Joice e os acessórios laterais ficam fora do recorte antigo.
+ // Preservar toda a largura, recortando somente a parte inferior para retrato.
+ return {x:frame.x,y:frame.y,width:frame.width,height:frame.height*.76};
+}
 export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,airborne=false,landing=false,attacking=false,hurt=false,alpha=1}={}){
  const selected=spriteFrameFor(type,{phase,airborne,landing,attacking,hurt});
  const sheet=sheets.get(selected.sheet);if(!sheet)return false;
  const frame=sheet.frames[selected.index];
- const reference=type==='flavio'?sheets.get('hero'):sheets.get('cast');
- if(!reference)return false;
- const group=actorGroups[type]||actorGroups.pf;
- const sourceHeight=Math.max(...group.map(i=>reference.frames[i].height));
- const factor=(type==='joice'?90:94)*scale/sourceHeight;
+ const factor=spriteScaleFor(type,selected.sheet,sheet.frames,scale);
+ if(!factor)return false;
  const dx=x+(frame.x-frame.center)*factor,dy=y-frame.height*factor;
  context.save();context.globalAlpha*=alpha;context.imageSmoothingEnabled=true;
  if(hurt&&type!=='flavio'){context.shadowColor='#ffd56b';context.shadowBlur=9;}
@@ -71,8 +80,8 @@ export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,a
 }
 export function drawSpritePortrait(context,type,width,height){
  const cast=sheets.get('cast'),index=actorGroups[type]?.[0];if(!cast||index===undefined)return;
- const f=cast.frames[index],crop={x:f.x+f.width*.12,y:f.y,width:f.width*.76,height:f.height*.56};
+ const f=cast.frames[index],crop=portraitCropFor(f);
  const factor=Math.min(width/crop.width,height/crop.height);
  context.clearRect(0,0,width,height);
- context.drawImage(cast.image,crop.x,crop.y,crop.width,crop.height,(width-crop.width*factor)/2,0,crop.width*factor,crop.height*factor);
+ context.drawImage(cast.image,crop.x,crop.y,crop.width,crop.height,(width-crop.width*factor)/2,(height-crop.height*factor)/2,crop.width*factor,crop.height*factor);
 }
