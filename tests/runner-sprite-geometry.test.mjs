@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spriteFrameFor,spriteScaleFor,portraitCropFor,spriteFacesRight} from '../tanahoraflavio/runner-sprites.mjs';
-import {enemyMotionFor} from '../tanahoraflavio/runner-art.mjs';
+import {enemyMotionFor,crouchAnimationStep} from '../tanahoraflavio/runner-art.mjs';
 
 test('Flávio não encolhe ao trocar atlas da corrida por salto e impacto',()=>{
  const hero=[490,491,456,487,469,464].map(height=>({height}));
@@ -48,4 +48,19 @@ test('perseguidores e chefões balançam, mas só alguns pixels e sem afetar obs
  for(const type of ['barrier','case','sound','stamp','receipts']){
   assert.deepEqual(enemyMotionFor(type,12,100),{bob:0,lean:0});
  }
+});
+
+test('agachamento anima a descida e a volta à posição normal sem saltos visuais',()=>{
+ let pose=0;
+ const descent=[];
+ for(let i=0;i<18;i++){pose=crouchAnimationStep(pose,true,1/60);descent.push(pose);}
+ assert.ok(descent[0]>0 && descent[0]<.3,'início gradual do agachamento');
+ assert.ok(descent.every((v,i)=>i===0||v>=descent[i-1]),'corpo baixa sem reversões');
+ assert.ok(descent.at(-1)>.85&&descent.at(-1)<=1,'agacha de verdade');
+ let rising=pose;
+ for(let i=0;i<22;i++)rising=crouchAnimationStep(rising,false,1/60);
+ assert.ok(rising<.12,'personagem se levanta suavemente ao soltar');
+ assert.equal(crouchAnimationStep(.3,true,1/60,true),1,'movimento reduzido pula o efeito');
+ assert.equal(crouchAnimationStep(.9,false,1/60,true),0);
+ assert.equal(crouchAnimationStep(.4,true,-1),.4,'não avança com dt negativo');
 });
