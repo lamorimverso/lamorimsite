@@ -142,16 +142,13 @@ test('o contador encerra sem números negativos após a data final', async () =>
   } finally { await context.close(); }
 });
 
-test('falha da música não deixa um quadro vazio na página', async () => {
+test('sem música na página, a contagem e o jogo continuam disponíveis', async () => {
   const {context,page,errors} = await open();
   try {
-    assert.equal(await page.locator('#music-panel').isVisible(),false);
-    await page.getByRole('button',{name:'▶ Tocar música',exact:true}).click();
-    await page.waitForFunction(() => document.getElementById('audio-status').textContent.includes('Não foi possível carregar'));
-    assert.equal(await page.locator('#music-panel').isVisible(),false);
-    assert.equal(await page.locator('#music-toggle').isDisabled(),true);
-    assert.equal(await page.locator('#music-toggle').textContent(),'Música indisponível');
+    assert.equal(await page.locator('#musicas, #musica, #music-panel, #music-toggle, #music-native, #game-playlist-player').count(),0);
+    assert.equal(await page.locator('.site-header nav').count(),0);
     assert.equal(await page.getByRole('button',{name:'Começar corrida',exact:true}).isEnabled(),true);
+    assert.ok(Number.isFinite(Number(await page.locator('#days').textContent())));
     assert.deepEqual(errors,[]);
   } finally { await context.close(); }
 });
@@ -262,7 +259,7 @@ test('interface clean destaca retrato e percentual no celular e desktop', async 
     assert.ok(await page.locator('#game').isVisible());
     assert.match(await page.locator('#share-message').textContent(),/copiado|compartilhado|Copie/i);
     assert.equal(await page.locator('.hero-play').textContent(),'Compartilhar ↗');
-    assert.equal(await page.locator('#music-toggle').count(),1);
+    assert.equal(await page.locator('#music-toggle').count(),0);
     assert.equal(await page.locator('#share').count(),1);
     assert.deepEqual(errors,[]);
   } finally { await context.close(); }
@@ -288,7 +285,7 @@ test('desktop replica a coluna única do celular sem excesso de texto exposto', 
         return {hero:{x:hero.x,width:hero.width},game:{x:game.x,width:game.width},counterY:counter.y,photoY:photo.y,viewportWidth:viewport.width,viewportHeight:viewport.height,overflow:document.documentElement.scrollWidth>innerWidth};
       });
       assert.equal(geometry.overflow,false,`overflow na largura ${width}`);
-      assert.equal(await page.locator('.site-header .nav-game').isVisible(),true,`link do jogo oculto em ${width}px`);
+      assert.equal(await page.locator('.site-header .wordmark').isVisible(),true,`marca do site visível em ${width}px`);
       assert.ok(geometry.hero.width <= 540,`hero não deve virar grade desktop em ${width}: ${geometry.hero.width}`);
       assert.ok(Math.abs(geometry.hero.width-geometry.game.width)<3,`larguras das seções incoerentes: ${width}`);
       assert.ok(Math.abs(geometry.hero.x-geometry.game.x)<3,`colunas desalinhadas: ${width}`);
@@ -304,7 +301,7 @@ test('desktop replica a coluna única do celular sem excesso de texto exposto', 
     assert.equal(await page.locator('#game-stage-name').isVisible(),false);
     assert.equal(await page.locator('#game-lives').isVisible(),true);
     assert.equal(await page.locator('#game-passports').isVisible(),true);
-    assert.equal(await page.locator('.site-header nav a').count(),3);
+    assert.equal(await page.locator('.site-header nav a').count(),0);
     assert.deepEqual(errors,[]);
   }finally{await context.close();}
 });
@@ -341,7 +338,7 @@ test('referência minimalista mantém mesma hierarquia no desktop e celular sem 
       assert.ok(v.portrait.y<v.counter.y,`retrato deve vir primeiro em ${width}px`);
       assert.ok(v.button.height>=44,`CTA tocável em ${width}px`);
     }
-    assert.equal(await page.locator('#music-toggle').count(),1);
+    assert.equal(await page.locator('#music-toggle').count(),0);
     assert.equal(await page.locator('#share').count(),1);
     assert.equal(await page.locator('.sources').count(),0);
     assert.equal(await page.locator('.game-help').count(),0);
@@ -709,40 +706,19 @@ test('um toque não duplica o salto entre pointerdown e click de compatibilidade
  }finally{await context.close();}
 });
 
-test('playlist de 2026 somente carrega player após clique e pode ser interrompida',async()=>{
- const {context,page,errors}=await open({viewport:{width:390,height:844}});
- try{
-  await page.locator('#musicas').scrollIntoViewIfNeeded();
-  assert.equal(await page.locator('#musicas .game-playlist-choices button').count(),13);
-  assert.equal(await page.locator('#game-playlist-frame').getAttribute('src'),null);
-  await page.locator('[data-election-track="bota"]').click();
-  const url=await page.locator('#game-playlist-frame').getAttribute('src');
-  assert.match(url,/youtube-nocookie\.com\/embed\/dC5pqPsUSnw/);
-  assert.equal(await page.locator('[data-election-track="bota"]').getAttribute('aria-pressed'),'true');
-  assert.equal(await page.locator('#game-playlist-player').isVisible(),true);
-  await page.locator('#game-playlist-stop').click();
-  assert.equal(await page.locator('#game-playlist-frame').getAttribute('src'),null);
-  assert.equal(await page.locator('#game-playlist-player').isVisible(),false);
-  assert.deepEqual(errors,[]);
- }finally{await context.close();}
-});
-
-test('o topo oferece três tópicos claros, a música fica em sua seção, sem controles duplicados',async()=>{
+test('cabeçalho simplificado e sem playlist em celular e desktop',async()=>{
  const {context,page,errors}=await open({viewport:{width:320,height:820}});
  try{
-  const nav=page.locator('.site-header nav a');
-  assert.deepEqual(await nav.allTextContents(),['Tá na hora','Corre, Flávio!','Músicas']);
-  assert.deepEqual(await nav.evaluateAll(elements=>elements.map(e=>e.getAttribute('href'))),['#contagem','#game','#musicas']);
+  assert.equal(await page.locator('.site-header nav').count(),0);
+  assert.equal(await page.locator('.site-header .wordmark').isVisible(),true);
+  assert.equal(await page.locator('#musicas, .music-catalog, .music-collection, .music-memes, #music-native, #music-toggle, #game-playlist-frame, [data-election-track]').count(),0);
   assert.equal(await page.locator('#share').count(),1);
-  assert.equal(await page.locator('#music-toggle').count(),1);
-  assert.equal(await page.locator('#game-playlist').count(),0);
-  assert.equal(await page.locator('.sources').count(),0);
-  assert.equal(await page.locator('.game-help').count(),0);
-  assert.equal(await page.locator('#musicas').count(),1);
-  await page.locator('.nav-music').click();
-  await page.waitForFunction(()=>location.hash==='#musicas');
-  assert.equal(await page.locator('.music-catalog-heading').isVisible(),true);
-  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  assert.equal(await page.locator('#game-sound').count(),1,'efeitos do jogo continuam opcionais');
+  assert.equal(await page.locator('#runner-canvas').isVisible(),true);
+  for(const width of [320,390,768,1440]){
+   await page.setViewportSize({width,height:820});
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`sem rolagem horizontal em ${width}`);
+  }
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
