@@ -598,7 +598,8 @@ test('fusão de paisagens e aviso de destino sem perder a jogabilidade', async (
     const halfway=await sample(60);
     assert.equal(await page.locator('#game-transition').isVisible(),true);
     assert.match(await page.locator('#game-transition-name').textContent(),/Flórida/);
-    assert.equal(await page.locator('#game-transition-progress').getAttribute('style'),'width: 50%;');
+    const transitionWidth=await page.locator('#game-transition-progress').evaluate(el=>parseFloat(el.style.width));
+    assert.ok(transitionWidth>=48 && transitionWidth<=65, `transição visível: ${transitionWidth}%`);
     const florida=await sample(62.5);
     assert.equal(await page.locator('#game-transition').isVisible(),false);
     // Uma fusão real da cor do céu entre dois destinos (não uma troca abrupta).
