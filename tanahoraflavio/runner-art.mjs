@@ -1,4 +1,4 @@
-import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=20261028-sprites-v3";
+import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=20261028-sprites-v4";
 // Personagens da prancha em atlas PNG; itens e perigos continuam leves em Canvas.
 const INK='#292337',SKIN='#edb57d',CREAM='#fff6e5';
 function oval(c,x,y,rx,ry,fill,stroke=INK,w=1.8){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=w;c.stroke();}}
@@ -8,7 +8,7 @@ function line(c,points,color=INK,width=2){c.beginPath();points.forEach(([x,y],i)
 function text(c,value,x,y,size=7,color=CREAM){c.fillStyle=color;c.font='900 '+size+'px system-ui';c.textAlign='center';c.fillText(value,x,y);}
 const COATS={flavio:'#754595',pf:'#284c70',janones:'#3e6c9c',army:'#68764c',boulos:'#7c558b',dino:'#89634b',xandao:'#393044',haddad:'#286778',lula:'#a33349',joice:'#294d77'};
 
-export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait} from "./runner-sprites.mjs?v=20261028-sprites-v3";
+export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait} from "./runner-sprites.mjs?v=20261028-sprites-v4";
 export function drawItem(c,{type,x,y,scale=1}){
  c.save();c.translate(x,y);c.scale(scale,scale);
  if(type==='shield'){
