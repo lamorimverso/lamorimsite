@@ -524,3 +524,42 @@ test("sem chefe não há disparos automáticos nem cartuchos acumulados", () => 
   assert.equal(run.boss,null);
   assert.deepEqual(run.shots,[]);
 });
+
+test("transições progressivas entre cinco destinos são contínuas e não alteram stageAt", () => {
+  assert.equal(typeof core.stageTransitionAt,"function");
+  for(let i=1;i<5;i++) {
+    const boundary=i*core.SCENE_SECONDS;
+    const start=core.stageTransitionAt(boundary-2.01);
+    const quarter=core.stageTransitionAt(boundary-1);
+    const middle=core.stageTransitionAt(boundary);
+    const threeQuarters=core.stageTransitionAt(boundary+1);
+    const finish=core.stageTransitionAt(boundary+2.01);
+    assert.equal(start.active,false);
+    assert.equal(quarter.active,true);
+    assert.equal(quarter.from,core.STAGES[i-1]);
+    assert.equal(quarter.to,core.STAGES[i]);
+    assert.ok(quarter.progress>0 && quarter.progress<.5);
+    assert.equal(middle.progress,.5);
+    assert.ok(threeQuarters.progress>.5&&threeQuarters.progress<1);
+    assert.equal(finish.active,false);
+    assert.equal(core.stageAt(boundary-1).index,i-1);
+    assert.equal(core.stageAt(boundary).index,i);
+  }
+  assert.equal(core.stageTransitionAt(900).active,false);
+  assert.equal(core.stageTransitionAt(-1).active,false);
+  assert.equal(core.stageTransitionAt(NaN).active,false);
+});
+
+test("física e pontos continuam durante uma transição entre cenários", () => {
+  const run=running();
+  run.elapsed=59;
+  run.nextObstacle=run.nextPickup=run.nextPassport=run.nextPower=1e8;
+  run.bossCooldown=1e8;
+  run.invisibleFor=10;
+  const distance=run.distance;
+  frames(run,2);
+  assert.ok(run.distance>distance);
+  assert.equal(run.status,"running");
+  assert.equal(core.stageAt(run.elapsed).id,"florida");
+  assert.equal(core.stageTransitionAt(run.elapsed).active,true);
+});
