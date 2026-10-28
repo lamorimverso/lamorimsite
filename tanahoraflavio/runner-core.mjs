@@ -126,11 +126,12 @@ function advanceBoss(run,dt,rng){
   const attackType={xandao:'stamp',haddad:'receipts',lula:'sound'}[boss.type];
   const [width,height]={stamp:[42,32],receipts:[44,40],sound:[48,38]}[attackType];
   // Tiro de verdade: parte da mão do chefe, mira a posição do protagonista
-  // no instante do disparo e continua em linha reta, permitindo esquiva.
+  // na altura habitual da corrida e continua em linha reta, permitindo salto.
+  // Mirar o ponto do salto atual faria o objeto atingir injustamente quem desvia.
   const x=visibleWidth(run)-104;
   const attack={x,width,height,type:attackType,owner:boss.type,bossAttack:true,counted:false,
    projectile:true,launchX:x+width/2,targetX:PLAYER.x+PLAYER.width/2,
-   launchY:77,targetY:run.player.y+PLAYER.height/2,y:77};
+   launchY:77,targetY:PLAYER.height/2,y:77};
   run.obstacles.push(attack);boss.attackFlashFor=.26;boss.fired++;boss.nextAttack+=boss.interval+random(rng)*.25;return attack;
  }
 }
