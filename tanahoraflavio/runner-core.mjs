@@ -73,7 +73,7 @@ export function pursuitAt(seconds,rng=()=>.5) {
 }
 export function createRun() {
  return {status:'ready',elapsed:0,distance:0,routeDistance:0,viewportWidth:WORLD.width,bonus:0,collected:0,passports:0,lives:1,
-  event:'',events:0,player:{y:0,velocity:0},obstacles:[],pickups:[],
+  event:'',events:0,player:{y:0,velocity:0,crouching:false},obstacles:[],pickups:[],
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,shieldFor:0,graceFor:0,
   lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:null,bossCooldown:0,
@@ -81,8 +81,15 @@ export function createRun() {
 }
 export function startRun(run){if(run.status==='ready')run.status='running';}
 export function jumpRun(run){
- if(run.status!=='running'||run.player.y>0||run.player.velocity>0)return false;
+ if(run.status!=='running'||run.player.y>0||run.player.velocity>0||run.player.crouching)return false;
  run.player.velocity=610;return true;
+}
+// Abaixar só é possível no chão; aperto contínuo reduz a área de colisão.
+// Não altera a altura do salto ou os itens; soltar o botão restaura a postura.
+export function crouchRun(run,active){
+ const next=!!active && run.status==='running'&&run.player.y===0&&run.player.velocity===0;
+ run.player.crouching=next;
+ return next;
 }
 // Interno ao motor/testes; não há comando de pausa na interface.
 export function togglePause(run){if(run.status==='running')run.status='paused';else if(run.status==='paused')run.status='running';}
@@ -126,7 +133,9 @@ function advanceBoss(run,dt,rng){
  const x=visibleWidth(run)-104;
  const attack={x,width,height,type:attackType,owner:boss.type,bossAttack:true,counted:false,
   projectile:true,launchX:x+width/2,targetX:PLAYER.x+PLAYER.width/2,
-  launchY:77,targetY:PLAYER.height/2,y:77};
+  // Mandado, mão em L e recibos passam mais alto: abaixar evita estes;
+  // o martelo vai baixo e precisa ser superado com salto.
+  launchY:77,targetY:attackType==='hammer'?PLAYER.height/2:73,y:77};
  run.obstacles.push(attack);
  boss.attackFlashFor=.26;boss.fired++;
  boss.nextAttack+=boss.interval+random(rng)*.22;
@@ -177,6 +186,7 @@ export function advanceRun(run,seconds,rng=Math.random){
  if(!run.boss&&!run.raid)run.routeDistance+=travel;
  run.bossCooldown=Math.max(0,run.bossCooldown-dt);
  run.player.velocity-=1750*dt;run.player.y=Math.max(0,run.player.y+run.player.velocity*dt);
+ if(run.player.y>0)run.player.crouching=false;
  if(run.player.y===0)run.player.velocity=0;
  run.shieldFor=Math.max(0,run.shieldFor-dt);run.graceFor=Math.max(0,run.graceFor-dt);
  for(const obstacle of run.obstacles){
@@ -204,7 +214,8 @@ export function advanceRun(run,seconds,rng=Math.random){
   }
  }
  run.nextPickup-=dt;run.nextPassport-=dt;run.nextPower-=dt;rewardForObstacle(run,anchor,balance,rng);
- const left=PLAYER.x+5,right=PLAYER.x+PLAYER.width-3,bottom=run.player.y+3,top=run.player.y+PLAYER.height-5;
+ const left=PLAYER.x+5,right=PLAYER.x+PLAYER.width-3,bottom=run.player.y+3,
+  top=run.player.y+(run.player.crouching?25:PLAYER.height-5);
  // Coleta antes do impacto: o escudo ou o centésimo passaporte já valem neste frame.
  run.pickups=run.pickups.filter(p=>{
   const hit=right>p.x-12&&left<p.x+12&&top>p.y-12&&bottom<p.y+12;
