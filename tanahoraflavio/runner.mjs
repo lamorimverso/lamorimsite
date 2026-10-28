@@ -1,8 +1,8 @@
-import { WORLD, PLAYER, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, advanceRun, stageAt, stageTransitionAt, scoreFor } from "./runner-core.mjs?v=20261028-sprites-v4";
-import { RAID_FACTS } from "./runner-core.mjs?v=20261028-sprites-v4";
-import { drawActor, drawItem, drawThreat, drawShot, loadSprites, drawSpritePortrait } from "./runner-art.mjs?v=20261028-sprites-v4";
-import { createGameAudio } from "./runner-audio.mjs?v=20261028-sprites-v4";
-import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=20261028-sprites-v4";
+import { WORLD, PLAYER, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, advanceRun, stageAt, stageTransitionAt, scoreFor } from "./runner-core.mjs?v=20261028-aimed-shots-v1";
+import { RAID_FACTS } from "./runner-core.mjs?v=20261028-aimed-shots-v1";
+import { drawActor, drawItem, drawThreat, drawShot, loadSprites, drawSpritePortrait } from "./runner-art.mjs?v=20261028-aimed-shots-v1";
+import { createGameAudio } from "./runner-audio.mjs?v=20261028-aimed-shots-v1";
+import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=20261028-aimed-shots-v1";
 
 function initRunner() {
   const $ = id => document.getElementById(id);
@@ -129,9 +129,17 @@ function initRunner() {
   function frame(now) {
     frameId=0;if(run.status!=="running")return;
     const timing=advanceFrameClock(frameClock,now),wasAirborne=run.player.y>0;
+    const before={lives:run.lives,collected:run.collected,boss:run.boss?.type,
+      attacks:run.boss?.fired||0};
     for(let i=0;i<timing.steps&&run.status==="running";i++)advanceRun(run,timing.step);
     if(wasAirborne&&run.player.y===0)landingUntil=run.elapsed+.12;
-    updateUI();draw();schedule();
+    updateUI();
+    if(run.lives<before.lives)audio.effect("hit");
+    else if(before.boss&&!run.boss)audio.effect("victory");
+    else if(!before.boss&&run.boss)audio.effect("boss");
+    else if(run.boss&&run.boss.fired>before.attacks)audio.effect("attack");
+    else if(run.collected>before.collected)audio.effect("pickup");
+    draw();schedule();
   }
   function resumeFromGesture(){
     if(document.hidden)return;
@@ -164,7 +172,7 @@ function initRunner() {
   function jump(){
     resumeFromGesture();
     if(["ready","over"].includes(run.status))begin();
-    if(jumpRun(run))draw();
+    if(jumpRun(run)){audio.effect("jump");draw();}
   }
   $("game-start").addEventListener("click",begin);
   $("game-sound").addEventListener("click",()=>{
@@ -359,10 +367,16 @@ function initRunner() {
       ctx.save();ctx.strokeStyle="#bda15b";ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.beginPath();ctx.ellipse(PLAYER.x+17,WORLD.ground-run.player.y-35,27,47,0,0,Math.PI*2);ctx.stroke();ctx.restore();
       drawItem(ctx,{type:"shield",x:PLAYER.x+17,y:WORLD.ground-run.player.y-91,scale:.38});
     }
+    // Os quadros originais já estão orientados para +X (frente da corrida).
     drawActor(ctx,{type:"flavio",x:PLAYER.x+17,y:WORLD.ground-run.player.y-bounce,scale:.95,phase,airborne,landing:run.elapsed<landingUntil,hurt:run.status==="over",alpha:run.shieldFor>0?.27:run.graceFor>0?.55:1});
   }
   function obstacle(item){
-    drawThreat(ctx,item,WORLD.ground,prefersReducedMotion()?0:run.elapsed*8);
+    if(item.projectile){
+      // O rastro confirma visualmente que o ataque parte do chefão rumo ao jogador.
+      const y=WORLD.ground-item.y;
+      line([[item.x+item.width*.78,y-2],[item.x+item.width+22,y-7]],"#bd526e",3);
+      drawThreat(ctx,item,y+item.height/2,prefersReducedMotion()?0:run.elapsed*8);
+    }else drawThreat(ctx,item,WORLD.ground,prefersReducedMotion()?0:run.elapsed*8);
   }
   function pickup(item){
     drawItem(ctx,{type:item.type,x:item.x,y:WORLD.ground-item.y,scale:item.type==="shield"?.86:.8});
