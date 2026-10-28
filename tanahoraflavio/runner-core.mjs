@@ -66,6 +66,24 @@ export function stageAt(seconds) {
   return STAGES[Math.max(0, Math.min(STAGES.length - 1, Math.floor((seconds + 1e-7) / SCENE_SECONDS)))];
 }
 
+/**
+ * Faz a passagem entre destinos nos 4 s ao redor de cada marco de 20 s.
+ * É uma função pura: o crossfade não altera a física, colisões ou pontuação.
+ */
+export function stageTransitionAt(seconds) {
+  const elapsed = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
+  const current = stageAt(elapsed);
+  const nextIndex = Math.round(elapsed / SCENE_SECONDS);
+  const boundary = nextIndex * SCENE_SECONDS;
+  const halfWindow = 2;
+  if (nextIndex < 1 || nextIndex >= STAGES.length || Math.abs(elapsed - boundary) >= halfWindow) {
+    return {from:current,to:current,progress:1,active:false};
+  }
+  const linear = Math.max(0, Math.min(1, (elapsed - boundary + halfWindow) / (2 * halfWindow)));
+  const progress = linear * linear * (3 - 2 * linear); // smoothstep
+  return {from:STAGES[nextIndex-1],to:STAGES[nextIndex],progress,active:true};
+}
+
 export function createRun() {
   return {
     status: "ready", elapsed: 0, distance: 0, bonus: 0, collected: 0,
