@@ -1,6 +1,6 @@
-import { WORLD, PLAYER, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, advanceRun, stageAt, stageTransitionAt, scoreFor } from "./runner-core.mjs?v=20261028-fugindo-v1";
-import { RAID_FACTS } from "./runner-core.mjs?v=20261028-aimed-shots-v1";
-import { drawActor, drawItem, drawThreat, drawShot, loadSprites, drawSpritePortrait, enemyMotionFor } from "./runner-art.mjs?v=20261028-fugindo-v1";
+import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, difficultyAt, createRun, startRun, jumpRun, advanceRun, stageAt, stageTransitionAt, scoreFor } from "./runner-core.mjs?v=20261028-dodge-km-v1";
+import { RAID_FACTS } from "./runner-core.mjs?v=20261028-dodge-km-v1";
+import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor } from "./runner-art.mjs?v=20261028-dodge-km-v1";
 import { createGameAudio } from "./runner-audio.mjs?v=20261028-aimed-shots-v1";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=20261028-aimed-shots-v1";
 
@@ -14,7 +14,7 @@ function initRunner() {
     $("game-start").disabled = true;
     return;
   }
-  const recordKey = "tanahoraflavio.runner.best.v1";
+  const recordKey = "tanahoraflavio.runner.best.metres.v2";
   let best = 0;
   try {
     const stored = Number(localStorage.getItem(recordKey));
@@ -29,7 +29,7 @@ function initRunner() {
   let lastLives = 1, lastEvents = 0;
   const audio=createGameAudio();
   let lastRaidKey="";
-  const routeSeconds=()=>run.routeDistance/250;
+  const routeSeconds=()=>run.routeDistance/SCENE_DISTANCE*SCENE_SECONDS;
   const pad = number => String(number).padStart(2, "0");
   // A preferência pode mudar enquanto o jogo está aberto.
   const motionPreference = window.matchMedia?.("(prefers-reduced-motion: reduce)");
@@ -50,36 +50,37 @@ function initRunner() {
     $("game-passports").textContent=String(run.passports);
     $("game-passport-next").textContent=String(100-run.passports%100);
     $("game-passport-progress").style.width=run.passports%100+"%";
-    const lap=Math.floor(run.routeDistance/25000)+1,sceneElapsed=clock%SCENE_SECONDS;
+    const lap=Math.floor(run.routeDistance/(SCENE_DISTANCE*STAGES.length))+1;
+    const sceneElapsed=run.routeDistance%SCENE_DISTANCE;
     $("game-phase").textContent="Cenário "+(stage.index+1)+" de 5 · Volta "+lap;
     $("game-stage-name").textContent=stage.name;
-    $("game-difficulty").textContent="Risco "+difficulty.level+" · "+Math.floor(run.distance/10).toLocaleString("pt-BR")+" m";
-    $("game-stage-time").textContent=run.boss?"Enfrente o chefão":Math.ceil((SCENE_SECONDS-sceneElapsed)*25)+" m para "+STAGES[(stage.index+1)%5].short;
-    $("game-best").textContent=String(best).padStart(4,"0");
+    $("game-difficulty").textContent="Risco "+difficulty.level+" · "+score.toLocaleString("pt-BR")+" m";
+    $("game-stage-time").textContent=run.boss?"Desvie do chefão":Math.ceil(SCENE_DISTANCE-sceneElapsed).toLocaleString("pt-BR")+" m até "+STAGES[(stage.index+1)%5].short;
+    $("game-best").textContent=best.toLocaleString("pt-BR");
     $("game-time").textContent=pad(Math.floor(run.elapsed/60))+":"+pad(Math.floor(run.elapsed%60));
     $("game-progress").hidden=false;
+    $("game-progress").setAttribute("aria-valuemax",String(SCENE_DISTANCE));
     $("game-progress").setAttribute("aria-valuenow",String(Math.floor(sceneElapsed)));
     $("game-progress").setAttribute("aria-valuetext",stage.name+" · volta "+lap);
-    $("game-progress").firstElementChild.style.width=sceneElapsed/SCENE_SECONDS*100+"%";
+    $("game-progress").firstElementChild.style.width=sceneElapsed/SCENE_DISTANCE*100+"%";
     section.dataset.runState=run.status;
     section.dataset.art=spritesReady?"loaded":spritesFailed?"error":"loading";
     const power=run.shieldFor>0?"shield":run.graceFor>0?"recovery":"none";
-    section.dataset.power=power;section.dataset.ammo=run.bibleCharges>0?"held":"none";
+    section.dataset.power=power;section.dataset.ammo="none";
     $("game-power").textContent=power==="shield"?"Escudo das Américas · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo";
-    $("game-ammo").textContent="Bíblia · "+run.bibleCharges+" tiros × 3";
-    $("game-ammo").parentElement.hidden=run.bibleCharges===0;
+    $("game-ammo").parentElement.hidden=true;
     $("game-boss").hidden=!run.boss;section.dataset.boss=run.boss?.type||"none";
     if(run.boss){
       const b=run.boss;
       $("game-boss-name").textContent=b.name+" · rodada "+b.level;
-      $("game-boss-health").setAttribute("aria-valuemax",String(b.maxHealth));
-      $("game-boss-health").setAttribute("aria-valuenow",String(b.health));
-      $("game-boss-progress").style.width=100*b.health/b.maxHealth+"%";
-      $("game-boss-weapon").textContent="Disparo automático: "+b.lastWeapon+(run.bibleCharges?" · "+run.bibleCharges+" cargas":"");
+      $("game-boss-health").setAttribute("aria-valuemax",String(b.total));
+      $("game-boss-health").setAttribute("aria-valuenow",String(b.total-b.remaining));
+      $("game-boss-progress").style.width=100*(b.total-b.remaining)/b.total+"%";
+      $("game-boss-weapon").textContent="Desvie de "+b.remaining+" ataque"+(b.remaining===1?"":"s")+" para escapar";
       $("game-boss").style.setProperty("--boss-accent",b.color);
     }
     $("game-threat").textContent=run.raid?.phase==="active"?"PF em operação":"Inimigos sorteados · "+stage.short;
-    $("game-objective").textContent=run.boss?"Desvie e colete a Bíblia para fortalecer os tiros":"Faltam "+(100-run.passports%100)+" passaportes para +1 vida";
+    $("game-objective").textContent=run.boss?"Só o chefão ataca. Pule para desviar e escapar!":"Faltam "+(100-run.passports%100)+" passaportes para +1 vida";
     const raid=run.status==="running"?run.raid:null;
     $("game-raid").hidden=!raid;section.dataset.raid=raid?.phase||"none";
     if(raid){
@@ -99,11 +100,11 @@ function initRunner() {
     $("game-overlay").hidden=run.status==="running";
     if(run.status==="over"){
       $("game-overlay-title").textContent="Foi pego pela Polícia Federal!";
-      $("game-overlay-copy").textContent=score+" pontos · "+run.passports+" passaportes. Tente novamente!";
+      $("game-overlay-copy").textContent=score.toLocaleString("pt-BR")+" metros percorridos · "+run.passports+" passaportes. Tente novamente!";
       $("game-overlay-badge").textContent="Perseguição fictícia";audio.stop();
     }
     if(lastStatus!==run.status||lastStage!==stage.index||lastCollected!==run.collected||lastPower!==power||lastLives!==run.lives||lastEvents!==run.events){
-      let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="over"?"Foi pego pela Polícia Federal! "+score+" pontos. Toque em Tentar de novo.":stage.name+" · continue pulando os perigos.";
+      let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="over"?"Foi pego pela Polícia Federal! "+score+" metros percorridos. Toque em Tentar de novo.":stage.name+" · continue pulando os perigos.";
       if(run.status==="running"){
         if(run.events>lastEvents)message=run.event;
         else if(lastCollected!==run.collected)message="Passaporte coletado. Faltam "+(100-run.passports%100)+" para uma vida.";
@@ -386,11 +387,6 @@ function initRunner() {
   function pickup(item){
     drawItem(ctx,{type:item.type,x:item.x,y:WORLD.ground-item.y,scale:item.type==="shield"?.86:.8});
   }
-  function projectile(shot){
-    const start=PLAYER.x+PLAYER.width+9,end=virtualWidth-76,x=start+(end-start)*shot.progress;
-    const arc=prefersReducedMotion()?0:Math.sin(Math.PI*shot.progress)*13;
-    drawShot(ctx,shot,x,WORLD.ground-47-shot.launchY*(1-shot.progress)-arc);
-  }
   function draw() {
     ctx.setTransform(canvas.width/virtualWidth,0,0,canvas.height/WORLD.height,0,0);
     const stage = stageAt(routeSeconds());
@@ -408,7 +404,6 @@ function initRunner() {
     bossFigure();
     for(const item of run.pickups)pickup(item);
     for(const item of run.obstacles)obstacle(item);
-    for(const shot of run.shots)projectile(shot);
     character();
   }
   updateUI();resize();draw();prepareSprites();
