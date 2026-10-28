@@ -570,3 +570,65 @@ test('armas caricaturais aparecem durante chefes sem impedir o salto', async () 
     assert.deepEqual(errors,[]);
   }finally{await context.close();}
 });
+
+test('fusão de paisagens e aviso de destino sem perder a jogabilidade', async () => {
+  const {context,page,errors}=await openWithRun();
+  try {
+    await page.emulateMedia({reducedMotion:'no-preference'});
+    await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+    await page.evaluate(()=>{
+      const run=globalThis.__testRun;
+      run.nextObstacle=run.nextPickup=run.nextPassport=run.nextPower=1e8;
+      run.bossCooldown=1e8;
+      run.invisibleFor=100;
+    });
+    const sample=async elapsed=>{
+      await page.evaluate(elapsed=>{globalThis.__testRun.elapsed=elapsed;},elapsed);
+      await page.waitForTimeout(95);
+      return page.evaluate(()=>{
+        const c=document.getElementById('runner-canvas');
+        const ctx=c.getContext('2d');
+        const x=Math.round(c.width*10/Math.min(900,Math.max(480,Math.round(c.getBoundingClientRect().width*1.15))));
+        const y=Math.round(c.height*105/300);
+        return [...ctx.getImageData(x,y,1,1).data].slice(0,3);
+      });
+    };
+    const argentina=await sample(57.5);
+    assert.equal(await page.locator('#game-transition').isVisible(),false);
+    const halfway=await sample(60);
+    assert.equal(await page.locator('#game-transition').isVisible(),true);
+    assert.match(await page.locator('#game-transition-name').textContent(),/Flórida/);
+    assert.equal(await page.locator('#game-transition-progress').getAttribute('style'),'width: 50%;');
+    const florida=await sample(62.5);
+    assert.equal(await page.locator('#game-transition').isVisible(),false);
+    // Uma fusão real da cor do céu entre dois destinos (não uma troca abrupta).
+    for(let i=0;i<3;i++){
+      const low=Math.min(argentina[i],florida[i]), high=Math.max(argentina[i],florida[i]);
+      assert.ok(halfway[i]>=low-2 && halfway[i]<=high+2,
+        `canal ${i}: ${argentina}, ${halfway}, ${florida}`);
+    }
+    assert.notDeepEqual(halfway,argentina);
+    assert.notDeepEqual(halfway,florida);
+    assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
+    assert.equal(await page.locator('#game-jump').isEnabled(),true);
+    assert.deepEqual(errors,[]);
+  } finally {await context.close();}
+});
+
+test('movimento reduzido mantém mudança de destino acessível', async () => {
+  const {context,page,errors}=await openWithRun({reducedMotion:'reduce'});
+  try{
+    await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+    await page.evaluate(()=>{
+      const run=globalThis.__testRun;
+      run.nextObstacle=run.nextPickup=run.nextPassport=run.nextPower=1e8;
+      run.bossCooldown=1e8;
+      run.invisibleFor=100;
+      run.elapsed=19;
+    });
+    await page.waitForFunction(()=>document.getElementById('game-transition').hidden===false);
+    assert.match(await page.locator('#game-transition-name').textContent(),/Rio/);
+    assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
+    assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+});
