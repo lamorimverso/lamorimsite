@@ -1,14 +1,13 @@
-import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=20261028-fugindo-v1";
+import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=ee68575ab8ad";
 // Personagens da prancha em atlas PNG; itens e perigos continuam leves em Canvas.
-const INK='#292337',SKIN='#edb57d',CREAM='#fff6e5';
+const INK='#292337',CREAM='#fff6e5';
 function oval(c,x,y,rx,ry,fill,stroke=INK,w=1.8){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=w;c.stroke();}}
 function box(c,x,y,w,h,fill,r=3,stroke=INK){c.beginPath();c.roundRect(x,y,w,h,r);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=1.8;c.stroke();}}
 function path(c,points,fill,stroke=INK){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.closePath();c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=1.8;c.stroke();}}
 function line(c,points,color=INK,width=2){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.strokeStyle=color;c.lineWidth=width;c.lineCap='round';c.lineJoin='round';c.stroke();}
 function text(c,value,x,y,size=7,color=CREAM){c.fillStyle=color;c.font='900 '+size+'px system-ui';c.textAlign='center';c.fillText(value,x,y);}
-const COATS={flavio:'#754595',pf:'#284c70',janones:'#3e6c9c',army:'#68764c',boulos:'#7c558b',dino:'#89634b',xandao:'#393044',haddad:'#286778',lula:'#a33349',joice:'#294d77'};
 
-export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait} from "./runner-sprites.mjs?v=20261028-fugindo-v1";
+export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait} from "./runner-sprites.mjs?v=ee68575ab8ad";
 export function drawItem(c,{type,x,y,scale=1}){
  c.save();c.translate(x,y);c.scale(scale,scale);
  if(type==='shield'){
@@ -78,8 +77,4 @@ export function drawThreat(c,item,ground,phase){
   drawActor(c,{type:item.type,x:0,y:0,scale:item.height/66,phase});
  }
  c.restore();
-}
-export function drawShot(c,shot,x,y){
- if(shot.type==='biblia'){drawItem(c,{type:'biblia',x,y,scale:.72});return;}
- c.save();c.translate(x,y);c.rotate(-.25);box(c,-14,-6,28,12,CREAM,6);c.beginPath();c.roundRect(-14,-6,14,12,[6,0,0,6]);c.fillStyle='#50b4a3';c.fill();text(c,'IV',6,2.5,6,'#275c60');c.restore();
 }

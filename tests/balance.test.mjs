@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRun, startRun, advanceRun, jumpRun, difficultyAt, PLAYER } from '../tanahoraflavio/runner-core.mjs';
+import { createRun, startRun, advanceRun, difficultyAt } from '../tanahoraflavio/runner-core.mjs';
 
 const running = () => { const run = createRun(); startRun(run); return run; };
 function seeded(seed) { return () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 2 ** 32; }; }
@@ -57,29 +57,14 @@ test('poderes não se acumulam em uma sequência que torna o jogador sempre inve
   for (let i = 1; i < powers.length; i++) assert.ok(powers[i] - powers[i-1] >= 12);
 });
 
-test('passaportes escassos continuam permitindo vida extra sem matar o ritmo',()=>{
- for(const seed of [7,103,8801]){
-  const run=running(),rng=seeded(seed);run.shieldFor=1200;
-  for(let i=0;i<120*480&&run.status==='running'&&run.passports<100;i++){
-   const old=new Set(run.pickups);
-   advanceRun(run,1/120,rng);
-   // Reproduz um jogador habilidoso alcançando os grupos que aparecem.
-   for(const item of run.pickups)if(!old.has(item)&&item.type==='passport'){
-    item.x=136;item.y=35;
-   }
-  }
-  assert.equal(run.status,'running',`corrida sobrevive na sequência ${seed}`);
-  assert.ok(run.passports>=100,`100 passaportes coletáveis sem enxurrada (${seed}): ${run.passports}`);
-  assert.ok(run.lives>=2,'regra de uma vida a cada 100 continua');
-  assert.ok(run.bossesDefeated>=1,'chefões não desaparecem do percurso');
- }
-});
+// A economia com coleta física real é verificada pelo piloto de ux-core.test.mjs.
 test('itens raros possuem intervalos amplos e continuam alcançáveis', () => {
   const first=difficultyAt(0),last=difficultyAt(900000);
   assert.ok(first.pickupGap>=7);
-  assert.ok(first.passportGap>=6,'passaportes são mais escassos do que na versão antiga');
+  assert.ok(first.passportGap>=5.2&&first.passportGap<6,'novo intervalo permite a primeira vida em tempo útil');
   assert.ok(first.powerGap>=24);
   assert.ok(last.pickupGap>first.pickupGap);
   assert.ok(last.passportGap>first.passportGap);
+  assert.ok(last.passportGap<=6.4,'o intervalo entre passaportes tem limite');
   assert.ok(last.powerGap>first.powerGap);
 });

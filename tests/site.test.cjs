@@ -13,7 +13,7 @@ before(async () => {
       let file = path.resolve(root, '.' + decodeURIComponent(new URL(req.url, 'http://localhost').pathname));
       if (!file.startsWith(root + path.sep)) throw Error('outside root');
       if ((await fs.stat(file)).isDirectory()) file = path.join(file, 'index.html');
-      const type = {'.html':'text/html', '.css':'text/css', '.mjs':'text/javascript', '.webp':'image/webp', '.png':'image/png'}[path.extname(file)] || 'application/octet-stream';
+      const type = {'.html':'text/html', '.css':'text/css', '.mjs':'text/javascript', '.js':'text/javascript', '.webp':'image/webp', '.png':'image/png'}[path.extname(file)] || 'application/octet-stream';
       res.writeHead(200, {'Content-Type':type}); res.end(await fs.readFile(file));
     } catch { res.writeHead(404); res.end(); }
   });
@@ -252,7 +252,7 @@ test('100 passaportes concedem +1 vida e a corrida permanece infinita', async ()
     await page.waitForFunction(() => document.getElementById('game-stage-name').textContent === 'Casa Branca');
     assert.match(await page.locator('#game-difficulty').textContent(),/Risco/);
     assert.match(await page.locator('#game-phase').textContent(),/Cenário 5 de 5/);
-    assert.equal(await page.locator('#game-progress').isVisible(),false);
+    assert.equal(await page.locator('#game-progress').isVisible(),true);
     assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
     assert.deepEqual(errors,[]);
   } finally { await context.close(); }
@@ -309,8 +309,8 @@ test('desktop replica a coluna única do celular sem excesso de texto exposto', 
       assert.equal(geometry.overflow,false,`overflow na largura ${width}`);
       assert.equal(await page.locator('.site-header .wordmark').isVisible(),true,`marca do site visível em ${width}px`);
       assert.ok(geometry.hero.width <= 540,`hero não deve virar grade desktop em ${width}: ${geometry.hero.width}`);
-      assert.ok(Math.abs(geometry.hero.width-geometry.game.width)<3,`larguras das seções incoerentes: ${width}`);
-      assert.ok(Math.abs(geometry.hero.x-geometry.game.x)<3,`colunas desalinhadas: ${width}`);
+      assert.ok(geometry.game.width<=900 && geometry.game.width>=geometry.hero.width,`largura útil da pista: ${width}`);
+      assert.ok(Math.abs((geometry.hero.x+geometry.hero.width/2)-(geometry.game.x+geometry.game.width/2))<3,`colunas desalinhadas: ${width}`);
       assert.ok(geometry.photoY < geometry.counterY,`retrato deve anteceder contagem: ${width}`);
       assert.ok(geometry.viewportWidth >= 240 && geometry.viewportHeight >= 150,`pista legível em ${width}: ${JSON.stringify({w:geometry.viewportWidth,h:geometry.viewportHeight})}`);
       assert.equal(await page.locator('.game-itinerary').evaluate(e=>e.open),false);
@@ -320,7 +320,7 @@ test('desktop replica a coluna única do celular sem excesso de texto exposto', 
     assert.equal(await page.locator('#game').getAttribute('data-ammo'),'none');
     assert.equal(await page.locator('.game-hud .power-chip').isVisible(),false);
     assert.equal(await page.locator('.game-hud .ammo-chip').isVisible(),false);
-    assert.equal(await page.locator('#game-stage-name').isVisible(),false);
+    assert.equal(await page.locator('#game-stage-name').isVisible(),true);
     assert.equal(await page.locator('#game-lives').isVisible(),true);
     assert.equal(await page.locator('#game-passports').isVisible(),true);
     assert.equal(await page.locator('.site-header nav a').count(),0);
@@ -345,7 +345,7 @@ test('referência minimalista mantém mesma hierarquia no desktop e celular sem 
           hero:rect('.hero'),game:rect('.game-card'),counter:rect('.counter'),
           portrait:rect('.progress-ring'),button:rect('.hero-play'),
           overflow:document.documentElement.scrollWidth>innerWidth,
-          stylesheet:[...document.styleSheets].some(x=>x.href?.includes('minimal.css'))
+          stylesheet:[...document.styleSheets].some(x=>x.href?.includes('game.css'))
         };
       });
       assert.equal(v.body,'rgb(255, 255, 255)', 'fundo branco');
@@ -356,7 +356,7 @@ test('referência minimalista mantém mesma hierarquia no desktop e celular sem 
       assert.equal(v.overflow,false,`overflow em ${width}px`);
       assert.ok(v.portrait.x + v.portrait.width <= width, `retrato precisa caber em ${width}px`);
       assert.ok(v.hero.width<=540,`coluna única não deve esticar em ${width}px`);
-      assert.ok(Math.abs(v.hero.x-v.game.x)<3,`seções alinhadas em ${width}px`);
+      assert.ok(Math.abs((v.hero.x+v.hero.width/2)-(v.game.x+v.game.width/2))<3,`seções alinhadas em ${width}px`);
       assert.ok(v.portrait.y<v.counter.y,`retrato deve vir primeiro em ${width}px`);
       assert.ok(v.button.height>=44,`CTA tocável em ${width}px`);
     }
@@ -376,10 +376,10 @@ test('jogo minimalista mostra só a pista, placar essencial e controles em todas
       await page.locator('#runner-canvas').waitFor({state:'visible'});
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`sem rolagem horizontal em ${width}`);
       for(const hidden of [
-        '.game-stage-header','.game-hud','.game-itinerary',
-        '.game-guide','.game-duration','.route-meter','.game-instructions'
+        '.game-hud','.game-itinerary',
+        '.game-guide','.game-duration','.game-instructions'
       ]) assert.equal(await page.locator(hidden).isVisible(),false,`${hidden} oculto em ${width}`);
-      for(const visible of ['#game-score','#game-lives','#game-passports','#runner-canvas','#game-start']){
+      for(const visible of ['#game-stage-name','#game-progress','#game-score','#game-lives','#game-passports','#runner-canvas','#game-start']){
         assert.equal(await page.locator(visible).isVisible(),true,`${visible} visível em ${width}`);
       }
       const game=await page.locator('#game').boundingBox(), canvas=await page.locator('#runner-canvas').boundingBox();
@@ -708,12 +708,12 @@ test('tocar em Pular retoma corrida que perdeu foco sem exigir recarregar',async
 test('falha nos desenhos impede partida invisível e oferece nova tentativa',async()=>{
  const {context,page,errors}=await open();
  try{
-  await context.route('**/assets/*.png*',route=>route.abort());
+  await context.route('**/assets/*.webp*',route=>route.abort());
   await page.reload();
   await page.getByRole('button',{name:'Tentar carregar desenhos',exact:true}).waitFor({state:'visible',timeout:10000});
   assert.equal(await page.locator('#game').getAttribute('data-run-state'),'ready');
   assert.match(await page.locator('#game-loading-note').textContent(),/não carregaram/);
-  await context.unroute('**/assets/*.png*');
+  await context.unroute('**/assets/*.webp*');
   await page.getByRole('button',{name:'Tentar carregar desenhos',exact:true}).click();
   await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor({state:'visible',timeout:10000});
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();

@@ -23,3 +23,12 @@ test('desligar som cancela narração em curso e impede novas falas',()=>{
  const fixture=browserSpeech([{name:'Local',lang:'pt-BR',localService:true}]);
  withBrowser(fixture,()=>{const audio=createGameAudio();audio.event('active',{text:'Notícia.'});assert.equal(fixture.speaking,true);audio.toggle();assert.equal(fixture.speaking,false);audio.event('active',{text:'Outra notícia.'});assert.equal(fixture.emitted.length,1);});
 });
+test('escolha de som desligado permanece ao criar uma nova sessão',()=>{
+ const fixture=browserSpeech([]),saved=new Map();
+ fixture.window.localStorage={getItem:k=>saved.get(k)??null,setItem:(k,v)=>saved.set(k,v)};
+ withBrowser(fixture,()=>{const first=createGameAudio();assert.equal(first.enabled,true);first.toggle();assert.equal(createGameAudio().enabled,false);});
+});
+test('preferência de som bloqueada não impede ativar ou desativar efeitos',()=>{
+ const fixture=browserSpeech([]);Object.defineProperty(fixture.window,'localStorage',{get(){throw new Error('blocked');}});
+ withBrowser(fixture,()=>{const audio=createGameAudio();assert.equal(audio.enabled,true);assert.equal(audio.toggle(),false);assert.equal(audio.toggle(),true);});
+});
