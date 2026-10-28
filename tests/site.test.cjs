@@ -13,7 +13,7 @@ before(async () => {
       let file = path.resolve(root, '.' + decodeURIComponent(new URL(req.url, 'http://localhost').pathname));
       if (!file.startsWith(root + path.sep)) throw Error('outside root');
       if ((await fs.stat(file)).isDirectory()) file = path.join(file, 'index.html');
-      const type = {'.html':'text/html', '.css':'text/css', '.mjs':'text/javascript', '.webp':'image/webp'}[path.extname(file)] || 'application/octet-stream';
+      const type = {'.html':'text/html', '.css':'text/css', '.mjs':'text/javascript', '.webp':'image/webp', '.png':'image/png'}[path.extname(file)] || 'application/octet-stream';
       res.writeHead(200, {'Content-Type':type}); res.end(await fs.readFile(file));
     } catch { res.writeHead(404); res.end(); }
   });
@@ -386,7 +386,7 @@ test("HUD do chefe surge pela distância e some ao vencer sem poluir a pista", a
     });
     await page.waitForFunction(()=>document.getElementById('game-boss').hidden===false);
     assert.match(await page.locator('#game-boss-name').textContent(),/(Xandão|Haddad|Lula).*rodada 1/);
-    const expectedHP=(await page.locator('#game').getAttribute('data-boss'))==='lula'?'10':'8';
+    const expectedHP=({xandao:'14',haddad:'16',lula:'20'})[await page.locator('#game').getAttribute('data-boss')];
     assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuenow'),expectedHP);
     assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuemax'),expectedHP);
     assert.equal(await page.locator('.game-help').evaluate(e=>e.open),false);
@@ -678,6 +678,31 @@ test('tocar em Pular retoma corrida que perdeu foco sem exigir recarregar',async
   const before=Number(await page.locator('#game-score').textContent());
   await page.locator('#game-jump').click();
   await page.waitForFunction(before=>Number(document.getElementById('game-score').textContent)>before,before,{timeout:2500});
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+test('falha nos desenhos impede partida invisível e oferece nova tentativa',async()=>{
+ const {context,page,errors}=await open();
+ try{
+  await context.route('**/assets/*.png*',route=>route.abort());
+  await page.reload();
+  await page.getByRole('button',{name:'Tentar carregar desenhos',exact:true}).waitFor({state:'visible',timeout:10000});
+  assert.equal(await page.locator('#game').getAttribute('data-run-state'),'ready');
+  assert.match(await page.locator('#game-loading-note').textContent(),/não carregaram/);
+  await context.unroute('**/assets/*.png*');
+  await page.getByRole('button',{name:'Tentar carregar desenhos',exact:true}).click();
+  await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor({state:'visible',timeout:10000});
+  await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+  assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+test('um toque não duplica o salto entre pointerdown e click de compatibilidade',async()=>{
+ const {context,page,errors}=await openWithRun({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+ try{
+  await page.getByRole('button',{name:'Começar corrida',exact:true}).tap();
+  await page.locator('#game-jump').tap();
+  await page.waitForFunction(()=>globalThis.__testRun.player.y>0);
+  assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });

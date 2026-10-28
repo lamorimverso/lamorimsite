@@ -20,8 +20,8 @@ Site estático em `tanahoraflavio/`, atualmente no repositório público `lamori
 
 - Corrida infinita para teclado e toque, sem pausa manual. Espaço, ↑, pista ou botão Pular acionam o salto. A simulação e seus temporizadores são suspensos quando a página perde foco ou a pista sai da tela, retomando automaticamente.
 - Cinco cenários em voltas: Brasília → Rio → Argentina → Flórida → Casa Branca → Brasília. Cada destino corresponde a 5.000 unidades da rota. Os encontros seguram a progressão do cenário, enquanto personagem, distância total e pontos continuam avançando. Transições usam fusão e parallax; com movimento reduzido, a troca é direta.
-- Três chefões sorteados sem repetição por rodada: **Xandão, Haddad e Lula**, nos trechos 1, 3 e 5, com entrada variável por distância. Pontos coletados não antecipam encontros. Xandão lança carimbos/ondas; Haddad lança documentos; Lula lança ondas do megafone. Os ataques são anunciados, saltáveis e limitados por intervalos seguros.
-- Inimigos comuns e obstáculos são sorteados conforme o destino. Chefões não são reaproveitados como ondas comuns. Os desenhos são caricaturas originais em Canvas, com rostos, acessórios e poses próprias.
+- Três chefões sorteados sem repetição por rodada: **Xandão, Haddad e Lula**, nos trechos 1, 3 e 5, com entrada variável por distância. Pontos coletados não antecipam encontros. Xandão lança carimbos/ondas; Haddad lança documentos; Lula lança ondas do megafone. Os ataques são anunciados, saltáveis e limitados por intervalos seguros. Saem da posição real do chefão em cada largura de tela; enquanto tiver energia, ele continua atacando. Energia inicial: Xandão 14, Haddad 16 e Lula 20, com aumento limitado por rodada.
+- Inimigos comuns e obstáculos são sorteados conforme o destino. Chefões não são reaproveitados como ondas comuns. Os personagens usam atlas PNG transparentes gerados a partir da prancha selecionada pelo usuário, com seis quadros de corrida, salto, aterrissagem, impacto e três poses por chefão. Lula usa a aparência solicitada de 2026. Os perseguidores da prancha são PF, Janones e exército.
 - **Passaporte:** +10 pontos e progresso para uma vida extra a cada 100 (100, 200...). Grupos de três ficam alinhados ao salto, sem exigir desvios incompatíveis.
 - **Escudo das Américas:** invisibilidade por **6 segundos**, permitindo atravessar inimigos e ataques. Contador e desenho do escudo indicam o efeito. Outro escudo não nasce enquanto houver um ativo ou já em trânsito. Não concede uma colisão guardada.
 - **Bíblia evangélica:** coletada em encontros com chefe, fortalece os próximos **três disparos**, com **dano 3** cada. Munição restante é indicada e pode ser usada no chefe seguinte. Sem cargas, o disparo automático simbólico de ivermectina tem **dano 1**. Tiros não removem os obstáculos; é necessário desviar.
@@ -30,13 +30,21 @@ Site estático em `tanahoraflavio/`, atualmente no repositório público `lamori
 - O meme tem três batidas sintetizadas e narração genérica do navegador; não usa gravação ou imitação da voz da pessoa retratada. O botão Som liga/desliga esse áudio. Legendas permanecem disponíveis e falhas de áudio não impedem jogar. Sair da aba ou reiniciar interrompe a narração.
 - As falas são roteiro ficcional com referência documental e data: [denúncia do MP-RJ em 2020](https://www.mprj.mp.br/web/guest/visualizar?noticiaId=96203) e [decisão do STF de 2021 anulando quatro RIFs](https://portal.stf.jus.br/noticias/verNoticiaDetalhe.asp?idConteudo=477496). Denúncia não equivale a condenação; a sátira da PF não descreve uma operação real.
 - Começa com **1 vida**. Uma colisão sem proteção encerra a partida. Após gastar uma vida extra já conquistada, 1,2 s de recuperação evitam dano duplicado da mesma barreira. Reiniciar limpa vidas extras, poderes, munição e eventos.
+- Quadros atrasados não congelam o jogo: relógio fixo de 120 Hz com recuperação limitada a 150 ms por quadro. Retomar a aba descarta o tempo oculto. Um novo gesto retoma foco válido, e pointerdown evita atraso/duplicação dos controles no celular.
+- Os desenhos são pré-carregados antes de liberar Começar corrida. Falha no carregamento oferece nova tentativa, sem iniciar uma partida sem personagens.
 - Recorde em localStorage, sem impedir o jogo quando esse armazenamento estiver bloqueado.
-- Arquitetura sem dependências de runtime: runner-core.mjs (regras), runner-art.mjs (caricaturas), runner-audio.mjs (áudio opcional), runner.mjs (Canvas/DOM) e minimal.css (página). Versões dos módulos e estilos impedem misturar caches antigos.
+- Arquitetura sem dependências de runtime: runner-core.mjs (regras), runner-art.mjs (itens e perigos), runner-sprites.mjs (atlas/animações), runner-clock.mjs (relógio), runner-audio.mjs (áudio opcional), runner.mjs (Canvas/DOM) e minimal.css (página). Versões dos módulos e estilos impedem misturar caches antigos.
 - Os endereços foro-flavio/ e fimdoforoflaviobosonaro/ redirecionam para esta página. A raiz e os demais sites são independentes.
 
 ### Verificação
 
-Execute **node --test tests/*.test.***. Os testes de navegador requerem Playwright e Chromium; para Chrome existente, use PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH. A suíte cobre física, coletas, sorteio, duração dos eventos, escudo, munição, movimento reduzido, teclado/toque, armazenamento bloqueado, contador, música e larguras de 320 a 1440 px.
+Execute node --test tests/*.test.*. Os testes de navegador requerem Playwright e Chromium; para Chrome existente, use PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH. A suíte cobre física, coletas, sorteio, duração dos eventos, escudo, munição, movimento reduzido, teclado/toque, armazenamento bloqueado, contador, música e larguras de 320 a 1440 px.
+
+### Referências de implementação
+
+- [Dino do Chromium: estados e quadros da animação](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/components/neterror/resources/dino_game/trex.ts).
+- [Tutorial oficial Phaser: sprites, carregamento e colisões](https://docs.phaser.io/phaser/getting-started/making-your-first-phaser-game).
+- [Jetpack Joyride 2, Halfbrick: referências de ação e chefes](https://www.halfbrick.com/games/jetpack-joyride-2).
 
 ## Próxima etapa: domínio próprio
 1. Confirmar **a grafia** antes de pagar: a marca atual é `tanahoraflavio`, enquanto `tanahroaflavio` apareceu na solicitação original.

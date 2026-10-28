@@ -42,12 +42,13 @@ export const RAID_FACTS = Object.freeze([
  {title:'Arquivo · 2020',text:'Fabrício Queiroz e outros 15 investigados também foram denunciados pelo MP-RJ.',source:'MP-RJ · 04/11/2020',url:'https://www.mprj.mp.br/web/guest/visualizar?noticiaId=96203'}
 ].map(Object.freeze));
 const POOLS = [
- ['pf','barrier','janones'],['janones','boulos','barrier','pf'],
- ['pf','dino','case'],['army','pf','case','boulos'],['pf','janones','army','boulos','dino','case']
+ ['pf','barrier','janones'],['janones','barrier','pf'],
+ ['pf','barrier','case'],['army','pf','case'],['pf','janones','army','case','barrier']
 ];
 const random = rng => Math.max(0,Math.min(.999999999,Number(rng())||0));
 const foeFor = type => PURSUERS.find(p=>p.type===type);
 const routeClock = run => run.routeDistance / 250;
+const visibleWidth = run => Math.max(480,Math.min(900,Number(run.viewportWidth)||WORLD.width));
 const announce = (run,text) => {run.event=text;run.events++;};
 
 export function difficultyAt(distance) {
@@ -70,7 +71,7 @@ export function pursuitAt(seconds,rng=()=>.5) {
  const pool=POOLS[stageAt(seconds).index];return foeFor(pool[Math.floor(random(rng)*pool.length)]);
 }
 export function createRun() {
- return {status:'ready',elapsed:0,distance:0,routeDistance:0,bonus:0,collected:0,passports:0,lives:1,
+ return {status:'ready',elapsed:0,distance:0,routeDistance:0,viewportWidth:WORLD.width,bonus:0,collected:0,passports:0,lives:1,
   event:'',events:0,player:{y:0,velocity:0},obstacles:[],pickups:[],shots:[],
   nextObstacle:1.5,nextPickup:0,nextPassport:3.5,nextPower:7,shieldFor:0,graceFor:0,bibleCharges:0,
   lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,
@@ -89,7 +90,7 @@ export function bossAtRound(round,type) {
  const safe=Math.max(0,Math.floor(Number.isFinite(round)?round:0)),level=Math.floor(safe/3)+1;
  const foe=foeFor(type||BOSS_ROSTER[safe%3]),supreme=foe.type==='lula';
  return {foe,level,supreme,round:safe+1,attacks:Math.min(7,3+Math.min(level-1,3)+(supreme?1:0)),
-  interval:Math.max(1.25,1.65-Math.min(level-1,4)*.07),health:8+Math.min(level-1,4)*2+(supreme?2:0)};
+  interval:Math.max(1.25,1.65-Math.min(level-1,4)*.07),health:({xandao:14,haddad:16,lula:20})[foe.type]+Math.min(level-1,4)*2};
 }
 function nextBossDistance(count,rng){return Math.floor(count/3)*25000+[3500,13500,23500][count%3]+random(rng)*700;}
 function takeBoss(run,rng){
@@ -104,12 +105,13 @@ function beginBoss(run,rng){
  const conf=bossAtRound(run.bossesDefeated,takeBoss(run,rng));
  run.boss={type:conf.foe.type,name:conf.foe.name,color:conf.foe.color,level:conf.level,supreme:conf.supreme,
   round:conf.round,total:conf.attacks,remaining:conf.attacks,fired:0,interval:conf.interval,nextAttack:1.3,
-  health:conf.health,maxHealth:conf.health,nextShot:.45,shotsFired:0,lastWeapon:'Ivermectina',hitFlashFor:0};
+  health:conf.health,maxHealth:conf.health,nextShot:.45,shotsFired:0,lastWeapon:'Ivermectina',hitFlashFor:0,attackFlashFor:0};
  run.obstacles=[];run.shots=[];run.nextObstacle=Math.max(1.8,run.nextObstacle);
  announce(run,conf.foe.name+' apareceu! Desvie dos ataques e continue correndo.');
 }
 function advanceBoss(run,dt,rng){
  const boss=run.boss;if(!boss)return;
+ boss.attackFlashFor=Math.max(0,boss.attackFlashFor-dt);
  boss.nextShot-=dt;
  if(boss.nextShot<=0&&boss.health>0){
   const weapon=BOSS_WEAPONS[run.bibleCharges>0?1:0];if(run.bibleCharges>0)run.bibleCharges--;
@@ -117,11 +119,12 @@ function advanceBoss(run,dt,rng){
   boss.lastWeapon=weapon.name;boss.shotsFired++;boss.nextShot+=.9;
  }
  boss.nextAttack-=dt;
- if(boss.fired<boss.total&&boss.nextAttack<=0){
+ if((boss.health>0||boss.fired<boss.total)&&boss.nextAttack<=0){
+  if(boss.fired>=boss.total){boss.total++;boss.remaining++;}
   const attackType={xandao:'stamp',haddad:'receipts',lula:'sound'}[boss.type];
   const [width,height]={stamp:[42,32],receipts:[44,40],sound:[48,38]}[attackType];
-  const attack={x:WORLD.width+50,width,height,type:attackType,owner:boss.type,bossAttack:true,counted:false};
-  run.obstacles.push(attack);boss.fired++;boss.nextAttack+=boss.interval+random(rng)*.25;return attack;
+  const attack={x:visibleWidth(run)-104,width,height,type:attackType,owner:boss.type,bossAttack:true,counted:false};
+  run.obstacles.push(attack);boss.attackFlashFor=.26;boss.fired++;boss.nextAttack+=boss.interval+random(rng)*.25;return attack;
  }
 }
 function advanceShots(run,dt){
@@ -191,7 +194,7 @@ export function advanceRun(run,seconds,rng=Math.random){
   run.nextObstacle-=dt;
   if(run.nextObstacle<=0){
    const opponent=run.raid?.phase==='active'?foeFor('pf'):pursuitAt(routeClock(run),rng);
-   anchor={x:WORLD.width+40,width:opponent.width,height:opponent.height,type:opponent.type};run.obstacles.push(anchor);run.spawnedObstacles++;
+   anchor={x:visibleWidth(run)+40,width:opponent.width,height:opponent.height,type:opponent.type};run.obstacles.push(anchor);run.spawnedObstacles++;
    const factor=run.raid?.phase==='active'?.84:run.raid?.phase==='recovery'?1-.16*run.raid.remaining/2:1;
    run.nextObstacle+=Math.max(1.15,balance.obstacleGap*factor)+random(rng)*.4;
   }

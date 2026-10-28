@@ -430,3 +430,7 @@ summary:focus-visible, #runner-canvas:focus-visible { outline: 3px solid #a994c8
  .game-hud strong {font-size:9px}
  .game-heading h2 {font-size:23px}
 }
+.game-loading-note {margin:8px 0;color:var(--muted);font-size:12px;line-height:1.5}
+.game-loading-note[hidden] {display:none!important}
+.game-sound[disabled],#game-start[disabled] {opacity:.65;cursor:progress}
+#runner-canvas,#game-jump {touch-action:manipulation;-webkit-user-select:none;user-select:none}

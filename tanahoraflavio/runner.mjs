@@ -1,7 +1,8 @@
-import { WORLD, PLAYER, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, advanceRun, stageAt, stageTransitionAt, scoreFor } from "./runner-core.mjs?v=20261028-functional-v2";
-import { RAID_FACTS } from "./runner-core.mjs?v=20261028-functional-v2";
-import { drawActor, drawItem, drawThreat, drawShot } from "./runner-art.mjs?v=20261028-functional-v2";
-import { createGameAudio } from "./runner-audio.mjs?v=20261028-functional-v2";
+import { WORLD, PLAYER, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, advanceRun, stageAt, stageTransitionAt, scoreFor } from "./runner-core.mjs?v=20261028-sprites-v3";
+import { RAID_FACTS } from "./runner-core.mjs?v=20261028-sprites-v3";
+import { drawActor, drawItem, drawThreat, drawShot, loadSprites, drawSpritePortrait } from "./runner-art.mjs?v=20261028-sprites-v3";
+import { createGameAudio } from "./runner-audio.mjs?v=20261028-sprites-v3";
+import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=20261028-sprites-v3";
 
 function initRunner() {
   const $ = id => document.getElementById(id);
@@ -19,7 +20,9 @@ function initRunner() {
     const stored = Number(localStorage.getItem(recordKey));
     if (Number.isSafeInteger(stored) && stored >= 0 && stored <= 10000000) best = stored;
   } catch { /* O modo privado e o armazenamento bloqueado não impedem jogar. */ }
-  let run = createRun(), frameId = 0, lastFrame = 0, accumulator = 0;
+  let run=createRun(),frameId=0;
+  const frameClock=createFrameClock(performance.now());
+  let spritesReady=false,spritesFailed=false,loadedSprites=0,loadingSprites=false,landingUntil=0;
   let windowFocused = true, inView = true;
   let lastStatus = "", lastStage = -1, virtualWidth = 900, measuredWidth = 0, measuredDpr = 0;
   let lastCollected=0,lastPower="";
@@ -59,6 +62,7 @@ function initRunner() {
     $("game-progress").setAttribute("aria-valuetext",stage.name+" · volta "+lap);
     $("game-progress").firstElementChild.style.width=sceneElapsed/SCENE_SECONDS*100+"%";
     section.dataset.runState=run.status;
+    section.dataset.art=spritesReady?"loaded":spritesFailed?"error":"loading";
     const power=run.shieldFor>0?"shield":run.graceFor>0?"recovery":"none";
     section.dataset.power=power;section.dataset.ammo=run.bibleCharges>0?"held":"none";
     $("game-power").textContent=power==="shield"?"Escudo das Américas · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo";
@@ -88,7 +92,10 @@ function initRunner() {
       if(raidKey!==lastRaidKey){audio.event(raid.phase,fact);lastRaidKey=raidKey;}
     }else if(lastRaidKey){audio.stop();lastRaidKey="";}
     $("game-jump").disabled=run.status!=="running";
-    $("game-start").textContent=run.status==="ready"?"Começar corrida":run.status==="over"?"Tentar de novo":"Recomeçar corrida";
+    $("game-start").disabled=!spritesReady&&!spritesFailed;
+    $("game-start").textContent=!spritesReady?(spritesFailed?"Tentar carregar desenhos":"Carregando desenhos · "+loadedSprites+"/2"):run.status==="ready"?"Começar corrida":run.status==="over"?"Tentar de novo":"Recomeçar corrida";
+    $("game-loading-note").hidden=spritesReady;
+    $("game-loading-note").textContent=spritesFailed?"Os desenhos não carregaram. Toque no botão para tentar novamente.":"Preparando os personagens…";
     $("game-overlay").hidden=run.status==="running";
     if(run.status==="over"){
       $("game-overlay-title").textContent="Bateu, perdeu!";
@@ -115,47 +122,64 @@ function initRunner() {
   // Sem controle de pausa: congela apenas a simulação oculta e retoma sozinha.
   function syncActivity() {
     cancelAnimationFrame(frameId);frameId=0;
-    accumulator=0;lastFrame=performance.now();
+    resetFrameClock(frameClock,performance.now());
     if(document.hidden||!windowFocused||!inView||run.status!=="running")audio.stop();
     schedule();
   }
   function frame(now) {
-    frameId = 0;
-    if (run.status !== "running") return;
-    if (now - lastFrame > 250) { accumulator=0;lastFrame=now;schedule();return; }
-    accumulator += Math.min(.05, Math.max(0, (now - lastFrame) / 1000));
-    lastFrame = now;
-    while (accumulator >= 1 / 120 && run.status === "running") {
-      advanceRun(run, 1 / 120);
-      accumulator -= 1 / 120;
-    }
-    updateUI();
-    draw();
-    schedule();
+    frameId=0;if(run.status!=="running")return;
+    const timing=advanceFrameClock(frameClock,now),wasAirborne=run.player.y>0;
+    for(let i=0;i<timing.steps&&run.status==="running";i++)advanceRun(run,timing.step);
+    if(wasAirborne&&run.player.y===0)landingUntil=run.elapsed+.12;
+    updateUI();draw();schedule();
   }
-  function begin() {
-    cancelAnimationFrame(frameId); frameId = 0;
+  function resumeFromGesture(){
+    if(document.hidden)return;
+    windowFocused=true;
+    const rect=canvas.getBoundingClientRect();inView=rect.height>0&&rect.bottom>0&&rect.top<window.innerHeight;
+    if(!frameId){resetFrameClock(frameClock,performance.now());schedule();}
+  }
+  function prepareSprites(){
+    if(loadingSprites)return;
+    loadingSprites=true;spritesFailed=false;loadedSprites=0;updateUI();
+    loadSprites(count=>{loadedSprites=count;updateUI();}).then(()=>{
+      spritesReady=true;loadingSprites=false;
+      const portraitContext=$("game-joice-portrait").getContext("2d");
+      if(portraitContext)drawSpritePortrait(portraitContext,"joice",78,96);
+      updateUI();draw();
+    }).catch(()=>{
+      spritesFailed=true;loadingSprites=false;updateUI();
+      $("game-status").textContent="Os desenhos não carregaram. Toque em Tentar carregar desenhos.";
+    });
+  }
+  function begin(){
+    if(!spritesReady){if(spritesFailed)prepareSprites();return;}
+    cancelAnimationFrame(frameId);frameId=0;resumeFromGesture();
     audio.stop();audio.prime();lastRaidKey="";
-    run = createRun(); startRun(run);
-    lastCollected = 0; lastPower = ""; lastStatus = ""; lastEvents = 0; lastLives = 1;
-    accumulator = 0; lastFrame = performance.now();
-    updateUI(); draw(); syncActivity();
-    canvas.focus({ preventScroll: true });
+    run=createRun();run.viewportWidth=virtualWidth;startRun(run);landingUntil=0;
+    lastCollected=0;lastPower="";lastStatus="";lastEvents=0;lastLives=1;
+    resetFrameClock(frameClock,performance.now());
+    updateUI();draw();syncActivity();canvas.focus({preventScroll:true});
   }
-  function jump() {
-    if (["ready", "over"].includes(run.status)) begin();
-    if (jumpRun(run)) draw();
+  function jump(){
+    resumeFromGesture();
+    if(["ready","over"].includes(run.status))begin();
+    if(jumpRun(run))draw();
   }
-  $("game-start").addEventListener("click", begin);
+  $("game-start").addEventListener("click",begin);
   $("game-sound").addEventListener("click",()=>{
     const enabled=audio.toggle();$("game-sound").textContent=enabled?"Som ligado":"Som desligado";
     $("game-sound").setAttribute("aria-pressed",String(enabled));lastRaidKey="";updateUI();
   });
-  const portraitContext=$("game-joice-portrait").getContext("2d");
-  if(portraitContext)drawActor(portraitContext,{type:"joice",x:39,y:91,scale:1.05});
-
-  $("game-jump").addEventListener("click", () => { jump(); canvas.focus({ preventScroll: true }); });
-  canvas.addEventListener("click", () => { jump(); canvas.focus({ preventScroll: true }); });
+  function bindJump(target){
+    const activate=()=>{jump();canvas.focus({preventScroll:true});};
+    if("PointerEvent" in window)target.addEventListener("pointerdown",event=>{
+      if(event.isPrimary===false||event.button!==0)return;
+      event.preventDefault();activate();
+    },{passive:false});
+    target.addEventListener("click",event=>{if(!("PointerEvent" in window)||event.detail===0)activate();});
+  }
+  bindJump($("game-jump"));bindJump(canvas);
   section.addEventListener("keydown", event => {
     if (event.target.closest("button,a,input,select,textarea,summary") || event.ctrlKey || event.metaKey || event.altKey) return;
     if (["Space","ArrowUp"].includes(event.code)) {
@@ -179,6 +203,7 @@ function initRunner() {
     if (!width || (width === measuredWidth && dpr === measuredDpr)) return;
     measuredWidth = width; measuredDpr = dpr;
     virtualWidth = Math.min(900, Math.max(480, Math.round(width * 1.15)));
+    run.viewportWidth=virtualWidth;
     canvas.style.aspectRatio = `${virtualWidth} / ${WORLD.height}`;
     canvas.width = Math.round(width * dpr);
     canvas.height = Math.round(width * WORLD.height / virtualWidth * dpr);
@@ -318,26 +343,26 @@ function initRunner() {
   }
   function bossFigure(){
     const b=run.boss;if(!b)return;
-    const phase=prefersReducedMotion()?0:run.elapsed*15;
-    drawActor(ctx,{type:b.type,x:virtualWidth-72,y:WORLD.ground-3,scale:1.62,phase,attacking:b.nextAttack<.45,hurt:b.hitFlashFor>0});
-    if(b.nextAttack<.45&&b.fired<b.total){
+    const phase=prefersReducedMotion()?0:run.elapsed*6;
+    drawActor(ctx,{type:b.type,x:virtualWidth-72,y:WORLD.ground-3,scale:1.62,phase,attacking:b.attackFlashFor>0,hurt:b.hitFlashFor>0});
+    if(b.nextAttack<.65&&(b.health>0||b.fired<b.total)){
       ctx.fillStyle="#a33e4b";ctx.font="900 11px system-ui";ctx.textAlign="center";
       ctx.fillText("PREPARE O SALTO",virtualWidth-86,62);ctx.textAlign="start";
     }
   }
   function character(){
     const active=run.status==="running"&&!prefersReducedMotion(),airborne=run.player.y>0;
-    const phase=active?run.elapsed*23:0,bounce=active&&!airborne?Math.abs(Math.sin(phase))*2:0;
+    const phase=active?run.elapsed*12:0,bounce=active&&!airborne?Math.abs(Math.sin(phase))*2:0;
     if(active&&!airborne){circle(PLAYER.x-8-run.distance%19,WORLD.ground-2,2.8,"#a6a7aa70");circle(PLAYER.x-30,WORLD.ground-4,1.7,"#aaa2a660");}
     ctx.save();ctx.globalAlpha=.12;ctx.fillStyle="#292337";ctx.beginPath();ctx.ellipse(PLAYER.x+17,WORLD.ground+4,22,4,0,0,Math.PI*2);ctx.fill();ctx.restore();
     if(run.shieldFor>0){
       ctx.save();ctx.strokeStyle="#bda15b";ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.beginPath();ctx.ellipse(PLAYER.x+17,WORLD.ground-run.player.y-35,27,47,0,0,Math.PI*2);ctx.stroke();ctx.restore();
       drawItem(ctx,{type:"shield",x:PLAYER.x+17,y:WORLD.ground-run.player.y-91,scale:.38});
     }
-    drawActor(ctx,{type:"flavio",x:PLAYER.x+17,y:WORLD.ground-run.player.y-bounce,scale:.95,phase,airborne,alpha:run.shieldFor>0?.27:run.graceFor>0?.55:1});
+    drawActor(ctx,{type:"flavio",x:PLAYER.x+17,y:WORLD.ground-run.player.y-bounce,scale:.95,phase,airborne,landing:run.elapsed<landingUntil,hurt:run.status==="over",alpha:run.shieldFor>0?.27:run.graceFor>0?.55:1});
   }
   function obstacle(item){
-    drawThreat(ctx,item,WORLD.ground,prefersReducedMotion()?0:run.elapsed*21+item.x*.02);
+    drawThreat(ctx,item,WORLD.ground,prefersReducedMotion()?0:run.elapsed*8);
   }
   function pickup(item){
     drawItem(ctx,{type:item.type,x:item.x,y:WORLD.ground-item.y,scale:item.type==="shield"?.86:.8});
@@ -367,7 +392,7 @@ function initRunner() {
     for(const shot of run.shots)projectile(shot);
     character();
   }
-  updateUI(); resize(); draw();
+  updateUI();resize();draw();prepareSprites();
 }
 
 initRunner();

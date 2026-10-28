@@ -84,8 +84,8 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
   <link rel="stylesheet" href="enhancements.css?v=20261027-mobile-desktop5">
-  <link rel="stylesheet" href="minimal.css?v=20261028-functional-v2" >
-  <script type="module" src="runner.mjs?v=20261028-functional-v2"></script>
+  <link rel="stylesheet" href="minimal.css?v=20261028-sprites-v3" >
+  <script type="module" src="runner.mjs?v=20261028-sprites-v3"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -194,8 +194,9 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         <div class="route-meter" role="progressbar" aria-label="Tempo no cenário atual" aria-valuemin="0" aria-valuemax="20" aria-valuenow="0" id="game-progress"><span></span></div>
         <div class="game-controls">
           <button type="button" id="game-jump" aria-label="Pular" disabled><span aria-hidden="true">↑</span> Pular</button>
-          <button type="button" class="game-primary" id="game-start">Começar corrida</button>
+          <button type="button" class="game-primary" id="game-start" disabled>Carregando desenhos…</button>
         </div>
+        <p class="game-loading-note" id="game-loading-note" role="status">Preparando os personagens…</p>
         <p class="game-objective" id="game-objective">100 passaportes = +1 vida</p>
         <p class="game-instructions sr-only" id="game-instructions">Toque ou use Espaço ou seta para cima para pular. O disparo básico é automático durante chefes. Colete a Bíblia para três tiros mais fortes e o Escudo das Américas para seis segundos de invisibilidade. Continue pulando os perigos.</p>
         <p class="game-status sr-only" id="game-status" role="status" aria-live="polite">Tudo pronto. A corrida começa quando você quiser.</p>
