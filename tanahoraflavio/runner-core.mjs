@@ -230,7 +230,7 @@ export function advanceRun(run,seconds,rng=Math.random){
   right>o.x+3&&left<o.x+o.width-3&&(
    o.projectile?(bottom<o.y+o.height/2&&top>o.y-o.height/2):(bottom<o.height&&top>0)
   ))){
-  run.lives--;announce(run,run.lives>0?'Vida extra usada! Restam '+run.lives+'.':'Bateu, perdeu! A fuga fictícia terminou.');
+  run.lives--;announce(run,run.lives>0?'Vida extra usada! Restam '+run.lives+'.':'Foi pego pela Polícia Federal! A fuga fictícia terminou.');
   if(run.lives<=0){run.status='over';return;}run.graceFor=RECOVERY_AFTER_EXTRA;
  }
 }
