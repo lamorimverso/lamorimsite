@@ -37,8 +37,8 @@ async function open(options = {}, init) {
 }
 
 // Instrumentação exclusiva do teste: o produto não expõe APIs de depuração.
-async function openWithRun() {
-  const context = await browser.newContext();
+async function openWithRun(options = {}) {
+  const context = await browser.newContext(options);
   await context.route(/^https:\/\//, route => route.abort());
   const source = await fs.readFile(path.resolve(__dirname, '../tanahoraflavio/runner-core.mjs'), 'utf8');
   await context.route('**/runner-core.mjs*', route => route.fulfill({
@@ -515,4 +515,44 @@ test('escudo e invisibilidade aparecem somente quando ativos, sem deslocar a pis
     assert.equal(await page.locator('#game-chance').isVisible(),false);
     assert.deepEqual(errors,[]);
   } finally {await context.close();}
+});
+
+
+test('movimento reduzido retira animações decorativas sem paralisar a corrida', async () => {
+  const {context,page,errors} = await openWithRun({reducedMotion:'reduce'});
+  try {
+    assert.equal(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches), true);
+    await page.evaluate(() => {
+      const originalSin = Math.sin;
+      globalThis.__decorativeSinCalls = 0;
+      Math.sin = function (...args) {
+        globalThis.__decorativeSinCalls++;
+        return originalSin.apply(this,args);
+      };
+    });
+    await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+    await page.evaluate(() => {
+      const run = globalThis.__testRun;
+      run.nextObstacle=run.nextPickup=run.nextPassport=run.nextPower=10000;
+      run.obstacles=[{x:480,width:34,height:44,type:'pf'}];
+      run.graceFor=15;
+    });
+    await page.waitForTimeout(300);
+    assert.ok(Number(await page.locator('#game-score').textContent()) > 0);
+    assert.equal(await page.evaluate(() => globalThis.__decorativeSinCalls),0,
+      'sem movimento senoidal do personagem e adversários');
+    await page.evaluate(() => {
+      const run=globalThis.__testRun;
+      run.bonus=1500;
+      run.bossCooldown=0;
+    });
+    await page.waitForFunction(() => document.getElementById('game-boss').hidden === false);
+    await page.waitForTimeout(150);
+    assert.equal(await page.evaluate(() => globalThis.__decorativeSinCalls),0,
+      'o chefe também não oscila em movimento reduzido');
+    await page.emulateMedia({reducedMotion:'no-preference'});
+    await page.waitForFunction(() => globalThis.__decorativeSinCalls > 0);
+    assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
+    assert.deepEqual(errors,[]);
+  } finally { await context.close(); }
 });
