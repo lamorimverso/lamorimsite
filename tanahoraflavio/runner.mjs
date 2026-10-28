@@ -38,6 +38,7 @@ function initRunner() {
       const isApproaching = run.elapsed < transition.to.index * SCENE_SECONDS;
       $("game-transition-label").textContent = isApproaching ? "PRÓXIMA PARADA" : "CHEGANDO EM";
       $("game-transition-name").textContent = transition.to.name;
+      $("game-transition-progress").style.width = `${Math.round(transition.progress*100)}%`;
     }
     const difficulty = difficultyAt(run.distance);
     const power = run.invisibleFor > 0 ? "invisible" : run.graceFor > 0 ? "recovery" : "none";
@@ -307,7 +308,7 @@ function initRunner() {
       ctx.fillStyle="#637ba5";ctx.fillRect(x+1,92,12,8);
     }
     // Pequeno avião e linha pontilhada indicam a viagem sem distrair da pista.
-    ctx.save(); ctx.translate(virtualWidth-135,83);ctx.fillStyle=stage.ink;ctx.globalAlpha=.45;
+    ctx.save(); ctx.translate(virtualWidth-135,83);ctx.fillStyle=stage.ink;ctx.globalAlpha*=.45;
     ctx.beginPath();ctx.moveTo(0,-9);ctx.lineTo(4,-1);ctx.lineTo(15,4);ctx.lineTo(15,7);ctx.lineTo(3,4);ctx.lineTo(2,12);ctx.lineTo(6,15);ctx.lineTo(6,17);ctx.lineTo(0,15);ctx.lineTo(-6,17);ctx.lineTo(-6,15);ctx.lineTo(-2,12);ctx.lineTo(-3,4);ctx.lineTo(-15,7);ctx.lineTo(-15,4);ctx.lineTo(-4,-1);ctx.closePath();ctx.fill();ctx.restore();
     ctx.fillStyle=stage.ground;ctx.fillRect(0,WORLD.ground,virtualWidth,WORLD.height-WORLD.ground);
     line([[0,WORLD.ground],[virtualWidth,WORLD.ground]],stage.ink,2);
