@@ -444,7 +444,7 @@ summary:focus-visible, #runner-canvas:focus-visible { outline: 3px solid #a994c8
 .game-playlist-choices button[aria-pressed="true"] {background:#f3edfa;border-color:#9070b1}
 .game-playlist button:focus-visible {outline:3px solid #a994c8;outline-offset:2px}
 #game-playlist-player[hidden] {display:none!important}
-#game-playlist-frame {display:block;width:100%;aspect-ratio:16 / 9;height:auto;min-height:170px;border:0;border-radius:8px;background:#24202a}
+#game-playlist-frame {display:block;width:100%;aspect-ratio:16 / 9;height:auto;min-height:200px;border:0;border-radius:8px;background:#24202a}
 .game-playlist #game-playlist-stop {margin-top:8px;min-height:38px;text-align:center}
 .game-playlist .game-playlist-notice {font-size:10px}
 @media(max-width:420px){.game-playlist-choices {grid-template-columns:1fr}.game-playlist-choices button {min-height:42px}}
