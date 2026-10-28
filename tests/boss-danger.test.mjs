@@ -16,10 +16,13 @@ test('inimigos comuns também nascem na borda da área de jogo real',()=>{
  const r=running();r.viewportWidth=480;r.nextBossAt=Infinity;r.nextObstacle=0;advanceRun(r,1/120,()=>.5);
  assert.ok(r.obstacles[0].x>=480&&r.obstacles[0].x<=530);
 });
-test('chefão vivo continua atacando depois de sua primeira sequência',()=>{
- const r=bossRun();r.boss.health=r.boss.maxHealth=100;r.boss.nextShot=100;r.shieldFor=100;
- const initial=r.boss.total;for(let i=0;i<120*15;i++)advanceRun(r,1/120,()=>.5);
- assert.ok(r.boss.fired>initial,'o chefe não pode ficar inerte com vida');
+test('chefão dispara apenas sua sequência completa e termina quando o jogador desvia',()=>{
+ const r=bossRun();r.shieldFor=100;
+ const initial=r.boss.total;
+ for(let i=0;i<120*30&&r.status==='running';i++)advanceRun(r,1/120,()=>.5);
+ assert.equal(r.bossesDefeated,1);
+ assert.equal(r.boss,null);
+ assert.ok(initial>=4,'confrontos têm várias ameaças');
 });
 test('todos os chefões conseguem atingir e derrotar jogador que não desvia',()=>{
  for(const type of ['xandao','haddad','lula']){
