@@ -84,16 +84,20 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
   <link rel="stylesheet" href="enhancements.css?v=20261027-mobile-desktop5">
-  <link rel="stylesheet" href="minimal.css?v=20261028-election-playlist-v1" >
+  <link rel="stylesheet" href="minimal.css?v=20261028-three-topics-v1" >
   <script type="module" src="runner.mjs?v=20261028-fugindo-v1"></script>
-  <script type="module" src="runner-playlist.mjs?v=20261028-election-playlist-v1"></script>
+  <script type="module" src="runner-playlist.mjs?v=20261028-three-topics-v1"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
   <div class="wrap">
     <header class="site-header">
       <a class="wordmark" href="#contagem" aria-label="Tá na hora, Flávio — início"><span aria-hidden="true">◷</span> tá na hora<span class="wordmark-dot">.</span></a>
-      <nav aria-label="Navegação principal"><a class="nav-game" href="#game">Jogo <span aria-hidden="true">↗</span></a></nav>
+      <nav class="section-navigation" aria-label="Três tópicos do site">
+        <a class="nav-time" href="#contagem">Tá na hora</a>
+        <a class="nav-game" href="#game">Corre, Flávio!</a>
+        <a class="nav-music" href="#musicas">Músicas</a>
+      </nav>
     </header>
 <main id="conteudo" tabindex="-1">
 
@@ -120,25 +124,10 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         </div>
 
         <div class="hero-tools">
-          <a href="#game" class="hero-play">Jogar agora <span aria-hidden="true">→</span></a>
-          <div class="hero-utilities">
-        <section class="music" id="musica" aria-label="Música">
-          <div class="music-copy">
-            <h2>♫ Música</h2>
-            <button type="button" class="audio-button" id="music-toggle">▶ Tocar música</button>
-          </div>
-          <p class="audio-status" id="audio-status" role="status" aria-live="polite">Preparando a música…</p>
-          <audio id="music-native" preload="auto" loop aria-label="Música da contagem"></audio>
-          <div class="music-panel" id="music-panel" hidden>
-            <div class="music-frame">
-              <iframe id="music-iframe" width="310" height="215"
-                title="Tá na Hora do Jair Já Ir Embora — YouTube"
-                referrerpolicy="strict-origin-when-cross-origin"
-                allow="autoplay; encrypted-media; picture-in-picture"
-                allowfullscreen></iframe>
-            </div>
-          </div>
-        </section>
+          <button class="hero-play" type="button" id="share">Compartilhar <span aria-hidden="true">↗</span></button>
+          <div class="share-message" id="share-message" role="status" aria-live="polite"></div>
+        </div>
+      </section>
         <button class="share" type="button" id="share">Compartilhar</button>
         <div class="share-message" id="share-message" role="status" aria-live="polite"></div>
 
@@ -209,53 +198,73 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
           <li data-stage="3"><span class="route-number">04</span><span>Flórida <small>Miami Beach</small></span></li>
           <li data-stage="4"><span class="route-number">05</span><span>Casa Branca <small>Washington, EUA</small></span></li>
         </ol></details>
-        <details class="game-help"><summary>Como jogar e para que serve cada item</summary>
-          <div class="game-legend"><span><i class="legend-bonus" aria-hidden="true"></i> Passaportes: a cada 100, +1 vida</span><span><i class="legend-shield" aria-hidden="true"></i> Escudo das Américas: invisível por 6 s</span><span><i class="legend-bible" aria-hidden="true"></i> Bíblia: próximos 3 tiros com dano 3</span></div>
-          <p>Toque na pista ou em Pular; no teclado, use Espaço ou ↑. Contra chefões, o personagem dispara automaticamente ivermectina simbólica (dano 1). A Bíblia coletada fortalece três disparos (dano 3). Os objetos são elementos de ficção, sem recomendação médica.</p>
-          <p>Você começa com 1 vida. Uma colisão sem proteção encerra a partida; 100 passaportes concedem +1 vida. O Escudo das Américas permite atravessar inimigos por 6 s: ele não guarda uma colisão extra. Ao consumir uma vida conquistada, 1,2 s de recuperação impedem dano repetido pela mesma barreira.</p>
-          <p>Os chefões aparecem depois de um período inicial de corrida. Seus objetos seguem a direção do Flávio e tiram vida quando atingem; salte para escapar. O jogo tem efeitos sonoros de salto, arremesso, coleta e impacto, controlados por Som ligado/desligado.</p>
-          <p>Os eventos da Joice têm aviso de 2 s, perseguição de 8 s e retorno gradual de 2 s. Som opcional; as legendas funcionam sem áudio. Falas da personagem são roteiro ficcional, não gravações autênticas.</p>
-          <p>Contexto das notícias: o <a href="https://www.mprj.mp.br/web/guest/visualizar?noticiaId=96203" target="_blank" rel="noopener noreferrer">MP-RJ apresentou denúncia em 2020</a>; o <a href="https://portal.stf.jus.br/noticias/verNoticiaDetalhe.asp?idConteudo=477496" target="_blank" rel="noopener noreferrer">STF anulou quatro relatórios do Coaf em 2021</a>. Denúncia não equivale a condenação.</p>
-          <p>Recorde pessoal: <strong id="game-best">0000</strong> pontos.</p>
-        </details>
-        <details class="game-guide"><summary>Destinos, chefões e Joice</summary><p>Brasília → Rio → Argentina → Flórida → Casa Branca → nova volta. Xandão, Haddad e Lula aparecem por sorteio, sem repetir antes dos três; o primeiro só chega depois de aproximadamente 34 segundos de corrida. Seus projéteis vão em direção ao jogador, causam dano ao atingir e podem ser evitados com saltos. Joice Hasselmann anuncia uma perseguição especial por 8 s.</p></details>
-        <details class="game-playlist" id="game-playlist">
-          <summary>♫ Playlist de músicas das eleições de 2026</summary>
-          <p>Escolha uma faixa para ouvi-la no player do YouTube. O som não começa sem seu clique. As músicas são de campanhas e repercussões eleitorais distintas; a seleção não representa apoio a candidatos.</p>
-          <div class="game-playlist-choices" role="group" aria-label="Escolher música eleitoral">
-            <button type="button" data-election-track="lula" aria-pressed="false">Rap do Silva — Lula</button>
-            <button type="button" data-election-track="bota" aria-pressed="false">Bota Pra Virar — Igor Kannário</button>
-            <button type="button" data-election-track="flavio" aria-pressed="false">Vem com Fé — Flávio Bolsonaro</button>
-            <button type="button" data-election-track="renan" aria-pressed="false">A Vingança do Povo — Renan Santos</button>
-          </div>
-          <p id="game-playlist-status" role="status" aria-live="polite">Selecione uma das músicas para começar.</p>
-          <div id="game-playlist-player" hidden>
-            <iframe id="game-playlist-frame" title="Playlist eleitoral de 2026" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-            <button id="game-playlist-stop" type="button">■ Parar playlist</button> <a id="game-playlist-open" href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer">Abrir no YouTube</a>
-          </div>
-          <p class="game-playlist-notice">Os vídeos são disponibilizados pelo YouTube e podem ter anúncios ou restrições do titular dos direitos. Nenhum áudio é hospedado pelo jogo.</p>
-        </details>
+        <p class="game-record">Recorde pessoal: <strong id="game-best">0000</strong> pontos.</p>
         <noscript>Habilite o JavaScript para jogar.</noscript>
       </section>
 
-      <details class="sources">
-        <summary>Fontes e informações legais</summary>
-        <section class="bottom" aria-label="Informações importantes">
-        <div class="panel">
-          <h2>O que está sendo contado?</h2>
-        <p class="count-satire">…de perder o <strong>foro privilegiado</strong> e <strong>ficar desempregado!</strong></p>
-          <p>O tempo até o encerramento do mandato de senador em 31/01/2027. A contagem chega a zero às 00h de 01/02/2027 (horário de Brasília). <a href="https://www.cnnbrasil.com.br/eleicoes/flavio-bolsonaro-ficara-sem-mandato-pela-primeira-vez-em-24-anos/" target="_blank" rel="noopener noreferrer">Fonte: CNN Brasil</a>.</p>
+      <section class="music-catalog" id="musicas" aria-labelledby="music-catalog-title">
+        <div class="music-catalog-heading">
+          <h2 id="music-catalog-title">Músicas e memes</h2>
+          <p>Jingles, sátiras e músicas que circularam nas eleições. Escolha o que quer ouvir — não há reprodução automática sem clique.</p>
         </div>
-        <div class="panel">
-          <h2>Atenção: ressalva jurídica</h2>
-          <p>O fim do mandato não extingue automaticamente a competência do STF em todos os casos. Segundo decisão de 2025, processos relacionados a crimes praticados no cargo e em razão dele podem continuar no tribunal. <a href="https://noticias.stf.jus.br/postsnoticias/acoes-contra-autoridades-permanecem-no-stf-mesmo-apos-saida-do-cargo/" target="_blank" rel="noopener noreferrer">Fonte: STF</a>.</p>
-        </div>
+        <section class="music" id="musica" aria-label="Música Tá na Hora do Jair Já Ir Embora">
+          <div class="music-copy">
+            <h3>♫ Tá na Hora do Jair Já Ir Embora <small>Tiago Doidão e Juliano Maderada · 2022</small></h3>
+            <button type="button" class="audio-button" id="music-toggle">▶ Tocar música</button>
+          </div>
+          <p class="audio-status" id="audio-status" role="status" aria-live="polite">Preparando a música…</p>
+          <audio id="music-native" preload="none" loop aria-label="Tá na Hora do Jair Já Ir Embora"></audio>
+          <div class="music-panel" id="music-panel" hidden>
+            <div class="music-frame">
+              <iframe id="music-iframe" width="310" height="215" title="Tá na Hora do Jair Já Ir Embora — YouTube"
+                referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+            </div>
+          </div>
+          <a class="music-source-link" href="https://www.youtube.com/watch?v=RTMiC5WturY" target="_blank" rel="noopener noreferrer">Ouvir no YouTube</a>
         </section>
-      </details>
-
-
+        <section class="music-collection" aria-labelledby="music-collection-heading">
+          <h3 id="music-collection-heading">Jingles e faixas de 2026</h3>
+          <p>Repertório de diferentes campanhas e artistas, incluindo músicas que viraram meme. Seleção informativa e satírica, sem apoio eleitoral.</p>
+          <div class="game-playlist-choices" role="group" aria-label="Selecionar música de 2026">
+            <button type="button" data-election-track="lula" aria-pressed="false">Rap do Silva · Lula</button>
+            <button type="button" data-election-track="bota" aria-pressed="false">Bota Pra Virar · Igor Kannário</button>
+            <button type="button" data-election-track="flavio" aria-pressed="false">Fé que o Brasil vai vencer · Flávio</button>
+            <button type="button" data-election-track="renan" aria-pressed="false">A Vingança do Povo · Renan Santos</button>
+            <button type="button" data-election-track="caiado" aria-pressed="false">Vamos Endireitar o Brasil · Caiado</button>
+            <button type="button" data-election-track="clariana" aria-pressed="false">É Claro que É Clariana</button>
+            <button type="button" data-election-track="augusto" aria-pressed="false">Augusto Cury Chegou</button>
+            <button type="button" data-election-track="tropa" aria-pressed="false">Tropa do Bolsonaro · Flávio</button>
+            <button type="button" data-election-track="coracao" aria-pressed="false">Coração, Vem Cá · Lula</button>
+            <button type="button" data-election-track="tapete" aria-pressed="false">Tapete Vermelho · Lula</button>
+            <button type="button" data-election-track="samara" aria-pressed="false">Negra no Poder · Samara Martins</button>
+            <button type="button" data-election-track="zema" aria-pressed="false">Zema, Zema, Zema</button>
+            <button type="button" data-election-track="coletanea" aria-pressed="false">Coletânea dos jingles de 2026</button>
+          </div>
+          <p id="game-playlist-status" role="status" aria-live="polite">Selecione uma música para abrir o player.</p>
+          <div id="game-playlist-player" hidden>
+            <iframe id="game-playlist-frame" title="Jingles e músicas das eleições de 2026" loading="lazy"
+              allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            <div class="music-player-actions">
+              <button id="game-playlist-stop" type="button">■ Parar</button>
+              <a id="game-playlist-open" href="https://www.youtube.com/watch?v=-X64_csaUhM" target="_blank" rel="noopener noreferrer">Abrir no YouTube</a>
+            </div>
+          </div>
+          <div class="music-memes">
+            <h3>Mais memes eleitorais</h3>
+            <p>Versões que circularam nas redes, com gravações e autores variáveis:</p>
+            <div class="music-meme-links">
+              <a href="https://www.youtube.com/results?search_query=Tariflavio+pagodao+eleicoes+2026" target="_blank" rel="noopener noreferrer">TariFlávio · pagodão satírico</a>
+              <a href="https://www.youtube.com/results?search_query=Foi+o+Osmarzinho+Flavio+Bolsonaro+2026" target="_blank" rel="noopener noreferrer">Foi o Osmarzinho · versão Flávio</a>
+              <a href="https://www.youtube.com/results?search_query=Flavio+Bolsonaro+2026+Pra+seguir+em+frente+jingle" target="_blank" rel="noopener noreferrer">Pra Seguir em Frente · Flávio</a>
+              <a href="https://www.youtube.com/results?search_query=Lula+2026+Pode+Espalhar+jingle" target="_blank" rel="noopener noreferrer">Pode Espalhar · Lula</a>
+            </div>
+          </div>
+          <p class="game-playlist-notice">Os vídeos são reproduzidos pelo YouTube, sujeitos à disponibilidade e aos direitos dos titulares. Alguns memes abrem uma busca, pois existem versões diferentes. Nenhum áudio é copiado ou hospedado aqui.</p>
+        </section>
+      </section>
+      <p class="compact-legal">Humor e sátira. O encerramento do mandato não implica perda automática de foro em todos os processos. <a href="https://noticias.stf.jus.br/postsnoticias/acoes-contra-autoridades-permanecem-no-stf-mesmo-apos-saida-do-cargo/" target="_blank" rel="noopener noreferrer">Entenda a regra do STF</a>.</p>
     </main>
-    <footer>Projeto independente de humor. <span class="music-credit">♫ “Tá na Hora do Jair Já Ir Embora” — Tiago Doidão e Juliano Maderada. <a href="https://www.youtube.com/watch?v=RTMiC5WturY" target="_blank" rel="noopener noreferrer">Música no YouTube ↗</a></span></footer>
+    <footer>Projeto independente de humor.</footer>
   </div>
   <noscript>Para ver a contagem regressiva funcionando, habilite o JavaScript no navegador.</noscript>
 
