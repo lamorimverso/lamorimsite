@@ -84,8 +84,8 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
   <link rel="stylesheet" href="enhancements.css?v=20261027-mobile-desktop5">
-  <link rel="stylesheet" href="minimal.css?v=20261028-no-music-v1" >
-  <script type="module" src="runner.mjs?v=20261028-fugindo-v1"></script>
+  <link rel="stylesheet" href="minimal.css?v=20261028-dodge-km-v1" >
+  <script type="module" src="runner.mjs?v=20261028-dodge-km-v1"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -134,18 +134,18 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         <div class="game-topline">
         <div class="game-stage-header">
           <div><span id="game-phase" class="sr-only">Cenário 1 de 5</span><strong id="game-stage-name">Brasília</strong><small id="game-difficulty">Risco 1 · 0 m</small></div>
-          <span class="game-stage-clock" id="game-stage-time">500 m para Rio</span>
+          <span class="game-stage-clock" id="game-stage-time">7.000 m até Rio</span>
         </div>
         <div class="game-scoreboard" aria-label="Placar">
-          <div><span>Pontos</span><strong id="game-score">0000</strong></div>
+          <div><span>Metros</span><strong id="game-score">0000</strong></div>
           <div><span>Vidas</span><strong id="game-lives">1</strong></div>
           <div><span>Passaportes</span><strong id="game-passports">0</strong><div class="passport-track" title="100 passaportes = +1 vida" aria-hidden="true"><span id="game-passport-progress"></span></div></div>
         </div>
         </div>
         <div class="game-boss" id="game-boss" hidden aria-label="Confronto com chefe">
-          <div class="game-boss-heading"><span>CHEFE</span><strong id="game-boss-name">Chefão sorteado</strong></div>
-          <div class="game-boss-health" id="game-boss-health" role="progressbar" aria-label="Energia do chefe" aria-valuemin="0" aria-valuemax="6" aria-valuenow="6"><span id="game-boss-progress"></span></div>
-          <small class="game-boss-weapon" id="game-boss-weapon">Disparo automático: Ivermectina</small>
+          <div class="game-boss-heading"><span>CHEFÃO</span><strong id="game-boss-name">Chefão sorteado</strong></div>
+          <div class="game-boss-health" id="game-boss-health" role="progressbar" aria-label="Ataques superados" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0"><span id="game-boss-progress"></span></div>
+          <small class="game-boss-weapon" id="game-boss-weapon">Desvie dos ataques para fugir</small>
         </div>
         <div class="game-internal-metrics sr-only" aria-hidden="true">
           <span id="game-time">00:00</span>
@@ -166,18 +166,19 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         <div class="game-hud" aria-label="Perseguição e vantagens">
           <div class="pursuit-chip"><span class="sr-only">Na perseguição: </span><strong id="game-threat">1/5 · PF</strong></div>
           <div class="power-chip"><span class="sr-only">Vantagem ativa: </span><strong id="game-power">Sem efeito ativo</strong></div>
-          <div class="ammo-chip" hidden><span class="sr-only">Munição especial: </span><strong id="game-ammo">Bíblia · 0 tiros × 3</strong></div>
+          <div class="ammo-chip" hidden><span class="sr-only">Munição especial: </span><strong id="game-ammo">Sem arma</strong></div>
         </div>
           <div class="game-overlay" id="game-overlay"><span class="game-overlay-badge" id="game-overlay-badge">Corrida fictícia</span><strong id="game-overlay-title">Pronto para correr?</strong><p id="game-overlay-copy">Pule e sobreviva.</p></div>
         </div>
-        <div class="route-meter" role="progressbar" aria-label="Tempo no cenário atual" aria-valuemin="0" aria-valuemax="20" aria-valuenow="0" id="game-progress"><span></span></div>
+        <div class="route-meter" role="progressbar" aria-label="Metros no cenário atual" aria-valuemin="0" aria-valuemax="7000" aria-valuenow="0" id="game-progress"><span></span></div>
         <div class="game-controls">
           <button type="button" id="game-jump" aria-label="Pular" disabled><span aria-hidden="true">↑</span> Pular</button>
+          <button type="button" id="game-crouch" aria-label="Abaixar, segure para agachar" aria-pressed="false" disabled><span aria-hidden="true">↓</span> Abaixar</button>
           <button type="button" class="game-primary" id="game-start" disabled>Carregando desenhos…</button>
         </div>
         <p class="game-loading-note" id="game-loading-note" role="status">Preparando os personagens…</p>
         <p class="game-objective" id="game-objective">100 passaportes = +1 vida</p>
-        <p class="game-instructions sr-only" id="game-instructions">Toque ou use Espaço ou seta para cima para pular. O disparo básico é automático durante chefes. Colete a Bíblia para três tiros mais fortes e o Escudo das Américas para seis segundos de invisibilidade. Continue pulando os perigos.</p>
+        <p class="game-instructions sr-only" id="game-instructions">Toque ou use Espaço ou seta para cima para pular. Segure Abaixar, seta para baixo ou tecla S para agachar sob ataques altos. Flávio não ataca: supere os chefões desviando. Cada cenário tem sete quilômetros; a velocidade aumenta com os metros. Colete passaportes raros para ganhar vida a cada cem e o Escudo das Américas para seis segundos de invisibilidade.</p>
         <p class="game-status sr-only" id="game-status" role="status" aria-live="polite">Tudo pronto. A corrida começa quando você quiser.</p>
         <details class="game-itinerary"><summary>Destinos</summary>
         <ol class="game-route" aria-label="Rota da corrida">
@@ -187,7 +188,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
           <li data-stage="3"><span class="route-number">04</span><span>Flórida <small>Miami Beach</small></span></li>
           <li data-stage="4"><span class="route-number">05</span><span>Casa Branca <small>Washington, EUA</small></span></li>
         </ol></details>
-        <p class="game-record">Recorde pessoal: <strong id="game-best">0000</strong> pontos.</p>
+        <p class="game-record">Recorde: <strong id="game-best">0000</strong> metros</p>
         <noscript>Habilite o JavaScript para jogar.</noscript>
       </section>
 
