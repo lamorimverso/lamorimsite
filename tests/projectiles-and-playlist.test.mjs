@@ -53,12 +53,14 @@ test('o Escudo das Américas protege contra projéteis sem dano',()=>{
  assert.equal(r.lives,1);
 });
 test('playlist contém escolhas reais sem hospedagem ou links arbitrários',()=>{
- assert.deepEqual(ELECTION_TRACKS.map(t=>t.id),['lula','bota','flavio','renan']);
+ assert.deepEqual(ELECTION_TRACKS.slice(0,4).map(t=>t.id),['lula','bota','flavio','renan']);
+ assert.equal(ELECTION_TRACKS.length,13);
  assert.equal(playlistEmbedUrl('__unknown__'),null);
  for(const track of ELECTION_TRACKS){
   const url=new URL(playlistEmbedUrl(track.id));
   assert.equal(url.hostname,'www.youtube-nocookie.com');
   assert.ok(url.pathname.endsWith('/'+track.video));
   assert.equal(url.searchParams.get('autoplay'),'1');
+  if(track.start!==undefined)assert.equal(url.searchParams.get('start'),String(track.start));
  }
 });
