@@ -272,12 +272,12 @@ function initRunner() {
     ctx.save();
     // Colinas suaves e afastadas; não competem com o personagem.
     ctx.fillStyle=stage.accent+"16";
-    ctx.beginPath();ctx.moveTo(0,222);
-    for(let i=-2;i<=7;i++){
+    for(let i=-1;i<=7;i++){
       const x=i*185-wrap(farShift,185);
-      ctx.quadraticCurveTo(x+70,176+(i%3)*10,x+185,222);
+      ctx.beginPath();ctx.moveTo(x-12,225);
+      ctx.quadraticCurveTo(x+72,175+(i%3)*7,x+175,225);
+      ctx.closePath();ctx.fill();
     }
-    ctx.lineTo(virtualWidth,225);ctx.lineTo(0,225);ctx.closePath();ctx.fill();
     // Uma só fileira de elementos baixos dá movimento sem amontoar.
     ctx.fillStyle=stage.ink+"25";
     for(let i=-1;i<=7;i++){
