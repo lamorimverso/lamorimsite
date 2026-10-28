@@ -57,10 +57,10 @@ test('poderes não se acumulam em uma sequência que torna o jogador sempre inve
   for (let i = 1; i < powers.length; i++) assert.ok(powers[i] - powers[i-1] >= 12);
 });
 
-test('um piloto que salta os obstáculos consegue coletar 100 passaportes sem proteção gratuita', () => {
+test('passaportes mais raros ainda permitem conquistar vida extra em até 260 segundos', () => {
   for (const seed of [7, 103, 8801]) {
     const run = running(), rng = seeded(seed);
-    for (let i = 0; i < 120 * 240 && run.status === 'running'; i++) {
+    for (let i = 0; i < 120 * 260 && run.status === 'running'; i++) {
       const speed = difficultyAt(run.distance).speed;
       const next = run.obstacles.find(o => o.x + o.width > PLAYER.x + 5);
       if (next && next.x - (PLAYER.x + PLAYER.width) <= speed * .19) jumpRun(run);
@@ -71,4 +71,14 @@ test('um piloto que salta os obstáculos consegue coletar 100 passaportes sem pr
     assert.ok(run.lives >= 2);
     assert.ok(run.bossesDefeated >= 1, 'o piloto também enfrenta chefes');
   }
+});
+
+test('itens raros possuem intervalos amplos e continuam alcançáveis', () => {
+  const first=difficultyAt(0),last=difficultyAt(900000);
+  assert.ok(first.pickupGap>=7);
+  assert.ok(first.passportGap>=4.5);
+  assert.ok(first.powerGap>=24);
+  assert.ok(last.pickupGap>first.pickupGap);
+  assert.ok(last.passportGap>first.passportGap);
+  assert.ok(last.powerGap>first.powerGap);
 });

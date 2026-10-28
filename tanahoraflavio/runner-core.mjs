@@ -33,6 +33,12 @@ export const PICKUPS = Object.freeze([
   Object.freeze({ type: "invisible", name: "Invisibilidade", value: 0 }),
   Object.freeze({ type: "chance", name: "Chance extra", value: 0 })
 ]);
+/* Armamento puramente simbólico do jogo satírico. */
+export const BOSS_WEAPONS = Object.freeze([
+  Object.freeze({type:"ivermectina",name:"Ivermectina",damage:1}),
+  Object.freeze({type:"constituicao",name:"Constituição",damage:2}),
+  Object.freeze({type:"biblia",name:"Bíblia evangélica",damage:3})
+]);
 
 /**
  * Dificuldade guiada pela distância da própria partida, não pelo tempo do navegador.
@@ -46,9 +52,9 @@ export function difficultyAt(distance) {
     level: 1 + Math.floor(traveled / 8000),
     speed: 250 + 130 * progression,
     obstacleGap: 1.95 - .6 * progression,
-    pickupGap: 3.8 + 2.4 * progression,
-    passportGap: 2.6 + 1.8 * progression,
-    powerGap: 14 + 22 * progression
+    pickupGap: 7.3 + 4.2 * progression,
+    passportGap: 4.6 + 2.4 * progression,
+    powerGap: 24 + 32 * progression
   };
 }
 
@@ -64,8 +70,8 @@ export function createRun() {
   return {
     status: "ready", elapsed: 0, distance: 0, bonus: 0, collected: 0,
     passports: 0, lives: STARTING_LIVES, event: "", events: 0,
-    player: { y: 0, velocity: 0 }, obstacles: [], pickups: [],
-    nextObstacle: 1.5, nextPickup: 2.2, nextPassport: 1.9, nextPower: 4,
+    player: { y: 0, velocity: 0 }, obstacles: [], pickups: [], shots: [],
+    nextObstacle: 1.5, nextPickup: 4.2, nextPassport: 3.5, nextPower: 7,
     invisibleFor: 0, graceFor: 0, extraChance: false, saves: 0,
     lastPickup: null, spawnedObstacles: 0, spawnedPickups: 0, spawnedPowers: 0,
     boss: null, bossesDefeated: 0, nextBossScore: BOSS_SCORE_STEP, bossCooldown: 0
@@ -106,14 +112,24 @@ function beginBoss(run) {
   const conf=bossAtRound(run.bossesDefeated);
   run.boss={type:conf.foe.type,name:conf.foe.name,color:conf.foe.color,
     level:conf.level,supreme:conf.supreme,round:conf.round,total:conf.attacks,
-    remaining:conf.attacks,fired:0,interval:conf.interval,nextAttack:1.3};
+    remaining:conf.attacks,fired:0,interval:conf.interval,nextAttack:1.3,
+    health:conf.attacks*2,maxHealth:conf.attacks*2,nextShot:.45,shotsFired:0,
+    lastWeapon:"Ivermectina",hitFlashFor:0};
   run.obstacles=[]; // A arena abre sem ataques comuns encavalados.
+  run.shots=[];
   run.nextObstacle=Math.max(1.8,run.nextObstacle);
   run.events++;
   run.event=`Chefe ${conf.foe.short} · nível ${conf.level}! Desvie dos ataques.`;
 }
 function advanceBoss(run,dt) {
   const boss=run.boss;if(!boss)return;
+  boss.nextShot-=dt;
+  if(boss.nextShot<=0 && boss.health>0){
+    const weapon=BOSS_WEAPONS[boss.shotsFired++%BOSS_WEAPONS.length];
+    run.shots.push({type:weapon.type,damage:weapon.damage,progress:0,launchY:run.player.y});
+    boss.lastWeapon=weapon.name;
+    boss.nextShot+=.9;
+  }
   boss.nextAttack-=dt;
   if(boss.fired<boss.total && boss.nextAttack<=0){
     const foe=PURSUERS.find(p=>p.type===boss.type);
@@ -123,6 +139,21 @@ function advanceBoss(run,dt) {
     boss.nextAttack+=boss.interval;
     return attack;
   }
+}
+
+// Tiros atingem o chefe sem eliminar os obstáculos que exigem salto.
+function advanceShots(run,dt) {
+  if(!run.boss){run.shots=[];return;}
+  const boss=run.boss;
+  boss.hitFlashFor=Math.max(0,boss.hitFlashFor-dt);
+  for(const shot of run.shots){
+    shot.progress+=dt/.55;
+    if(shot.progress>=1){
+      boss.health=Math.max(0,boss.health-shot.damage);
+      boss.hitFlashFor=.15;
+    }
+  }
+  run.shots=run.shots.filter(shot=>shot.progress<1);
 }
 
 // Um salto, um grupo: os itens acompanham o arco sobre o adversário.
@@ -154,8 +185,8 @@ function resolveBossDodges(run) {
       obstacle.counted=true;run.boss.remaining--;
     }
   }
-  if(run.boss.fired<run.boss.total||run.boss.remaining>0)return;
-  const boss=run.boss;run.boss=null;run.bossesDefeated++;
+  if(run.boss.fired<run.boss.total||run.boss.remaining>0||run.boss.health>0)return;
+  const boss=run.boss;run.boss=null;run.shots=[];run.bossesDefeated++;
   run.nextBossScore+=BOSS_SCORE_STEP;
   run.bossCooldown=4;
   run.nextObstacle=Math.max(1.75,run.nextObstacle);
@@ -182,6 +213,7 @@ export function advanceRun(run, seconds, rng = Math.random) {
 
   for (const obstacle of run.obstacles) obstacle.x -= travel;
   for (const pickup of run.pickups) pickup.x -= travel;
+  advanceShots(run,dt);
   resolveBossDodges(run);
   run.obstacles = run.obstacles.filter(o => o.x + o.width > -20);
   run.pickups = run.pickups.filter(p => p.x > -30);

@@ -489,3 +489,38 @@ test("colisão contra ataque de chefe também termina a corrida sem poder", () =
   assert.equal(run.status,"over");
   assert.equal(run.lives,0);
 });
+
+test("projéteis alternam ivermectina, Constituição e Bíblia evangélica", () => {
+  const run=running();
+  run.bonus=core.BOSS_SCORE_STEP;
+  run.nextObstacle=run.nextPickup=run.nextPassport=run.nextPower=1e8;
+  core.advanceRun(run,1/120,()=>.5);
+  const initial=run.boss.maxHealth;
+  assert.equal(initial,6);
+  run.graceFor=100;
+  frames(run,3);
+  assert.deepEqual(core.BOSS_WEAPONS.map(w=>w.damage),[1,2,3]);
+  assert.ok(run.boss.shotsFired>=3);
+  assert.ok(run.boss.health<initial);
+  assert.ok(run.boss.health>=0);
+  assert.ok(run.shots.every(s=>s.progress>=0&&s.progress<1));
+});
+
+test("projéteis não eliminam obstáculos nem oferecem proteção gratuita", () => {
+  const run=running();
+  run.bonus=core.BOSS_SCORE_STEP;
+  core.advanceRun(run,1/120,()=>.5);
+  run.shots.push({type:"biblia",damage:3,progress:.8,launchY:0});
+  run.obstacles.push({x:125,width:34,height:44,type:"pf",bossAttack:true,counted:false});
+  core.advanceRun(run,1/120,()=>.5);
+  assert.equal(run.status,"over");
+  assert.equal(run.lives,0);
+});
+
+test("sem chefe não há disparos automáticos nem cartuchos acumulados", () => {
+  const run=running();
+  run.nextObstacle=run.nextPickup=run.nextPassport=run.nextPower=1e8;
+  frames(run,3);
+  assert.equal(run.boss,null);
+  assert.deepEqual(run.shots,[]);
+});

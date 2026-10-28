@@ -85,7 +85,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
 </style>
   <link rel="stylesheet" href="enhancements.css?v=20261027-mobile-desktop5">
   <link rel="stylesheet" href="minimal.css?v=20261027-portrait-balance" >
-  <script type="module" src="runner.mjs?v=20261027-reduced-motion"></script>
+  <script type="module" src="runner.mjs?v=20261028-boss-shots"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -165,7 +165,8 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         </div>
         <div class="game-boss" id="game-boss" hidden aria-label="Confronto com chefe">
           <div class="game-boss-heading"><span>CHEFE</span><strong id="game-boss-name">PF · Nível 1</strong></div>
-          <div class="game-boss-health" id="game-boss-health" role="progressbar" aria-label="Ataques do chefe restantes" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3"><span id="game-boss-progress"></span></div>
+          <div class="game-boss-health" id="game-boss-health" role="progressbar" aria-label="Energia do chefe" aria-valuemin="0" aria-valuemax="6" aria-valuenow="6"><span id="game-boss-progress"></span></div>
+          <small class="game-boss-weapon" id="game-boss-weapon">Disparo automático: Ivermectina</small>
         </div>
         <div class="game-internal-metrics sr-only" aria-hidden="true">
           <span id="game-time">00:00</span>
@@ -184,10 +185,9 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         <div class="route-meter" role="progressbar" aria-label="Tempo no cenário atual" aria-valuemin="0" aria-valuemax="20" aria-valuenow="0" id="game-progress"><span></span></div>
         <div class="game-controls">
           <button type="button" id="game-jump" aria-label="Pular" disabled><span aria-hidden="true">↑</span> Pular</button>
-          <button type="button" id="game-pause" disabled>Pausar corrida</button>
           <button type="button" class="game-primary" id="game-start">Começar corrida</button>
         </div>
-        <p class="game-instructions sr-only" id="game-instructions">Toque ou <kbd>Espaço</kbd> para pular.</p>
+        <p class="game-instructions sr-only" id="game-instructions">Toque ou use Espaço ou seta para cima para pular. O jogador atira automaticamente ivermectina, Constituição e Bíblia evangélica durante os chefes; continue desviando para sobreviver.</p>
         <p class="game-status sr-only" id="game-status" role="status" aria-live="polite">Tudo pronto. A corrida começa quando você quiser.</p>
         <details class="game-itinerary"><summary>Destinos</summary>
         <ol class="game-route" aria-label="Rota da corrida">
@@ -199,6 +199,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         </ol></details>
         <details class="game-help"><summary>Regras e recorde</summary>
           <div class="game-legend"><span><i class="legend-bonus" aria-hidden="true"></i> Chocolate e recibo +25 · Mansão +50 · Passaporte +10</span><span><i class="legend-invisible" aria-hidden="true"></i> Fantasma: invisibilidade por 6 s</span><span><i class="legend-chance" aria-hidden="true"></i> Escudo +1: uma chance guardada</span></div>
+          <p>Contra chefes, o personagem dispara automaticamente projéteis caricaturais de ivermectina, Constituição e Bíblia evangélica enquanto corre. São símbolos fictícios, sem recomendação de medicamentos nem alegações sobre pessoas reais.</p>
           <p>Bateu, perdeu: você começa com 1 vida e uma colisão encerra a partida. Uma vida extra conquistada (a cada 100 passaportes), um escudo guardado ou invisibilidade ativa permitem sobreviver. Após consumir uma vida extra ou escudo, há 1,2 s de recuperação para impedir danos duplicados do mesmo obstáculo.</p>
           <p>Recorde pessoal: <strong id="game-best">0000</strong> pontos.</p>
         </details>
