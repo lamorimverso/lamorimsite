@@ -261,163 +261,124 @@ function initRunner() {
     ctx.fillStyle = "#ffffffb8"; ctx.beginPath(); ctx.ellipse(x,y,32,9,0,0,Math.PI*2); ctx.fill();
     circle(x-10,y-6,11,"#ffffffb8"); circle(x+7,y-9,15,"#ffffffb8");
   }
-  function buildings(stage) {
-    const base = 217;
-    ctx.fillStyle = stage.id === "argentina" ? "#cadcf1" : "#ded2e9";
-    for (let index = 0; index < 11; index++) {
-      const x = virtualWidth * .38 + index * 45;
-      const height = [43,70,51,86,58,68][index % 6];
-      ctx.fillRect(x,base-height,32,height);
-      ctx.fillStyle = "#ffffff72";
-      for(let y=base-height+10;y<base-6;y+=13) { ctx.fillRect(x+7,y,4,5);ctx.fillRect(x+20,y,4,5); }
-      ctx.fillStyle = stage.id === "argentina" ? "#cadcf1" : "#ded2e9";
-    }
-  }
-  // Duas camadas discretas para comunicar deslocamento sem criar colisões falsas.
-  // Velocidades diferentes dão profundidade (parallax) e continuam baratas no mobile.
-  function environmentalLayers(stage, distance) {
-    const far=distance*.045, near=distance*.13;
-    const wrap=(x,period)=>((x%period)+period)%period;
+  // Fundo em três planos: céu, silhuetas distantes e um marco por destino.
+  // Retirados os cartazes repetitivos, caricaturas sobrepostas e o avião.
+  // Tudo é decoração: nenhum novo obstáculo ou hitbox é criado aqui.
+  const wrap=(x,span)=>((x%span)+span)%span;
+  function layeredHorizon(stage, distance){
+    const farShift=distance*.018,nearShift=distance*.052;
     ctx.save();
-    ctx.fillStyle=stage.accent+"17";
-    for(let i=0;i<12;i++){
-      const x=wrap(i*120-far,virtualWidth+160)-80;
-      ctx.beginPath();
-      ctx.moveTo(x-38,219);
-      ctx.lineTo(x+24,173+i%3*9);
-      ctx.lineTo(x+86,219);
-      ctx.closePath();ctx.fill();
+    // Colinas suaves e afastadas; não competem com o personagem.
+    ctx.fillStyle=stage.accent+"16";
+    ctx.beginPath();ctx.moveTo(0,222);
+    for(let i=-2;i<=7;i++){
+      const x=i*185-wrap(farShift,185);
+      ctx.quadraticCurveTo(x+70,176+(i%3)*10,x+185,222);
     }
-    ctx.fillStyle=stage.ink+"23";
-    for(let i=0;i<10;i++){
-      const x=wrap(i*138-near,virtualWidth+120)-60;
+    ctx.lineTo(virtualWidth,225);ctx.lineTo(0,225);ctx.closePath();ctx.fill();
+    // Uma só fileira de elementos baixos dá movimento sem amontoar.
+    ctx.fillStyle=stage.ink+"25";
+    for(let i=-1;i<=7;i++){
+      const x=i*174-wrap(nearShift,174);
       if(stage.id==="rio"){
-        ctx.beginPath();ctx.ellipse(x+12,221,31,10,0,Math.PI,0);ctx.fill();
+        ctx.beginPath();ctx.ellipse(x+45,224,34,10,0,Math.PI,0);ctx.fill();
       }else if(stage.id==="florida"){
-        ctx.fillRect(x,202,28,18);ctx.fillRect(x+8,191,10,11);
+        ctx.fillRect(x+26,207,36,16);ctx.fillRect(x+34,199,12,8);
+      }else if(stage.id==="argentina"){
+        ctx.fillRect(x+20,206,29,18);ctx.fillRect(x+54,197,22,27);
       }else{
-        const height=18+(i*7)%19;
-        ctx.fillRect(x,220-height,22,height);
-        if(stage.id==="argentina"||stage.id==="casa-branca"){
-          ctx.fillStyle="#ffffff55";ctx.fillRect(x+7,221-height+5,4,5);
-          ctx.fillStyle=stage.ink+"23";
-        }
+        ctx.beginPath();ctx.ellipse(x+28,220,22,6,0,Math.PI*2);ctx.fill();
+        ctx.fillRect(x+25,206,6,16);
       }
     }
     ctx.restore();
   }
-  // Cartazes e caricaturas ao fundo: referências históricas e memes satíricos.
-  // São decorações sem colisão, baixa opacidade e paralaxe suave.
-  function backdropMemes(stage,distance){
-    const samples={
-      brasilia:['PAPUDA','PAPUDINHA','JAIR · MEME','PF'],
-      rio:['CHUPETINHA','POLÍCIA','IVERMECTINA','COVID-19'],
-      argentina:['COVID-19','IVERMECTINA','JAIR · MEME','PAPUDA'],
-      florida:['CHUPETINHA','PAPUDINHA','JAIR · MEME','PF'],
-      'casa-branca':['PF','PAPUDA','IVERMECTINA','CHUPETINHA']
-    }[stage.id]||[];
-    ctx.save();ctx.globalAlpha=.62;ctx.textAlign="center";
-    const width=1200;
-    for(let i=0;i<samples.length;i++){
-      const x=((130+i*295-distance*.09)%width+width)%width-70;
-      if(x< -115||x>virtualWidth+115)continue;
-      const label=samples[i],base=213-(i%2)*12;
-      ctx.save();ctx.translate(x,base);
-      ctx.fillStyle=stage.ink+"30";ctx.fillRect(-49,-54,98,54);
-      ctx.fillStyle="#f6f4eea8";ctx.fillRect(-42,-50,84,19);
-      ctx.strokeStyle=stage.ink+"66";ctx.lineWidth=1;ctx.strokeRect(-42,-50,84,19);
-      ctx.font="800 8px system-ui";ctx.fillStyle="#515168";ctx.fillText(label,0,-37,82);
-      if(label.includes('JAIR')){
-        // Caricatura memorial/satírica, não representação da situação atual.
-        circle(0,-17,8,"#e8bb8d");ctx.fillStyle="#5c6586";ctx.fillRect(-11,-10,22,10);
-        ctx.strokeStyle="#63728c";ctx.lineWidth=2;
-        for(const bar of [-21,-7,7,21]){ctx.beginPath();ctx.moveTo(bar,-32);ctx.lineTo(bar,0);ctx.stroke();}
-      }else if(label==='COVID-19'){
-        circle(0,-16,10,"#c68d8d");
-        ctx.strokeStyle="#b57b83";ctx.lineWidth=2;
-        for(const [x,y] of [[-16,-16],[16,-16],[0,-32],[0,0]]){
-          line([[x*.68,(y+16)*.68-16],[x,y]],"#b57b83",2);
-        }
-      }else if(label==='IVERMECTINA'){
-        ctx.save();ctx.translate(0,-16);ctx.rotate(-.35);
-        ctx.fillStyle="#f4efe7";ctx.fillRect(-16,-7,32,14);
-        ctx.fillStyle="#88b5b2";ctx.fillRect(0,-7,16,14);ctx.restore();
-      }else{
-        // Silhuetas / placas alusivas à política; ficam ao fundo da pista.
-        circle(0,-17,8,"#d8b99c");ctx.fillStyle=stage.ink+"88";ctx.fillRect(-9,-9,18,9);
+  function landmark(stage){
+    const x=virtualWidth*.70,base=226;
+    ctx.save();
+    if(stage.id==="brasilia"){
+      // Congresso Nacional: referência arquitetônica concentrada à direita.
+      ctx.fillStyle="#eff4f4";ctx.fillRect(x-121,base-14,242,14);
+      ctx.fillStyle="#b9ceda";ctx.fillRect(x-14,125,12,87);ctx.fillRect(x+5,125,12,87);
+      ctx.fillStyle="#eaf0f1";
+      ctx.beginPath();ctx.arc(x-68,base-20,34,Math.PI,0);ctx.fill();
+      ctx.beginPath();ctx.arc(x+75,base-42,31,0,Math.PI);ctx.fill();
+      ctx.strokeStyle="#a3bac6";ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(x-109,base);ctx.lineTo(x+112,base);ctx.stroke();
+    }else if(stage.id==="rio"){
+      // Morros do Rio e Cristo Redentor, em duas cores da mesma paleta.
+      ctx.fillStyle="#b8d9d2";
+      ctx.beginPath();ctx.moveTo(x-170,base);
+      ctx.bezierCurveTo(x-105,202,x-122,139,x-72,145);
+      ctx.bezierCurveTo(x-27,148,x-27,206,x+21,base);ctx.fill();
+      ctx.fillStyle="#a6cec3";
+      ctx.beginPath();ctx.moveTo(x-17,base);
+      ctx.bezierCurveTo(x+25,204,x+17,121,x+67,126);
+      ctx.bezierCurveTo(x+104,130,x+101,209,x+159,base);ctx.fill();
+      ctx.strokeStyle="#e8f2e9";ctx.lineWidth=5;ctx.lineCap="round";
+      ctx.beginPath();ctx.moveTo(x-70,151);ctx.lineTo(x-70,120);ctx.moveTo(x-87,132);ctx.lineTo(x-53,132);ctx.stroke();
+      circle(x-70,113,5,"#e8f2e9");
+    }else if(stage.id==="argentina"){
+      // Obelisco de Buenos Aires, com prédios discretos bem ao fundo.
+      ctx.fillStyle="#ccd9ea";ctx.fillRect(x-145,182,34,42);
+      ctx.fillRect(x+103,184,38,40);
+      ctx.fillStyle="#fffaf0";ctx.beginPath();
+      ctx.moveTo(x-12,base);ctx.lineTo(x-7,116);ctx.lineTo(x,94);
+      ctx.lineTo(x+7,116);ctx.lineTo(x+12,base);ctx.closePath();ctx.fill();
+      ctx.strokeStyle="#d7d1bd";ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(x,115);ctx.lineTo(x,base);ctx.stroke();
+    }else if(stage.id==="florida"){
+      // Miami: apenas duas fachadas art déco e palmeiras nas laterais.
+      ctx.fillStyle="#f4d6cd";ctx.fillRect(x-93,164,73,61);
+      ctx.fillStyle="#d3d6e7";ctx.fillRect(x+3,177,77,48);
+      ctx.fillStyle="#fff7ec";
+      for(let row=0;row<3;row++){
+        ctx.fillRect(x-83,176+row*15,51,4);
+        ctx.fillRect(x+13,188+row*12,55,3);
       }
-      ctx.restore();
+      for(const px of [x-141,x+135]){
+        ctx.strokeStyle="#b4a289";ctx.lineWidth=5;ctx.lineCap="round";
+        ctx.beginPath();ctx.moveTo(px,base);ctx.quadraticCurveTo(px-7,172,px+2,146);ctx.stroke();
+        ctx.strokeStyle="#7cae98";ctx.lineWidth=6;
+        for(const dx of [-27,-9,16,29]){
+          ctx.beginPath();ctx.moveTo(px+2,146);ctx.lineTo(px+dx,148+Math.abs(dx)*.27);ctx.stroke();
+        }
+      }
+    }else{
+      // Casa Branca, um único edifício proporcional ao horizonte.
+      ctx.fillStyle="#dce4ee";ctx.fillRect(x-117,166,234,60);
+      ctx.fillStyle="#fff";ctx.fillRect(x-108,172,216,51);
+      ctx.fillStyle="#e9edf4";ctx.fillRect(x-43,151,86,72);
+      ctx.fillStyle="#fff";
+      for(let i=0;i<5;i++)ctx.fillRect(x-37+i*16,164,8,59);
+      ctx.beginPath();ctx.moveTo(x-53,151);ctx.lineTo(x,119);ctx.lineTo(x+53,151);ctx.closePath();ctx.fill();
+      ctx.fillStyle="#b2c2d3";
+      for(let i=0;i<4;i++){
+        ctx.fillRect(x-99+i*24,185,9,18);ctx.fillRect(x+29+i*24,185,9,18);
+      }
+      ctx.fillStyle="#edf1f4";ctx.fillRect(x-124,223,248,6);
     }
     ctx.restore();
   }
   function scenery(stage) {
-    // Mantém obstáculos e salto em movimento; congela somente a decoração.
-    const decorativeDistance = prefersReducedMotion() ? 0 : run.distance;
-    ctx.fillStyle = stage.sky; ctx.fillRect(0,0,virtualWidth,WORLD.height);
-    circle(virtualWidth-65,49,20,"#ebcc7880");
-    for (let i=0;i<3;i++) cloud(((i*290 + 110 - decorativeDistance*.07) % (virtualWidth+180) + virtualWidth+180) % (virtualWidth+180)-70, 65+(i%2)*30);
-    environmentalLayers(stage,decorativeDistance);
-    if (stage.id === "brasilia") {
-      const x = virtualWidth * .64;
-      ctx.fillStyle="#c1d9c8";ctx.fillRect(0,218,virtualWidth,28);
-      ctx.fillStyle="#bdcad8";ctx.fillRect(x-7,107,10,111);ctx.fillRect(x+7,107,10,111);
-      ctx.fillStyle="#fff";ctx.fillRect(x-99,207,201,15);
-      ctx.beginPath();ctx.arc(x-54,205,29,Math.PI,0);ctx.fill();
-      ctx.beginPath();ctx.arc(x+59,176,32,0,Math.PI);ctx.fill();
-      line([[x-89,225],[x+91,225]],"#a6c6c3",2);
-    } else if (stage.id === "rio") {
-      ctx.fillStyle="#c9e4df";
-      ctx.beginPath(); ctx.moveTo(virtualWidth*.35,218);ctx.bezierCurveTo(virtualWidth*.47,193,virtualWidth*.46,130,virtualWidth*.54,141);ctx.bezierCurveTo(virtualWidth*.64,143,virtualWidth*.6,200,virtualWidth*.71,218);ctx.fill();
-      ctx.fillStyle="#b5d9d3";
-      const hill=virtualWidth*.77;
-      ctx.beginPath();ctx.moveTo(hill-95,218);ctx.bezierCurveTo(hill-50,204,hill-50,119,hill-14,119);ctx.bezierCurveTo(hill+29,114,hill+28,197,hill+80,218);ctx.fill();
-      line([[virtualWidth*.53,149],[virtualWidth*.53,115]],"#83b5ac",5);
-      line([[virtualWidth*.53-12,126],[virtualWidth*.53+12,126]],"#83b5ac",4);
-      circle(virtualWidth*.53,110,4,"#83b5ac");
-      ctx.fillStyle="#aed7d250";ctx.fillRect(0,215,virtualWidth,31);
-      for(let x=0;x<virtualWidth;x+=65)line([[x,229],[x+23,229]],"#ffffff9c",2);
-    } else if (stage.id === "argentina") {
-      buildings(stage);
-      const x=virtualWidth*.64;
-      ctx.fillStyle="#fffaf0";ctx.beginPath();ctx.moveTo(x-10,219);ctx.lineTo(x-6,108);ctx.lineTo(x,91);ctx.lineTo(x+6,108);ctx.lineTo(x+10,219);ctx.fill();
-      line([[x,111],[x+1,214]],"#d4c9af",1);
-      ctx.fillStyle="#b7cae1";ctx.fillRect(x-18,218,36,5);
-    } else if (stage.id === "florida") {
-      ctx.fillStyle="#b3dcdf";ctx.fillRect(0,180,virtualWidth,66);
-      ctx.fillStyle="#efdeca";ctx.fillRect(0,228,virtualWidth,18);
-      for(let i=0;i<4;i++){
-        const x=virtualWidth*.42+i*49,h=38+i%2*23;
-        ctx.fillStyle=i%2?"#dfb7c6":"#c4d0e5";ctx.fillRect(x,215-h,38,h);
-        ctx.fillStyle="#fff4e9";ctx.fillRect(x+6,222-h,25,5);ctx.fillRect(x+6,234-h,25,5);
-      }
-      for(const x of [virtualWidth*.32,virtualWidth*.85]){
-        line([[x,231],[x-7,184],[x+2,132]],"#b89975",6);
-        line([[x-29,145],[x-14,126],[x+2,132],[x+21,124],[x+33,142]],"#8aaa85",7);
-        line([[x-20,161],[x-11,139],[x+2,132],[x+18,145],[x+25,164]],"#8aaa85",7);
-      }
-    } else if (stage.id === "casa-branca") {
-      const x=virtualWidth*.65,w=210;
-      ctx.fillStyle="#c1d7bb";ctx.fillRect(0,211,virtualWidth,35);
-      ctx.fillStyle="#e0e7ea";ctx.fillRect(x-w/2,144,w,74);
-      ctx.fillStyle="#fff";ctx.fillRect(x-w/2+3,147,w-6,66);
-      for(let row=0;row<2;row++)for(let col=0;col<10;col++){ctx.fillStyle="#a3b3c4";ctx.fillRect(x-w/2+12+col*19,158+row*25,7,12);}
-      ctx.fillStyle="#e7ebef";ctx.fillRect(x-44,151,88,63);
-      ctx.fillStyle="#fff";
-      for(let i=0;i<5;i++)ctx.fillRect(x-37+i*17,153,8,59);
-      ctx.beginPath();ctx.moveTo(x-53,151);ctx.lineTo(x,120);ctx.lineTo(x+53,151);ctx.closePath();ctx.fill();
-      line([[x-49,216],[x+49,216]],"#c2cdd6",5);
-      line([[x,123],[x,92]],"#8391a6",2);
-      for(let i=0;i<6;i++){ctx.fillStyle=i%2?"#fff":"#c5828c";ctx.fillRect(x+1,92+i*2.5,28,2.5);}
-      ctx.fillStyle="#637ba5";ctx.fillRect(x+1,92,12,8);
+    // O modo de movimento reduzido congela apenas a paralaxe.
+    const distance=prefersReducedMotion()?0:run.distance;
+    const sky=ctx.createLinearGradient(0,0,0,WORLD.ground);
+    sky.addColorStop(0,stage.sky);sky.addColorStop(1,"#ffffff");
+    ctx.fillStyle=sky;ctx.fillRect(0,0,virtualWidth,WORLD.height);
+    circle(virtualWidth-64,54,20,"#ffffff80");
+    // Nuvens esparsas, altas e deslocadas da área dos chefões.
+    for(let i=0;i<2;i++){
+      const x=wrap(155+i*360-distance*.026,virtualWidth+180)-65;
+      cloud(x,69+(i%2)*25);
     }
-    backdropMemes(stage,decorativeDistance);
-    // Pequeno avião e linha pontilhada indicam a viagem sem distrair da pista.
-    ctx.save(); ctx.translate(virtualWidth-135,83);ctx.fillStyle=stage.ink;ctx.globalAlpha*=.45;
-    ctx.beginPath();ctx.moveTo(0,-9);ctx.lineTo(4,-1);ctx.lineTo(15,4);ctx.lineTo(15,7);ctx.lineTo(3,4);ctx.lineTo(2,12);ctx.lineTo(6,15);ctx.lineTo(6,17);ctx.lineTo(0,15);ctx.lineTo(-6,17);ctx.lineTo(-6,15);ctx.lineTo(-2,12);ctx.lineTo(-3,4);ctx.lineTo(-15,7);ctx.lineTo(-15,4);ctx.lineTo(-4,-1);ctx.closePath();ctx.fill();ctx.restore();
+    layeredHorizon(stage,distance);
+    landmark(stage);
+    // O solo é o mesmo em todos os destinos, por clareza de jogabilidade.
     ctx.fillStyle=stage.ground;ctx.fillRect(0,WORLD.ground,virtualWidth,WORLD.height-WORLD.ground);
     line([[0,WORLD.ground],[virtualWidth,WORLD.ground]],stage.ink,2);
-    const offset=decorativeDistance%64;
-    for(let x=-offset;x<virtualWidth;x+=64)line([[x,272],[x+25,272]],"#ffffffaa",3);
+    const offset=distance%84;
+    for(let x=-offset;x<virtualWidth;x+=84)line([[x,274],[x+31,274]],"#ffffffb0",3);
   }
   function sceneTitle(stage) {
     ctx.fillStyle=stage.ink;
