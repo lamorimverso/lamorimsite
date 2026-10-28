@@ -434,3 +434,17 @@ summary:focus-visible, #runner-canvas:focus-visible { outline: 3px solid #a994c8
 .game-loading-note[hidden] {display:none!important}
 .game-sound[disabled],#game-start[disabled] {opacity:.65;cursor:progress}
 #runner-canvas,#game-jump {touch-action:manipulation;-webkit-user-select:none;user-select:none}
+
+/* Playlist opcional de jingles de 2026: recolhida por padrão. */
+.game-playlist {margin-top:14px;border-top:1px solid var(--line);padding-top:5px}
+.game-playlist summary {padding:9px 0;font-size:12px;font-weight:750;cursor:pointer}
+.game-playlist p {font-size:11px;color:var(--muted);line-height:1.55}
+.game-playlist-choices {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0}
+.game-playlist-choices button,.game-playlist #game-playlist-stop {min-height:43px;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font:650 11px system-ui;text-align:left;cursor:pointer}
+.game-playlist-choices button[aria-pressed="true"] {background:#f3edfa;border-color:#9070b1}
+.game-playlist button:focus-visible {outline:3px solid #a994c8;outline-offset:2px}
+#game-playlist-player[hidden] {display:none!important}
+#game-playlist-frame {display:block;width:100%;aspect-ratio:16 / 9;height:auto;min-height:170px;border:0;border-radius:8px;background:#24202a}
+.game-playlist #game-playlist-stop {margin-top:8px;min-height:38px;text-align:center}
+.game-playlist .game-playlist-notice {font-size:10px}
+@media(max-width:420px){.game-playlist-choices {grid-template-columns:1fr}.game-playlist-choices button {min-height:42px}}
