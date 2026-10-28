@@ -257,7 +257,7 @@ test('interface clean destaca retrato e percentual no celular e desktop', async 
     }
     await page.locator('.hero-play').click();
     assert.ok(await page.locator('#game').isVisible());
-    assert.match(await page.locator('#share-message').textContent(),/copiado|compartilhado|Copie/i);
+    await page.waitForFunction(()=>/copiado|compartilhado|Copie/i.test(document.getElementById('share-message').textContent));
     assert.equal(await page.locator('.hero-play').textContent(),'Compartilhar ↗');
     assert.equal(await page.locator('#music-toggle').count(),0);
     assert.equal(await page.locator('#share').count(),1);
