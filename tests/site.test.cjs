@@ -118,8 +118,8 @@ test('layout e controles cabem em 320, 390, 768 e 1440 pixels', async () => {
       const canvas = await page.locator('#runner-canvas').boundingBox();
       assert.ok(canvas.width <= width && canvas.height >= 150);
     }
-    await page.locator('.sources summary').click();
-    assert.equal(await page.getByRole('heading',{name:'Atenção: ressalva jurídica'}).isVisible(),true);
+    assert.equal(await page.locator('.sources').count(),0);
+    assert.equal(await page.locator('.compact-legal a').isVisible(),true);
     await page.getByRole('button',{name:'Começar corrida',exact:true}).hover();
     const contrast = await page.locator('#game-start').evaluate(button => {
       const style=getComputedStyle(button);
@@ -253,13 +253,15 @@ test('interface clean destaca retrato e percentual no celular e desktop', async 
       const play = await page.locator('.hero-play').boundingBox();
       assert.ok(play.height >= 44 && play.width >= 44);
       assert.equal(await page.locator('.game-itinerary').evaluate(x => x.open),false);
-      assert.equal(await page.locator('.game-help').evaluate(x => x.open),false);
+      assert.equal(await page.locator('.game-help').count(),0);
       const game = await page.locator('#runner-canvas').boundingBox();
       const stage = await page.locator('.game-topline').boundingBox();
       assert.ok(stage.y < game.y, `HUD e cenário devem anteceder a pista em ${width}px`);
     }
     await page.locator('.hero-play').click();
     assert.ok(await page.locator('#game').isVisible());
+    assert.match(await page.locator('#share-message').textContent(),/copiado|compartilhado|Copie/i);
+    assert.equal(await page.locator('.hero-play').textContent(),'Compartilhar ↗');
     assert.equal(await page.locator('#music-toggle').count(),1);
     assert.equal(await page.locator('#share').count(),1);
     assert.deepEqual(errors,[]);
@@ -293,8 +295,8 @@ test('desktop replica a coluna única do celular sem excesso de texto exposto', 
       assert.ok(geometry.photoY < geometry.counterY,`retrato deve anteceder contagem: ${width}`);
       assert.ok(geometry.viewportWidth >= 240 && geometry.viewportHeight >= 150,`pista legível em ${width}: ${JSON.stringify({w:geometry.viewportWidth,h:geometry.viewportHeight})}`);
       assert.equal(await page.locator('.game-itinerary').evaluate(e=>e.open),false);
-      assert.equal(await page.locator('.game-help').evaluate(e=>e.open),false);
-      assert.equal(await page.locator('.game-guide').evaluate(e=>e.open),false);
+      assert.equal(await page.locator('.game-help').count(),0);
+      assert.equal(await page.locator('.game-guide').count(),0);
     }
     assert.equal(await page.locator('#game').getAttribute('data-ammo'),'none');
     assert.equal(await page.locator('.game-hud .power-chip').isVisible(),false);
@@ -302,7 +304,7 @@ test('desktop replica a coluna única do celular sem excesso de texto exposto', 
     assert.equal(await page.locator('#game-stage-name').isVisible(),false);
     assert.equal(await page.locator('#game-lives').isVisible(),true);
     assert.equal(await page.locator('#game-passports').isVisible(),true);
-    assert.equal(await page.locator('.sources summary').isVisible(),true);
+    assert.equal(await page.locator('.site-header nav a').count(),3);
     assert.deepEqual(errors,[]);
   }finally{await context.close();}
 });
@@ -341,8 +343,8 @@ test('referência minimalista mantém mesma hierarquia no desktop e celular sem 
     }
     assert.equal(await page.locator('#music-toggle').count(),1);
     assert.equal(await page.locator('#share').count(),1);
-    assert.equal(await page.locator('.sources').evaluate(x=>x.open),false);
-    assert.equal(await page.locator('.game-help').evaluate(x=>x.open),false);
+    assert.equal(await page.locator('.sources').count(),0);
+    assert.equal(await page.locator('.game-help').count(),0);
     assert.deepEqual(errors,[]);
   }finally{await context.close();}
 });
@@ -389,7 +391,7 @@ test("HUD do chefe surge pela distância e some ao vencer sem poluir a pista", a
     const expectedHP=({xandao:'14',haddad:'16',lula:'20'})[await page.locator('#game').getAttribute('data-boss')];
     assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuenow'),expectedHP);
     assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuemax'),expectedHP);
-    assert.equal(await page.locator('.game-help').evaluate(e=>e.open),false);
+    assert.equal(await page.locator('.game-help').count(),0);
     assert.equal(await page.locator('#runner-canvas').isVisible(),true);
     await page.evaluate(()=>{
       const run=globalThis.__testRun;
@@ -710,7 +712,8 @@ test('um toque não duplica o salto entre pointerdown e click de compatibilidade
 test('playlist de 2026 somente carrega player após clique e pode ser interrompida',async()=>{
  const {context,page,errors}=await open({viewport:{width:390,height:844}});
  try{
-  await page.locator('#game-playlist').evaluate(element=>{element.open=true;});
+  await page.locator('#musicas').scrollIntoViewIfNeeded();
+  assert.equal(await page.locator('#musicas .game-playlist-choices button').count(),13);
   assert.equal(await page.locator('#game-playlist-frame').getAttribute('src'),null);
   await page.locator('[data-election-track="bota"]').click();
   const url=await page.locator('#game-playlist-frame').getAttribute('src');
@@ -720,6 +723,26 @@ test('playlist de 2026 somente carrega player após clique e pode ser interrompi
   await page.locator('#game-playlist-stop').click();
   assert.equal(await page.locator('#game-playlist-frame').getAttribute('src'),null);
   assert.equal(await page.locator('#game-playlist-player').isVisible(),false);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('o topo oferece três tópicos claros, a música fica em sua seção, sem controles duplicados',async()=>{
+ const {context,page,errors}=await open({viewport:{width:320,height:820}});
+ try{
+  const nav=page.locator('.site-header nav a');
+  assert.deepEqual(await nav.allTextContents(),['Tá na hora','Corre, Flávio!','Músicas']);
+  assert.deepEqual(await nav.evaluateAll(elements=>elements.map(e=>e.getAttribute('href'))),['#contagem','#game','#musicas']);
+  assert.equal(await page.locator('#share').count(),1);
+  assert.equal(await page.locator('#music-toggle').count(),1);
+  assert.equal(await page.locator('#game-playlist').count(),0);
+  assert.equal(await page.locator('.sources').count(),0);
+  assert.equal(await page.locator('.game-help').count(),0);
+  assert.equal(await page.locator('#musicas').count(),1);
+  await page.locator('.nav-music').click();
+  await page.waitForFunction(()=>location.hash==='#musicas');
+  assert.equal(await page.locator('.music-catalog-heading').isVisible(),true);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
