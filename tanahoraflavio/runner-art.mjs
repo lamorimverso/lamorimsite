@@ -1,4 +1,4 @@
-import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=20261028-sprites-v4";
+import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=20261028-fugindo-v1";
 // Personagens da prancha em atlas PNG; itens e perigos continuam leves em Canvas.
 const INK='#292337',SKIN='#edb57d',CREAM='#fff6e5';
 function oval(c,x,y,rx,ry,fill,stroke=INK,w=1.8){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=w;c.stroke();}}
@@ -8,7 +8,7 @@ function line(c,points,color=INK,width=2){c.beginPath();points.forEach(([x,y],i)
 function text(c,value,x,y,size=7,color=CREAM){c.fillStyle=color;c.font='900 '+size+'px system-ui';c.textAlign='center';c.fillText(value,x,y);}
 const COATS={flavio:'#754595',pf:'#284c70',janones:'#3e6c9c',army:'#68764c',boulos:'#7c558b',dino:'#89634b',xandao:'#393044',haddad:'#286778',lula:'#a33349',joice:'#294d77'};
 
-export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait} from "./runner-sprites.mjs?v=20261028-sprites-v4";
+export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait} from "./runner-sprites.mjs?v=20261028-fugindo-v1";
 export function drawItem(c,{type,x,y,scale=1}){
  c.save();c.translate(x,y);c.scale(scale,scale);
  if(type==='shield'){
@@ -24,6 +24,14 @@ export function drawItem(c,{type,x,y,scale=1}){
   else{oval(c,-1,-2,6.5,6.5,'#274d80','#f2cf77',1.5);line(c,[[-7,-2],[5,-2]],'#f2cf77',1);line(c,[[-1,-8],[-1,4]],'#f2cf77',1);line(c,[[-6,10],[5,10]],'#f2cf77',1.5);}
  }c.restore();
 }
+// Inimigos com um único quadro ganham passos discretos, sem alterar a
+// física da colisão. Com movimento reduzido (phase=0), ficam estáticos.
+export function enemyMotionFor(type,phase=0,x=0){
+ if(!['pf','janones','army','boulos','dino','xandao','haddad','lula'].includes(type)
+   ||!Number.isFinite(phase)||phase<=0)return {bob:0,lean:0};
+ const stride=phase*.8+(Math.abs(x)%67)/67*Math.PI*2;
+ return {bob:-Math.abs(Math.sin(stride))*2.4,lean:Math.sin(stride)*.034};
+}
 export function drawThreat(c,item,ground,phase){
  const x=item.x+item.width/2;c.save();c.translate(x,ground);
  if(item.type==='barrier'){box(c,-22,-28,44,12,'#f1bd65');for(let i=-15;i<20;i+=14)line(c,[[i,-27],[i+7,-17]],'#543b42',4);line(c,[[-15,-16],[-17,0]],INK,4);line(c,[[15,-16],[17,0]],INK,4);}
@@ -31,7 +39,11 @@ export function drawThreat(c,item,ground,phase){
  else if(item.type==='stamp'){box(c,-21,-15,42,13,'#a53e54');box(c,-8,-31,16,16,'#81584a');line(c,[[-23,-1],[23,-1]],'#e1a05e',3);}
  else if(item.type==='receipts'){for(let i=0;i<3;i++){box(c,-18+i*10,-34+i*4,20,25,'#fff1cf',2);for(let j=0;j<3;j++)line(c,[[-14+i*10,-28+i*4+j*5],[-3+i*10,-28+i*4+j*5]],'#417884',1.5);}}
  else if(item.type==='sound'){for(let i=0;i<3;i++){c.beginPath();c.ellipse(-13+i*14,-19,7,18,0,-Math.PI/2,Math.PI/2);c.strokeStyle=i===1?'#e8aa50':'#b64354';c.lineWidth=4;c.stroke();}}
- else drawActor(c,{type:item.type,x:0,y:0,scale:item.height/66,phase});
+ else {
+  const movement=enemyMotionFor(item.type,phase,x);
+  c.translate(0,movement.bob);c.rotate(movement.lean);
+  drawActor(c,{type:item.type,x:0,y:0,scale:item.height/66,phase});
+ }
  c.restore();
 }
 export function drawShot(c,shot,x,y){
