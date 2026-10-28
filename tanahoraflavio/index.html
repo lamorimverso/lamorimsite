@@ -84,20 +84,15 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
   <link rel="stylesheet" href="enhancements.css?v=20261027-mobile-desktop5">
-  <link rel="stylesheet" href="minimal.css?v=20261028-three-topics-v1" >
+  <link rel="stylesheet" href="minimal.css?v=20261028-no-music-v1" >
   <script type="module" src="runner.mjs?v=20261028-fugindo-v1"></script>
-  <script type="module" src="runner-playlist.mjs?v=20261028-three-topics-v1"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
   <div class="wrap">
     <header class="site-header">
       <a class="wordmark" href="#contagem" aria-label="Tá na hora, Flávio — início"><span aria-hidden="true">◷</span> tá na hora<span class="wordmark-dot">.</span></a>
-      <nav class="section-navigation" aria-label="Três tópicos do site">
-        <a class="nav-time" href="#contagem">Tá na hora</a>
-        <a class="nav-game" href="#game">Corre, Flávio!</a>
-        <a class="nav-music" href="#musicas">Músicas</a>
-      </nav>
+
     </header>
 <main id="conteudo" tabindex="-1">
 
@@ -196,66 +191,6 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         <noscript>Habilite o JavaScript para jogar.</noscript>
       </section>
 
-      <section class="music-catalog" id="musicas" aria-labelledby="music-catalog-title">
-        <div class="music-catalog-heading">
-          <h2 id="music-catalog-title">Músicas e memes</h2>
-          <p>Jingles, sátiras e músicas que circularam nas eleições. Escolha o que quer ouvir — não há reprodução automática sem clique.</p>
-        </div>
-        <section class="music" id="musica" aria-label="Música Tá na Hora do Jair Já Ir Embora">
-          <div class="music-copy">
-            <h3>♫ Tá na Hora do Jair Já Ir Embora <small>Tiago Doidão e Juliano Maderada · 2022</small></h3>
-            <button type="button" class="audio-button" id="music-toggle">▶ Tocar música</button>
-          </div>
-          <p class="audio-status" id="audio-status" role="status" aria-live="polite">Preparando a música…</p>
-          <audio id="music-native" preload="none" loop aria-label="Tá na Hora do Jair Já Ir Embora"></audio>
-          <div class="music-panel" id="music-panel" hidden>
-            <div class="music-frame">
-              <iframe id="music-iframe" width="310" height="215" title="Tá na Hora do Jair Já Ir Embora — YouTube"
-                referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-            </div>
-          </div>
-          <a class="music-source-link" href="https://www.youtube.com/watch?v=RTMiC5WturY" target="_blank" rel="noopener noreferrer">Ouvir no YouTube</a>
-        </section>
-        <section class="music-collection" aria-labelledby="music-collection-heading">
-          <h3 id="music-collection-heading">Jingles e faixas de 2026</h3>
-          <p>Repertório de diferentes campanhas e artistas, incluindo músicas que viraram meme. Seleção informativa e satírica, sem apoio eleitoral.</p>
-          <div class="game-playlist-choices" role="group" aria-label="Selecionar música de 2026">
-            <button type="button" data-election-track="lula" aria-pressed="false">Rap do Silva · Lula</button>
-            <button type="button" data-election-track="bota" aria-pressed="false">Bota Pra Virar · Igor Kannário</button>
-            <button type="button" data-election-track="flavio" aria-pressed="false">Fé que o Brasil vai vencer · Flávio</button>
-            <button type="button" data-election-track="renan" aria-pressed="false">A Vingança do Povo · Renan Santos</button>
-            <button type="button" data-election-track="caiado" aria-pressed="false">Vamos Endireitar o Brasil · Caiado</button>
-            <button type="button" data-election-track="clariana" aria-pressed="false">É Claro que É Clariana</button>
-            <button type="button" data-election-track="augusto" aria-pressed="false">Augusto Cury Chegou</button>
-            <button type="button" data-election-track="tropa" aria-pressed="false">Tropa do Bolsonaro · Flávio</button>
-            <button type="button" data-election-track="coracao" aria-pressed="false">Coração, Vem Cá · Lula</button>
-            <button type="button" data-election-track="tapete" aria-pressed="false">Tapete Vermelho · Lula</button>
-            <button type="button" data-election-track="samara" aria-pressed="false">Negra no Poder · Samara Martins</button>
-            <button type="button" data-election-track="zema" aria-pressed="false">Zema, Zema, Zema</button>
-            <button type="button" data-election-track="coletanea" aria-pressed="false">Coletânea dos jingles de 2026</button>
-          </div>
-          <p id="game-playlist-status" role="status" aria-live="polite">Selecione uma música para abrir o player.</p>
-          <div id="game-playlist-player" hidden>
-            <iframe id="game-playlist-frame" title="Jingles e músicas das eleições de 2026" loading="lazy"
-              allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-            <div class="music-player-actions">
-              <button id="game-playlist-stop" type="button">■ Parar</button>
-              <a id="game-playlist-open" href="https://www.youtube.com/watch?v=-X64_csaUhM" target="_blank" rel="noopener noreferrer">Abrir no YouTube</a>
-            </div>
-          </div>
-          <div class="music-memes">
-            <h3>Mais memes eleitorais</h3>
-            <p>Versões que circularam nas redes, com gravações e autores variáveis:</p>
-            <div class="music-meme-links">
-              <a href="https://www.youtube.com/results?search_query=Tariflavio+pagodao+eleicoes+2026" target="_blank" rel="noopener noreferrer">TariFlávio · pagodão satírico</a>
-              <a href="https://www.youtube.com/results?search_query=Foi+o+Osmarzinho+Flavio+Bolsonaro+2026" target="_blank" rel="noopener noreferrer">Foi o Osmarzinho · versão Flávio</a>
-              <a href="https://www.youtube.com/results?search_query=Flavio+Bolsonaro+2026+Pra+seguir+em+frente+jingle" target="_blank" rel="noopener noreferrer">Pra Seguir em Frente · Flávio</a>
-              <a href="https://www.youtube.com/results?search_query=Lula+2026+Pode+Espalhar+jingle" target="_blank" rel="noopener noreferrer">Pode Espalhar · Lula</a>
-            </div>
-          </div>
-          <p class="game-playlist-notice">Os vídeos são reproduzidos pelo YouTube, sujeitos à disponibilidade e aos direitos dos titulares. Alguns memes abrem uma busca, pois existem versões diferentes. Nenhum áudio é copiado ou hospedado aqui.</p>
-        </section>
-      </section>
       <p class="compact-legal">Humor e sátira. O encerramento do mandato não implica perda automática de foro em todos os processos. <a href="https://noticias.stf.jus.br/postsnoticias/acoes-contra-autoridades-permanecem-no-stf-mesmo-apos-saida-do-cargo/" target="_blank" rel="noopener noreferrer">Entenda a regra do STF</a>.</p>
     </main>
     <footer>Projeto independente de humor.</footer>
@@ -294,185 +229,6 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
       else {$("share-message").textContent="Copie o endereço da barra do navegador.";}
     } catch(e) {if(e.name!=="AbortError")$("share-message").textContent="Copie o endereço da barra do navegador.";}
   });
-  // A música local roda diretamente quando publicada em musica.m4a.
-  // Sem o arquivo local, usa o player visível do YouTube, respeitando as
-  // restrições do navegador para áudio automático e as regras de exibição.
-  const playButton=$("music-toggle");
-  const status=$("audio-status");
-  const audio=$("music-native");
-  const panel=$("music-panel");
-  const iframe=$("music-iframe");
-  let mode="checking",player=null,ready=false;
-  let requested=false, clicked=false, muteFallbackTried=false, browserBlocked=false;
-  let intersectionObserver=null;
-  const say=t=>{status.textContent=t;};
-  const audioPlaying=()=>!audio.paused&&!audio.ended;
-  const videoPlaying=()=>ready&&player&&player.getPlayerState()===YT.PlayerState.PLAYING;
-  function musicUnavailable(message){
-    mode="unavailable";
-    requested=false;
-    panel.hidden=true;
-    playButton.disabled=true;
-    playButton.textContent="Música indisponível";
-    say(message);
-    if(ready&&player)player.pauseVideo();
-  }
-  function updateButton(){
-    if(mode==="unavailable")return;
-    if(mode==="native"){
-      playButton.textContent=audioPlaying()?"⏸ Pausar música":"▶ Tocar música";
-    }else if(mode==="youtube"&&ready){
-      const muted=player.isMuted();
-      playButton.textContent=videoPlaying()?(muted?"🔊 Ativar som":"⏸ Pausar música"):"▶ Tocar música";
-    }else{
-      playButton.textContent="▶ Tocar música";
-    }
-  }
-  async function playLocal(){
-    requested=true;
-    audio.muted=false;
-    try{
-      await audio.play();
-      say("");
-    }catch(error){
-      say("Toque em ▶ Tocar música para ouvir com som.");
-    }
-    updateButton();
-  }
-  audio.addEventListener("play",()=>{if(mode==="native"){updateButton();say("");}});
-  audio.addEventListener("pause",()=>{if(mode==="native")updateButton();});
-  audio.addEventListener("error",()=>{if(mode==="native"){startYouTube();}});
-  function playYoutubeWithSound(){
-    requested=true;
-    if(!ready||!player){startYouTube();say("Carregando…");return;}
-    panel.hidden=false;
-    player.unMute();
-    player.setVolume(100);
-    player.playVideo();
-    updateButton();
-    say("Se o navegador bloquear o som, toque em ▶ no vídeo.");
-  }
-  function tryVisibleAutoplay(){
-    if(!requested||clicked||!ready||panel.hidden||!document.hasFocus())return;
-    if(browserBlocked||videoPlaying())return;
-    // Reproduzir automaticamente somente quando o player estiver visível.
-    player.unMute();
-    player.setVolume(100);
-    player.playVideo();
-    say("");
-    setTimeout(()=>{
-      if(clicked||!requested||!ready||panel.hidden||videoPlaying()||muteFallbackTried)return;
-      muteFallbackTried=true;
-      player.mute();
-      player.playVideo();
-      say("Som automático bloqueado. Toque em 🔊 Ativar som.");
-      updateButton();
-    },2500);
-  }
-  function startYouTube(){
-    if(mode==="youtube"&&iframe.getAttribute("src"))return;
-    audio.pause();
-    mode="youtube";
-    panel.hidden=!requested;
-    say("Se não ouvir a música, toque em ▶ Tocar música.");
-    if(!requested){updateButton();return;}
-    iframe.src="https://www.youtube-nocookie.com/embed/RTMiC5WturY?enablejsapi=1&autoplay=0&playsinline=1&controls=1&loop=1&playlist=RTMiC5WturY&rel=0&origin="+encodeURIComponent(location.origin);
-    window.onYouTubeIframeAPIReady=()=>{
-      player=new YT.Player("music-iframe",{
-        events:{
-          onReady:event=>{
-            if(mode==="unavailable")return;
-            ready=true;
-            updateButton();
-            if(!requested)return;
-            if(clicked){playYoutubeWithSound();return;}
-            const frame=event.target.getIframe();
-            if("IntersectionObserver" in window){
-              intersectionObserver=new IntersectionObserver(entries=>{
-                if(entries.some(e=>e.intersectionRatio>=0.5)){
-                  tryVisibleAutoplay();
-                  intersectionObserver.disconnect();
-                }
-              },{threshold:[0.5,0.75]});
-              intersectionObserver.observe(frame);
-            }else{
-              // O botão manual permanece disponível em navegadores antigos.
-              say("Toque em ▶ Tocar música para ouvir.");
-            }
-          },
-          onStateChange:event=>{
-            if(mode==="unavailable")return;
-            if(event.data===YT.PlayerState.PLAYING){
-              updateButton();
-              say(event.target.isMuted()?"Vídeo sem som. Toque em 🔊 Ativar som.":"");
-            }else if(event.data===YT.PlayerState.PAUSED){
-              updateButton();
-            }else if(event.data===YT.PlayerState.ENDED&&requested){
-              event.target.playVideo();
-            }
-          },
-          onAutoplayBlocked:event=>{
-            if(mode==="unavailable")return;
-            browserBlocked=true;
-            if(!clicked&&!muteFallbackTried){
-              muteFallbackTried=true;
-              event.target.mute();
-              event.target.playVideo();
-            }
-            say("O navegador exige um toque para liberar o som.");
-            updateButton();
-          },
-          onError:()=>{
-            musicUnavailable("Não foi possível reproduzir aqui. Use o link da música no rodapé.");
-          }
-        }
-      });
-    };
-    const script=document.createElement("script");
-    script.src="https://www.youtube.com/iframe_api";
-    script.async=true;
-    script.onerror=()=>{
-      musicUnavailable("Não foi possível carregar a música. Veja o link no rodapé.");
-    };
-    document.head.appendChild(script);
-    updateButton();
-  }
-  window.addEventListener("game-playlist-start",()=>{
-    requested=false;
-    audio.pause();
-    if(ready&&player)player.pauseVideo();
-    updateButton();
-  });
-  playButton.addEventListener("click",()=>{
-    clicked=true;
-    requested=true;
-    if(mode==="native"){
-      if(audioPlaying()){requested=false;audio.pause();}
-      else{playLocal();}
-    }else if(mode==="youtube"){
-      if(ready&&videoPlaying()&&!player.isMuted()){
-        requested=false;
-        player.pauseVideo();
-        say("Música pausada.");
-      }else{
-        playYoutubeWithSound();
-      }
-    }else{
-      // Primeiro gesto também solicita a reprodução quando a verificação terminar.
-      say("Preparando a música…");
-    }
-    updateButton();
-  });
-  fetch("./musica.m4a",{method:"HEAD",cache:"no-store"})
-    .then(response=>{
-      if(!response.ok)throw new Error("Áudio local indisponível");
-      mode="native";
-      audio.src="./musica.m4a";
-      panel.hidden=true;
-      updateButton();
-      if(requested)playLocal();
-    })
-    .catch(()=>{startYouTube();});
 })();
 </script>
 </body>
