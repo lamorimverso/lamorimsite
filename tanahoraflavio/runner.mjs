@@ -1,4 +1,4 @@
-import { WORLD, PLAYER, PURSUERS, PICKUPS, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, advanceRun, stageAt, pursuitAt, scoreFor } from "./runner-core.mjs?v=20261028-boss-shots";
+import { WORLD, PLAYER, PURSUERS, PICKUPS, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, advanceRun, stageAt, stageTransitionAt, pursuitAt, scoreFor } from "./runner-core.mjs?v=20261028-scenery-crossfade";
 
 function initRunner() {
   const $ = id => document.getElementById(id);
@@ -31,6 +31,15 @@ function initRunner() {
 
   function updateUI() {
     const stage = stageAt(run.elapsed), score = scoreFor(run), pursuit = pursuitAt(run.elapsed);
+    const transition = stageTransitionAt(run.elapsed);
+    const banner = $("game-transition");
+    banner.hidden = run.status !== "running" || !transition.active;
+    if (!banner.hidden) {
+      const isApproaching = run.elapsed < transition.to.index * SCENE_SECONDS;
+      $("game-transition-label").textContent = isApproaching ? "PRÓXIMA PARADA" : "CHEGANDO EM";
+      $("game-transition-name").textContent = transition.to.name;
+      $("game-transition-progress").style.width = `${Math.round(transition.progress*100)}%`;
+    }
     const difficulty = difficultyAt(run.distance);
     const power = run.invisibleFor > 0 ? "invisible" : run.graceFor > 0 ? "recovery" : "none";
     if ((run.status === "over" || run.status === "won") && score > best) {
@@ -97,6 +106,7 @@ function initRunner() {
           const item = PICKUPS.find(item => item.type === run.lastPickup);
           messages.running = run.lastPickup === "invisible" ? "Invisibilidade ativada por 6 segundos. Atravesse os adversários!" : run.lastPickup === "chance" ? "Uma chance extra guardada. Ela protege você de uma colisão." : `${item?.name || "Item"} coletado: +${item?.value || 0} pontos.`;
         } else if (lastPower === "invisible" && power !== "invisible") messages.running = "A invisibilidade terminou. Volte a pular os adversários!";
+        if (lastStage >= 0 && stage.index !== lastStage) messages.running = `Chegamos a ${stage.name}! A corrida não para: continue desviando.`;
       }
       $("game-status").textContent = messages[run.status];
       section.querySelectorAll("[data-stage]").forEach((stop, index) => {
@@ -204,12 +214,46 @@ function initRunner() {
       ctx.fillStyle = stage.id === "argentina" ? "#cadcf1" : "#ded2e9";
     }
   }
+  // Duas camadas discretas para comunicar deslocamento sem criar colisões falsas.
+  // Velocidades diferentes dão profundidade (parallax) e continuam baratas no mobile.
+  function environmentalLayers(stage, distance) {
+    const far=distance*.045, near=distance*.13;
+    const wrap=(x,period)=>((x%period)+period)%period;
+    ctx.save();
+    ctx.fillStyle=stage.accent+"17";
+    for(let i=0;i<12;i++){
+      const x=wrap(i*120-far,virtualWidth+160)-80;
+      ctx.beginPath();
+      ctx.moveTo(x-38,219);
+      ctx.lineTo(x+24,173+i%3*9);
+      ctx.lineTo(x+86,219);
+      ctx.closePath();ctx.fill();
+    }
+    ctx.fillStyle=stage.ink+"23";
+    for(let i=0;i<10;i++){
+      const x=wrap(i*138-near,virtualWidth+120)-60;
+      if(stage.id==="rio"){
+        ctx.beginPath();ctx.ellipse(x+12,221,31,10,0,Math.PI,0);ctx.fill();
+      }else if(stage.id==="florida"){
+        ctx.fillRect(x,202,28,18);ctx.fillRect(x+8,191,10,11);
+      }else{
+        const height=18+(i*7)%19;
+        ctx.fillRect(x,220-height,22,height);
+        if(stage.id==="argentina"||stage.id==="casa-branca"){
+          ctx.fillStyle="#ffffff55";ctx.fillRect(x+7,221-height+5,4,5);
+          ctx.fillStyle=stage.ink+"23";
+        }
+      }
+    }
+    ctx.restore();
+  }
   function scenery(stage) {
     // Mantém obstáculos e salto em movimento; congela somente a decoração.
     const decorativeDistance = prefersReducedMotion() ? 0 : run.distance;
     ctx.fillStyle = stage.sky; ctx.fillRect(0,0,virtualWidth,WORLD.height);
     circle(virtualWidth-65,49,20,"#ebcc7880");
     for (let i=0;i<3;i++) cloud(((i*290 + 110 - decorativeDistance*.07) % (virtualWidth+180) + virtualWidth+180) % (virtualWidth+180)-70, 65+(i%2)*30);
+    environmentalLayers(stage,decorativeDistance);
     if (stage.id === "brasilia") {
       const x = virtualWidth * .64;
       ctx.fillStyle="#c1d9c8";ctx.fillRect(0,218,virtualWidth,28);
@@ -264,13 +308,17 @@ function initRunner() {
       ctx.fillStyle="#637ba5";ctx.fillRect(x+1,92,12,8);
     }
     // Pequeno avião e linha pontilhada indicam a viagem sem distrair da pista.
-    ctx.save(); ctx.translate(virtualWidth-135,83);ctx.fillStyle=stage.ink;ctx.globalAlpha=.45;
+    ctx.save(); ctx.translate(virtualWidth-135,83);ctx.fillStyle=stage.ink;ctx.globalAlpha*=.45;
     ctx.beginPath();ctx.moveTo(0,-9);ctx.lineTo(4,-1);ctx.lineTo(15,4);ctx.lineTo(15,7);ctx.lineTo(3,4);ctx.lineTo(2,12);ctx.lineTo(6,15);ctx.lineTo(6,17);ctx.lineTo(0,15);ctx.lineTo(-6,17);ctx.lineTo(-6,15);ctx.lineTo(-2,12);ctx.lineTo(-3,4);ctx.lineTo(-15,7);ctx.lineTo(-15,4);ctx.lineTo(-4,-1);ctx.closePath();ctx.fill();ctx.restore();
     ctx.fillStyle=stage.ground;ctx.fillRect(0,WORLD.ground,virtualWidth,WORLD.height-WORLD.ground);
     line([[0,WORLD.ground],[virtualWidth,WORLD.ground]],stage.ink,2);
     const offset=decorativeDistance%64;
     for(let x=-offset;x<virtualWidth;x+=64)line([[x,272],[x+25,272]],"#ffffffaa",3);
-    ctx.fillStyle=stage.ink;ctx.font='650 11px system-ui, sans-serif';ctx.fillText(`${stage.index + 1}/${STAGES.length} · ${stage.name.toLocaleUpperCase("pt-BR")}`,20,26);
+  }
+  function sceneTitle(stage) {
+    ctx.fillStyle=stage.ink;
+    ctx.font='650 11px system-ui, sans-serif';
+    ctx.fillText(`${stage.index + 1}/${STAGES.length} · ${stage.name.toLocaleUpperCase("pt-BR")}`,20,26);
   }
   function bossFigure() {
     const boss = run.boss;
@@ -456,7 +504,18 @@ function initRunner() {
   }
   function draw() {
     ctx.setTransform(canvas.width/virtualWidth,0,0,canvas.height/WORLD.height,0,0);
-    scenery(stageAt(run.elapsed));
+    const stage = stageAt(run.elapsed);
+    const transition = stageTransitionAt(run.elapsed);
+    if (transition.active && !prefersReducedMotion()) {
+      scenery(transition.from);
+      ctx.save();
+      ctx.globalAlpha=transition.progress;
+      scenery(transition.to);
+      ctx.restore();
+    } else {
+      scenery(stage);
+    }
+    sceneTitle(stage);
     bossFigure();
     for(const item of run.pickups)pickup(item);
     for(const item of run.obstacles)obstacle(item);

@@ -18,6 +18,7 @@ Site estático em `tanahoraflavio/`, atualmente no repositório público `lamori
 
 ## Minigame: Corre, Flávio!
 
+- **Transições visuais**: os últimos 2 s de cada cenário e os primeiros 2 s do destino seguinte usam fusão progressiva (crossfade com smoothstep), além de duas camadas leves de parallax e um cartão discreto de destino. Personagem, obstáculos, tiros e pontuação nunca desaparecem e a corrida não é interrompida. Com preferência por movimento reduzido, a troca de cenário é direta, sem animação.
 - Corrida infinita fictícia e satírica: **Brasília (0–20 s) → Rio (20–40 s) → Argentina (40–60 s) → Flórida (60–80 s) → Casa Branca (a partir de 80 s)**. A pista continua até o jogador perder as vidas; não existe vitória automática ou limite de duração.
 - Toque na pista ou em **Pular**; teclado: Espaço ou seta para cima. Não existe botão ou atalho de pausa manual. Ao sair da aba, perder foco ou retirar a pista da tela, a simulação fica temporariamente suspensa internamente e retoma automaticamente sem prejudicar a partida. Não há início automático.
 - A perseguição começa com a **PF**. Entram **Xandão aos 15 s**, **Janones aos 30 s**, o **“exército do Lula” aos 45 s** e **Lula como perseguidor comum aos 60 s**. Os adversários anteriores continuam aparecendo. A velocidade aumenta e o intervalo entre adversários diminui até um mínimo de 1,35 s nas ondas comuns; todos podem ser saltados.

@@ -84,8 +84,8 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
   <link rel="stylesheet" href="enhancements.css?v=20261027-mobile-desktop5">
-  <link rel="stylesheet" href="minimal.css?v=20261027-portrait-balance" >
-  <script type="module" src="runner.mjs?v=20261028-boss-shots"></script>
+  <link rel="stylesheet" href="minimal.css?v=20261028-scene-banner" >
+  <script type="module" src="runner.mjs?v=20261028-scenery-crossfade"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -175,6 +175,11 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         </div>
         <div class="game-viewport">
           <canvas id="runner-canvas" width="900" height="300" tabindex="0" role="img" aria-label="Pista do jogo Corre, Flávio!" aria-describedby="game-instructions">Seu navegador não oferece Canvas. A contagem regressiva continua disponível acima.</canvas>
+          <div class="game-transition" id="game-transition" hidden aria-hidden="true">
+            <span id="game-transition-label">PRÓXIMA PARADA</span>
+            <strong id="game-transition-name">Rio de Janeiro</strong>
+            <div class="game-transition-track"><span id="game-transition-progress"></span></div>
+          </div>
         <div class="game-hud" aria-label="Perseguição e vantagens">
           <div class="pursuit-chip"><span class="sr-only">Na perseguição: </span><strong id="game-threat">1/5 · PF</strong></div>
           <div class="power-chip"><span class="sr-only">Vantagem ativa: </span><strong id="game-power">Sem efeito ativo</strong></div>
