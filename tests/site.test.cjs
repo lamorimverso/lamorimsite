@@ -56,7 +56,7 @@ async function openWithRun(options = {}, init) {
 
 test('o fundo usa a assinatura completa de Canvas ellipse, sem travar a inicialização',async()=>{
  const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner.mjs'),'utf8');
- const calls=[...source.matchAll(/ctx\\.ellipse\\(([^)]*)\\)/g)].map(match=>match[1]);
+ const calls=[...source.matchAll(/ctx\.ellipse\(([^)]*)\)/g)].map(match=>match[1]);
  assert.ok(calls.length>=4,'o desenho contém elipses decorativas e da personagem');
  for(const args of calls){
   assert.equal(args.split(',').length,7,'ellipse exige x, y, raioX, raioY, rotação, início e fim: '+args);
