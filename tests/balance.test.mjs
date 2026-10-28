@@ -72,3 +72,13 @@ test('um piloto que salta os obstáculos consegue coletar 100 passaportes sem pr
     assert.ok(run.bossesDefeated >= 1, 'o piloto também enfrenta chefes');
   }
 });
+
+test('itens raros possuem intervalos amplos e continuam alcançáveis', () => {
+  const first=difficultyAt(0),last=difficultyAt(900000);
+  assert.ok(first.pickupGap>=7);
+  assert.ok(first.passportGap>=4.5);
+  assert.ok(first.powerGap>=24);
+  assert.ok(last.pickupGap>first.pickupGap);
+  assert.ok(last.passportGap>first.passportGap);
+  assert.ok(last.powerGap>first.powerGap);
+});
