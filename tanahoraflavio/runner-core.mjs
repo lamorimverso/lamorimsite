@@ -92,7 +92,9 @@ export function bossAtRound(round,type) {
  return {foe,level,supreme,round:safe+1,attacks:Math.min(7,3+Math.min(level-1,3)+(supreme?1:0)),
   interval:Math.max(1.25,1.65-Math.min(level-1,4)*.07),health:({xandao:14,haddad:16,lula:20})[foe.type]+Math.min(level-1,4)*2};
 }
-function nextBossDistance(count,rng){return Math.floor(count/3)*25000+[3500,13500,23500][count%3]+random(rng)*700;}
+// O primeiro chefe só entra após aproximadamente 34 segundos de corrida efetiva.
+// Os próximos encontros continuam distribuídos pelo trajeto, sem se acumular.
+function nextBossDistance(count,rng){return Math.floor(count/3)*25000+[8500,16500,24000][count%3]+random(rng)*700;}
 function takeBoss(run,rng){
  if(!run.bossBag.length){
   run.bossBag=[...BOSS_ROSTER];
@@ -123,7 +125,12 @@ function advanceBoss(run,dt,rng){
   if(boss.fired>=boss.total){boss.total++;boss.remaining++;}
   const attackType={xandao:'stamp',haddad:'receipts',lula:'sound'}[boss.type];
   const [width,height]={stamp:[42,32],receipts:[44,40],sound:[48,38]}[attackType];
-  const attack={x:visibleWidth(run)-104,width,height,type:attackType,owner:boss.type,bossAttack:true,counted:false};
+  // Tiro de verdade: parte da mão do chefe, mira a posição do protagonista
+  // no instante do disparo e continua em linha reta, permitindo esquiva.
+  const x=visibleWidth(run)-104;
+  const attack={x,width,height,type:attackType,owner:boss.type,bossAttack:true,counted:false,
+   projectile:true,launchX:x+width/2,targetX:PLAYER.x+PLAYER.width/2,
+   launchY:77,targetY:run.player.y+PLAYER.height/2,y:77};
   run.obstacles.push(attack);boss.attackFlashFor=.26;boss.fired++;boss.nextAttack+=boss.interval+random(rng)*.25;return attack;
  }
 }
@@ -182,7 +189,14 @@ export function advanceRun(run,seconds,rng=Math.random){
  run.player.velocity-=1750*dt;run.player.y=Math.max(0,run.player.y+run.player.velocity*dt);
  if(run.player.y===0)run.player.velocity=0;
  run.shieldFor=Math.max(0,run.shieldFor-dt);run.graceFor=Math.max(0,run.graceFor-dt);
- for(const obstacle of run.obstacles)obstacle.x-=travel;
+ for(const obstacle of run.obstacles){
+  obstacle.x-=travel;
+  if(obstacle.projectile){
+   const span=Math.max(1,obstacle.launchX-obstacle.targetX);
+   const progress=Math.max(0,Math.min(1,(obstacle.launchX-(obstacle.x+obstacle.width/2))/span));
+   obstacle.y=obstacle.launchY+(obstacle.targetY-obstacle.launchY)*progress;
+  }
+ }
  for(const pickup of run.pickups)pickup.x-=travel;
  advanceShots(run,dt);resolveBossDodges(run,rng);
  run.obstacles=run.obstacles.filter(o=>o.x+o.width>-20);run.pickups=run.pickups.filter(p=>p.x>-30);
@@ -211,7 +225,10 @@ export function advanceRun(run,seconds,rng=Math.random){
    if(p.type==='passport'&&++run.passports%100===0){run.lives++;announce(run,'100 passaportes! Uma vida extra; total: '+run.lives+'.');}
   }return !hit;
  });
- if(run.shieldFor<=0&&run.graceFor<=0&&run.obstacles.some(o=>right>o.x+3&&left<o.x+o.width-3&&bottom<o.height&&top>0)){
+ if(run.shieldFor<=0&&run.graceFor<=0&&run.obstacles.some(o=>
+  right>o.x+3&&left<o.x+o.width-3&&(
+   o.projectile?(bottom<o.y+o.height/2&&top>o.y-o.height/2):(bottom<o.height&&top>0)
+  ))){
   run.lives--;announce(run,run.lives>0?'Vida extra usada! Restam '+run.lives+'.':'Bateu, perdeu! A fuga fictícia terminou.');
   if(run.lives<=0){run.status='over';return;}run.graceFor=RECOVERY_AFTER_EXTRA;
  }
