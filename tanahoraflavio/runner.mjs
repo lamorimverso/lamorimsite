@@ -24,6 +24,9 @@ function initRunner() {
   portrait.src = new URL("./retrato.webp", import.meta.url).href;
   portrait.addEventListener("load", () => draw());
   const pad = number => String(number).padStart(2, "0");
+  // A preferência pode mudar enquanto o jogo está aberto.
+  const motionPreference = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+  const prefersReducedMotion = () => motionPreference?.matches === true;
 
   function updateUI() {
     const stage = stageAt(run.elapsed), score = scoreFor(run), pursuit = pursuitAt(run.elapsed);
@@ -214,9 +217,11 @@ function initRunner() {
     }
   }
   function scenery(stage) {
+    // Mantém obstáculos e salto em movimento; congela somente a decoração.
+    const decorativeDistance = prefersReducedMotion() ? 0 : run.distance;
     ctx.fillStyle = stage.sky; ctx.fillRect(0,0,virtualWidth,WORLD.height);
     circle(virtualWidth-65,49,20,"#ebcc7880");
-    for (let i=0;i<3;i++) cloud(((i*290 + 110 - run.distance*.07) % (virtualWidth+180) + virtualWidth+180) % (virtualWidth+180)-70, 65+(i%2)*30);
+    for (let i=0;i<3;i++) cloud(((i*290 + 110 - decorativeDistance*.07) % (virtualWidth+180) + virtualWidth+180) % (virtualWidth+180)-70, 65+(i%2)*30);
     if (stage.id === "brasilia") {
       const x = virtualWidth * .64;
       ctx.fillStyle="#c1d9c8";ctx.fillRect(0,218,virtualWidth,28);
@@ -275,14 +280,14 @@ function initRunner() {
     ctx.beginPath();ctx.moveTo(0,-9);ctx.lineTo(4,-1);ctx.lineTo(15,4);ctx.lineTo(15,7);ctx.lineTo(3,4);ctx.lineTo(2,12);ctx.lineTo(6,15);ctx.lineTo(6,17);ctx.lineTo(0,15);ctx.lineTo(-6,17);ctx.lineTo(-6,15);ctx.lineTo(-2,12);ctx.lineTo(-3,4);ctx.lineTo(-15,7);ctx.lineTo(-15,4);ctx.lineTo(-4,-1);ctx.closePath();ctx.fill();ctx.restore();
     ctx.fillStyle=stage.ground;ctx.fillRect(0,WORLD.ground,virtualWidth,WORLD.height-WORLD.ground);
     line([[0,WORLD.ground],[virtualWidth,WORLD.ground]],stage.ink,2);
-    const offset=run.distance%64;
+    const offset=decorativeDistance%64;
     for(let x=-offset;x<virtualWidth;x+=64)line([[x,272],[x+25,272]],"#ffffffaa",3);
     ctx.fillStyle=stage.ink;ctx.font='650 11px system-ui, sans-serif';ctx.fillText(`${stage.index + 1}/${STAGES.length} · ${stage.name.toLocaleUpperCase("pt-BR")}`,20,26);
   }
   function bossFigure() {
     const boss = run.boss;
     if (!boss) return;
-    const idleMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    const idleMotion = prefersReducedMotion();
     const bob = idleMotion ? 0 : Math.sin(run.elapsed * 4) * 3;
     const x = virtualWidth - 76, y = 155 + bob;
     ctx.save();
@@ -328,7 +333,7 @@ function initRunner() {
   }
 
   function character() {
-    const stride = run.player.y === 0 && run.status === "running" ? Math.sin(run.elapsed*22)*9 : 4;
+    const stride = prefersReducedMotion() ? 0 : run.player.y === 0 && run.status === "running" ? Math.sin(run.elapsed*22)*9 : 4;
     ctx.save();ctx.translate(PLAYER.x+17,WORLD.ground-run.player.y);
     ctx.fillStyle="#414052";ctx.globalAlpha=.09;ctx.beginPath();ctx.ellipse(0,run.player.y+3,21,4,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
     if (run.extraChance || run.invisibleFor > 0) {
@@ -347,7 +352,7 @@ function initRunner() {
     circle(20+stride*.4,-29,3,"#ddbb9d");
     ctx.save();
     // Leve inclinação do retrato acompanha o movimento (sem alterar a imagem).
-    if(!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) {
+    if(!prefersReducedMotion()) {
       const tilt = run.player.y > 0 ? -.075 : Math.sin(run.elapsed*9)*.035;
       ctx.translate(0,-52);ctx.rotate(tilt);ctx.translate(0,52);
     }
@@ -361,7 +366,7 @@ function initRunner() {
     if (!foe) return;
     const x=item.x+item.width/2, y=WORLD.ground;
     ctx.save();ctx.translate(x,y);ctx.scale(item.width/34,item.height/54);
-    const stride=run.status==="running" ? Math.sin(run.elapsed*18+x*.02)*5 : 2;
+    const stride=prefersReducedMotion() ? 0 : run.status==="running" ? Math.sin(run.elapsed*18+x*.02)*5 : 2;
     line([[-5,-18],[-7+stride,-8],[-8-stride,0]],"#343847",6);
     line([[5,-18],[7-stride,-8],[8+stride,0]],"#444556",6);
     ctx.fillStyle=foe.color;
