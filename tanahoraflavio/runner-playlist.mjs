@@ -19,8 +19,9 @@ export function initElectionPlaylist(){
  const frame=document.getElementById('game-playlist-frame'),
    box=document.getElementById('game-playlist-player'),
    label=document.getElementById('game-playlist-status'),
-   stop=document.getElementById('game-playlist-stop');
- if(!frame||!box||!label||!stop)return;
+   stop=document.getElementById('game-playlist-stop'),
+   external=document.getElementById('game-playlist-open');
+ if(!frame||!box||!label||!stop||!external)return;
  const buttons=[...document.querySelectorAll('[data-election-track]')];
  for(const button of buttons)button.addEventListener('click',()=>{
   const track=ELECTION_TRACKS.find(t=>t.id===button.dataset.electionTrack);
@@ -29,6 +30,7 @@ export function initElectionPlaylist(){
   window.dispatchEvent(new Event('game-playlist-start'));
   frame.src=playlistEmbedUrl(track.id);
   frame.title='Playlist eleitoral de 2026: '+track.title;
+  external.href='https://www.youtube.com/watch?v='+track.video;
   box.hidden=false;label.textContent='Selecionado: '+track.title+
    '. Se o navegador bloquear o som, use o botão Play do vídeo.';
   buttons.forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
