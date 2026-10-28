@@ -1,6 +1,6 @@
 import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, difficultyAt, createRun, startRun, jumpRun, crouchRun, advanceRun, stageAt, stageTransitionAt, scoreFor } from "./runner-core.mjs?v=20261028-dodge-km-v1";
 import { RAID_FACTS } from "./runner-core.mjs?v=20261028-dodge-km-v1";
-import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor } from "./runner-art.mjs?v=20261028-dodge-km-v1";
+import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep } from "./runner-art.mjs?v=20261028-clean-scene-v1";
 import { createGameAudio } from "./runner-audio.mjs?v=20261028-aimed-shots-v1";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=20261028-aimed-shots-v1";
 
@@ -23,6 +23,7 @@ function initRunner() {
   let run=createRun(),frameId=0;
   const frameClock=createFrameClock(performance.now());
   let spritesReady=false,spritesFailed=false,loadedSprites=0,loadingSprites=false,landingUntil=0;
+  let crouchPose=0,lastPoseFrame=performance.now();
   let windowFocused = true, inView = true;
   let lastStatus = "", lastStage = -1, virtualWidth = 900, measuredWidth = 0, measuredDpr = 0;
   let lastCollected=0,lastPower="";
@@ -168,6 +169,7 @@ function initRunner() {
     cancelAnimationFrame(frameId);frameId=0;resumeFromGesture();
     audio.stop();audio.prime();lastRaidKey="";
     run=createRun();run.viewportWidth=virtualWidth;startRun(run);landingUntil=0;
+    crouchPose=0;lastPoseFrame=performance.now();
     lastCollected=0;lastPower="";lastStatus="";lastEvents=0;lastLives=1;
     resetFrameClock(frameClock,performance.now());
     updateUI();draw();syncActivity();canvas.focus({preventScroll:true});
@@ -400,19 +402,44 @@ function initRunner() {
     }
   }
   function character(){
-    const active=run.status==="running"&&!prefersReducedMotion(),airborne=run.player.y>0;
-    const phase=active?run.elapsed*12:0,bounce=active&&!airborne?Math.abs(Math.sin(phase))*2:0;
-    if(active&&!airborne){circle(PLAYER.x-8-run.distance%19,WORLD.ground-2,2.8,"#a6a7aa70");circle(PLAYER.x-30,WORLD.ground-4,1.7,"#aaa2a660");}
-    ctx.save();ctx.globalAlpha=.12;ctx.fillStyle="#292337";ctx.beginPath();ctx.ellipse(PLAYER.x+17,WORLD.ground+4,22,4,0,0,Math.PI*2);ctx.fill();ctx.restore();
-    if(run.shieldFor>0){
-      ctx.save();ctx.strokeStyle="#bda15b";ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.beginPath();ctx.ellipse(PLAYER.x+17,WORLD.ground-run.player.y-35,27,47,0,0,Math.PI*2);ctx.stroke();ctx.restore();
-      drawItem(ctx,{type:"shield",x:PLAYER.x+17,y:WORLD.ground-run.player.y-91,scale:.38});
+    const airborne=run.player.y>0,reduced=prefersReducedMotion();
+    const active=run.status==="running"&&!reduced;
+    const phase=active?run.elapsed*12:0;
+    const crouchTarget=run.player.crouching&&!airborne;
+    const frameTime=performance.now();
+    crouchPose=crouchAnimationStep(crouchPose,crouchTarget,(frameTime-lastPoseFrame)/1000,reduced);
+    lastPoseFrame=frameTime;
+    const bounce=active&&!airborne?(1-crouchPose)*Math.abs(Math.sin(phase))*2:0;
+    if(active&&!airborne){
+      circle(PLAYER.x-8-run.distance%19,WORLD.ground-2,2.8,"#a6a7aa70");
+      // Pequena poeira que acompanha o deslize, sem afetar a pista.
+      if(crouchPose>.22){
+        circle(PLAYER.x-14,WORLD.ground-5,2.5,"#a6a7aa60");
+        circle(PLAYER.x-23,WORLD.ground-8,1.5,"#a6a7aa55");
+      }
     }
-    // O Canvas espelha os quadros originais para o Flávio fugir olhando para +X (direita).
+    ctx.save();ctx.globalAlpha=.12;ctx.fillStyle="#292337";
+    ctx.beginPath();ctx.ellipse(PLAYER.x+17,WORLD.ground+4,22+crouchPose*6,4,0,0,Math.PI*2);ctx.fill();ctx.restore();
+    if(run.shieldFor>0){
+      ctx.save();ctx.strokeStyle="#bda15b";ctx.lineWidth=2;ctx.setLineDash([5,4]);
+      ctx.beginPath();ctx.ellipse(PLAYER.x+17,WORLD.ground-run.player.y-35+crouchPose*12,27,47-crouchPose*15,0,0,Math.PI*2);
+      ctx.stroke();ctx.restore();
+      drawItem(ctx,{type:"shield",x:PLAYER.x+17,y:WORLD.ground-run.player.y-91+crouchPose*35,scale:.38});
+    }
+    // Animação agachar ↔ levantar dura ~150ms: abaixa o corpo, flexiona
+    // a postura e alterna para o quadro de aterrissagem. Sem troca de hitbox.
     const feet=WORLD.ground-run.player.y-bounce;
     ctx.save();
-    if(run.player.crouching&&!airborne){ctx.translate(0,feet);ctx.scale(1,.47);ctx.translate(0,-feet);}
-    drawActor(ctx,{type:"flavio",x:PLAYER.x+17,y:feet,scale:.95,phase,airborne,landing:run.elapsed<landingUntil,hurt:run.status==="over",alpha:run.shieldFor>0?.27:run.graceFor>0?.55:1});
+    if(crouchPose>.001&&!airborne){
+      const pivot=PLAYER.x+17;
+      ctx.translate(pivot,feet);
+      ctx.rotate(-.045*crouchPose);
+      ctx.scale(1+.09*crouchPose,1-.53*crouchPose);
+      ctx.translate(-pivot,-feet);
+    }
+    drawActor(ctx,{type:"flavio",x:PLAYER.x+17,y:feet,scale:.95,phase,airborne,
+      landing:run.elapsed<landingUntil||(crouchPose>.60&&!airborne),
+      hurt:run.status==="over",alpha:run.shieldFor>0?.27:run.graceFor>0?.55:1});
     ctx.restore();
   }
   function obstacle(item){
