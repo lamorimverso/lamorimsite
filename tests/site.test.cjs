@@ -706,3 +706,20 @@ test('um toque não duplica o salto entre pointerdown e click de compatibilidade
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
+
+test('playlist de 2026 somente carrega player após clique e pode ser interrompida',async()=>{
+ const {context,page,errors}=await open({viewport:{width:390,height:844}});
+ try{
+  await page.locator('#game-playlist').evaluate(element=>{element.open=true;});
+  assert.equal(await page.locator('#game-playlist-frame').getAttribute('src'),null);
+  await page.locator('[data-election-track="bota"]').click();
+  const url=await page.locator('#game-playlist-frame').getAttribute('src');
+  assert.match(url,/youtube-nocookie\.com\/embed\/dC5pqPsUSnw/);
+  assert.equal(await page.locator('[data-election-track="bota"]').getAttribute('aria-pressed'),'true');
+  assert.equal(await page.locator('#game-playlist-player').isVisible(),true);
+  await page.locator('#game-playlist-stop').click();
+  assert.equal(await page.locator('#game-playlist-frame').getAttribute('src'),null);
+  assert.equal(await page.locator('#game-playlist-player').isVisible(),false);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
