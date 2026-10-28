@@ -61,6 +61,10 @@ export function spriteScaleFor(type,sheetName,frames,scale=1){
  const sourceHeight=Math.max(...indices.map(i=>frames[i]?.height||0));
  return sourceHeight>0?(type==='joice'?90:94)*scale/sourceHeight:0;
 }
+// As imagens originais da corrida mostram Flávio olhando para a esquerda.
+// Espelhar somente o herói no Canvas o põe de frente para o avanço (+X)
+// sem alterar os PNGs, a posição do personagem ou as colisões.
+export function spriteFacesRight(type){return type==='flavio';}
 export function portraitCropFor(frame){
  // O microfone da Joice e os acessórios laterais ficam fora do recorte antigo.
  // Preservar toda a largura, recortando somente a parte inferior para retrato.
@@ -74,6 +78,9 @@ export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,a
  if(!factor)return false;
  const dx=x+(frame.x-frame.center)*factor,dy=y-frame.height*factor;
  context.save();context.globalAlpha*=alpha;context.imageSmoothingEnabled=true;
+ // O eixo de espelhamento passa pelo centro do Flávio: nenhuma mudança
+ // no hitbox, no x físico ou no alinhamento dos quadros de salto/impacto.
+ if(spriteFacesRight(type)){context.translate(2*x,0);context.scale(-1,1);}
  if(hurt&&type!=='flavio'){context.shadowColor='#ffd56b';context.shadowBlur=9;}
  context.drawImage(sheet.image,frame.x,frame.y,frame.width,frame.height,dx,dy,frame.width*factor,frame.height*factor);
  context.restore();return true;
