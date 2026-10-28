@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createRun,startRun,advanceRun,jumpRun,PLAYER} from '../tanahoraflavio/runner-core.mjs';
+import {createRun,startRun,advanceRun,jumpRun,crouchRun,PLAYER,SCENE_DISTANCE,scoreFor,difficultyAt} from '../tanahoraflavio/runner-core.mjs';
 import {ELECTION_TRACKS,playlistEmbedUrl} from '../tanahoraflavio/runner-playlist.mjs';
 
 const step=(r,n)=>{for(let i=0;i<n&&r.status==='running';i++)advanceRun(r,1/120,()=>0);};
-function bossRun(){
+function bossRun(type='xandao'){
  const r=createRun();startRun(r);r.viewportWidth=480;r.nextRaid=Infinity;
- r.bossBag=['xandao'];r.nextBossAt=0;
+ r.bossBag=[type];r.nextBossAt=0;
  advanceRun(r,1/120,()=>0);
  r.boss.nextShot=100;r.boss.nextAttack=0;
  advanceRun(r,1/120,()=>0);
@@ -63,4 +63,39 @@ test('playlist contém escolhas reais sem hospedagem ou links arbitrários',()=>
   assert.equal(url.searchParams.get('autoplay'),'1');
   if(track.start!==undefined)assert.equal(url.searchParams.get('start'),String(track.start));
  }
+});
+
+test('sete quilômetros por cenário, velocidade cresce e score mede apenas metros',()=>{
+ assert.equal(SCENE_DISTANCE,7000);
+ const r=createRun();r.distance=4311.8;r.bonus=99999;
+ assert.equal(scoreFor(r),4311,'coletas nunca alteram metros percorridos');
+ const speeds=[0,3500,7000,14000,28000,50000].map(d=>difficultyAt(d).speed);
+ assert.ok(speeds.every((v,i)=>i===0||v>speeds[i-1]));
+ assert.ok(speeds.at(-1)<=435,'velocidade máxima ainda permite reação');
+});
+test('segurar Abaixar protege contra a mão em L do Lula, mas não contra martelo baixo',()=>{
+ const high=bossRun('lula');assert.equal(crouchRun(high,true),true);
+ assert.equal(high.player.crouching,true);
+ step(high,120*1.4);
+ assert.equal(high.status,'running');
+ assert.equal(high.lives,1);
+ const low=bossRun('xandao');crouchRun(low,true);
+ step(low,120*1.4);
+ assert.equal(low.status,'over','martelo baixo exige salto');
+});
+test('não pode pular enquanto agachado nem abaixar em pleno salto',()=>{
+ const r=createRun();startRun(r);
+ assert.equal(crouchRun(r,true),true);
+ assert.equal(jumpRun(r),false);
+ assert.equal(crouchRun(r,false),false);
+ assert.equal(jumpRun(r),true);
+ assert.equal(crouchRun(r,true),false);
+});
+test('martelo e mandado alternam, e Lua usa a mão em L no alto',()=>{
+ const x=bossRun('xandao');assert.equal(x.obstacles[0].type,'hammer');
+ x.boss.nextAttack=0;advanceRun(x,1/120,()=>0);
+ assert.equal(x.obstacles.at(-1).type,'mandado');
+ assert.equal(x.obstacles.at(-1).targetY,70);
+ const lula=bossRun('lula');assert.equal(lula.obstacles[0].type,'lhand');
+ assert.equal(lula.obstacles[0].targetY,70);
 });
