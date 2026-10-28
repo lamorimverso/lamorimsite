@@ -41,7 +41,7 @@ test('projétil acertando tira vida e derruba jogador desprotegido',()=>{
 });
 test('o salto depois do lançamento realmente evita o projétil direcionado',()=>{
  const r=bossRun();
- step(r,54);assert.equal(r.status,'running');
+ step(r,72);assert.equal(r.status,'running');
  assert.equal(jumpRun(r),true);
  step(r,78);
  assert.equal(r.status,'running');
