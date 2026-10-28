@@ -1,8 +1,8 @@
-import { WORLD, PLAYER, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, advanceRun, stageAt, stageTransitionAt, scoreFor } from "./runner-core.mjs?v=20261028-sprites-v3";
-import { RAID_FACTS } from "./runner-core.mjs?v=20261028-sprites-v3";
-import { drawActor, drawItem, drawThreat, drawShot, loadSprites, drawSpritePortrait } from "./runner-art.mjs?v=20261028-sprites-v3";
-import { createGameAudio } from "./runner-audio.mjs?v=20261028-sprites-v3";
-import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=20261028-sprites-v3";
+import { WORLD, PLAYER, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, advanceRun, stageAt, stageTransitionAt, scoreFor } from "./runner-core.mjs?v=20261028-sprites-v4";
+import { RAID_FACTS } from "./runner-core.mjs?v=20261028-sprites-v4";
+import { drawActor, drawItem, drawThreat, drawShot, loadSprites, drawSpritePortrait } from "./runner-art.mjs?v=20261028-sprites-v4";
+import { createGameAudio } from "./runner-audio.mjs?v=20261028-sprites-v4";
+import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=20261028-sprites-v4";
 
 function initRunner() {
   const $ = id => document.getElementById(id);
