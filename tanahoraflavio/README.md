@@ -8,40 +8,30 @@ Site estático em `tanahoraflavio/`, atualmente no repositório público `lamori
 - Este diretório faz parte de um repositório que possui outros sites. **Não renomear** `lamorimsite` nem alterar a raiz sem avaliar impactos.
 - O site não utiliza servidor próprio nem expõe IP de VPS no HTML. A hospedagem GitHub Pages, no entanto, não garante anonimato do dono da conta GitHub nem de dados de cadastro do domínio.
 
-## Experiência e música
-- O contador e aro de porcentagem são calculados no navegador.
-- A página verifica se `musica.m4a` está disponível; caso não esteja, disponibiliza o YouTube como alternativa. O player só é carregado e aberto ao tocar em **Tocar música**, sem reprodução automática.
-- O navegador pode exigir um gesto para liberar o som. O botão **Tocar música** e o Play do próprio YouTube continuam disponíveis.
-- O mesmo botão pausa a música que estiver tocando. O arquivo de áudio local não está incluído neste repositório.
-- Se a API ou o vídeo falhar, o quadro vazio é recolhido e o controle fica indisponível; o link original no rodapé permanece acessível.
-- Para manter a música tocando sem exibir vídeo, é necessário **um arquivo de áudio devidamente licenciado** e um player HTML `audio`; usar YouTube apenas como fonte invisível de áudio não é a implementação recomendada e contraria regras de exibição do player.
+## Experiência
+
+- Contagem regressiva e botão Compartilhar, sem navegação em três abas e sem playlist.
+- O jogo oferece efeitos sonoros originais (Web Audio) que podem ser desligados. Não reproduz arquivos musicais.
 
 ## Minigame: Corre, Flávio!
 
-- Corrida infinita para teclado e toque, sem pausa manual. Espaço, ↑, pista ou botão Pular acionam o salto. A simulação e seus temporizadores são suspensos quando a página perde foco ou a pista sai da tela, retomando automaticamente.
-- Cinco cenários em voltas: Brasília → Rio → Argentina → Flórida → Casa Branca → Brasília. Cada destino corresponde a 5.000 unidades da rota. Os encontros seguram a progressão do cenário, enquanto personagem, distância total e pontos continuam avançando. Transições usam fusão e parallax; com movimento reduzido, a troca é direta.
-- Três chefões sorteados sem repetição por rodada: **Xandão, Haddad e Lula**, com o primeiro encontro após aproximadamente 34 segundos de percurso (a partir de 8.500 unidades de distância). Pontos coletados não antecipam encontros. Xandão lança carimbos/ondas; Haddad lança documentos; Lula lança ondas do megafone. Os ataques são anunciados, saltáveis e limitados por intervalos seguros. Saem da posição real do chefão em cada largura de tela; enquanto tiver energia, ele continua atacando. Energia inicial: Xandão 14, Haddad 16 e Lula 20, com aumento limitado por rodada.
-- Inimigos comuns e obstáculos são sorteados conforme o destino. Chefões não são reaproveitados como ondas comuns. Os personagens usam atlas PNG transparentes gerados a partir da prancha selecionada pelo usuário, com seis quadros de corrida, salto, aterrissagem, impacto e três poses por chefão. Lula usa a aparência solicitada de 2026. Os perseguidores da prancha são PF, Janones e exército.
-- **Passaporte:** +10 pontos e progresso para uma vida extra a cada 100 (100, 200...). Grupos de três ficam alinhados ao salto, sem exigir desvios incompatíveis.
-- **Escudo das Américas:** invisibilidade por **6 segundos**, permitindo atravessar inimigos e ataques. Contador e desenho do escudo indicam o efeito. Outro escudo não nasce enquanto houver um ativo ou já em trânsito. Não concede uma colisão guardada.
-- **Bíblia evangélica:** coletada em encontros com chefe, fortalece os próximos **três disparos**, com **dano 3** cada. Munição restante é indicada e pode ser usada no chefe seguinte. Sem cargas, o disparo automático simbólico de ivermectina tem **dano 1**. Tiros não removem os obstáculos; é necessário desviar.
-- **Não há** fantasma, Constituição, proteção guardada de uma colisão ou coletas de chocolate, recibo e mansão. Todos os coletáveis têm finalidade visível. Armas são símbolos de um jogo satírico, sem recomendação médica.
-- **Joice Hasselmann** é uma personagem caricatural. Em intervalos sorteados de 35–60 segundos de jogo comum, ela anuncia uma perseguição: **2 s de aviso**, **8 s de ondas mais frequentes da PF** e **2 s de retorno gradual**. Não se sobrepõe a chefões nem a transições. O intervalo espera quando essas situações estão ocupadas.
-- Os chefões lançam projéteis em trajetória reta da mão em direção à posição habitual do Flávio na pista. Acertar a personagem causa perda de vida; o jogador pode desviar saltando. A mira não acompanha o salto em tempo real, para não causar ataques impossíveis de evitar.
-- Sons curtos e originais (Web Audio) são acionados por salto, arremesso, coleta, colisão, entrada e vitória contra chefão. O controle Som pode silenciá-los; sem gesto inicial ou suporte do navegador, a corrida continua normalmente.
-- A seção recolhida **Playlist de músicas das eleições de 2026** oferece quatro faixas identificadas: Rap do Silva, Bota Pra Virar, Vem com Fé e A Vingança do Povo. Vídeos são selecionados por gesto no player visível do YouTube, sem baixar, extrair ou hospedar áudio. Abrir a playlist pausa a música da contagem. Reprodução e anúncios dependem das condições do YouTube e titulares.
-- O meme tem três batidas sintetizadas e narração genérica do navegador; não usa gravação ou imitação da voz da pessoa retratada. O botão Som liga/desliga esse áudio. Legendas permanecem disponíveis e falhas de áudio não impedem jogar. Sair da aba ou reiniciar interrompe a narração.
-- As falas são roteiro ficcional com referência documental e data: [denúncia do MP-RJ em 2020](https://www.mprj.mp.br/web/guest/visualizar?noticiaId=96203) e [decisão do STF de 2021 anulando quatro RIFs](https://portal.stf.jus.br/noticias/verNoticiaDetalhe.asp?idConteudo=477496). Denúncia não equivale a condenação; a sátira da PF não descreve uma operação real.
-- Começa com **1 vida**. Uma colisão sem proteção encerra a partida. Após gastar uma vida extra já conquistada, 1,2 s de recuperação evitam dano duplicado da mesma barreira. Reiniciar limpa vidas extras, poderes, munição e eventos.
-- Quadros atrasados não congelam o jogo: relógio fixo de 120 Hz com recuperação limitada a 150 ms por quadro. Retomar a aba descarta o tempo oculto. Um novo gesto retoma foco válido, e pointerdown evita atraso/duplicação dos controles no celular.
-- Os desenhos são pré-carregados antes de liberar Começar corrida. Falha no carregamento oferece nova tentativa, sem iniciar uma partida sem personagens.
-- Recorde em localStorage, sem impedir o jogo quando esse armazenamento estiver bloqueado.
-- Arquitetura sem dependências de runtime: runner-core.mjs (regras), runner-art.mjs (itens e perigos), runner-sprites.mjs (atlas/animações), runner-clock.mjs (relógio), runner-audio.mjs (áudio opcional), runner.mjs (Canvas/DOM) e minimal.css (página). Versões dos módulos e estilos impedem misturar caches antigos.
-- Os endereços foro-flavio/ e fimdoforoflaviobosonaro/ redirecionam para esta página. A raiz e os demais sites são independentes.
+- Corrida infinita para teclado e toque, sem pausa manual. Tecla Espaço, ↑, pista ou Pular acionam o salto; ↓/S ou **segurar Abaixar** reduz a altura do personagem, no chão. Agachar impede o salto enquanto o comando estiver pressionado. A simulação suspende ao perder foco ou visibilidade.
+- Cinco cenários em voltas: Brasília → Rio → Argentina → Flórida → Casa Branca → Brasília. **Cada cenário percorre 7.000 metros (7 km)** e uma volta totaliza **35 km**, excluindo percursos extras de confronto. Os cenários mudam conforme a distância da rota, pausada durante chefões/Joice. A velocidade de deslocamento cresce a cada quilômetro até limite jogável.
+- O placar e o recorde mostram **metros percorridos**. Passaportes e bônus não alteram o placar. O recorde usa chave própria no armazenamento para não interpretar pontuações antigas como metros.
+- Chefões sorteados sem repetição a cada três: **Xandão, Haddad e Lula**. O primeiro aparece depois de um trecho significativo (a partir de 8.500 metros). Somente os chefões atacam: **Flávio não possui armas nem disparos automáticos**; vence ao desviar da sequência de ataques e continuar vivo.
+- **Xandão** alterna martelo baixo (salto) e mandado de papel alto (abaixar). **Haddad** arremessa papéis altos e **Lula** lança o gesto caricatural de mão em L, também alto. A mira é estável durante cada arremesso e nunca persegue o jogador no ar. Cada chefão tem indicador dos ataques já evitados, em vez de barra de HP.
+- **Passaporte:** aparece em grupos espaçados de três, menos frequentes que antes; **100 coletados = +1 vida**, repetidamente. O item não concede pontos artificiais e não aparece em excesso.
+- **Escudo das Américas:** invisibilidade por **6 segundos**, permitindo atravessar inimigos e projéteis. Outro escudo não nasce quando um efeito já está ativo ou há um escudo próximo.
+- **Joice Hasselmann** surge em eventos com **2 s de aviso, 8 s de perseguição intensificada da PF e 2 s de recuperação**, em intervalos sorteados. Não coincide com chefões ou transições de cenário.
+- Personagens originais mantêm seus atlas PNG: Flávio corre olhando à direita, com animação de corrida/salto/impacto e agachamento em Canvas. Perseguidores e chefões têm balanço de movimento sem afetar colisões.
+- Paisagens utilizam transições suaves e parallax, com cartazes ilustrados e referências satíricas à Papuda, Papudinha, Jair, ivermectina, Covid-19 e “Chupetinha”. São caricaturas históricas/fictícias, **não afirmações sobre situação prisional atual** ou orientação médica. Cenários não criam perigos invisíveis.
+- Começa com uma vida. Colisão sem proteção encerra a partida; vidas extras concedem 1,2 s de recuperação após um impacto.
+- Relógio fixo de 120 Hz limita recuperação de tempo entre frames; movimento reduzido reduz efeitos decorativos sem interromper jogo e animações essenciais.
+- O jogo roda inteiramente no navegador, com testes para física, chefões, coleta, acessibilidade, teclas/toque e celular/desktop. A página e os outros sites/bots do repositório não precisam ser alterados.
 
 ### Verificação
 
-Execute node --test tests/*.test.*. Os testes de navegador requerem Playwright e Chromium; para Chrome existente, use PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH. A suíte cobre física, coletas, sorteio, duração dos eventos, escudo, munição, movimento reduzido, teclado/toque, armazenamento bloqueado, contador, música e larguras de 320 a 1440 px.
+Execute node --test tests/*.test.*. Os testes de navegador requerem Playwright e Chromium; para Chrome existente, use PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH. A suíte cobre metros, cenários de 7 km, dificuldade crescente, coletas raras, chefões somente ofensivos, pular/abaixar, escudo, movimento reduzido, teclas/toque, armazenamento bloqueado e larguras de 320 a 1440 px.
 
 ### Referências de implementação
 
