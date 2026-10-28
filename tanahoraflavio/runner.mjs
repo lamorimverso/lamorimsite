@@ -282,7 +282,12 @@ function initRunner() {
     ctx.globalAlpha = .83;
     circle(x, y - 35, 40, "#ffffffb9");
     circle(x, y - 35, 37, boss.color + "20");
-    ctx.fillStyle = boss.color;
+    const stride=idleMotion?0:Math.sin(run.elapsed*18)*11;
+    line([[x-15,y+30],[x-21+stride,y+59]],"#384251",8);
+    line([[x+15,y+30],[x+21-stride,y+59]],"#414351",8);
+    line([[x-24,y],[x-36-stride*.35,y+16]],boss.color,9);
+    line([[x+24,y],[x+36+stride*.35,y+8]],boss.color,9);
+    ctx.fillStyle=boss.hitFlashFor>0?"#e4b748":boss.color;
     ctx.beginPath();ctx.roundRect(x-29,y-16,58,54,15);ctx.fill();
     circle(x, y-45, 25, "#e8c7aa");
     ctx.strokeStyle="#3e2f30";ctx.lineWidth=3;
@@ -321,8 +326,15 @@ function initRunner() {
   }
 
   function character() {
-    const stride = prefersReducedMotion() ? 0 : run.player.y === 0 && run.status === "running" ? Math.sin(run.elapsed*22)*9 : 4;
-    ctx.save();ctx.translate(PLAYER.x+17,WORLD.ground-run.player.y);
+    const sprinting=run.status==="running" && run.player.y===0 && !prefersReducedMotion();
+    const stride=sprinting?Math.sin(run.elapsed*23)*13:0;
+    const bounce=sprinting?Math.abs(Math.sin(run.elapsed*23))*3:0;
+    if(sprinting){
+      const dust=6+(run.distance%26);
+      circle(PLAYER.x-dust,WORLD.ground-3,2.7,"#a6b6bf85");
+      circle(PLAYER.x-dust-13,WORLD.ground-5,1.7,"#b8c7cb9c");
+    }
+    ctx.save();ctx.translate(PLAYER.x+17,WORLD.ground-run.player.y-bounce);
     ctx.fillStyle="#414052";ctx.globalAlpha=.09;ctx.beginPath();ctx.ellipse(0,run.player.y+3,21,4,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
     if (run.extraChance || run.invisibleFor > 0) {
       ctx.strokeStyle = run.invisibleFor > 0 ? "#299b8b" : "#5984b7";ctx.lineWidth=2;
@@ -354,7 +366,7 @@ function initRunner() {
     if (!foe) return;
     const x=item.x+item.width/2, y=WORLD.ground;
     ctx.save();ctx.translate(x,y);ctx.scale(item.width/34,item.height/54);
-    const stride=prefersReducedMotion() ? 0 : run.status==="running" ? Math.sin(run.elapsed*18+x*.02)*5 : 2;
+    const stride=prefersReducedMotion()?0:run.status==="running"?Math.sin(run.elapsed*21+x*.02)*11:0;
     line([[-5,-18],[-7+stride,-8],[-8-stride,0]],"#343847",6);
     line([[5,-18],[7-stride,-8],[8+stride,0]],"#444556",6);
     ctx.fillStyle=foe.color;
@@ -420,12 +432,35 @@ function initRunner() {
       for(let i=0;i<3;i++)line([[x-5,y-7+i*6],[x+5,y-7+i*6]],"#ad9b80",1.5);
     }
   }
+  function projectile(shot) {
+    const start=PLAYER.x+PLAYER.width+9,end=virtualWidth-76;
+    const x=start+(end-start)*shot.progress;
+    const arc=prefersReducedMotion()?0:Math.sin(Math.PI*shot.progress)*13;
+    const y=WORLD.ground-47-shot.launchY*(1-shot.progress)-arc;
+    ctx.save();ctx.translate(x,y);
+    if(shot.type==="ivermectina"){
+      ctx.rotate(-.35);ctx.fillStyle="#fcfcfe";ctx.strokeStyle="#19827c";ctx.lineWidth=2;
+      ctx.beginPath();ctx.roundRect(-19,-8,38,16,8);ctx.fill();ctx.stroke();
+      ctx.fillStyle="#3eb7aa";ctx.beginPath();ctx.roundRect(-19,-8,19,16,[8,0,0,8]);ctx.fill();
+      ctx.fillStyle="#174c50";ctx.font="800 7px system-ui";ctx.textAlign="center";ctx.fillText("IV",10,2);
+    }else{
+      const bible=shot.type==="biblia";
+      ctx.rotate(-.16);ctx.fillStyle=bible?"#6f4b9b":"#dfbb68";
+      ctx.beginPath();ctx.roundRect(-14,-18,28,36,3);ctx.fill();
+      ctx.fillStyle="#fff6df";ctx.fillRect(10,-15,3,30);
+      ctx.strokeStyle=bible?"#e3c47f":"#95672e";ctx.lineWidth=2;ctx.strokeRect(-12,-16,22,32);
+      ctx.fillStyle=bible?"#fff1bd":"#5d4023";ctx.font="900 11px system-ui";ctx.textAlign="center";
+      ctx.fillText(bible?"✝":"CF",-1,5);
+    }
+    ctx.restore();
+  }
   function draw() {
     ctx.setTransform(canvas.width/virtualWidth,0,0,canvas.height/WORLD.height,0,0);
     scenery(stageAt(run.elapsed));
     bossFigure();
     for(const item of run.pickups)pickup(item);
     for(const item of run.obstacles)obstacle(item);
+    for(const shot of run.shots)projectile(shot);
     character();
   }
   updateUI(); resize(); draw();
