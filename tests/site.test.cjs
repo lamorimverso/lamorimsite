@@ -659,3 +659,25 @@ test('ocultar a página interrompe a narração da Joice e congela seu evento',a
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
+test('quadros de 300 ms continuam avançando a corrida em aparelho lento',async()=>{
+ const {context,page,errors}=await openWithRun({},()=>{
+  const native=window.requestAnimationFrame.bind(window);let timestamp=performance.now();
+  window.requestAnimationFrame=callback=>native(()=>{timestamp+=300;callback(timestamp);});
+ });
+ try{
+  await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+  await page.waitForFunction(()=>document.getElementById('game-score').textContent!=='0000',null,{timeout:3000});
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+test('tocar em Pular retoma corrida que perdeu foco sem exigir recarregar',async()=>{
+ const {context,page,errors}=await openWithRun();
+ try{
+  await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+  await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
+  const before=Number(await page.locator('#game-score').textContent());
+  await page.locator('#game-jump').click();
+  await page.waitForFunction(before=>Number(document.getElementById('game-score').textContent)>before,before,{timeout:2500});
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
