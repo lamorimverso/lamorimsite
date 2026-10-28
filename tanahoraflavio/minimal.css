@@ -444,3 +444,12 @@ summary:focus-visible, #runner-canvas:focus-visible { outline: 3px solid #a994c8
 .compact-legal{font-size:10px;line-height:1.6;color:var(--muted);margin:12px 0 0}
 .compact-legal a{color:var(--dark);text-decoration:underline}
 footer{margin-top:10px;font-size:10px;text-align:center;color:var(--muted)}
+
+/* Agachamento real: dois comandos igualmente tocáveis durante a corrida. */
+.game-card[data-run-state="running"] #game-jump{grid-column:auto}
+.game-card[data-run-state="running"] #game-crouch{grid-column:auto}
+.game-card:is([data-run-state="ready"],[data-run-state="over"]) #game-crouch{display:none}
+#game-crouch{min-height:48px;min-width:0;border-radius:9px;border:1px solid var(--line);background:#f5f1fa;color:var(--dark);font:750 13px system-ui;cursor:pointer;touch-action:none;-webkit-user-select:none;user-select:none}
+#game-crouch[aria-pressed="true"]{background:#e2d3f3;border-color:#8d72ae}
+#game-crouch:focus-visible{outline:3px solid #aa8bcf;outline-offset:2px}
+#game-crouch[disabled]{opacity:.58;cursor:default}
