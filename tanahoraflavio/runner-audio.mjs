@@ -23,6 +23,32 @@ export function createGameAudio() {
    }
   }catch{/* O evento também funciona sem som. */}
  };
+ // Efeitos curtos e originais: gerados no navegador, sem arquivos musicais.
+ // Tocar apenas após o gesto inicial, respeitando Som ligado/desligado.
+ const effect=name=>{
+  if(!enabled||!context||context.state!=='running')return;
+  const sounds={
+   jump:[420,660,.105,'sine',.065],
+   attack:[240,115,.16,'sawtooth',.085],
+   hit:[125,44,.24,'triangle',.12],
+   pickup:[660,880,.1,'sine',.07],
+   boss:[165,85,.25,'triangle',.105],
+   victory:[440,780,.23,'sine',.085]
+  };
+  const spec=sounds[name];if(!spec||nodes.length>=12)return;
+  try{
+   const [start,end,length,wave,volume]=spec,t=context.currentTime;
+   const osc=context.createOscillator(),gain=context.createGain();
+   osc.type=wave;osc.frequency.setValueAtTime(start,t);
+   osc.frequency.exponentialRampToValueAtTime(end,t+length);
+   gain.gain.setValueAtTime(.001,t);
+   gain.gain.linearRampToValueAtTime(volume,t+.015);
+   gain.gain.exponentialRampToValueAtTime(.001,t+length);
+   osc.connect(gain);gain.connect(context.destination);osc.start(t);osc.stop(t+length+.015);
+   nodes.push(osc);
+   osc.onended=()=>{osc.disconnect();gain.disconnect();nodes=nodes.filter(n=>n!==osc);};
+  }catch{/* Efeitos não podem interromper o jogo. */}
+ };
  const speak=text=>{
   if(!enabled||!('speechSynthesis' in window)||!window.SpeechSynthesisUtterance)return;
   try{const voices=window.speechSynthesis.getVoices();
@@ -32,7 +58,7 @@ export function createGameAudio() {
    window.speechSynthesis.speak(utterance);
   }catch{utterance=null;}
  };
- return {get enabled(){return enabled;},prime,stop,
+ return {get enabled(){return enabled;},prime,stop,effect,
   toggle(){enabled=!enabled;if(!enabled)stop();else prime();return enabled;},
   event(phase,fact){stop();if(!enabled)return;if(phase==='warning')knocks();
    if(phase==='active')speak('Toc, toc, toc! É a Polícia Federal! '+fact.text);
