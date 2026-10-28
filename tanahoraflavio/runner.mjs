@@ -1,4 +1,4 @@
-import { WORLD, PLAYER, PURSUERS, PICKUPS, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, togglePause, advanceRun, stageAt, pursuitAt, scoreFor } from "./runner-core.mjs?v=20261027-portrait-balance";
+import { WORLD, PLAYER, PURSUERS, PICKUPS, STAGES, SCENE_SECONDS, difficultyAt, createRun, startRun, jumpRun, advanceRun, stageAt, pursuitAt, scoreFor } from "./runner-core.mjs?v=20261028-boss-shots";
 
 function initRunner() {
   const $ = id => document.getElementById(id);
@@ -17,6 +17,7 @@ function initRunner() {
     if (Number.isSafeInteger(stored) && stored >= 0 && stored <= 10000000) best = stored;
   } catch { /* O modo privado e o armazenamento bloqueado não impedem jogar. */ }
   let run = createRun(), frameId = 0, lastFrame = 0, accumulator = 0;
+  let windowFocused = true, inView = true;
   let lastStatus = "", lastStage = -1, virtualWidth = 900, measuredWidth = 0, measuredDpr = 0;
   let lastPursuit = -1, lastCollected = 0, lastSaves = 0, lastPower = "";
   let lastLives = 1, lastEvents = 0;
@@ -62,34 +63,31 @@ function initRunner() {
     if (run.boss) {
       const boss = run.boss;
       $("game-boss-name").textContent = `${boss.name} · Nível ${boss.level}`;
-      $("game-boss-health").setAttribute("aria-valuemax", String(boss.total));
-      $("game-boss-health").setAttribute("aria-valuenow", String(boss.remaining));
-      $("game-boss-progress").style.width = `${100 * boss.remaining / boss.total}%`;
+      $("game-boss-health").setAttribute("aria-valuemax", String(boss.maxHealth));
+      $("game-boss-health").setAttribute("aria-valuenow", String(boss.health));
+      $("game-boss-progress").style.width = `${100 * boss.health / boss.maxHealth}%`;
+      $("game-boss-weapon").textContent = `Disparo automático: ${boss.lastWeapon}`;
       bossPanel.style.setProperty("--boss-accent", boss.color);
     }
     $("game-threat").textContent = `${pursuit.index + 1}/5 · ${pursuit.name}`;
     $("game-power").textContent = power === "invisible" ? `Invisível · ${Math.ceil(run.invisibleFor)} s` : power === "recovery" ? `Recuperando · ${Math.ceil(run.graceFor)} s` : "Sem efeito ativo";
     $("game-chance").textContent = run.extraChance ? "Escudo pronto" : "0 guardada";
     $("game-jump").disabled = run.status !== "running";
-    $("game-pause").disabled = run.status !== "running" && run.status !== "paused";
-    $("game-pause").textContent = run.status === "paused" ? "Continuar corrida" : "Pausar corrida";
     $("game-start").textContent = run.status === "ready" ? "Começar corrida" : run.status === "over" ? "Tentar de novo" : "Recomeçar corrida";
     $("game-overlay").hidden = run.status === "running";
     const overlays = {
       ready: ["Pronto para correr?", "Pule e sobreviva."],
-      paused: ["Pausado", "Continue quando quiser."],
       over: ["Bateu, perdeu!", `${score} pontos · ${run.passports} passaportes. Tente novamente!`]
     };
     if (overlays[run.status]) {
       $("game-overlay-title").textContent = overlays[run.status][0];
       $("game-overlay-copy").textContent = overlays[run.status][1];
-      $("game-overlay-badge").textContent = run.status === "over" ? "Capturado · PF" : run.status === "paused" ? "Corrida pausada" : "Perseguição fictícia";
+      $("game-overlay-badge").textContent = run.status === "over" ? "Capturado · PF" : "Perseguição fictícia";
     }
     if (lastStatus !== run.status || lastStage !== stage.index || lastPursuit !== pursuit.index || lastCollected !== run.collected || lastSaves !== run.saves || lastPower !== power || lastLives !== run.lives || lastEvents !== run.events) {
       const messages = {
         ready: "Tudo pronto. A corrida começa quando você quiser.",
         running: `${stage.name} · ${pursuit.name} na perseguição. Desvie e colete itens; risco ${difficulty.level}.`,
-        paused: "Corrida pausada. Toque em Continuar corrida para retomar.",
         over: `Bateu, perdeu! ${score} pontos. Toque em Tentar de novo para jogar.`
       };
       if (run.status === "running") {
@@ -115,12 +113,18 @@ function initRunner() {
   }
 
   function schedule() {
-    if (!frameId && run.status === "running") frameId = requestAnimationFrame(frame);
+    if (!frameId && run.status === "running" && !document.hidden && windowFocused && inView) frameId = requestAnimationFrame(frame);
+  }
+  // Sem controle de pausa: congela apenas a simulação oculta e retoma sozinha.
+  function syncActivity() {
+    cancelAnimationFrame(frameId);frameId=0;
+    accumulator=0;lastFrame=performance.now();
+    schedule();
   }
   function frame(now) {
     frameId = 0;
     if (run.status !== "running") return;
-    if (now - lastFrame > 250) { pause("A corrida foi pausada para você não perder o ponto. Toque em Continuar corrida."); return; }
+    if (now - lastFrame > 250) { accumulator=0;lastFrame=now;schedule();return; }
     accumulator += Math.min(.05, Math.max(0, (now - lastFrame) / 1000));
     lastFrame = now;
     while (accumulator >= 1 / 120 && run.status === "running") {
@@ -136,47 +140,31 @@ function initRunner() {
     run = createRun(); startRun(run);
     lastCollected = 0; lastSaves = 0; lastPower = ""; lastStatus = ""; lastEvents = 0; lastLives = 1;
     accumulator = 0; lastFrame = performance.now();
-    updateUI(); draw(); schedule();
+    updateUI(); draw(); syncActivity();
     canvas.focus({ preventScroll: true });
   }
   function jump() {
     if (["ready", "over"].includes(run.status)) begin();
     if (jumpRun(run)) draw();
   }
-  function pause(message) {
-    if (run.status !== "running") return;
-    togglePause(run); cancelAnimationFrame(frameId); frameId = 0;
-    updateUI(); draw();
-    if (message) $("game-status").textContent = message;
-  }
-  function pauseOrResume() {
-    if (run.status === "running") pause();
-    else if (run.status === "paused") {
-      togglePause(run); lastFrame = performance.now(); accumulator = 0;
-      updateUI(); draw(); schedule(); canvas.focus({ preventScroll: true });
-    }
-  }
   $("game-start").addEventListener("click", begin);
   $("game-jump").addEventListener("click", () => { jump(); canvas.focus({ preventScroll: true }); });
-  $("game-pause").addEventListener("click", pauseOrResume);
   canvas.addEventListener("click", () => { jump(); canvas.focus({ preventScroll: true }); });
   section.addEventListener("keydown", event => {
-    // Espaço em um botão deve ativar aquele botão uma única vez.
     if (event.target.closest("button,a,input,select,textarea,summary") || event.ctrlKey || event.metaKey || event.altKey) return;
-    if (["Space", "ArrowUp", "KeyP", "Escape"].includes(event.code)) {
+    if (["Space","ArrowUp"].includes(event.code)) {
       event.preventDefault();
-      if (event.repeat) return;
-      if (event.code === "Space" || event.code === "ArrowUp") jump();
-      else if (event.code === "KeyP") pauseOrResume();
-      else pause();
+      if (!event.repeat) jump();
     }
   });
-  document.addEventListener("visibilitychange", () => { if (document.hidden) pause("Você saiu da aba. Sua corrida está pausada."); });
-  window.addEventListener("blur", () => pause("Sua corrida está pausada. Continue quando estiver pronto."));
+  document.addEventListener("visibilitychange", syncActivity);
+  window.addEventListener("blur", () => { windowFocused=false; syncActivity(); });
+  window.addEventListener("focus", () => { windowFocused=true; syncActivity(); });
   if ("IntersectionObserver" in window) {
     new IntersectionObserver(entries => {
-      if (entries.some(entry => !entry.isIntersecting || entry.intersectionRatio < .12)) pause("A pista saiu da tela. Toque em Continuar corrida para retomar.");
-    }, { threshold: [0, .12] }).observe(canvas);
+      inView=entries.some(entry => entry.isIntersecting && entry.intersectionRatio >= .12);
+      syncActivity();
+    }, {threshold:[0,.12]}).observe(canvas);
   }
 
   function resize() {
