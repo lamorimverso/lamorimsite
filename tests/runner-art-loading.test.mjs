@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {definitions} from '../tanahoraflavio/runner-sprite-data.mjs';
 
 let moduleId=0;
 
@@ -23,9 +24,9 @@ async function browserEvents(t){
  t.mock.method(globalThis,'clearTimeout',id=>{const timer=timers.find(item=>item.id===id);if(timer)timer.cleared=true;});
  const sprites=await import(`../tanahoraflavio/runner-sprites.mjs?art-loading-test=${++moduleId}`);
  function load(image,size){
-  const hero=image.src.includes('flavio-run');
-  image.naturalWidth=size?.width??(hero?1536:1254);
-  image.naturalHeight=size?.height??(hero?1024:1254);
+  const definition=Object.values(definitions).find(d=>d.url===image.src);
+  image.naturalWidth=size?.width??definition.width;
+  image.naturalHeight=size?.height??definition.height;
   image.onload?.();
  }
  return {sprites,images,timers,load};
@@ -94,18 +95,20 @@ test('recortes pré-calculados conservam a orientação original à direita em t
  await pending;
  const hero=drawingContext();
  assert.equal(sprites.drawSpriteActor(hero,{x:100,y:200}),true);
- assert.deepEqual(hero.drawn[0].slice(1,5),[73,20,425,490]);
- assert.ok(Math.abs(hero.drawn[0][8]-490*94/491)<1e-10);
+ assert.equal(hero.drawn[0][0],images[0]);
+ assert.ok(hero.drawn[0][7]>20&&hero.drawn[0][8]>75,'o personagem tem tamanho legível');
  assert.deepEqual(hero.transforms,[],'o PNG original já olha para a direita e não pode ser invertido');
- for(const pose of [{phase:4},{airborne:true},{landing:true},{hurt:true}]){
+ for(const pose of [{phase:7},{airborne:true},{airborne:true,falling:true},{landing:true},{hurt:true}]){
   const context=drawingContext();
   assert.equal(sprites.drawSpriteActor(context,{type:'flavio',x:100,y:200,...pose}),true);
-  assert.deepEqual(context.transforms,[],'corrida, salto, aterrissagem e derrota mantêm a direção do atlas');
+  assert.deepEqual(context.transforms,[],'corrida, salto, slide e derrota mantêm a direção do atlas');
+  assert.equal(context.drawn[0][0],images[0],'as poses pertencem ao mesmo herói');
+  if(pose.landing)assert.ok(context.drawn[0][8]<=48,'slide fica abaixo do ataque alto sem deformação vertical');
  }
  const boss=drawingContext();
  assert.equal(sprites.drawSpriteActor(boss,{type:'xandao',attacking:true}),true);
- assert.deepEqual(boss.drawn[0].slice(1,5),[636,66,304,247]);
- assert.ok(Math.abs(boss.drawn[0][8]-247*94/308)<1e-10);
+ assert.equal(boss.drawn[0][0],images[1]);
+ assert.ok(boss.drawn[0][7]>20&&boss.drawn[0][8]>60);
  assert.deepEqual(boss.transforms,[]);
  await sprites.loadSprites();
  assert.equal(images.length,2,'o atlas pronto continua em memória');

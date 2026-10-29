@@ -15,7 +15,7 @@ Site estático em `tanahoraflavio/`, atualmente no repositório público `lamori
 
 ## Minigame: Corre, Flávio!
 
-- Corrida infinita para teclado e toque, sem pausa manual. Tecla Espaço, ↑, pista ou Pular acionam o salto; ↓/S ou **Abaixar** reduz a altura do personagem, no chão. Segurar durante o salto guarda a intenção até o pouso; a opção tocar para alternar dispensa pressão prolongada. Agachar impede o salto enquanto o comando estiver pressionado. A simulação suspende ao perder foco ou visibilidade.
+- Corrida infinita para teclado e toque, sem pausa manual. Tecla Espaço, ↑, pista ou Pular acionam o salto; ↓/S ou **Abaixar** reduz a altura do personagem, no chão. Segurar durante o salto guarda a intenção até o pouso; a opção tocar para alternar dispensa pressão prolongada. Pular sai do agachamento imediatamente; uma nova pressão no ar pode aguardar o pouso por até120ms, sem salto duplo. Perda de foco/visibilidade limpa intenções pendentes e suspende a simulação.
 - Cinco cenários em voltas: Brasília → Rio → Argentina → Flórida → Casa Branca → Brasília. **Cada cenário percorre 7.000 metros (7 km)** e uma volta totaliza **35 km**, excluindo percursos extras de confronto. Os cenários mudam conforme a distância da rota, pausada durante chefões/Joice. A velocidade de deslocamento cresce a cada quilômetro até limite jogável.
 - O placar e o recorde mostram **metros percorridos**. Passaportes e bônus não alteram o placar. O recorde usa chave própria no armazenamento para não interpretar pontuações antigas como metros.
 - Chefões sorteados sem repetição a cada três: **Xandão, Haddad e Lula**. O primeiro aparece depois de um trecho significativo (a partir de 8.500 metros). Somente os chefões atacam: **Flávio não possui armas nem disparos automáticos**; vence ao desviar da sequência de ataques e continuar vivo.
@@ -23,7 +23,7 @@ Site estático em `tanahoraflavio/`, atualmente no repositório público `lamori
 - **Passaporte:** aparece em grupos espaçados de três, menos frequentes que antes; **100 coletados = +1 vida**, repetidamente. O item não concede pontos artificiais e não aparece em excesso.
 - **Escudo das Américas:** invisibilidade por **6 segundos**, permitindo atravessar inimigos e projéteis. Outro escudo não nasce quando um efeito já está ativo ou há um escudo próximo.
 - **Joice Hasselmann** surge em eventos com **2 s de aviso, 8 s de perseguição intensificada da PF e 2 s de recuperação**, em intervalos sorteados. Não coincide com chefões ou transições de cenário.
-- Personagens originais mantêm os PNGs como fontes e usam atlas WebP sem perdas na página: Flávio corre olhando à direita, com corrida/salto/impacto e **agachamento animado (~150 ms para abaixar e levantar)** usando pose de aterrissagem e transição suave de postura em Canvas; movimento reduzido exibe a pose imediatamente. A animação visual não altera a colisão. Perseguidores e chefões têm balanço sutil.
+- Os desenhos anteriores ficam preservados. Novos atlas cartoon2D usam oito passos de Flávio, salto de subida/descida, slide e derrota; PF, Janones e Exército alternam pernas. Flávio continua olhando à direita. As poses preservam a proporção da arte, com registro de torso e pés. O slide recebe ajuste uniforme de escala para caber abaixo do ataque alto; o rosto não é achatado. A animação não altera colisões. Chefões sinalizam preparo e lançamento sem alternar continuamente as armas.
 - Paisagens agora têm três camadas limpas (céu, silhuetas distantes e um monumento por destino), com paralaxe suave e transição entre locais. Os cartazes, sobreposições e caricaturas espalhadas foram retirados para deixar a pista legível, sem criar perigos invisíveis.
 - Começa com uma vida. Colisão sem proteção encerra a partida; vidas extras concedem 1,2 s de recuperação após um impacto.
 - Relógio fixo de 120 Hz limita recuperação de tempo entre frames; movimento reduzido reduz efeitos decorativos sem interromper jogo e animações essenciais.
@@ -40,8 +40,16 @@ Execute `node --test --test-concurrency=1 tests/*.test.*` (dependências de dese
 - A forma de abaixar, os efeitos reduzidos, o ritmo mais tranquilo e o som lembram a escolha local. Armazenamento bloqueado não impede jogar. O ritmo tranquilo afeta a próxima tentativa.
 - Perigos têm velocidade de aproximação própria para harmonizar a janela de reação entre telas. Coletas acompanham essa velocidade e aparecem na ação de evasão correspondente.
 - Calibração inicial dos passaportes usa um piloto de testes com comandos reais, sem teleporte nem imunidade: aproximadamente quatro minutos até a primeira vida nas sequências examinadas. Isso não equivale a um playtest humano.
-- HTML antigo em cache recebe atualização compatível; imagens têm tempo limite e tentativa nova; um bootstrap independente oferece recarregar se o módulo falhar. Os recortes são gerados antecipadamente, sem varredura de pixels em runtime.
+- HTML antigo em cache recebe atualização compatível; imagens têm tempo limite e tentativa nova; um bootstrap independente oferece recarregar se o módulo falhar. Os recortes são gerados antecipadamente, sem varredura de pixels em runtime. A rodada29/10 usa caixas explícitas em tools/runner-art-layout.json porque as figuras geradas não obedecem perfeitamente à grade nominal; os testes verificam integridade, margens e ausência de personagens vizinhos.
 - As colisões continuam permissivas em relação às partes extremas dos sprites. A geometria física e a escala da arte são avaliadas em regressões e inspeção de poses; não se amplia a hitbox para cobrir toda a caricatura.
+
+### Apresentação limpa e qualidade —29/10/2026
+
+- Contagem compacta ao lado do retrato, sem marca duplicada no cabeçalho. Pista e início cabem na primeira tela móvel.
+- Som, ampliação e ajuda em controles discretos. Ajustes recolhidos; objetivo repetido oculto; recorde aparece no fim. Placar e progresso essenciais preservados.
+- Cenários vetoriais em runner-scenery.mjs: paletas coesas, arquitetura com contornos discretos, três planos e pista definida. Sem cartazes nem texto decorativo.
+- Novos PNGs flavio-motion-v2/characters-motion-v2 foram gerados por imagem a partir dos personagens anteriores, com revisão de anatomia, transparência e recortes. As escolhas visuais não equivalem a validação com jogadores nem prova de qualidade igual às referências.
+- Controles de ajuste aguardam seus eventos estarem ligados antes de aceitar interação, evitando perder escolhas feitas enquanto o módulo carrega.
 
 Para regenerar a arte: `node tools/build-runner-art.mjs`. Para atualizar versões após qualquer mudança de recurso: `node tools/version-runner-assets.mjs`. O CI usa as verificações `--check`; uma mudança na dependência invalida o import e o HTML automaticamente. O CSS atual está concentrado em `game.css`.
 

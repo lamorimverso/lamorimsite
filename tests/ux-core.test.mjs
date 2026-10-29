@@ -25,10 +25,11 @@ test('abaixar durante o salto guarda a intenção e aplica ao pousar',()=>{
  assert.equal(run.player.y,height);
  step(run,.6);
  assert.equal(run.player.y,0);assert.equal(run.player.crouching,true);
- assert.equal(core.jumpRun(run),false,'a postura mantida continua impedindo salto');
+ assert.equal(core.jumpRun(run),true,'saltar sai da postura mantida');
+ assert.equal(run.player.crouchHeld,true);assert.equal(run.player.crouching,false);
  core.crouchRun(run,false);
  assert.equal(run.player.crouchHeld,false);assert.equal(run.player.crouching,false);
- assert.equal(core.jumpRun(run),true);
+ assert.equal(core.jumpRun(run),false,'a mesma decolagem não permite salto duplo');
 });
 
 test('soltar ou cancelar no ar limpa a intenção antes do pouso',()=>{

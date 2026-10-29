@@ -1,0 +1,324 @@
+{
+  "schema": 1,
+  "note": "Raw PNGs are imagegen outputs, unmodified except file copy. Use these explicit source rectangles; nominal equal-grid crops are unsafe for a few cast feet. center=[atlasX,atlasY] is an estimated torso pivot in source pixels for registration, not measured runtime alignment. groundY is source foreground bottom. Crops have 4px padding around significant alpha components; all source pixels outside all crops have alpha<=2. No neighboring significant foreground enters these crop rectangles.",
+  "heroSize": [
+    1448,
+    1086
+  ],
+  "castSize": [
+    1254,
+    1254
+  ],
+  "hero": [
+    {
+      "x": 53,
+      "y": 87,
+      "width": 251,
+      "height": 268,
+      "center": [
+        183,
+        250
+      ],
+      "groundY": 351
+    },
+    {
+      "x": 443,
+      "y": 92,
+      "width": 241,
+      "height": 268,
+      "center": [
+        564,
+        252
+      ],
+      "groundY": 356
+    },
+    {
+      "x": 794,
+      "y": 88,
+      "width": 239,
+      "height": 274,
+      "center": [
+        918,
+        252
+      ],
+      "groundY": 358
+    },
+    {
+      "x": 1168,
+      "y": 86,
+      "width": 249,
+      "height": 273,
+      "center": [
+        1296,
+        252
+      ],
+      "groundY": 355
+    },
+    {
+      "x": 52,
+      "y": 446,
+      "width": 259,
+      "height": 283,
+      "center": [
+        182,
+        614
+      ],
+      "groundY": 725
+    },
+    {
+      "x": 434,
+      "y": 448,
+      "width": 259,
+      "height": 279,
+      "center": [
+        564,
+        615
+      ],
+      "groundY": 723
+    },
+    {
+      "x": 790,
+      "y": 446,
+      "width": 253,
+      "height": 283,
+      "center": [
+        919,
+        616
+      ],
+      "groundY": 725
+    },
+    {
+      "x": 1171,
+      "y": 447,
+      "width": 256,
+      "height": 271,
+      "center": [
+        1298,
+        612
+      ],
+      "groundY": 714
+    },
+    {
+      "x": 52,
+      "y": 808,
+      "width": 255,
+      "height": 246,
+      "center": [
+        184,
+        973
+      ],
+      "groundY": 1050
+    },
+    {
+      "x": 431,
+      "y": 806,
+      "width": 253,
+      "height": 266,
+      "center": [
+        560,
+        966
+      ],
+      "groundY": 1068
+    },
+    {
+      "x": 757,
+      "y": 871,
+      "width": 342,
+      "height": 176,
+      "center": [
+        878,
+        982
+      ],
+      "groundY": 1043
+    },
+    {
+      "x": 1168,
+      "y": 807,
+      "width": 263,
+      "height": 272,
+      "center": [
+        1294,
+        960
+      ],
+      "groundY": 1075
+    }
+  ],
+  "cast": [
+    {
+      "x": 56,
+      "y": 98,
+      "width": 235,
+      "height": 216,
+      "center": [
+        171,
+        222
+      ],
+      "groundY": 310
+    },
+    {
+      "x": 373,
+      "y": 52,
+      "width": 219,
+      "height": 264,
+      "center": [
+        477,
+        220
+      ],
+      "groundY": 312
+    },
+    {
+      "x": 649,
+      "y": 109,
+      "width": 266,
+      "height": 210,
+      "center": [
+        798,
+        232
+      ],
+      "groundY": 315
+    },
+    {
+      "x": 994,
+      "y": 90,
+      "width": 220,
+      "height": 231,
+      "center": [
+        1105,
+        222
+      ],
+      "groundY": 317
+    },
+    {
+      "x": 57,
+      "y": 376,
+      "width": 224,
+      "height": 253,
+      "center": [
+        173,
+        522
+      ],
+      "groundY": 625
+    },
+    {
+      "x": 343,
+      "y": 376,
+      "width": 246,
+      "height": 252,
+      "center": [
+        482,
+        520
+      ],
+      "groundY": 624
+    },
+    {
+      "x": 624,
+      "y": 384,
+      "width": 306,
+      "height": 246,
+      "center": [
+        805,
+        531
+      ],
+      "groundY": 626
+    },
+    {
+      "x": 979,
+      "y": 382,
+      "width": 244,
+      "height": 247,
+      "center": [
+        1108,
+        531
+      ],
+      "groundY": 625
+    },
+    {
+      "x": 46,
+      "y": 668,
+      "width": 237,
+      "height": 251,
+      "center": [
+        167,
+        808
+      ],
+      "groundY": 915
+    },
+    {
+      "x": 379,
+      "y": 672,
+      "width": 207,
+      "height": 241,
+      "center": [
+        479,
+        808
+      ],
+      "groundY": 909
+    },
+    {
+      "x": 654,
+      "y": 670,
+      "width": 253,
+      "height": 245,
+      "center": [
+        790,
+        811
+      ],
+      "groundY": 911
+    },
+    {
+      "x": 995,
+      "y": 672,
+      "width": 228,
+      "height": 246,
+      "center": [
+        1108,
+        815
+      ],
+      "groundY": 914
+    },
+    {
+      "x": 43,
+      "y": 964,
+      "width": 256,
+      "height": 242,
+      "center": [
+        177,
+        1106
+      ],
+      "groundY": 1202
+    },
+    {
+      "x": 383,
+      "y": 951,
+      "width": 228,
+      "height": 253,
+      "center": [
+        485,
+        1097
+      ],
+      "groundY": 1200
+    },
+    {
+      "x": 680,
+      "y": 961,
+      "width": 223,
+      "height": 247,
+      "center": [
+        796,
+        1105
+      ],
+      "groundY": 1204
+    },
+    {
+      "x": 1001,
+      "y": 959,
+      "width": 226,
+      "height": 247,
+      "center": [
+        1111,
+        1104
+      ],
+      "groundY": 1202
+    }
+  ]
+}

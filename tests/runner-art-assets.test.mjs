@@ -8,34 +8,6 @@ import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
-const expectedFrames={
- hero:[
-  {x:73,y:20,width:425,height:490,center:256},
-  {x:579,y:20,width:401,height:491,center:768},
-  {x:1064,y:21,width:429,height:456,center:1280},
-  {x:57,y:522,width:400,height:487,center:256},
-  {x:601,y:524,width:383,height:469,center:768},
-  {x:1086,y:522,width:417,height:464,center:1280}
- ],
- cast:[
-  {x:28,y:40,width:285,height:273,center:156.5},
-  {x:313,y:5,width:298,height:308,center:470},
-  {x:636,y:66,width:304,height:247,center:783.5},
-  {x:940,y:38,width:298,height:275,center:1097},
-  {x:62,y:336,width:232,height:289,center:156.5},
-  {x:342,y:333,width:285,height:294,center:470},
-  {x:627,y:342,width:313,height:281,center:783.5},
-  {x:940,y:334,width:296,height:287,center:1097},
-  {x:27,y:634,width:277,height:291,center:156.5},
-  {x:331,y:627,width:254,height:305,center:470},
-  {x:636,y:639,width:304,height:287,center:783.5},
-  {x:940,y:656,width:305,height:266,center:1097},
-  {x:23,y:940,width:276,height:289,center:156.5},
-  {x:348,y:940,width:259,height:242,center:470},
-  {x:642,y:995,width:288,height:226,center:783.5},
-  {x:951,y:941,width:286,height:242,center:1097}
- ]
-};
 
 async function manifest(){
  const imported=await import('../tanahoraflavio/runner-sprite-data.mjs').catch(()=>null);
@@ -52,19 +24,33 @@ function imageDecoder(){
  }
 }
 
-test('manifesto preserva os 22 recortes do PNG com alfa 150 e margem de 2 pixels',async()=>{
- const {definitions,frames}=await manifest();
- assert.deepEqual(frames,expectedFrames);
- assert.equal(definitions.hero.cols,3);assert.equal(definitions.hero.rows,2);
- assert.equal(definitions.cast.cols,4);assert.equal(definitions.cast.rows,4);
- assert.deepEqual([definitions.hero.width,definitions.hero.height],[1536,1024]);
- assert.deepEqual([definitions.cast.width,definitions.cast.height],[1254,1254]);
+test('recortes explícitos incluem cada personagem sem cortar nem capturar vizinhos',async()=>{
+ const {definitions,frames}=await manifest(),sharp=imageDecoder();
+ for(const [name,filename,count] of [['hero','flavio-motion-v2',12],['cast','characters-motion-v2',16]]){
+  const {data,info:{width,height}}=await sharp(join(root,'tanahoraflavio/assets',filename+'.png')).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+  assert.equal(frames[name].length,count);
+  assert.deepEqual([definitions[name].width,definitions[name].height],[width,height]);
+  const covered=new Uint8Array(width*height);
+  for(const frame of frames[name]){
+   assert.ok(frame.x>=0&&frame.y>=0&&frame.x+frame.width<=width&&frame.y+frame.height<=height,'recorte dentro da imagem');
+   let opaque=0;
+   for(let y=frame.y;y<frame.y+frame.height;y++)for(let x=frame.x;x<frame.x+frame.width;x++){
+    const i=y*width+x,a=data[i*4+3];
+    if(a>2){assert.equal(covered[i],0,'um pixel de personagem não pode aparecer em dois quadros');covered[i]=1;}
+    if(a>=150)opaque++;
+    if(x===frame.x||x===frame.x+frame.width-1||y===frame.y||y===frame.y+frame.height-1)assert.ok(a<=2,'margem transparente evita cortar pés/acessórios');
+   }
+   assert.ok(opaque>5000,'quadro contém um personagem visível, não só ruído');
+   assert.ok(frame.groundY>=frame.y&&frame.groundY<=frame.y+frame.height);
+  }
+  for(let i=0;i<covered.length;i++)if(data[i*4+3]>2)assert.equal(covered[i],1,'nenhum fragmento de personagem foi descartado entre os recortes');
+ }
 });
 
 test('WebP preserva cada pixel visível e dimensões dos PNGs com menos bytes e hash real',async()=>{
  const {definitions}=await manifest();
  const sharp=imageDecoder();
- for(const [name,filename] of [['hero','flavio-run'],['cast','characters-2026']]){
+ for(const [name,filename] of [['hero','flavio-motion-v2'],['cast','characters-motion-v2']]){
   const definition=definitions[name],url=new URL(definition.url);
   assert.equal(url.pathname.endsWith(`${filename}.webp`),true);
   const source=await readFile(join(root,'tanahoraflavio/assets',`${filename}.png`));
@@ -91,7 +77,7 @@ test('WebP preserva cada pixel visível e dimensões dos PNGs com menos bytes e 
 test('a ferramenta reproduz atlas e manifesto sem alterar os arquivos ao verificar',async()=>{
  const tool=join(root,'tools/build-runner-art.mjs');
  assert.ok(await stat(tool).catch(()=>null),'a geração precisa ter um comando repetível');
- const files=['tanahoraflavio/runner-sprite-data.mjs','tanahoraflavio/assets/flavio-run.webp','tanahoraflavio/assets/characters-2026.webp'];
+ const files=['tanahoraflavio/runner-sprite-data.mjs','tanahoraflavio/assets/flavio-motion-v2.webp','tanahoraflavio/assets/characters-motion-v2.webp'];
  const before=await Promise.all(files.map(file=>readFile(join(root,file))));
  const result=spawnSync(process.execPath,[tool,'--check'],{cwd:root,env:process.env,encoding:'utf8'});
  assert.equal(result.status,0,result.stderr||result.stdout);
