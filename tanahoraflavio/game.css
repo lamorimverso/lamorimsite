@@ -142,6 +142,19 @@ body.game-expanded{overflow:hidden}
 .is-expanded .game-boss-weapon{margin-top:3px}
 @keyframes arrival{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 @media(min-width:601px){.is-expanded .game-boss{display:grid;grid-template-columns:auto minmax(40px,1fr) auto;align-items:center;gap:10px;min-height:36px}.is-expanded .game-boss-health,.is-expanded .game-boss-weapon{margin:0}}
+@media(min-width:601px) and (max-height:500px){
+ .game-card.is-expanded{padding:8px 12px}
+ .is-expanded .game-heading{min-height:44px}
+ .is-expanded .game-topline{position:absolute;top:22px;left:208px;right:116px;margin:0}
+ .is-expanded .game-scoreboard{margin:0;gap:8px}
+ .is-expanded .game-scoreboard span{font-size:9px}
+ .is-expanded .game-scoreboard strong{font-size:16px}
+ .is-expanded .game-stage-header{display:none}
+ .is-expanded #runner-canvas{max-height:calc(100dvh - 198px)}
+ .is-expanded .route-meter{margin-top:4px}
+ .is-expanded .game-controls{margin-top:6px}
+ .is-expanded .game-controls button{min-height:44px;padding:8px}
+}
 @media(max-width:600px){.game-options{grid-template-columns:1fr}.game-heading{gap:8px}.game-raid{grid-template-columns:27px minmax(0,1fr);gap:5px;padding:6px}#game-joice-portrait{width:27px;height:35px}.game-raid strong{font-size:10px}.game-raid p{font-size:10px}.game-raid a{font-size:9px}}
 @media(max-width:380px){.wrap{padding:0 12px 20px}.hero{grid-template-columns:88px minmax(0,1fr);column-gap:14px}.hero h1{font-size:28px}.progress-ring{width:88px}.digit{font-size:23px}.unit-label{font-size:9px}.unit{padding:2px}.game-heading h2{font-size:20px}.game-scoreboard{gap:6px}.game-scoreboard>div{gap:4px}.game-scoreboard strong{font-size:18px}.game-scoreboard span{font-size:9px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}

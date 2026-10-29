@@ -174,6 +174,8 @@ test('ampliar mantém controles na tela e Escape recolhe sem pausar',async()=>{
   await page.locator('#game-expand').click();
   assert.equal(await page.locator('#game-expand').getAttribute('aria-pressed'),'true');
   await begin(page);
+  const track=await page.locator('#runner-canvas').boundingBox();
+  assert.ok(track.height>=175,`ampliação em paisagem mantém uma pista legível: ${track.height}px`);
   for(const id of ['runner-canvas','game-jump','game-crouch']){
    const r=await page.locator('#'+id).boundingBox();assert.ok(r.y>=0&&r.y+r.height<=391,`${id} cabe no modo ampliado: ${JSON.stringify(r)}`);
   }
