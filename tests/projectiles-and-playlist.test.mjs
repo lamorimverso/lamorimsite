@@ -11,15 +11,16 @@ function bossRun(type='xandao'){
  advanceRun(r,1/120,()=>0);
  return r;
 }
-test('primeiro chefe só chega depois de um trecho substancial de corrida',()=>{
+test('primeiro chefe só chega após 22 km, mesmo que a corrida já dure um minuto',()=>{
  const r=createRun();startRun(r);r.nextRaid=Infinity;r.nextObstacle=1e8;
  r.nextPassport=r.nextPower=r.nextPickup=1e8;r.shieldFor=100;
  advanceRun(r,1/120,()=>0);
- assert.equal(r.nextBossAt,8500);
+ assert.equal(r.nextBossAt,22000);
+ step(r,120*60);
+ assert.ok(r.routeDistance<22000);
+ assert.equal(r.boss,null,'o relógio sozinho não antecipa o marco de rota');
  step(r,120*25);
- assert.equal(r.boss,null,'sem chefão antes dos 25 segundos iniciais');
- step(r,120*18);
- assert.ok(r.boss||r.bossesDefeated>=1,'o chefão precisa surgir após o período inicial, mesmo se já foi vencido');
+ assert.ok(r.boss||r.bossesDefeated>=1,'o chefão surge ao alcançar 22 km, mesmo se já foi vencido');
 });
 test('objeto sai da mão do chefão e viaja em linha reta até o Flávio',()=>{
  const r=bossRun(),shot=r.obstacles.at(-1);

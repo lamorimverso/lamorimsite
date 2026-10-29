@@ -25,14 +25,16 @@
   <link rel="canonical" href="https://lamorimverso.github.io/lamorimsite/tanahoraflavio/">
   <title>Tá na hora, Flávio! · Contagem e minigame</title>
 
-  <link rel="stylesheet" href="game.css?v=0155e0ea00df">
-  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=f8cc0334a4b8"></script>
+  <link rel="stylesheet" href="game.css?v=0d1fa4a6892e">
+  <script defer src="page-layout.js?v=d515141f39cb"></script>
+  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=f5c968c24993"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
   <div class="wrap">
 <main id="conteudo" tabindex="-1">
 
+      <div class="hero-shell" id="countdown-layout">
       <section class="hero" id="contagem" aria-labelledby="titulo">
         <div class="hero-intro">
         <h1 id="titulo">Tá na hora, <span class="title-name">Flávio!</span></h1>
@@ -60,14 +62,14 @@
           <div class="share-message" id="share-message" role="status" aria-live="polite"></div>
         </div>
       </section>
-
+      </div>
 
 
       <section class="game-card" id="game" aria-labelledby="game-title">
         <div class="game-heading">
           <div><h2 id="game-title">Corre, Flávio!</h2></div>
           <div class="game-actions"><button type="button" id="game-sound" class="game-sound" aria-label="Som do jogo" aria-pressed="true" title="Som ligado" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="sound-waves" d="M17 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/><path class="sound-off-mark" d="m17 9 5 6m0-6-5 6"/></svg><span class="sr-only" id="game-sound-label">Som ligado</span></button>
-          <button type="button" id="game-expand" class="game-expand" aria-label="Ampliar jogo" aria-pressed="false" title="Ampliar jogo" disabled><span aria-hidden="true">⤢</span></button></div>
+          <button type="button" id="game-expand" class="game-expand" aria-label="Ampliar jogo" aria-pressed="false" aria-expanded="false" aria-controls="game" title="Ampliar jogo" disabled><span id="game-expand-icon" aria-hidden="true">⤢</span><span id="game-expand-label">Expandir</span></button></div>
         </div>
         <div class="game-topline">
         <div class="game-scoreboard" aria-label="Placar">
@@ -87,13 +89,16 @@
         </div>
         <details class="game-settings" id="game-settings"><summary title="Como jogar e ajustes"><span aria-hidden="true">?</span><span class="sr-only">Como jogar e ajustes</span></summary>
           <div class="game-settings-content">
-            <p class="game-instructions" id="game-instructions">Toque em Pular ou use Espaço/↑ para saltar. Segure Abaixar ou use ↓/S para passar sob ataques altos. Flávio só desvia: observe o aviso do chefão. Cada cenário tem 7 km de rota; os metros totais também contam os encontros. A cada 100 passaportes, você ganha uma vida. O Escudo das Américas protege por seis segundos.</p>
+            <p class="game-instructions" id="game-instructions">Toque na pista ou deslize para cima para pular. Deslize para baixo e segure para abaixar; solte para levantar. No teclado, use Espaço/↑ e ↓/S. Outro dedo pode pular enquanto o primeiro abaixa. Flávio só desvia: observe o aviso do chefão. O cenário avança continuamente, com 7 km por ambiente. A cada 100 passaportes, você ganha uma vida. O Escudo das Américas protege por seis segundos.</p>
             <div class="game-options">
-              <label for="game-crouch-mode">Abaixar<select id="game-crouch-mode" disabled><option value="hold">Segurar o botão</option><option value="toggle">Tocar para alternar</option></select></label>
+              <label for="game-crouch-mode">Abaixar<select id="game-crouch-mode" disabled><option value="hold">Deslizar e segurar</option><option value="toggle">Deslizar para alternar</option></select></label>
               <label for="game-effects">Efeitos visuais<select id="game-effects" disabled><option value="system">Padrão do aparelho</option><option value="reduce">Reduzidos</option></select></label>
               <label class="assist-option" for="game-assist"><input id="game-assist" type="checkbox" disabled>Ritmo mais tranquilo</label>
             </div>
             <p class="game-options-note">O ritmo tranquilo reduz a velocidade da corrida e dos perigos na próxima tentativa. Você pode mudar os efeitos e a forma de abaixar a qualquer momento.</p>
+            <p class="game-options-note">Roteiro fictício inspirado no calendário de 2026: convenções em Brasília, campanha no Rio, primeiro turno na Argentina, reta final na Flórida e diplomação na Casa Branca. Haddad chega aos 22 km, Lula aos 29 km e Xandão aos 36 km de rota; depois, a ordem se repete a cada 7 km. Escape dos papéis, das sequências alto/baixo e dos martelos/mandados. <a href="https://www.tse.jus.br/comunicacao/noticias/2026/Marco/eleicoes-2026-confira-as-principais-datas-do-calendario-eleitoral" target="_blank" rel="noopener noreferrer">Calendário real do TSE</a>.</p>
+            <p class="game-options-note">Fala de arquivo: “Mas a direção é correta.” — Haddad, <a href="https://radiogov.ebc.com.br/programas/bom-dia-ministro-2/curtas-ministro-preve-resultado-fiscal-melhor-que-nos-dois-governos-passados" target="_blank" rel="noopener noreferrer">Bom Dia, Ministro · Rádio Gov/EBC · 07/10/2025</a>, sobre negociações econômicas. A gravação original não se refere ao jogo. O recorte toca na chegada de Haddad e respeita o botão de som.</p>
+            <p class="game-options-note">Joice aparece de surpresa e aumenta as ondas da PF por oito segundos, depois de um aviso curto. O áudio “toc, toc, toc” vem do <a href="https://www.camara.leg.br/evento-legislativo/65858" target="_blank" rel="noopener noreferrer">plenário da Câmara dos Deputados · 22/06/2022</a>, sobre Milton Ribeiro; não foi dito sobre Flávio. Recorte de 5,18 s, sem alterar palavras ou voz, sob <a href="https://www.camara.leg.br/tv/termos-de-uso/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. Respeita o botão de som.</p>
           </div>
         </details>
         <div class="game-viewport">
@@ -103,18 +108,15 @@
           <div class="power-chip"><span class="sr-only">Vantagem ativa: </span><strong id="game-power">Sem efeito ativo</strong></div>
           <div class="ammo-chip" hidden><span class="sr-only">Munição especial: </span><strong id="game-ammo">Sem arma</strong></div>
         </div>
-          <div class="game-overlay" id="game-overlay"><span class="game-overlay-badge" id="game-overlay-badge">Corrida fictícia</span><strong id="game-overlay-title">Pronto para correr?</strong><p id="game-overlay-copy">Pule ou abaixe para desviar.</p><p class="game-start-hint" id="game-start-hint">↑ Pular · ↓ Abaixar</p></div>
+          <div class="game-overlay" id="game-overlay"><span class="game-overlay-badge" id="game-overlay-badge">Corrida fictícia</span><img class="game-captured" id="game-captured" src="assets/flavio-captured-v1.webp?v=35a44e31f10f" width="1334" height="1179" alt="Caricatura de Flávio com as mãos algemadas" fetchpriority="low" hidden><strong id="game-overlay-title">Pronto para correr?</strong><p id="game-overlay-copy">Pule ou abaixe para desviar.</p><p class="game-start-hint" id="game-start-hint">Toque para pular · Deslize ↓ para abaixar</p></div>
         </div>
-        <div class="route-meter" role="progressbar" aria-label="Metros no cenário atual" aria-valuemin="0" aria-valuemax="7000" aria-valuenow="0" id="game-progress"><span></span></div>
         <div class="game-controls">
-          <button type="button" id="game-jump" aria-label="Pular" disabled><span aria-hidden="true">↑</span> Pular</button>
-          <button type="button" id="game-crouch" aria-label="Abaixar" aria-pressed="false" disabled><span aria-hidden="true">↓</span> Abaixar</button>
           <button type="button" class="game-primary" id="game-start" disabled>Carregando desenhos…</button>
         </div>
         <p class="game-loading-note" id="game-loading-note" role="status">Preparando os personagens…</p>
         <div class="game-feedback">
 <div class="game-boss" id="game-boss" hidden aria-label="Confronto com chefe">
-          <div class="game-boss-heading"><span>CHEFÃO</span><strong id="game-boss-name">Chefão sorteado</strong></div>
+          <div class="game-boss-heading"><span>CHEFÃO</span><strong id="game-boss-name">Próximo confronto</strong></div>
           <div class="game-boss-health" id="game-boss-health" role="progressbar" aria-label="Ataques superados" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0"><span id="game-boss-progress"></span></div>
           <small class="game-boss-weapon" id="game-boss-weapon">Desvie dos ataques para fugir</small>
         </div>
@@ -143,7 +145,6 @@
         <noscript>Habilite o JavaScript para jogar.</noscript>
       </section>
 
-      <p class="compact-legal">Humor e sátira. O encerramento do mandato não implica perda automática de foro em todos os processos. <a href="https://noticias.stf.jus.br/postsnoticias/acoes-contra-autoridades-permanecem-no-stf-mesmo-apos-saida-do-cargo/" target="_blank" rel="noopener noreferrer">Entenda a regra do STF</a>.</p>
     </main>
     <footer>Projeto independente de humor.</footer>
   </div>

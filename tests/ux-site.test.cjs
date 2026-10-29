@@ -51,6 +51,13 @@ async function begin(page){
  await page.evaluate(()=>{if(globalThis.__testRun)__testRun.nextObstacle=1000;});
 }
 
+
+async function swipeDown(page,id=7){
+ const track=page.locator('#runner-canvas');
+ await track.dispatchEvent('pointerdown',{button:0,pointerId:id,pointerType:'touch',isPrimary:true,clientX:100,clientY:100});
+ await track.dispatchEvent('pointermove',{pointerId:id,pointerType:'touch',clientX:100,clientY:135});
+}
+
 test('primeira visita ensina pular e abaixar sem expor um bloco longo',async()=>{
  const {context,page,errors}=await open({viewport:{width:390,height:844}});
  try{
@@ -68,12 +75,12 @@ test('primeira visita ensina pular e abaixar sem expor um bloco longo',async()=>
 test('toque mantido no ar agacha ao pousar e cancelamento libera a postura',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844},hasTouch:true,isMobile:true});
  try{
-  await begin(page);await page.locator('#game-jump').tap();
+  await begin(page);await page.locator('#runner-canvas').tap();
   await page.waitForFunction(()=>__testRun.player.y>20);
-  await page.locator('#game-crouch').dispatchEvent('pointerdown',{button:0,pointerId:7});
+  await swipeDown(page,7);
   await page.waitForFunction(()=>__testRun.player.y===0);
   assert.equal(await page.evaluate(()=>__testRun.player.crouching),true);
-  await page.locator('#game-crouch').dispatchEvent('pointercancel',{pointerId:7});
+  await page.locator('#runner-canvas').dispatchEvent('pointercancel',{pointerId:7});
   assert.equal(await page.evaluate(()=>__testRun.player.crouching),false);
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
@@ -93,27 +100,30 @@ test('alternância de agachamento funciona por toque e preferências sobrevivem 
   assert.equal(await page.locator('#game-assist').isChecked(),true);
   assert.equal(await page.locator('#game-effects').inputValue(),'reduce');
   assert.equal(await page.locator('#game-sound').getAttribute('aria-pressed'),'false');
-  assert.equal(await page.locator('#game-crouch').getAttribute('aria-label'),'Abaixar','nome acessível não manda segurar no modo alternar');
-  await begin(page);await page.locator('#game-crouch').tap();
+  assert.equal(await page.locator('#runner-canvas').getAttribute('aria-describedby'),'game-instructions');
+  await begin(page);await swipeDown(page,7);await page.locator('#runner-canvas').dispatchEvent('pointerup',{pointerId:7,pointerType:'touch'});
   assert.equal(await page.evaluate(()=>__testRun.player.crouching),true);
-  await page.locator('#game-crouch').tap();
+  await swipeDown(page,7);await page.locator('#runner-canvas').dispatchEvent('pointerup',{pointerId:7,pointerType:'touch'});
   assert.equal(await page.evaluate(()=>__testRun.player.crouching),false);
+  assert.equal(await page.evaluate(()=>__testRun.player.crouchHeld),false,'segundo deslize desativa a postura');
+  assert.equal(await page.evaluate(()=>__testRun.player.velocity),0,'levantar não dispara um salto');
   assert.equal(await page.evaluate(()=>__testRun.assisted),true);
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
 
-for(const target of ['game-jump','runner-canvas'])test(`segurar Abaixar com um dedo permite saltar com outro em ${target}`,async()=>{
+for(const target of ['centro','direita'])test(`segurar Abaixar com um dedo permite saltar com outro em ${target}`,async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844},hasTouch:true,isMobile:true});
  let touch;
  try{
   await begin(page);
-  const crouch=await page.locator('#game-crouch').boundingBox(),jump=await page.locator('#'+target).boundingBox();
+  const crouch=await page.locator('#runner-canvas').boundingBox(),jump=crouch;
   const first={id:1,x:crouch.x+crouch.width/2,y:crouch.y+crouch.height/2};
-  const second={id:2,x:jump.x+jump.width/2,y:jump.y+jump.height/2};
+  const second={id:2,x:jump.x+jump.width*(target==='centro'?.4:.8),y:jump.y+jump.height*.3};
   touch=await context.newCDPSession(page);
   await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[first]});
-  assert.equal(await page.evaluate(()=>__testRun.player.crouching),true,'o primeiro dedo realmente segura Abaixar');
+  first.y+=30;await touch.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[first]});
+  assert.equal(await page.evaluate(()=>__testRun.player.crouching),true,'o primeiro dedo desliza e mantém a postura baixa');
   await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[second]});
   assert.equal(await page.evaluate(()=>__testRun.player.velocity>0),true,'o segundo dedo inicia o salto sem soltar Abaixar');
   // Chromium encerra os contatos informados; manter o dedo de Abaixar ativo.
@@ -132,7 +142,7 @@ test('salto continua ignorando botão secundário e caneta não primária',async
  try{
   await begin(page);
   for(const event of [{button:2,pointerType:'mouse',isPrimary:true},{button:2,pointerType:'touch',isPrimary:false},{button:0,pointerType:'pen',isPrimary:false}]){
-   await page.locator('#game-jump').dispatchEvent('pointerdown',event);
+   await page.locator('#runner-canvas').dispatchEvent('pointerdown',event);
    assert.equal(await page.evaluate(()=>__testRun.player.velocity),0,'entrada filtrada não aciona salto');
    assert.equal(await page.evaluate(()=>__testRun.player.jumpBufferedUntil),0,'entrada filtrada não guarda intenção');
   }
@@ -183,7 +193,7 @@ test('progresso distingue a rota dos metros e chefão mostra a ação correta',a
   await page.evaluate(()=>{const r=__testRun;r.routeDistance=3500;r.distance=8500;r.nextBossAt=0;r.bossBag=['lula'];r.nextRaid=1000;});
   await page.waitForFunction(()=>document.getElementById('game').dataset.boss==='lula');
   assert.equal(await page.locator('.game-stage-header').isVisible(),true);
-  assert.equal(await page.locator('#game-progress').isVisible(),true);
+  assert.equal(await page.locator('#game-progress').count(),0);
   assert.match(await page.locator('#game-stage-time').textContent(),/ataques|chefão/i);
   assert.match(await page.locator('#game-objective').textContent(),/abaix/i);
   await page.evaluate(()=>{__testRun.boss.fired=1;__testRun.boss.nextAttack=.5;});
@@ -213,7 +223,7 @@ test('ampliar mantém controles na tela e Escape recolhe sem pausar',async()=>{
   await begin(page);
   const track=await page.locator('#runner-canvas').boundingBox();
   assert.ok(track.height>=175,`ampliação em paisagem mantém uma pista legível: ${track.height}px`);
-  for(const id of ['runner-canvas','game-jump','game-crouch']){
+  for(const id of ['runner-canvas']){
    const r=await page.locator('#'+id).boundingBox();assert.ok(r.y>=0&&r.y+r.height<=391,`${id} cabe no modo ampliado: ${JSON.stringify(r)}`);
   }
   await page.locator('#runner-canvas').press('Escape');
@@ -250,7 +260,7 @@ test('ajustes e início continuam funcionando com armazenamento bloqueado',async
  try{
   await page.locator('#game-settings summary').click();
   await page.locator('#game-assist').check();await page.locator('#game-sound').click();
-  await begin(page);await page.locator('#game-jump').click();
+  await begin(page);await page.locator('#runner-canvas').click();
   assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
@@ -262,13 +272,13 @@ test('HUD do chefão fica fora da pista e não desloca pista ou controles',async
   try{
    if(viewport.width===844)await page.locator('#game-expand').click();
    await begin(page);
-   const beforeCanvas=await page.locator('#runner-canvas').boundingBox(),beforeControls=await page.locator('#game-jump').boundingBox();
+   const beforeCanvas=await page.locator('#runner-canvas').boundingBox(),beforeControls=await page.locator('#runner-canvas').boundingBox();
    await page.evaluate(()=>{__testRun.nextBossAt=0;__testRun.bossBag=['lula'];__testRun.nextRaid=1000;});
    await page.waitForFunction(()=>document.getElementById('game').dataset.boss==='lula');
    const canvas=await page.locator('#runner-canvas').boundingBox(),hud=await page.locator('#game-boss').boundingBox();
    const overlaps=canvas.x<hud.x+hud.width&&hud.x<canvas.x+canvas.width&&canvas.y<hud.y+hud.height&&hud.y<canvas.y+canvas.height;
    assert.equal(overlaps,false,`HUD não pode cobrir herói ou projéteis em ${viewport.width}px`);
-   const controls=await page.locator('#game-jump').boundingBox();
+   const controls=await page.locator('#runner-canvas').boundingBox();
    assert.ok(Math.abs(beforeCanvas.y-canvas.y)<1,'entrada do chefe não desloca a pista');
    assert.ok(Math.abs(beforeControls.y-controls.y)<1,'entrada do chefe não desloca os comandos');
    if(viewport.width===844)assert.ok(hud.y+hud.height<=391,`HUD cabe na ampliação: ${JSON.stringify(hud)}`);
@@ -292,7 +302,7 @@ test('HUD do chefão fica fora da pista e não desloca pista ou controles',async
 test('HTML antigo no cache se atualiza sem travar a inicialização',async()=>{
  const {context,page,errors}=await open({legacyFirst:true});
  try{
-  await page.waitForURL(url=>url.searchParams.get('ui')==='20261029-clean', {timeout:4000});
+  await page.waitForURL(url=>url.searchParams.get('ui')==='20261029-endless', {timeout:4000});
   await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
   assert.equal(await page.locator('#game-settings').count(),1);
   assert.match(await page.locator('#days').textContent(),/^\d+$/);

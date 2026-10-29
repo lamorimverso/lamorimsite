@@ -25,10 +25,15 @@ export const PURSUERS = Object.freeze([
  {type:'barrier',name:'Barreira',short:'Barreira',width:44,height:32,color:'#c48845'},
  {type:'case',name:'Mala',short:'Mala',width:38,height:36,color:'#906490'}
 ].map((p,index)=>Object.freeze({...p,index})));
-export const BOSS_ROSTER = Object.freeze(['xandao','haddad','lula']);
+export const BOSS_ROSTER = Object.freeze(['haddad','lula','xandao']);
+const BOSS_GOALS = Object.freeze({
+ haddad:{attacks:5,goalKind:'papers',objective:'Desvie de 5 papéis.'},
+ lula:{attacks:6,goalKind:'pairs',objective:'Complete 3 sequências de ataques altos e baixos.'},
+ xandao:{attacks:8,goalKind:'hammer-mandado',objective:'Supere 4 martelos e 4 mandados.'}
+});
 export const PICKUPS = Object.freeze([
  Object.freeze({type:'passport',name:'Passaporte',value:10,purpose:'100 passaportes = +1 vida'}),
- Object.freeze({type:'shield',name:'Escudo das Américas',value:0,purpose:'Invisibilidade por 6 segundos'})
+ Object.freeze({type:'shield',name:'Escudo das Américas',value:0,purpose:'Proteção por 6 segundos'})
 ]);
 // O protagonista não possui armas; chefões atacam e o jogador só desvia.
 // Texto de roteiro ficcional, sem atribuir gravações/falas autênticas à personagem.
@@ -55,7 +60,7 @@ const approachSpeed = (run,distance,seconds) => Math.max(1,distance)/seconds*ass
 const JUMP_BUFFER_SECONDS = .12;
 
 export function difficultyAt(distance) {
- const d=Number.isFinite(distance)?Math.max(0,distance):0,p=d/(d+25000);
+ const d=Number.isFinite(distance)?Math.max(0,distance):0,p=d/(d+10000);
  return {level:1+Math.floor(d/8000),
   // Aceleração perceptível conforme a quilometragem, limitada para preservar o salto.
   speed:250+Math.min(185,36*Math.log2(1+d/4500)),
@@ -109,7 +114,7 @@ export function scoreFor(run){return Math.floor(run.distance);}
 export function bossAtRound(round,type) {
  const safe=Math.max(0,Math.floor(Number.isFinite(round)?round:0)),level=Math.floor(safe/3)+1;
  const foe=foeFor(type||BOSS_ROSTER[safe%3]),supreme=foe.type==='lula';
- return {foe,level,supreme,round:safe+1,attacks:Math.min(8,4+Math.min(level-1,2)+(supreme?2:foe.type==='haddad'?1:0)),
+ return {foe,level,supreme,round:safe+1,...BOSS_GOALS[foe.type],
   interval:Math.max(1.5,1.8-Math.min(level-1,4)*.05)};
 }
 // Fonte única para o aviso da interface, a arma e a altura do ataque real.
@@ -118,24 +123,21 @@ export function bossAttackFor(type,fired) {
  if(type==='xandao')return even?{type:'hammer',action:'jump'}:{type:'mandado',action:'crouch'};
  return {type:type==='lula'?'lhand':'receipts',action:even?'crouch':'jump'};
 }
-// O primeiro chefe só entra após aproximadamente 34 segundos de corrida efetiva.
-// Os próximos encontros continuam distribuídos pelo trajeto, sem se acumular.
-function nextBossDistance(count,rng){return Math.floor(count/3)*25000+[8500,16500,24000][count%3]+random(rng)*700;}
-function takeBoss(run,rng){
- if(!run.bossBag.length){
-  run.bossBag=[...BOSS_ROSTER];
-  for(let i=2;i>0;i--){const j=Math.floor(random(rng)*(i+1));[run.bossBag[i],run.bossBag[j]]=[run.bossBag[j],run.bossBag[i]];}
-  if(run.bossBag.at(-1)===run.lastBoss)[run.bossBag[0],run.bossBag[2]]=[run.bossBag[2],run.bossBag[0]];
- }
- return run.bossBag.pop();
+// Marcos fixos de rota: o primeiro fica após 21 km e fora da transição.
+// Um marco alcançado permanece pendente enquanto houver evento ou cooldown.
+function nextBossDistance(count){return 22000+count*7000;}
+function takeBoss(run){
+ // O bag explícito mantém a seleção determinística usada por integrações/testes.
+ return run.bossBag.length?run.bossBag.pop():BOSS_ROSTER[run.bossesDefeated%BOSS_ROSTER.length];
 }
-function beginBoss(run,rng){
- const conf=bossAtRound(run.bossesDefeated,takeBoss(run,rng));
+function beginBoss(run){
+ const conf=bossAtRound(run.bossesDefeated,takeBoss(run));
  run.boss={type:conf.foe.type,name:conf.foe.name,color:conf.foe.color,level:conf.level,supreme:conf.supreme,
+  objective:conf.objective,goalKind:conf.goalKind,
   round:conf.round,total:conf.attacks,remaining:conf.attacks,fired:0,interval:conf.interval,nextAttack:1.3,
   hitFlashFor:0,attackFlashFor:0};
  run.obstacles=[];run.nextObstacle=Math.max(1.8,run.nextObstacle);
- announce(run,'CHEFÃO '+conf.foe.name+'! Desvie de '+conf.attacks+' ataques para escapar.');
+ announce(run,'CHEFÃO '+conf.foe.name+'! '+conf.objective);
 }
 function advanceBoss(run,dt,rng,balance){
  const boss=run.boss;if(!boss)return;
@@ -156,13 +158,13 @@ function advanceBoss(run,dt,rng,balance){
  boss.nextAttack+=boss.interval+random(rng)*.22;
  return attack;
 }
-function resolveBossDodges(run,rng){
+function resolveBossDodges(run){
  if(!run.boss)return;
  for(const o of run.obstacles)if(o.bossAttack&&!o.counted&&o.x+o.width<PLAYER.x){o.counted=true;run.boss.remaining--;}
  const boss=run.boss;if(boss.fired<boss.total||boss.remaining>0)return;
  run.lastBoss=boss.type;run.boss=null;run.bossesDefeated++;run.bossCooldown=4;
- run.nextBossAt=nextBossDistance(run.bossesDefeated,rng);run.nextObstacle=Math.max(1.8,run.nextObstacle);
- announce(run,'Você escapou do chefão '+boss.name+'! '+(run.bossesDefeated%3===0?'Três chefões superados nesta volta.':'Continue fugindo.'));
+ run.nextBossAt=nextBossDistance(run.bossesDefeated);run.nextObstacle=Math.max(1.8,run.nextObstacle);
+ announce(run,'Você escapou do chefão '+boss.name+'! '+(run.bossesDefeated%3===0?'Três chefões superados nesta sequência.':'Continue fugindo.'));
 }
 function advanceRaid(run,dt,rng){
  if(run.raid){
@@ -170,7 +172,7 @@ function advanceRaid(run,dt,rng){
   if(raid.remaining<=1e-8){
    if(raid.phase==='warning'){raid.phase='active';raid.remaining=8;announce(run,'Toc, toc, toc… é a Polícia Federal! Oito segundos de perseguição.');}
    else if(raid.phase==='active'){raid.phase='recovery';raid.remaining=2;announce(run,'A perseguição especial terminou. O ritmo normal está voltando.');}
-   else{run.raid=null;run.nextRaid=35+random(rng)*25;}
+   else{run.raid=null;run.nextRaid=28+random(rng)*20;}
   }return;
  }
  if(run.boss||run.bossCooldown>0||stageTransitionAt(routeClock(run)).active)return;
@@ -178,7 +180,7 @@ function advanceRaid(run,dt,rng){
  if(run.nextRaid<=0&&run.nextBossAt-run.routeDistance>1500){
   const choices=RAID_FACTS.map((_,i)=>i).filter(i=>i!==run.lastFact);
   const factIndex=choices[Math.floor(random(rng)*choices.length)];run.lastFact=factIndex;
-  run.raid={phase:'warning',remaining:2,factIndex,id:++run.raids};
+  run.raid={phase:'warning',remaining:1.2,factIndex,id:++run.raids};
   announce(run,'Joice apareceu. Atenção: vem aí uma perseguição especial da PF.');
  }
 }
@@ -196,10 +198,10 @@ function rewardForObstacle(run,obstacle,balance,rng){
 export function advanceRun(run,seconds,rng=Math.random){
  if(run.status!=='running'||!Number.isFinite(seconds)||seconds<=0)return;
  const dt=Math.min(seconds,.05);run.elapsed+=dt;
- if(run.nextBossAt===null)run.nextBossAt=nextBossDistance(0,rng);
- if(run.nextRaid===null)run.nextRaid=35+random(rng)*25;
+ if(run.nextBossAt===null)run.nextBossAt=nextBossDistance(0);
+ if(run.nextRaid===null)run.nextRaid=18+random(rng)*12;
  const balance=difficultyAt(run.distance),travel=balance.speed*assistance(run)*dt;run.distance+=travel;
- if(!run.boss&&!run.raid)run.routeDistance+=travel;
+ run.routeDistance+=travel;
  run.bossCooldown=Math.max(0,run.bossCooldown-dt);
  // A tolerância só absorve erro de ponto flutuante no limite exato de 120ms.
  if(run.player.jumpBufferedUntil<run.elapsed-1e-8)run.player.jumpBufferedUntil=0;
@@ -219,9 +221,9 @@ export function advanceRun(run,seconds,rng=Math.random){
   }
  }
  for(const pickup of run.pickups)pickup.x-=Number.isFinite(pickup.speed)?pickup.speed*dt:travel;
- resolveBossDodges(run,rng);
+ resolveBossDodges(run);
  run.obstacles=run.obstacles.filter(o=>o.x+o.width>-20);run.pickups=run.pickups.filter(p=>p.x>-30);
- if(!run.boss&&!run.raid&&run.bossCooldown<=0&&run.routeDistance>=run.nextBossAt&&!stageTransitionAt(routeClock(run)).active)beginBoss(run,rng);
+ if(!run.boss&&!run.raid&&run.bossCooldown<=0&&run.routeDistance>=run.nextBossAt&&!stageTransitionAt(routeClock(run)).active)beginBoss(run);
  advanceRaid(run,dt,rng);
  let anchor;
  if(run.boss)anchor=advanceBoss(run,dt,rng,balance);
@@ -232,7 +234,7 @@ export function advanceRun(run,seconds,rng=Math.random){
    anchor={x:visibleWidth(run)+40,width:opponent.width,height:opponent.height,type:opponent.type,action:'jump',
     speed:approachSpeed(run,visibleWidth(run)-contactX,balance.obstacleApproach)};
    run.obstacles.push(anchor);run.spawnedObstacles++;
-   const factor=run.raid?.phase==='active'?.84:run.raid?.phase==='recovery'?1-.16*run.raid.remaining/2:1;
+   const factor=run.raid?.phase==='active'?.78:run.raid?.phase==='recovery'?1-.22*run.raid.remaining/2:1;
    run.nextObstacle+=Math.max(1.15,balance.obstacleGap*factor)+random(rng)*.4;
   }
  }
@@ -244,7 +246,7 @@ export function advanceRun(run,seconds,rng=Math.random){
   const hit=right>p.x-12&&left<p.x+12&&top>p.y-12&&bottom<p.y+12;
   if(hit){
    run.collected++;run.lastPickup=p.type;
-   if(p.type==='shield'){run.shieldFor=6;announce(run,'Escudo das Américas! Invisibilidade por 6 segundos.');}
+   if(p.type==='shield'){run.shieldFor=6;announce(run,'Escudo das Américas! Proteção por 6 segundos.');}
    if(p.type==='passport'&&++run.passports%100===0){run.lives++;announce(run,'100 passaportes! Uma vida extra; total: '+run.lives+'.');}
   }return !hit;
  });

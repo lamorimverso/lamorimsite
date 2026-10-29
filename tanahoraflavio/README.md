@@ -10,21 +10,22 @@ Site estático em `tanahoraflavio/`, atualmente no repositório público `lamori
 
 ## Experiência
 
-- Contagem regressiva e botão Compartilhar, sem navegação em três abas e sem playlist.
-- O jogo oferece efeitos sonoros originais (Web Audio) que podem ser desligados. Não reproduz arquivos musicais.
+- Contagem e retrato grandes centralizados no topo; ao descer, o mesmo bloco se transforma no cabeçalho compacto acima do jogo. Compartilhar preservado, sem navegação em abas nem playlist.
+- Efeitos sonoros originais e um recorte curto de arquivo de Haddad, identificados na ajuda e controlados pelo botão de som. Nenhuma gravação musical nem imitação de voz.
 
 ## Minigame: Corre, Flávio!
 
 - Corrida infinita para teclado e toque, sem pausa manual. Tecla Espaço, ↑, pista ou Pular acionam o salto; ↓/S ou **Abaixar** reduz a altura do personagem, no chão. Segurar durante o salto guarda a intenção até o pouso; a opção tocar para alternar dispensa pressão prolongada. Pular sai do agachamento imediatamente; no celular, outro dedo pode saltar em Pular ou na pista enquanto Abaixar continua pressionado. Uma nova pressão no ar pode aguardar o pouso por até120ms, sem salto duplo. Perda de foco/visibilidade limpa intenções pendentes e suspende a simulação.
-- Cinco cenários em voltas: Brasília → Rio → Argentina → Flórida → Casa Branca → Brasília. **Cada cenário percorre 7.000 metros (7 km)** e uma volta totaliza **35 km**, excluindo percursos extras de confronto. Os cenários mudam conforme a distância da rota, pausada durante chefões/Joice. A velocidade de deslocamento cresce a cada quilômetro até limite jogável.
+- Cinco cenários em voltas: Brasília → Rio → Argentina → Flórida → Casa Branca → Brasília. **Cada cenário percorre 7.000 metros (7 km)** e uma volta totaliza **35 km**, incluindo os encontros. A paisagem continua passando durante chefões/Joice, sem congelar a rota. A velocidade de deslocamento cresce a cada quilômetro até limite jogável.
 - O placar e o recorde mostram **metros percorridos**. Passaportes e bônus não alteram o placar. O recorde usa chave própria no armazenamento para não interpretar pontuações antigas como metros.
-- Chefões sorteados sem repetição a cada três: **Xandão, Haddad e Lula**. O primeiro aparece depois de um trecho significativo (a partir de 8.500 metros). Somente os chefões atacam: **Flávio não possui armas nem disparos automáticos**; vence ao desviar da sequência de ataques e continuar vivo.
+- Chefes em ordem **Haddad → Lula → Xandão**, repetida. Primeiro em **22.000 metros de rota**, depois29.000/36.000/43.000… a cada7km, fora de transições/eventos. Haddad exige5papéis; Lula3sequências alto/baixo (6ataques); Xandão4martelos e4mandados (8ataques). Somente chefes atacam: **Flávio não possui armas nem disparos automáticos**; vence ao desviar e continuar vivo.
 - **Xandão** alterna martelo baixo (salto) e mandado de papel alto (abaixar). **Haddad** arremessa papéis e **Lula** lança o gesto caricatural de mão em L, alternando ataques altos (abaixar) e baixos (pular). O aviso usa o mesmo padrão do motor e prioriza o ataque que ainda está vindo. A mira é estável durante cada arremesso e nunca persegue o jogador no ar. Cada chefão tem indicador dos ataques já evitados, em vez de barra de HP.
 - **Passaporte:** aparece em grupos espaçados de três, menos frequentes que antes; **100 coletados = +1 vida**, repetidamente. O item não concede pontos artificiais e não aparece em excesso.
-- **Escudo das Américas:** invisibilidade por **6 segundos**, permitindo atravessar inimigos e projéteis. Outro escudo não nasce quando um efeito já está ativo ou há um escudo próximo.
-- **Joice Hasselmann** surge em eventos com **2 s de aviso, 8 s de perseguição intensificada da PF e 2 s de recuperação**, em intervalos sorteados. Não coincide com chefões ou transições de cenário.
+- **Escudo das Américas:** proteção por **6 segundos**, representada por um objeto sólido azul/dourado diante do braço, com o desenho das Américas. Flávio permanece visível; acompanha salto/agachamento. Outro escudo não nasce quando um efeito já está ativo ou há um escudo próximo.
+- **Joice Hasselmann** surge em eventos com **1,2 s de aviso, 8 s de perseguição intensificada da PF e 2 s de recuperação**. Primeira aparição entre18–30s elegíveis, seguintes28–48s; personagem entra na pista, sem colisão própria, e ondas usam fator.78 com mínimo1,15s. Áudio original do plenário de22/06/2022 creditado na ajuda. Não coincide com chefões ou transições de cenário.
 - Os desenhos anteriores ficam preservados. Novos atlas cartoon2D usam oito passos de Flávio, salto de subida/descida, slide e derrota; PF, Janones e Exército alternam pernas. Flávio continua olhando à direita. As poses preservam a proporção da arte, com registro de torso e pés. O slide recebe ajuste uniforme de escala para caber abaixo do ataque alto; o rosto não é achatado. A animação não altera colisões. Chefões sinalizam preparo e lançamento sem alternar continuamente as armas.
-- Paisagens agora têm três camadas limpas (céu, silhuetas distantes e um monumento por destino), com paralaxe suave e transição entre locais. Os cartazes, sobreposições e caricaturas espalhadas foram retirados para deixar a pista legível, sem criar perigos invisíveis.
+- Paisagens em três planos de coordenadas contínuas: o próximo lugar entra pela direita, os monumentos passam e saem pela esquerda; cores/fronteiras se misturam numa faixa espacial, sem reset em7km/35km. O chão é contínuo e não cria colisões. Movimento reduzido fixa posições decorativas e dissolve a identidade do destino nos1000m finais.
+- Derrota com ilustração nova de Flávio algemado e a legenda exata “Foi pego pela Polícia Federal!” abaixo, preservando causa do impacto e nova tentativa. Os atlas originais continuam intactos.
 - Começa com uma vida. Colisão sem proteção encerra a partida; vidas extras concedem 1,2 s de recuperação após um impacto.
 - Relógio fixo de 120 Hz limita recuperação de tempo entre frames; movimento reduzido reduz efeitos decorativos sem interromper jogo e animações essenciais.
 - O jogo roda inteiramente no navegador, com testes para física, chefões, coleta, acessibilidade, teclas/toque e celular/desktop. A página e os outros sites/bots do repositório não precisam ser alterados.
@@ -36,20 +37,22 @@ Execute `node --test --test-concurrency=1 tests/*.test.*` (dependências de dese
 ### Refinamento de UX — 28/10/2026
 
 - A rota compacta distingue os 7 km da etapa dos metros totais percorridos em encontros. Ajuda e ajustes ficam recolhidos junto ao jogo.
-- Botão Ampliar aumenta a pista sem pausar; Escape recolhe. Sem playlist, cabeçalho com três links ou ataques do jogador.
+- Botão Expandir/Recolher alterna entre a pista ampliada e compacta sem pausar; Escape recolhe. Sem playlist, cabeçalho com três links ou ataques do jogador.
 - A forma de abaixar, os efeitos reduzidos, o ritmo mais tranquilo e o som lembram a escolha local. Armazenamento bloqueado não impede jogar. O ritmo tranquilo afeta a próxima tentativa.
 - Perigos têm velocidade de aproximação própria para harmonizar a janela de reação entre telas. Coletas acompanham essa velocidade e aparecem na ação de evasão correspondente.
 - Calibração inicial dos passaportes usa um piloto de testes com comandos reais, sem teleporte nem imunidade: aproximadamente quatro minutos até a primeira vida nas sequências examinadas. Isso não equivale a um playtest humano.
 - HTML antigo em cache recebe atualização compatível; imagens têm tempo limite e tentativa nova; um bootstrap independente oferece recarregar se o módulo falhar. Os recortes são gerados antecipadamente, sem varredura de pixels em runtime. A rodada29/10 usa caixas explícitas em tools/runner-art-layout.json porque as figuras geradas não obedecem perfeitamente à grade nominal; os testes verificam integridade, margens e ausência de personagens vizinhos.
 - As colisões continuam permissivas em relação às partes extremas dos sprites. A geometria física e a escala da arte são avaliadas em regressões e inspeção de poses; não se amplia a hitbox para cobrir toda a caricatura.
 
-### Apresentação limpa e qualidade —29/10/2026
+### Apresentação e viagem —29/10/2026
 
-- Contagem compacta ao lado do retrato, sem marca duplicada no cabeçalho. Pista e início cabem na primeira tela móvel.
+- Contagem grande e retrato central no topo; `page-layout.js` coordena a transformação no cabeçalho compacto, sem duplicar IDs nem realimentar a rolagem. Ao iniciar, pista/comandos são alinhados à tela; em telas baixas parte do cabeçalho pode sair naturalmente do campo de visão para caber a partida.
 - Som, ampliação e ajuda em controles discretos. Ajustes recolhidos; objetivo repetido oculto; recorde aparece no fim. Placar e progresso essenciais preservados.
-- Cenários vetoriais em runner-scenery.mjs: paletas coesas, arquitetura com contornos discretos, três planos e pista definida. Sem cartazes nem texto decorativo.
+- `drawJourneyScenery` usa distância de rota sem limite para a geografia e distância total para chão/nuvens. Três planos (.14/.18/.22px por metro), marco aos2500m de cada segmento e fronteiras suaves2200m; alpha/estado do Canvas preservados.
 - Novos PNGs flavio-motion-v2/characters-motion-v2 foram gerados por imagem a partir dos personagens anteriores, com revisão de anatomia, transparência e recortes. As escolhas visuais não equivalem a validação com jogadores nem prova de qualidade igual às referências.
 - Controles de ajuste aguardam seus eventos estarem ligados antes de aceitar interação, evitando perder escolhas feitas enquanto o módulo carrega.
+- Fases ficcionais inspiradas no calendárioTSE2026 aparecem no progresso existente; ajuda explica roteiro/ordem/objetivos e referencia o calendário. Não se afirmam candidaturas/resultados reais nem fatos sobre as personagens.
+- Recorte de Haddad: RádioGov/EBC,07/10/2025,3,45s, contexto econômico original identificado. Toca na chegada do chefe após gesto inicial, para com som desligado/blur/derrota; falha de mídia não impede jogar. Proveniência/termos em assets/audio/README.md. A fala foi alinhada por ASR, sem audição humana nesta sessão.
 
 Para regenerar a arte: `node tools/build-runner-art.mjs`. Para atualizar versões após qualquer mudança de recurso: `node tools/version-runner-assets.mjs`. O CI usa as verificações `--check`; uma mudança na dependência invalida o import e o HTML automaticamente. O CSS atual está concentrado em `game.css`.
 
@@ -76,3 +79,5 @@ A página não possui backend, banco ou senhas embutidas. Evite incluir identifi
 
 ## Contexto jurídico
 O fim do mandato não transfere automaticamente todos os processos para outra instância. Veja a [decisão do STF](https://noticias.stf.jus.br/postsnoticias/acoes-contra-autoridades-permanecem-no-stf-mesmo-apos-saida-do-cargo/).
+
+- Direção final Endless Runner: sem botões Pular/Abaixar nem barra de percurso. Toque/deslize para cima na pista pula; deslize para baixo e segure abaixa; solte para levantar. Modo alternar responde a novo deslize para baixo. Dois dedos e teclado permanecem. Cena contínua em encontros; curva de frequência/reação distância/(distância+10.000), mantendo limites de velocidade e colisão. Nota de foro/STF retirada conforme print.

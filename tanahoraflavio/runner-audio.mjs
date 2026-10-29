@@ -1,18 +1,37 @@
-// Som sintetizado localmente; sem gravação nem imitação da voz da pessoa retratada.
+import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=1d92b4ea737d';
+// Efeitos locais e recorte de arquivo identificado; nenhuma imitação de voz.
 export function createGameAudio() {
- let enabled=true,context=null,utterance=null,nodes=[];
+ let enabled=true,context=null,utterance=null,nodes=[],primed=false,recording=null,raidVoice=false;
  const preferenceKey='tanahoraflavio.runner.sound.v1';
  try{enabled=window.localStorage?.getItem(preferenceKey)!=='off';}catch{/* Armazenamento é opcional. */}
+ const stopRecording=()=>{
+  if(recording){try{recording.pause();recording.currentTime=0;}catch{/* A mídia pode já ter sido liberada. */}}
+  recording=null;
+ };
  const stop=()=>{
+  raidVoice=false;
+  stopRecording();
   for(const node of nodes){try{node.stop();}catch{/* Nó já encerrado. */}}nodes=[];
   if(utterance&&'speechSynthesis' in window){try{window.speechSynthesis.cancel();}catch{/* Legenda permanece. */}}
   utterance=null;
  };
  const prime=()=>{
   if(!enabled)return;
+  primed=true;
   try{const Audio=window.AudioContext||window.webkitAudioContext;if(Audio&&!context)context=new Audio();
    if(context?.state==='suspended')context.resume().catch(()=>{});
   }catch{context=null;}
+ };
+ const voice=name=>{
+  const clip=ARCHIVE_VOICES[name];
+  if(!clip||!enabled||!primed||typeof window.Audio!=='function')return false;
+  stopRecording();
+  try{
+   const url=new URL(clip.file,import.meta.url);url.searchParams.set('v',clip.sha256.slice(0,12));
+   const player=new window.Audio(url.href);recording=player;player.volume=.72;player.preload='none';
+   player.play()?.catch?.(()=>{if(recording===player)stopRecording();});
+   return true;
+  }catch{stopRecording();return false;}
  };
  const knocks=()=>{
   if(!enabled||!context)return;
@@ -60,9 +79,12 @@ export function createGameAudio() {
    window.speechSynthesis.speak(utterance);
   }catch{utterance=null;}
  };
- return {get enabled(){return enabled;},prime,stop,effect,
+ return {get enabled(){return enabled;},prime,stop,effect,voice,
   toggle(){enabled=!enabled;try{window.localStorage?.setItem(preferenceKey,enabled?'on':'off');}catch{/* A escolha vale nesta sessão. */}if(!enabled)stop();else prime();return enabled;},
-  event(phase,fact){stop();if(!enabled)return;if(phase==='warning')knocks();
-   if(phase==='active')speak('Toc, toc, toc! É a Polícia Federal! '+fact.text);
+  event(phase,fact){
+   if(!enabled)return;
+   if(phase==='warning'){stop();raidVoice=voice('joice');if(!raidVoice)knocks();}
+   else if(phase==='active'){if(!raidVoice){stop();speak('Toc, toc, toc! É a Polícia Federal! '+(fact?.text||''));}}
+   else stop();
   }};
 }
