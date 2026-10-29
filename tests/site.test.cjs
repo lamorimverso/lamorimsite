@@ -717,6 +717,7 @@ test('um toque não duplica o salto entre pointerdown e click de compatibilidade
   await page.getByRole('button',{name:'Começar corrida',exact:true}).tap();
   await page.locator('#game-jump').tap();
   await page.waitForFunction(()=>globalThis.__testRun.player.y>0);
+  assert.equal(await page.evaluate(()=>globalThis.__testRun.player.jumpBufferedUntil),0,'click de compatibilidade não duplica a pressão no ar');
   assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
