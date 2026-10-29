@@ -79,7 +79,7 @@ test('teclado mantém a corrida sem botão ou atalho de pausa', async () => {
     assert.ok(Number(await page.locator('#game-score').textContent())>before);
     assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
     await page.locator('#runner-canvas').press('Space');
-    assert.equal(await page.locator('#game-jump').isEnabled(),true);
+    assert.equal(await page.locator('#runner-canvas').isVisible(),true);
     assert.deepEqual(errors,[]);
   }finally{await context.close();}
 });
@@ -91,7 +91,7 @@ test('toque funciona em celular sem armazenamento disponível', async () => {
   try {
     await page.locator('#game').scrollIntoViewIfNeeded();
     await page.getByRole('button',{name:'Começar corrida',exact:true}).tap({timeout:1500});
-    await page.getByRole('button',{name:'Pular',exact:true}).tap();
+    await page.locator('#runner-canvas').tap();
     await page.waitForTimeout(250);
     assert.ok(Number(await page.locator('#game-score').textContent()) > 0);
     assert.deepEqual(errors,[]);
@@ -132,7 +132,8 @@ test('layout e controles cabem em 320, 390, 768 e 1440 pixels', async () => {
       assert.ok(canvas.width <= width && canvas.height >= 150);
     }
     assert.equal(await page.locator('.sources').count(),0);
-    assert.equal(await page.locator('.compact-legal a').isVisible(),true);
+    assert.equal(await page.locator('.compact-legal').count(),0,'nota retirada conforme o print do usuário');
+    assert.match(await page.locator('footer').textContent(),/Projeto independente de humor/);
     await page.getByRole('button',{name:'Começar corrida',exact:true}).hover();
     const contrast = await page.locator('#game-start').evaluate(button => {
       const style=getComputedStyle(button);
@@ -243,7 +244,7 @@ test('100 passaportes concedem +1 vida e a corrida permanece infinita', async ()
     await page.waitForFunction(() => document.getElementById('game-stage-name').textContent === 'Casa Branca');
     assert.match(await page.locator('#game-difficulty').textContent(),/Risco/);
     assert.match(await page.locator('#game-phase').textContent(),/Cenário 5 de 5/);
-    assert.equal(await page.locator('#game-progress').isVisible(),true);
+    assert.equal(await page.locator('#game-progress').count(),0);
     assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
     assert.deepEqual(errors,[]);
   } finally { await context.close(); }
@@ -370,7 +371,7 @@ test('jogo minimalista mostra só a pista, placar essencial e controles em todas
         '.game-hud','.game-itinerary',
         '.game-guide','.game-duration','.game-instructions'
       ]) assert.equal(await page.locator(hidden).isVisible(),false,`${hidden} oculto em ${width}`);
-      for(const visible of ['#game-stage-name','#game-progress','#game-score','#game-lives','#game-passports','#runner-canvas','#game-start']){
+      for(const visible of ['#game-stage-name','#game-score','#game-lives','#game-passports','#runner-canvas','#game-start']){
         assert.equal(await page.locator(visible).isVisible(),true,`${visible} visível em ${width}`);
       }
       const game=await page.locator('#game').boundingBox(), canvas=await page.locator('#runner-canvas').boundingBox();
@@ -378,7 +379,7 @@ test('jogo minimalista mostra só a pista, placar essencial e controles em todas
     }
     await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
     assert.equal(await page.locator('#game-start').isVisible(),false);
-    assert.equal(await page.locator('#game-jump').isEnabled(),true);
+    assert.equal(await page.locator('#runner-canvas').isVisible(),true);
     assert.equal(await page.locator('#game-pause').count(),0);
     assert.deepEqual(errors,[]);
   }finally{await context.close();}
@@ -425,7 +426,7 @@ test('os três chefões possuem HUD próprio e a pista permanece utilizável',as
    await page.evaluate(type=>{const r=globalThis.__testRun;r.boss=null;r.bossBag=[type];r.raid=null;r.nextRaid=Infinity;r.routeDistance=0;r.nextBossAt=0;r.bossCooldown=0;r.graceFor=100;r.obstacles=[];},type);
    await page.waitForFunction(type=>document.getElementById('game').dataset.boss===type,type);
    assert.equal(await page.locator('#game-boss').isVisible(),true);
-   assert.equal(await page.locator('#game-jump').isEnabled(),true);
+   assert.equal(await page.locator('#runner-canvas').isVisible(),true);
   }assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
@@ -539,22 +540,21 @@ test('Flávio não atira, e o botão Abaixar permite desviar no celular',async()
    r.graceFor=25;
   });
   await page.waitForFunction(()=>document.getElementById('game-boss').hidden===false);
-  assert.equal(await page.locator('#game-crouch').isVisible(),true);
-  assert.equal(await page.locator('#game-crouch').isEnabled(),true);
-  assert.equal(await page.locator('#game-jump').isEnabled(),true);
+  assert.equal(await page.locator('#game-crouch').count(),0);
+  assert.equal(await page.locator('#runner-canvas').isVisible(),true);
   assert.equal(await page.locator('#game-ammo').isVisible(),false);
   assert.equal(await page.evaluate(()=>Object.prototype.hasOwnProperty.call(globalThis.__testRun,'shots')),false);
-  await page.locator('#game-crouch').dispatchEvent('pointerdown',{button:0,pointerId:1});
+  await page.locator('#runner-canvas').focus();await page.keyboard.down('ArrowDown');
   await page.waitForFunction(()=>globalThis.__testRun.player.crouching);
-  assert.equal(await page.locator('#game-crouch').getAttribute('aria-pressed'),'true');
-  await page.locator('#game-crouch').dispatchEvent('pointerup',{pointerId:1});
+  assert.equal(await page.evaluate(()=>__testRun.player.crouchHeld),true);
+  await page.keyboard.up('ArrowDown');
   await page.waitForFunction(()=>!globalThis.__testRun.player.crouching);
   assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
 
-test('fusão de paisagens e aviso de destino sem perder a jogabilidade', async () => {
+test('passagem gradual da paisagem e aviso de destino sem perder a jogabilidade', async () => {
   const {context,page,errors}=await openWithRun();
   try {
     await page.emulateMedia({reducedMotion:'no-preference'});
@@ -571,7 +571,9 @@ test('fusão de paisagens e aviso de destino sem perder a jogabilidade', async (
       return page.evaluate(()=>{
         const c=document.getElementById('runner-canvas');
         const ctx=c.getContext('2d');
-        const x=Math.round(c.width*10/Math.min(900,Math.max(480,Math.round(c.getBoundingClientRect().width*1.15))));
+        // Na viagem contínua a próxima paisagem entra pela direita: avaliar
+        // o centro da passagem, não exigir que a borda esquerda mude junto.
+        const x=Math.round(c.width/2);
         const y=Math.round(c.height*105/300);
         return [...ctx.getImageData(x,y,1,1).data].slice(0,3);
       });
@@ -585,7 +587,7 @@ test('fusão de paisagens e aviso de destino sem perder a jogabilidade', async (
     assert.ok(transitionWidth>=48 && transitionWidth<=65, `transição visível: ${transitionWidth}%`);
     const florida=await sample(62.5);
     assert.equal(await page.locator('#game-transition').isVisible(),false);
-    // Uma fusão real da cor do céu entre dois destinos (não uma troca abrupta).
+    // A cor no meio da passagem mistura os dois destinos gradualmente.
     for(let i=0;i<3;i++){
       const low=Math.min(argentina[i],florida[i]), high=Math.max(argentina[i],florida[i]);
       assert.ok(halfway[i]>=low-2 && halfway[i]<=high+2,
@@ -594,7 +596,7 @@ test('fusão de paisagens e aviso de destino sem perder a jogabilidade', async (
     assert.notDeepEqual(halfway,argentina);
     assert.notDeepEqual(halfway,florida);
     assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
-    assert.equal(await page.locator('#game-jump').isEnabled(),true);
+    assert.equal(await page.locator('#runner-canvas').isVisible(),true);
     assert.deepEqual(errors,[]);
   } finally {await context.close();}
 });
@@ -628,7 +630,7 @@ test('som é opcional e falha de áudio não impede iniciar ou pular',async()=>{
   await sound.click();assert.equal(await sound.getAttribute('aria-pressed'),'false');
   await sound.click();assert.equal(await sound.getAttribute('aria-pressed'),'true');
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
-  await page.locator('#game-jump').click();assert.equal(await page.locator('#game-jump').isEnabled(),true);
+  await page.locator('#runner-canvas').click();assert.equal(await page.locator('#runner-canvas').isVisible(),true);
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
@@ -651,7 +653,7 @@ test('Joice anuncia evento com legenda e fonte, encerra e não muda a posição 
   await page.waitForFunction(()=>document.getElementById('game').dataset.raid==='recovery');
   await page.evaluate(()=>{globalThis.__testRun.raid.remaining=.01;});
   await page.waitForFunction(()=>document.getElementById('game-raid').hidden);
-  assert.equal(await page.locator('#game-jump').isEnabled(),true);assert.deepEqual(errors,[]);
+  assert.equal(await page.locator('#runner-canvas').isVisible(),true);assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
 test('ocultar a página interrompe a narração da Joice e congela seu evento',async()=>{
@@ -691,7 +693,7 @@ test('tocar em Pular retoma corrida que perdeu foco sem exigir recarregar',async
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
   await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
   const before=Number(await page.locator('#game-score').textContent());
-  await page.locator('#game-jump').click();
+  await page.locator('#runner-canvas').click();
   await page.waitForFunction(before=>Number(document.getElementById('game-score').textContent)>before,before,{timeout:2500});
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
@@ -715,7 +717,7 @@ test('um toque não duplica o salto entre pointerdown e click de compatibilidade
  const {context,page,errors}=await openWithRun({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
  try{
   await page.getByRole('button',{name:'Começar corrida',exact:true}).tap();
-  await page.locator('#game-jump').tap();
+  await page.locator('#runner-canvas').tap();
   await page.waitForFunction(()=>globalThis.__testRun.player.y>0);
   assert.equal(await page.evaluate(()=>globalThis.__testRun.player.jumpBufferedUntil),0,'click de compatibilidade não duplica a pressão no ar');
   assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');

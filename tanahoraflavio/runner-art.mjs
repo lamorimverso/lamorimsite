@@ -23,6 +23,16 @@ export function drawItem(c,{type,x,y,scale=1}){
   else{oval(c,-1,-2,6.5,6.5,'#274d80','#f2cf77',1.5);line(c,[[-7,-2],[5,-2]],'#f2cf77',1);line(c,[[-1,-8],[-1,4]],'#f2cf77',1);line(c,[[-6,10],[5,10]],'#f2cf77',1.5);}
  }c.restore();
 }
+// Objeto à frente do braço: não envolve o corpo nem muda sua opacidade/colisão.
+export function drawProtection(c,{x,y,crouching=false,remaining=0,foreground=false}){
+ if(remaining<=0||!foreground)return;
+ c.save();
+ c.globalAlpha*=Math.min(1,remaining/.65);
+ const cx=x+(crouching?49:44),cy=y-(crouching?24:29);
+ line(c,[[cx-22,cy+4],[cx-8,cy+2]],'#754e3b',5);
+ drawItem(c,{type:'shield',x:cx,y:cy,scale:crouching?1.1:1.4});
+ c.restore();
+}
 // Inimigos com um único quadro ganham passos discretos, sem alterar a
 // física da colisão. Com movimento reduzido (phase=0), ficam estáticos.
 // Animação visual contínua do agachamento (0 em pé, 1 totalmente abaixado).

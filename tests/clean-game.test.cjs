@@ -27,10 +27,12 @@ async function open(viewport){
  return {context,page,errors};
 }
 
-// Regression: added instruction/progress rows previously pushed the start below the first screen.
-for(const width of [320,390])test(`pista e início cabem na primeira tela de ${width}px sem informações repetidas`,async()=>{
+// Depois da contagem central, o mesmo cabeçalho encolhe para abrir espaço à partida.
+for(const width of [320,390])test(`ao descer, pista e início cabem em ${width}px sem informações repetidas`,async()=>{
  const {context,page,errors}=await open({width,height:844});
  try{
+  await page.evaluate(()=>scrollTo(0,334));
+  await page.waitForFunction(()=>document.querySelector('.progress-ring').getBoundingClientRect().width<=110);
   for(const id of ['runner-canvas','game-start']){
    const r=await page.locator('#'+id).boundingBox();
    assert.ok(r.y>=0&&r.y+r.height<=844,`${id} aparece sem rolar: ${JSON.stringify(r)}`);
@@ -55,8 +57,8 @@ test('ajuda compacta abre por teclado e não bloqueia começar a corrida',async(
   await page.locator('#game-effects').selectOption('reduce');
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
   assert.equal(await page.locator('#game-settings').evaluate(e=>e.open),false);
-  assert.equal(await page.locator('#game-jump').isVisible(),true);
-  assert.equal(await page.locator('#game-crouch').isVisible(),true);
+  assert.equal(await page.locator('#game-jump').count(),0);
+  assert.equal(await page.locator('#game-crouch').count(),0);
   assert.equal(await page.locator('#game').getAttribute('data-reduced-motion'),'true');
   assert.deepEqual(errors,[]);
  }finally{await context.close();}

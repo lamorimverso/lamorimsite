@@ -1,7 +1,8 @@
-import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, startRun, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=e42ec96c5833";
-import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep } from "./runner-art.mjs?v=313cef1d7eba";
-import { createGameAudio } from "./runner-audio.mjs?v=02bf65775963";
-import { drawScenery } from "./runner-scenery.mjs?v=c4f6c6e20f24";
+import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, startRun, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=6248a3197891";
+import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection } from "./runner-art.mjs?v=decf068b5878";
+import { createGameAudio } from "./runner-audio.mjs?v=8359de7489db";
+import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=1d92b4ea737d";
+import { drawJourneyScenery } from "./runner-scenery.mjs?v=fddd34f3a1ac";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
 
 function initRunner() {
@@ -10,10 +11,10 @@ function initRunner() {
   if (!canvas || !section) return;
   // Uma aba pode ter conservado o HTML anterior enquanto os módulos já
   // mudaram. Atualizar a página uma vez evita inicializar sobre IDs antigos.
-  if(!$("game-settings")||!$("game-start-hint")||!$("game-expand")||!$("game-sound-label")){
+  if(!$("game-settings")||!$("game-start-hint")||!$("game-expand-label")||!$("game-sound-label")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
     const url=new URL(location.href);
-    if(url.searchParams.get("ui")!=="20261029-clean"){
-      url.searchParams.set("ui","20261029-clean");location.replace(url.href);
+    if(url.searchParams.get("ui")!=="20261029-endless"){
+      url.searchParams.set("ui","20261029-endless");location.replace(url.href);
     }else{
       const button=$("game-start"),note=$("game-loading-note");
       if(button){button.disabled=false;button.textContent="Recarregar jogo";button.addEventListener("click",()=>location.reload(),{once:true});}
@@ -49,6 +50,7 @@ function initRunner() {
   $("game-effects").value=preferences.effects;
   $("game-assist").checked=preferences.assisted;
   let run=createRun({assisted:preferences.assisted}),frameId=0;
+  const trackPointers=new Map();
   const frameClock=createFrameClock(performance.now());
   let spritesReady=false,spritesFailed=false,loadedSprites=0,loadingSprites=false,landingUntil=0;
   let crouchPose=0,lastPoseFrame=performance.now();
@@ -60,7 +62,8 @@ function initRunner() {
   $("game-sound-label").textContent=audio.enabled?"Som ligado":"Som desligado";
   $("game-sound").title=$("game-sound-label").textContent;
   $("game-sound").setAttribute("aria-pressed",String(audio.enabled));
-  let lastRaidKey="";
+  let lastRaidKey="",lastPageMotion=null;
+  const campaignPhases=["Convenções","Campanha","1º turno","Reta final","Diplomação"];
   const routeSeconds=()=>run.routeDistance/SCENE_DISTANCE*SCENE_SECONDS;
   const pad = number => String(number).padStart(2, "0");
   // A preferência pode mudar enquanto o jogo está aberto.
@@ -98,16 +101,15 @@ function initRunner() {
     $("game-phase").textContent="Cenário "+(stage.index+1)+" de 5 · Volta "+lap;
     $("game-stage-name").textContent=stage.name;
     $("game-difficulty").textContent="Risco "+difficulty.level+" · "+score.toLocaleString("pt-BR")+" m";
-    $("game-stage-time").textContent=run.boss?run.boss.remaining+" ataques para escapar do chefão":run.raid?"Perseguição especial · rota em espera":(sceneElapsed/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+" / 7 km · até "+STAGES[(stage.index+1)%5].short;
+    $("game-stage-time").textContent=run.status==="over"?"Fim da corrida":run.boss?run.boss.remaining+" ataques para escapar do chefão":run.raid?"Perseguição especial":campaignPhases[stage.index];
     $("game-best").textContent=best.toLocaleString("pt-BR");
     $("game-time").textContent=pad(Math.floor(run.elapsed/60))+":"+pad(Math.floor(run.elapsed%60));
-    $("game-progress").hidden=false;
-    $("game-progress").setAttribute("aria-valuemax",String(SCENE_DISTANCE));
-    $("game-progress").setAttribute("aria-valuenow",String(Math.floor(sceneElapsed)));
-    $("game-progress").setAttribute("aria-valuetext",stage.name+" · "+Math.floor(sceneElapsed).toLocaleString("pt-BR")+" de 7.000 metros de rota · volta "+lap);
-    $("game-progress").firstElementChild.style.width=sceneElapsed/SCENE_DISTANCE*100+"%";
     section.dataset.runState=run.status;
     section.dataset.reducedMotion=String(prefersReducedMotion());
+    if(lastPageMotion!==prefersReducedMotion()){
+      lastPageMotion=prefersReducedMotion();
+      section.dispatchEvent(new CustomEvent("runner:motion",{detail:{reducedMotion:lastPageMotion}}));
+    }
     section.dataset.art=spritesReady?"loaded":spritesFailed?"error":"loading";
     const power=run.shieldFor>0?"shield":run.graceFor>0?"recovery":"none";
     section.dataset.power=power;section.dataset.ammo="none";
@@ -119,8 +121,11 @@ function initRunner() {
       $("game-boss-name").textContent=b.name+" · rodada "+b.level;
       $("game-boss-health").setAttribute("aria-valuemax",String(b.total));
       $("game-boss-health").setAttribute("aria-valuenow",String(b.total-b.remaining));
+      $("game-boss-health").setAttribute("aria-label",b.objective||"Ataques superados");
       $("game-boss-progress").style.width=100*(b.total-b.remaining)/b.total+"%";
-      $("game-boss-weapon").textContent=(bossCue().action==="crouch"?"↓ Abaixe":"↑ Pule")+" · "+b.remaining+" ataque"+(b.remaining===1?"":"s")+" para escapar";
+      const dodged=b.total-b.remaining;
+      const goal=b.goalKind==="pairs"?Math.floor(dodged/2)+"/3 sequências alto/baixo":b.goalKind==="hammer-mandado"?Math.floor(dodged/2)+"/4 pares martelo/mandado":dodged+"/"+b.total+" papéis";
+      $("game-boss-weapon").textContent=(bossCue().action==="crouch"?"↓ Abaixe":"↑ Pule")+" · "+goal;
       $("game-boss").style.setProperty("--boss-accent",b.color);
     }
     $("game-threat").textContent=run.raid?.phase==="active"?"PF em operação":"Inimigos sorteados · "+stage.short;
@@ -130,26 +135,25 @@ function initRunner() {
     $("game-raid").hidden=!raid;section.dataset.raid=raid?.phase||"none";
     if(raid){
       const fact=RAID_FACTS[raid.factIndex];
-      $("game-raid-title").textContent=raid.phase==="warning"?"JOICE AVISA · "+Math.ceil(raid.remaining)+" s":raid.phase==="active"?"É A POLÍCIA FEDERAL! · "+Math.ceil(raid.remaining)+" s":"RITMO NORMAL VOLTANDO";
+      $("game-raid-title").textContent=raid.phase==="warning"?"JOICE APARECEU!":raid.phase==="active"?"É A POLÍCIA FEDERAL! · "+Math.ceil(raid.remaining)+" s":"RITMO NORMAL VOLTANDO";
       $("game-raid-copy").textContent=raid.phase==="warning"?"Toc, toc, toc… prepare o salto!":fact.text;
-      $("game-raid-source").textContent=raid.phase==="warning"?"Joice Hasselmann · personagem satírica":fact.source;
-      $("game-raid-source").href=fact.url;
+      $("game-raid-source").textContent=raid.phase==="warning"?"Joice Hasselmann · Câmara · 22/06/2022":fact.source;
+      $("game-raid-source").href=raid.phase==="warning"?ARCHIVE_VOICES.joice.source:fact.url;
       const raidKey=raid.id+":"+raid.phase;
       if(raidKey!==lastRaidKey){audio.event(raid.phase,fact);lastRaidKey=raidKey;}
     }else if(lastRaidKey){audio.stop();lastRaidKey="";}
-    $("game-jump").disabled=run.status!=="running";
-    $("game-crouch").disabled=run.status!=="running";
-    $("game-crouch").setAttribute("aria-pressed",String(run.player.crouching));
     $("game-start").disabled=!spritesReady&&!spritesFailed;
     $("game-start").textContent=!spritesReady?(spritesFailed?"Tentar carregar desenhos":"Carregando desenhos · "+loadedSprites+"/2"):run.status==="ready"?"Começar corrida":run.status==="over"?"Tentar de novo":"Recomeçar corrida";
     $("game-loading-note").hidden=spritesReady;
     $("game-loading-note").textContent=spritesFailed?"Os desenhos não carregaram. Toque no botão para tentar novamente.":"Preparando os personagens…";
     $("game-overlay").hidden=run.status==="running";
+    $("game-captured").hidden=run.status!=="over";
     $("game-start-hint").hidden=run.status!=="ready";
     if(run.status==="over"){
       $("game-overlay-title").textContent="Foi pego pela Polícia Federal!";
       $("game-overlay-copy").textContent=dodgeHint()+" "+score.toLocaleString("pt-BR")+" m · "+run.passports+" passaportes.";
       $("game-overlay-badge").textContent="Perseguição fictícia";audio.stop();
+      if(lastStatus!=="over")section.dispatchEvent(new Event("runner:over"));
     }
     if(lastStatus!==run.status||lastStage!==stage.index||lastCollected!==run.collected||lastPower!==power||lastLives!==run.lives||lastEvents!==run.events){
       let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="over"?"Foi pego pela Polícia Federal! "+dodgeHint()+" "+score+" metros percorridos. Toque em Tentar de novo.":stage.name+" · pule ou abaixe conforme o perigo.";
@@ -173,7 +177,7 @@ function initRunner() {
     cancelAnimationFrame(frameId);frameId=0;
     resetFrameClock(frameClock,performance.now());
     if(document.hidden||!windowFocused||!inView||run.status!=="running"){
-      audio.stop();clearRunInput(run);$("game-crouch").setAttribute("aria-pressed","false");
+      audio.stop();clearRunInput(run);trackPointers.clear();
     }
     schedule();
   }
@@ -192,7 +196,7 @@ function initRunner() {
     updateUI();
     if(run.lives<before.lives)audio.effect("hit");
     else if(before.boss&&!run.boss)audio.effect("victory");
-    else if(!before.boss&&run.boss)audio.effect("boss");
+    else if(!before.boss&&run.boss){audio.effect("boss");audio.voice(run.boss.type);}
     else if(run.boss&&run.boss.fired>before.attacks)audio.effect("attack");
     else if(run.collected>before.collected)audio.effect("pickup");
     if(bufferedTakeoff&&run.status==="running")audio.effect("jump");
@@ -221,12 +225,13 @@ function initRunner() {
     if(!spritesReady){if(spritesFailed)prepareSprites();return;}
     cancelAnimationFrame(frameId);frameId=0;resumeFromGesture();
     audio.stop();audio.prime();lastRaidKey="";
+    trackPointers.clear();
     run=createRun({assisted:preferences.assisted});run.viewportWidth=virtualWidth;startRun(run);landingUntil=0;
     $("game-settings").open=false;
     crouchPose=0;lastPoseFrame=performance.now();
     lastCollected=0;lastPower="";lastStatus="";lastEvents=0;lastLives=1;
     resetFrameClock(frameClock,performance.now());
-    updateUI();draw();syncActivity();canvas.focus({preventScroll:true});
+    updateUI();section.dispatchEvent(new Event("runner:start"));draw();resumeFromGesture();syncActivity();canvas.focus({preventScroll:true});
   }
   function jump(){
     resumeFromGesture();
@@ -236,7 +241,6 @@ function initRunner() {
   function crouch(active){
     if(crouchRun(run,active)){draw();}
     else if(!active)draw();
-    $("game-crouch").setAttribute("aria-pressed",String(run.player.crouching));
   }
   $("game-start").addEventListener("click",begin);
   $("game-sound").addEventListener("click",()=>{
@@ -252,38 +256,44 @@ function initRunner() {
   function setExpanded(active){
     expanded=!!active;section.classList.toggle("is-expanded",expanded);document.body.classList.toggle("game-expanded",expanded);
     $("game-expand").setAttribute("aria-pressed",String(expanded));
+    $("game-expand").setAttribute("aria-expanded",String(expanded));
+    $("game-expand-icon").textContent=expanded?"⤡":"⤢";
+    $("game-expand-label").textContent=expanded?"Recolher":"Expandir";
     $("game-expand").setAttribute("aria-label",expanded?"Recolher jogo":"Ampliar jogo");
     $("game-expand").title=expanded?"Recolher jogo":"Ampliar jogo";
     resize();resumeFromGesture();
   }
   $("game-expand").addEventListener("click",()=>setExpanded(!expanded));
   document.addEventListener("keydown",event=>{if(event.code==="Escape"&&expanded){event.preventDefault();setExpanded(false);canvas.focus({preventScroll:true});}});
-  function bindJump(target){
-    const activate=()=>{jump();canvas.focus({preventScroll:true});};
-    if("PointerEvent" in window)target.addEventListener("pointerdown",event=>{
-      // Outro dedo pode saltar enquanto o primeiro segura Abaixar.
-      if(event.button!==0||(event.isPrimary===false&&event.pointerType!=="touch"))return;
-      event.preventDefault();activate();
-    },{passive:false});
-    target.addEventListener("click",event=>{if(!("PointerEvent" in window)||event.detail===0)activate();});
+  // Gestos na pista substituem os botões: toque/passe para cima, ou desça e segure.
+  canvas.addEventListener("pointerdown",event=>{
+    if(event.button!==0||(event.isPrimary===false&&event.pointerType!=="touch"))return;
+    event.preventDefault();resumeFromGesture();canvas.focus({preventScroll:true});
+    if(event.pointerType!=="touch"||run.status!=="running"){jump();return;}
+    const pointer={x:event.clientX,y:event.clientY,action:"pending"};
+    if(run.player.crouchHeld&&(preferences.crouchMode==="hold"||trackPointers.size>0)){pointer.action="jump";jump();}
+    trackPointers.set(event.pointerId,pointer);
+    try{canvas.setPointerCapture?.(event.pointerId);}catch{/* Eventos assistivos podem não ter contato nativo. */}
+  },{passive:false});
+  canvas.addEventListener("pointermove",event=>{
+    const pointer=trackPointers.get(event.pointerId);if(!pointer||pointer.action!=="pending")return;
+    const dx=event.clientX-pointer.x,dy=event.clientY-pointer.y;
+    if(Math.max(Math.abs(dx),Math.abs(dy))<22)return;
+    event.preventDefault();
+    if(Math.abs(dx)>Math.abs(dy)){pointer.action="cancelled";return;}
+    if(dy<0){pointer.action="jump";jump();}
+    else{pointer.action="crouch";crouch(preferences.crouchMode==="toggle"?!run.player.crouchHeld:true);}
+  },{passive:false});
+  function releaseTrackPointer(event){
+    const pointer=trackPointers.get(event.pointerId);if(!pointer)return;
+    trackPointers.delete(event.pointerId);
+    if(pointer.action==="pending"&&event.type==="pointerup")jump();
+    if(pointer.action==="crouch"&&preferences.crouchMode==="hold"&&![...trackPointers.values()].some(p=>p.action==="crouch"))crouch(false);
   }
-  bindJump($("game-jump"));bindJump(canvas);
-  const crouchButton=$("game-crouch");
-  // Segure para abaixar, solte para voltar a correr (celular/mouse/caneta).
-  crouchButton.addEventListener("pointerdown",event=>{
-    if(event.button!==0||run.status!=="running")return;
-    event.preventDefault();resumeFromGesture();
-    try{crouchButton.setPointerCapture?.(event.pointerId);}catch{/* navegador pode não reconhecer eventos de teste/assistivos */}
-    if(preferences.crouchMode==="hold")crouch(true);
-  });
-  const releaseCrouch=()=>{if(preferences.crouchMode==="hold")crouch(false);};
-  crouchButton.addEventListener("pointerup",releaseCrouch);
-  crouchButton.addEventListener("pointercancel",()=>{clearRunInput(run);crouch(false);});
-  crouchButton.addEventListener("lostpointercapture",releaseCrouch);
-  // Enter/Espaço no botão: alternância acessível sem exigir manter tecla.
-  crouchButton.addEventListener("click",event=>{
-    if(preferences.crouchMode==="toggle"||event.detail===0){resumeFromGesture();crouch(!run.player.crouchHeld);}
-  });
+  canvas.addEventListener("pointerup",releaseTrackPointer);
+  canvas.addEventListener("lostpointercapture",releaseTrackPointer);
+  canvas.addEventListener("pointercancel",()=>{trackPointers.clear();clearRunInput(run);crouch(false);});
+  canvas.addEventListener("click",event=>{if(!("PointerEvent" in window)||event.detail===0)jump();});
   section.addEventListener("keydown", event => {
     if (event.target.closest("button,a,input,select,textarea,summary") || event.ctrlKey || event.metaKey || event.altKey) return;
     if (["Space","ArrowUp"].includes(event.code)) {
@@ -329,9 +339,6 @@ function initRunner() {
   function circle(x, y, radius, color) {
     ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x,y,radius,0,Math.PI*2); ctx.fill();
   }
-  function scenery(stage) {
-    drawScenery(ctx,{stage,distance:run.distance,width:virtualWidth,reducedMotion:prefersReducedMotion()});
-  }
   function bossFigure(){
     const b=run.boss;if(!b)return;
     const phase=prefersReducedMotion()?0:run.elapsed*6;
@@ -348,14 +355,15 @@ function initRunner() {
   }
   function character(){
     const airborne=run.player.y>0||run.player.velocity>0,reduced=prefersReducedMotion();
-    const active=run.status==="running"&&!reduced;
-    const phase=active?run.distance/20:0;
+    const active=run.status==="running",decorative=active&&!reduced;
+    // A passada comunica a corrida; reduzir efeitos só retira poeira/balanço.
+    const phase=active?run.distance/24:0;
     const crouchTarget=run.player.crouching&&!airborne;
     const frameTime=performance.now();
     crouchPose=crouchAnimationStep(crouchPose,crouchTarget,(frameTime-lastPoseFrame)/1000,reduced);
     lastPoseFrame=frameTime;
-    const bounce=active&&!airborne?(1-crouchPose)*Math.abs(Math.sin(phase*Math.PI/4))*1.2:0;
-    if(active&&!airborne){
+    const bounce=decorative&&!airborne?(1-crouchPose)*Math.abs(Math.sin(phase*Math.PI/4))*1.2:0;
+    if(decorative&&!airborne){
       circle(PLAYER.x-8-run.distance%19,WORLD.ground-2,2.8,"#a6a7aa70");
       // Pequena poeira que acompanha o deslize, sem afetar a pista.
       if(crouchPose>.22){
@@ -365,14 +373,9 @@ function initRunner() {
     }
     ctx.save();ctx.globalAlpha=.12;ctx.fillStyle="#292337";
     ctx.beginPath();ctx.ellipse(PLAYER.x+17,WORLD.ground+4,22+crouchPose*6,4,0,0,Math.PI*2);ctx.fill();ctx.restore();
-    if(run.shieldFor>0){
-      ctx.save();ctx.strokeStyle="#bda15b";ctx.lineWidth=2;ctx.setLineDash([5,4]);
-      ctx.beginPath();ctx.ellipse(PLAYER.x+17,WORLD.ground-run.player.y-35+crouchPose*12,27,47-crouchPose*15,0,0,Math.PI*2);
-      ctx.stroke();ctx.restore();
-      drawItem(ctx,{type:"shield",x:PLAYER.x+17,y:WORLD.ground-run.player.y-91+crouchPose*35,scale:.38});
-    }
     // Slide desenhado na postura baixa: sem comprimir o rosto novamente.
     const feet=WORLD.ground-run.player.y-bounce;
+    const protection={x:PLAYER.x+17,y:feet,crouching:crouchTarget,remaining:run.shieldFor};
     ctx.save();
     if(crouchTarget){
       const pivot=PLAYER.x+17;
@@ -385,8 +388,15 @@ function initRunner() {
     }
     drawActor(ctx,{type:"flavio",x:PLAYER.x+17,y:feet,scale:.95,phase,airborne,
       falling:run.player.velocity<0,landing:crouchTarget,
-      hurt:run.status==="over",alpha:run.shieldFor>0?.27:run.graceFor>0?.55:1});
+      hurt:run.status==="over",alpha:run.graceFor>0&&run.shieldFor<=0?.55:1});
     ctx.restore();
+    drawProtection(ctx,{...protection,foreground:true});
+  }
+  function joiceFigure(){
+    const raid=run.raid;if(run.status!=="running"||!raid)return;
+    const leaving=raid.phase==="active"?Math.min(1,(8-raid.remaining)/.65):0;
+    if(raid.phase!=="warning"&&(raid.phase!=="active"||leaving>=1||prefersReducedMotion()))return;
+    drawActor(ctx,{type:"joice",x:virtualWidth-62+leaving*130,y:WORLD.ground-2,scale:1.08,phase:0});
   }
   function obstacle(item){
     if(item.projectile){
@@ -401,18 +411,9 @@ function initRunner() {
   }
   function draw() {
     ctx.setTransform(canvas.width/virtualWidth,0,0,canvas.height/WORLD.height,0,0);
-    const stage = stageAt(routeSeconds());
-    const transition = stageTransitionAt(routeSeconds());
-    if (transition.active && !prefersReducedMotion()) {
-      scenery(transition.from);
-      ctx.save();
-      ctx.globalAlpha=transition.progress;
-      scenery(transition.to);
-      ctx.restore();
-    } else {
-      scenery(stage);
-    }
+    drawJourneyScenery(ctx,{routeDistance:run.routeDistance,distance:run.distance,width:virtualWidth,reducedMotion:prefersReducedMotion()});
     bossFigure();
+    joiceFigure();
     for(const item of run.pickups)pickup(item);
     for(const item of run.obstacles)obstacle(item);
     character();

@@ -34,7 +34,7 @@ test('pista gera apenas passaportes e escudos úteis, sem armas do protagonista'
  assert.deepEqual([...types].sort(),['passport','shield']);
  assert.equal('shots' in r,false);assert.equal('bibleCharges' in r,false);
 });
-test('chefões são sorteados sem repetição entre grupos de três',()=>{
+test('chefões repetem a ordem Haddad, Lula e Xandão em cada sequência',()=>{
  const rng=seeded(7),r=running(),seen=[];
  for(let i=0;i<6;i++){
   r.nextBossAt=r.routeDistance;r.bossCooldown=0;core.advanceRun(r,1/120,rng);
@@ -42,16 +42,14 @@ test('chefões são sorteados sem repetição entre grupos de três',()=>{
   r.boss.fired=r.boss.total;r.boss.remaining=0;r.obstacles=[];
   core.advanceRun(r,1/120,rng);assert.equal(r.boss,null);
  }
- assert.deepEqual(seen.slice(0,3).sort(),['haddad','lula','xandao']);
- assert.deepEqual(seen.slice(3,6).sort(),['haddad','lula','xandao']);
- assert.notEqual(seen[2],seen[3]);
+ assert.deepEqual(seen,['haddad','lula','xandao','haddad','lula','xandao']);
 });
-test('a distância cresce enquanto a rota espera o chefão e o protagonista não atira',()=>{
+test('a distância e a rota crescem durante o chefão e o protagonista não atira',()=>{
  const r=running();triggerBoss(r);r.boss.nextAttack=100;const route=r.routeDistance,start=r.distance;
  step(r,.2);
- assert.equal(r.routeDistance,route);
+ assert.ok(r.routeDistance>route);
  assert.ok(core.scoreFor(r)>start);
- assert.equal(r.boss.total,4);
+ assert.equal(r.boss.total,8);
  assert.equal('shots' in r,false);
 });
 test('Xandão usa martelo e mandado, Lula gesto em L e Haddad papéis',()=>{
@@ -75,12 +73,12 @@ test('ganho de pontos independe de coletas e não antecipa o chefão',()=>{
  core.advanceRun(r,.01,()=>.5);assert.equal(r.boss,null);
  assert.equal(core.scoreFor(r),Math.floor(r.distance));
 });
-test('Joice avisa por dois segundos e intensifica perseguição por oito',()=>{
+test('Joice avisa por 1,2 segundo e intensifica perseguição por oito',()=>{
  const r=running();r.nextRaid=0;r.nextBossAt=Infinity;core.advanceRun(r,1/120,()=>.5);
- assert.equal(r.raid.phase,'warning');assert.equal(r.raid.remaining,2);r.shieldFor=50;
- step(r,2.02);assert.equal(r.raid.phase,'active');
+ assert.equal(r.raid.phase,'warning');assert.equal(r.raid.remaining,1.2);r.shieldFor=50;
+ step(r,1.22);assert.equal(r.raid.phase,'active');
  step(r,8.02);assert.equal(r.raid.phase,'recovery');
- step(r,2.02);assert.equal(r.raid,null);assert.ok(r.nextRaid>=35);
+ step(r,2.02);assert.equal(r.raid,null);assert.ok(r.nextRaid>=28);
 });
 test('ondas da PF no evento preservam intervalo mínimo de reação',()=>{
  const a=running(),b=running();a.nextBossAt=b.nextBossAt=Infinity;a.nextRaid=b.nextRaid=Infinity;

@@ -5,8 +5,16 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
+import {ARCHIVE_VOICES} from '../tanahoraflavio/runner-voice-data.mjs';
 const tool=new URL('../tools/version-runner-assets.mjs',import.meta.url);
 const version=s=>createHash('sha256').update(s).digest('hex').slice(0,12);
+test('URL versionada do recorte corresponde ao áudio incluído na publicação',async()=>{
+ for(const clip of Object.values(ARCHIVE_VOICES)){
+  const bytes=await readFile(new URL('../tanahoraflavio/'+clip.file,import.meta.url));
+  assert.equal(createHash('sha256').update(bytes).digest('hex'),clip.sha256,'mídia alterada exige versão nova');
+  assert.ok(clip.toSeconds>clip.fromSeconds&&clip.toSeconds-clip.fromSeconds<6,'recorte curto de um intervalo contínuo');
+ }
+});
 test('recurso alterado invalida também o import e a entrada HTML, com geração estável',async()=>{
  const root=await mkdtemp(join(tmpdir(),'runner-release-'));
  try{
