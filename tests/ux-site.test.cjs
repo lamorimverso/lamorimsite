@@ -103,6 +103,43 @@ test('alternância de agachamento funciona por toque e preferências sobrevivem 
  }finally{await context.close();}
 });
 
+for(const target of ['game-jump','runner-canvas'])test(`segurar Abaixar com um dedo permite saltar com outro em ${target}`,async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844},hasTouch:true,isMobile:true});
+ let touch;
+ try{
+  await begin(page);
+  const crouch=await page.locator('#game-crouch').boundingBox(),jump=await page.locator('#'+target).boundingBox();
+  const first={id:1,x:crouch.x+crouch.width/2,y:crouch.y+crouch.height/2};
+  const second={id:2,x:jump.x+jump.width/2,y:jump.y+jump.height/2};
+  touch=await context.newCDPSession(page);
+  await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[first]});
+  assert.equal(await page.evaluate(()=>__testRun.player.crouching),true,'o primeiro dedo realmente segura Abaixar');
+  await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[second]});
+  assert.equal(await page.evaluate(()=>__testRun.player.velocity>0),true,'o segundo dedo inicia o salto sem soltar Abaixar');
+  // Chromium encerra os contatos informados; manter o dedo de Abaixar ativo.
+  await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[second]});
+  await page.waitForFunction(()=>__testRun.player.y===0);
+  assert.equal(await page.evaluate(()=>__testRun.player.crouching),true,'ao pousar o primeiro dedo continua abaixando');
+  assert.equal(await page.evaluate(()=>__testRun.player.jumpBufferedUntil),0,'o mesmo toque não deixa outro salto pendente');
+  await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[first]});
+  assert.equal(await page.evaluate(()=>__testRun.player.crouchHeld),false,'soltar o primeiro dedo libera a postura');
+  assert.deepEqual(errors,[]);
+ }finally{await touch?.detach();await context.close();}
+});
+
+test('salto continua ignorando botão secundário e caneta não primária',async()=>{
+ const {context,page,errors}=await open({instrument:true});
+ try{
+  await begin(page);
+  for(const event of [{button:2,pointerType:'mouse',isPrimary:true},{button:2,pointerType:'touch',isPrimary:false},{button:0,pointerType:'pen',isPrimary:false}]){
+   await page.locator('#game-jump').dispatchEvent('pointerdown',event);
+   assert.equal(await page.evaluate(()=>__testRun.player.velocity),0,'entrada filtrada não aciona salto');
+   assert.equal(await page.evaluate(()=>__testRun.player.jumpBufferedUntil),0,'entrada filtrada não guarda intenção');
+  }
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
 test('perda de foco descarta salto que aguardava o pouso',async()=>{
  const {context,page,errors}=await open({instrument:true});
  try{

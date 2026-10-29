@@ -261,7 +261,8 @@ function initRunner() {
   function bindJump(target){
     const activate=()=>{jump();canvas.focus({preventScroll:true});};
     if("PointerEvent" in window)target.addEventListener("pointerdown",event=>{
-      if(event.isPrimary===false||event.button!==0)return;
+      // Outro dedo pode saltar enquanto o primeiro segura Abaixar.
+      if(event.button!==0||(event.isPrimary===false&&event.pointerType!=="touch"))return;
       event.preventDefault();activate();
     },{passive:false});
     target.addEventListener("click",event=>{if(!("PointerEvent" in window)||event.detail===0)activate();});
