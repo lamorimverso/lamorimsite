@@ -25,16 +25,12 @@
   <link rel="canonical" href="https://lamorimverso.github.io/lamorimsite/tanahoraflavio/">
   <title>Tá na hora, Flávio! · Contagem e minigame</title>
 
-  <link rel="stylesheet" href="game.css?v=f455da95ea80">
-  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=8fce36b7652c"></script>
+  <link rel="stylesheet" href="game.css?v=42612b17cde3">
+  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=3f3e7a8f29ef"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
   <div class="wrap">
-    <header class="site-header">
-      <a class="wordmark" href="#contagem" aria-label="Tá na hora, Flávio — início"><span aria-hidden="true">◷</span> tá na hora<span class="wordmark-dot">.</span></a>
-
-    </header>
 <main id="conteudo" tabindex="-1">
 
       <section class="hero" id="contagem" aria-labelledby="titulo">
@@ -70,8 +66,8 @@
       <section class="game-card" id="game" aria-labelledby="game-title">
         <div class="game-heading">
           <div><h2 id="game-title">Corre, Flávio!</h2></div>
-          <div class="game-actions"><button type="button" id="game-sound" class="game-sound" aria-label="Som do jogo" aria-pressed="true">Som ligado</button>
-          <button type="button" id="game-expand" class="game-expand" aria-label="Ampliar jogo" aria-pressed="false" title="Ampliar jogo"><span aria-hidden="true">⤢</span></button></div>
+          <div class="game-actions"><button type="button" id="game-sound" class="game-sound" aria-label="Som do jogo" aria-pressed="true" title="Som ligado" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="sound-waves" d="M17 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/><path class="sound-off-mark" d="m17 9 5 6m0-6-5 6"/></svg><span class="sr-only" id="game-sound-label">Som ligado</span></button>
+          <button type="button" id="game-expand" class="game-expand" aria-label="Ampliar jogo" aria-pressed="false" title="Ampliar jogo" disabled><span aria-hidden="true">⤢</span></button></div>
         </div>
         <div class="game-topline">
         <div class="game-scoreboard" aria-label="Placar">
@@ -89,13 +85,13 @@
           <span id="game-passport-next">100</span>
 
         </div>
-        <details class="game-settings" id="game-settings"><summary>Como jogar e ajustes</summary>
+        <details class="game-settings" id="game-settings"><summary title="Como jogar e ajustes"><span aria-hidden="true">?</span><span class="sr-only">Como jogar e ajustes</span></summary>
           <div class="game-settings-content">
             <p class="game-instructions" id="game-instructions">Toque em Pular ou use Espaço/↑ para saltar. Segure Abaixar ou use ↓/S para passar sob ataques altos. Flávio só desvia: observe o aviso do chefão. Cada cenário tem 7 km de rota; os metros totais também contam os encontros. A cada 100 passaportes, você ganha uma vida. O Escudo das Américas protege por seis segundos.</p>
             <div class="game-options">
-              <label for="game-crouch-mode">Abaixar<select id="game-crouch-mode"><option value="hold">Segurar o botão</option><option value="toggle">Tocar para alternar</option></select></label>
-              <label for="game-effects">Efeitos visuais<select id="game-effects"><option value="system">Padrão do aparelho</option><option value="reduce">Reduzidos</option></select></label>
-              <label class="assist-option" for="game-assist"><input id="game-assist" type="checkbox">Ritmo mais tranquilo</label>
+              <label for="game-crouch-mode">Abaixar<select id="game-crouch-mode" disabled><option value="hold">Segurar o botão</option><option value="toggle">Tocar para alternar</option></select></label>
+              <label for="game-effects">Efeitos visuais<select id="game-effects" disabled><option value="system">Padrão do aparelho</option><option value="reduce">Reduzidos</option></select></label>
+              <label class="assist-option" for="game-assist"><input id="game-assist" type="checkbox" disabled>Ritmo mais tranquilo</label>
             </div>
             <p class="game-options-note">O ritmo tranquilo reduz a velocidade da corrida e dos perigos na próxima tentativa. Você pode mudar os efeitos e a forma de abaixar a qualquer momento.</p>
           </div>
@@ -107,7 +103,7 @@
           <div class="power-chip"><span class="sr-only">Vantagem ativa: </span><strong id="game-power">Sem efeito ativo</strong></div>
           <div class="ammo-chip" hidden><span class="sr-only">Munição especial: </span><strong id="game-ammo">Sem arma</strong></div>
         </div>
-          <div class="game-overlay" id="game-overlay"><span class="game-overlay-badge" id="game-overlay-badge">Corrida fictícia</span><strong id="game-overlay-title">Pronto para correr?</strong><p id="game-overlay-copy">Pule ou abaixe para desviar.</p><p class="game-start-hint" id="game-start-hint">↑ Pular · ↓ Abaixar — observe os perigos</p></div>
+          <div class="game-overlay" id="game-overlay"><span class="game-overlay-badge" id="game-overlay-badge">Corrida fictícia</span><strong id="game-overlay-title">Pronto para correr?</strong><p id="game-overlay-copy">Pule ou abaixe para desviar.</p><p class="game-start-hint" id="game-start-hint">↑ Pular · ↓ Abaixar</p></div>
         </div>
         <div class="route-meter" role="progressbar" aria-label="Metros no cenário atual" aria-valuemin="0" aria-valuemax="7000" aria-valuenow="0" id="game-progress"><span></span></div>
         <div class="game-controls">

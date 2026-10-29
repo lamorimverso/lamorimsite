@@ -3,18 +3,21 @@ import assert from 'node:assert/strict';
 import {spriteFrameFor,spriteScaleFor,portraitCropFor,spriteFacesRight} from '../tanahoraflavio/runner-sprites.mjs';
 import {enemyMotionFor,crouchAnimationStep} from '../tanahoraflavio/runner-art.mjs';
 
-test('Flávio não encolhe ao trocar atlas da corrida por salto e impacto',()=>{
- const hero=[490,491,456,487,469,464].map(height=>({height}));
- const cast=Array.from({length:16},()=>({height:300}));
- cast[13]={height:242};cast[14]={height:226};cast[15]={height:242};
- const running=spriteScaleFor('flavio','hero',hero);
- const jumping=spriteScaleFor('flavio','cast',cast);
- assert.ok(Math.abs(hero[1].height*running-cast[13].height*jumping)<.1);
- assert.ok(Math.abs(hero[1].height*running-cast[15].height*jumping)<.1);
- assert.ok(cast[14].height*jumping>85,'a aterrissagem permanece legível');
- assert.equal(spriteFrameFor('flavio',{airborne:true}).index,13);
- assert.equal(spriteFrameFor('flavio',{landing:true}).index,14);
- assert.equal(spriteFrameFor('flavio',{hurt:true}).index,15);
+test('oito passos e todas as ações usam o mesmo herói sem trocar escala entre poses',()=>{
+ const hero=Array.from({length:12},()=>({height:300}));hero[7].height=320;hero[10].height=150;
+ const factor=spriteScaleFor('flavio','hero',hero);
+ assert.ok(Math.abs(hero[7].height*factor-94)<1e-10);
+ assert.ok(hero[10].height*factor<47,'a pose baixa mantém a escala do desenho, sem esticar');
+ assert.deepEqual(Array.from({length:8},(_,phase)=>spriteFrameFor('flavio',{phase}).index),[0,1,2,3,4,5,6,7]);
+ assert.deepEqual(spriteFrameFor('flavio',{airborne:true}),{sheet:'hero',index:8});
+ assert.deepEqual(spriteFrameFor('flavio',{airborne:true,falling:true}),{sheet:'hero',index:9});
+ assert.deepEqual(spriteFrameFor('flavio',{landing:true}),{sheet:'hero',index:10});
+ assert.deepEqual(spriteFrameFor('flavio',{hurt:true}),{sheet:'hero',index:11});
+});
+test('perseguidores alternam pernas em vez de repetir um único recorte',()=>{
+ for(const [type,indices] of [['pf',[3,13]],['janones',[7,14]],['army',[11,15]]]){
+  assert.deepEqual([0,1,2].map(phase=>spriteFrameFor(type,{phase}).index),[...indices,indices[0]]);
+ }
 });
 test('chefões conservam proporções próprias em seus três quadros',()=>{
  const frames=Array.from({length:16},()=>({height:250}));
@@ -35,7 +38,7 @@ test('o herói mantém quadros orientados à direita sem alterar a orientação 
  assert.equal(spriteFacesRight('flavio'),true);
  for(const type of ['pf','janones','army','xandao','haddad','lula'])assert.equal(spriteFacesRight(type),false);
  assert.equal(spriteFrameFor('flavio',{phase:3}).index,3);
- assert.equal(spriteFrameFor('flavio',{airborne:true}).index,13);
+ assert.equal(spriteFrameFor('flavio',{airborne:true}).index,8);
 });
 test('perseguidores e chefões balançam, mas só alguns pixels e sem afetar obstáculos',()=>{
  for(const type of ['pf','janones','army','xandao','haddad','lula']){
@@ -50,7 +53,7 @@ test('perseguidores e chefões balançam, mas só alguns pixels e sem afetar obs
  }
 });
 
-test('agachamento anima a descida e a volta à posição normal sem saltos visuais',()=>{
+test('efeitos secundários da postura interpolam ativação e retorno sem reversões',()=>{
  let pose=0;
  const descent=[];
  for(let i=0;i<18;i++){pose=crouchAnimationStep(pose,true,1/60);descent.push(pose);}

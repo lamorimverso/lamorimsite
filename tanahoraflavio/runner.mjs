@@ -1,6 +1,7 @@
-import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, startRun, jumpRun, crouchRun, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=ab4da0cf70b4";
-import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep } from "./runner-art.mjs?v=30d4c3e4a4ef";
+import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, startRun, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=e42ec96c5833";
+import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep } from "./runner-art.mjs?v=313cef1d7eba";
 import { createGameAudio } from "./runner-audio.mjs?v=02bf65775963";
+import { drawScenery } from "./runner-scenery.mjs?v=c4f6c6e20f24";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
 
 function initRunner() {
@@ -9,10 +10,10 @@ function initRunner() {
   if (!canvas || !section) return;
   // Uma aba pode ter conservado o HTML anterior enquanto os módulos já
   // mudaram. Atualizar a página uma vez evita inicializar sobre IDs antigos.
-  if(!$("game-settings")||!$("game-start-hint")||!$("game-expand")){
+  if(!$("game-settings")||!$("game-start-hint")||!$("game-expand")||!$("game-sound-label")){
     const url=new URL(location.href);
-    if(url.searchParams.get("ui")!=="20261028-ux"){
-      url.searchParams.set("ui","20261028-ux");location.replace(url.href);
+    if(url.searchParams.get("ui")!=="20261029-clean"){
+      url.searchParams.set("ui","20261029-clean");location.replace(url.href);
     }else{
       const button=$("game-start"),note=$("game-loading-note");
       if(button){button.disabled=false;button.textContent="Recarregar jogo";button.addEventListener("click",()=>location.reload(),{once:true});}
@@ -56,7 +57,8 @@ function initRunner() {
   let lastCollected=0,lastPower="";
   let lastLives = 1, lastEvents = 0;
   const audio=createGameAudio();
-  $("game-sound").textContent=audio.enabled?"Som ligado":"Som desligado";
+  $("game-sound-label").textContent=audio.enabled?"Som ligado":"Som desligado";
+  $("game-sound").title=$("game-sound-label").textContent;
   $("game-sound").setAttribute("aria-pressed",String(audio.enabled));
   let lastRaidKey="";
   const routeSeconds=()=>run.routeDistance/SCENE_DISTANCE*SCENE_SECONDS;
@@ -170,7 +172,9 @@ function initRunner() {
   function syncActivity() {
     cancelAnimationFrame(frameId);frameId=0;
     resetFrameClock(frameClock,performance.now());
-    if(document.hidden||!windowFocused||!inView||run.status!=="running")audio.stop();
+    if(document.hidden||!windowFocused||!inView||run.status!=="running"){
+      audio.stop();clearRunInput(run);$("game-crouch").setAttribute("aria-pressed","false");
+    }
     schedule();
   }
   function frame(now) {
@@ -178,7 +182,12 @@ function initRunner() {
     const timing=advanceFrameClock(frameClock,now),wasAirborne=run.player.y>0;
     const before={lives:run.lives,collected:run.collected,boss:run.boss?.type,
       attacks:run.boss?.fired||0};
-    for(let i=0;i<timing.steps&&run.status==="running";i++)advanceRun(run,timing.step);
+    let bufferedTakeoff=false;
+    for(let i=0;i<timing.steps&&run.status==="running";i++){
+      const pending=run.player.jumpBufferedUntil>0&&run.player.velocity<=0;
+      advanceRun(run,timing.step);
+      if(pending&&run.player.jumpBufferedUntil===0&&run.player.velocity>0)bufferedTakeoff=true;
+    }
     if(wasAirborne&&run.player.y===0)landingUntil=run.elapsed+.12;
     updateUI();
     if(run.lives<before.lives)audio.effect("hit");
@@ -186,6 +195,7 @@ function initRunner() {
     else if(!before.boss&&run.boss)audio.effect("boss");
     else if(run.boss&&run.boss.fired>before.attacks)audio.effect("attack");
     else if(run.collected>before.collected)audio.effect("pickup");
+    if(bufferedTakeoff&&run.status==="running")audio.effect("jump");
     draw();schedule();
   }
   function resumeFromGesture(){
@@ -230,7 +240,8 @@ function initRunner() {
   }
   $("game-start").addEventListener("click",begin);
   $("game-sound").addEventListener("click",()=>{
-    const enabled=audio.toggle();$("game-sound").textContent=enabled?"Som ligado":"Som desligado";
+    const enabled=audio.toggle();$("game-sound-label").textContent=enabled?"Som ligado":"Som desligado";
+    $("game-sound").title=$("game-sound-label").textContent;
     $("game-sound").setAttribute("aria-pressed",String(enabled));lastRaidKey="";updateUI();
   });
   function savePreferences(){try{localStorage.setItem(preferencesKey,JSON.stringify(preferences));}catch{/* A sessão atual permanece funcional. */}}
@@ -266,7 +277,7 @@ function initRunner() {
   });
   const releaseCrouch=()=>{if(preferences.crouchMode==="hold")crouch(false);};
   crouchButton.addEventListener("pointerup",releaseCrouch);
-  crouchButton.addEventListener("pointercancel",releaseCrouch);
+  crouchButton.addEventListener("pointercancel",()=>{clearRunInput(run);crouch(false);});
   crouchButton.addEventListener("lostpointercapture",releaseCrouch);
   // Enter/Espaço no botão: alternância acessível sem exigir manter tecla.
   crouchButton.addEventListener("click",event=>{
@@ -317,133 +328,8 @@ function initRunner() {
   function circle(x, y, radius, color) {
     ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x,y,radius,0,Math.PI*2); ctx.fill();
   }
-  function cloud(x, y) {
-    ctx.fillStyle = "#ffffffb8"; ctx.beginPath(); ctx.ellipse(x,y,32,9,0,0,Math.PI*2); ctx.fill();
-    circle(x-10,y-6,11,"#ffffffb8"); circle(x+7,y-9,15,"#ffffffb8");
-  }
-  // Fundo em três planos: céu, silhuetas distantes e um marco por destino.
-  // Retirados os cartazes repetitivos, caricaturas sobrepostas e o avião.
-  // Tudo é decoração: nenhum novo obstáculo ou hitbox é criado aqui.
-  const wrap=(x,span)=>((x%span)+span)%span;
-  function layeredHorizon(stage, distance){
-    const farShift=distance*.018,nearShift=distance*.052;
-    ctx.save();
-    // Colinas suaves e afastadas; não competem com o personagem.
-    ctx.fillStyle=stage.accent+"16";
-    for(let i=-1;i<=7;i++){
-      const x=i*185-wrap(farShift,185);
-      ctx.beginPath();ctx.moveTo(x-12,225);
-      ctx.quadraticCurveTo(x+72,175+(i%3)*7,x+175,225);
-      ctx.closePath();ctx.fill();
-    }
-    // Uma só fileira de elementos baixos dá movimento sem amontoar.
-    ctx.fillStyle=stage.ink+"25";
-    for(let i=-1;i<=7;i++){
-      const x=i*174-wrap(nearShift,174);
-      if(stage.id==="rio"){
-        ctx.beginPath();ctx.ellipse(x+45,224,34,10,0,Math.PI,0);ctx.fill();
-      }else if(stage.id==="florida"){
-        ctx.fillRect(x+26,207,36,16);ctx.fillRect(x+34,199,12,8);
-      }else if(stage.id==="argentina"){
-        ctx.fillRect(x+20,206,29,18);ctx.fillRect(x+54,197,22,27);
-      }else{
-        ctx.beginPath();ctx.ellipse(x+28,220,22,6,0,0,Math.PI*2);ctx.fill();
-        ctx.fillRect(x+25,206,6,16);
-      }
-    }
-    ctx.restore();
-  }
-  function landmark(stage){
-    const x=virtualWidth*.70,base=226;
-    ctx.save();
-    if(stage.id==="brasilia"){
-      // Congresso Nacional: referência arquitetônica concentrada à direita.
-      ctx.fillStyle="#eff4f4";ctx.fillRect(x-121,base-14,242,14);
-      ctx.fillStyle="#b9ceda";ctx.fillRect(x-14,125,12,87);ctx.fillRect(x+5,125,12,87);
-      ctx.fillStyle="#eaf0f1";
-      ctx.beginPath();ctx.arc(x-68,base-20,34,Math.PI,0);ctx.fill();
-      ctx.beginPath();ctx.arc(x+75,base-42,31,0,Math.PI);ctx.fill();
-      ctx.strokeStyle="#a3bac6";ctx.lineWidth=2;
-      ctx.beginPath();ctx.moveTo(x-109,base);ctx.lineTo(x+112,base);ctx.stroke();
-    }else if(stage.id==="rio"){
-      // Morros do Rio e Cristo Redentor, em duas cores da mesma paleta.
-      ctx.fillStyle="#b8d9d2";
-      ctx.beginPath();ctx.moveTo(x-170,base);
-      ctx.bezierCurveTo(x-105,202,x-122,139,x-72,145);
-      ctx.bezierCurveTo(x-27,148,x-27,206,x+21,base);ctx.fill();
-      ctx.fillStyle="#a6cec3";
-      ctx.beginPath();ctx.moveTo(x-17,base);
-      ctx.bezierCurveTo(x+25,204,x+17,121,x+67,126);
-      ctx.bezierCurveTo(x+104,130,x+101,209,x+159,base);ctx.fill();
-      ctx.strokeStyle="#e8f2e9";ctx.lineWidth=5;ctx.lineCap="round";
-      ctx.beginPath();ctx.moveTo(x-70,151);ctx.lineTo(x-70,120);ctx.moveTo(x-87,132);ctx.lineTo(x-53,132);ctx.stroke();
-      circle(x-70,113,5,"#e8f2e9");
-    }else if(stage.id==="argentina"){
-      // Obelisco de Buenos Aires, com prédios discretos bem ao fundo.
-      ctx.fillStyle="#ccd9ea";ctx.fillRect(x-145,182,34,42);
-      ctx.fillRect(x+103,184,38,40);
-      ctx.fillStyle="#fffaf0";ctx.beginPath();
-      ctx.moveTo(x-12,base);ctx.lineTo(x-7,116);ctx.lineTo(x,94);
-      ctx.lineTo(x+7,116);ctx.lineTo(x+12,base);ctx.closePath();ctx.fill();
-      ctx.strokeStyle="#d7d1bd";ctx.lineWidth=1.5;
-      ctx.beginPath();ctx.moveTo(x,115);ctx.lineTo(x,base);ctx.stroke();
-    }else if(stage.id==="florida"){
-      // Miami: apenas duas fachadas art déco e palmeiras nas laterais.
-      ctx.fillStyle="#f4d6cd";ctx.fillRect(x-93,164,73,61);
-      ctx.fillStyle="#d3d6e7";ctx.fillRect(x+3,177,77,48);
-      ctx.fillStyle="#fff7ec";
-      for(let row=0;row<3;row++){
-        ctx.fillRect(x-83,176+row*15,51,4);
-        ctx.fillRect(x+13,188+row*12,55,3);
-      }
-      for(const px of [x-141,x+135]){
-        ctx.strokeStyle="#b4a289";ctx.lineWidth=5;ctx.lineCap="round";
-        ctx.beginPath();ctx.moveTo(px,base);ctx.quadraticCurveTo(px-7,172,px+2,146);ctx.stroke();
-        ctx.strokeStyle="#7cae98";ctx.lineWidth=6;
-        for(const dx of [-27,-9,16,29]){
-          ctx.beginPath();ctx.moveTo(px+2,146);ctx.lineTo(px+dx,148+Math.abs(dx)*.27);ctx.stroke();
-        }
-      }
-    }else{
-      // Casa Branca, um único edifício proporcional ao horizonte.
-      ctx.fillStyle="#dce4ee";ctx.fillRect(x-117,166,234,60);
-      ctx.fillStyle="#fff";ctx.fillRect(x-108,172,216,51);
-      ctx.fillStyle="#e9edf4";ctx.fillRect(x-43,151,86,72);
-      ctx.fillStyle="#fff";
-      for(let i=0;i<5;i++)ctx.fillRect(x-37+i*16,164,8,59);
-      ctx.beginPath();ctx.moveTo(x-53,151);ctx.lineTo(x,119);ctx.lineTo(x+53,151);ctx.closePath();ctx.fill();
-      ctx.fillStyle="#b2c2d3";
-      for(let i=0;i<4;i++){
-        ctx.fillRect(x-99+i*24,185,9,18);ctx.fillRect(x+29+i*24,185,9,18);
-      }
-      ctx.fillStyle="#edf1f4";ctx.fillRect(x-124,223,248,6);
-    }
-    ctx.restore();
-  }
   function scenery(stage) {
-    // O modo de movimento reduzido congela apenas a paralaxe.
-    const distance=prefersReducedMotion()?0:run.distance;
-    const sky=ctx.createLinearGradient(0,0,0,WORLD.ground);
-    sky.addColorStop(0,stage.sky);sky.addColorStop(1,"#ffffff");
-    ctx.fillStyle=sky;ctx.fillRect(0,0,virtualWidth,WORLD.height);
-    circle(virtualWidth-64,54,20,"#ffffff80");
-    // Nuvens esparsas, altas e deslocadas da área dos chefões.
-    for(let i=0;i<2;i++){
-      const x=wrap(155+i*360-distance*.026,virtualWidth+180)-65;
-      cloud(x,69+(i%2)*25);
-    }
-    layeredHorizon(stage,distance);
-    landmark(stage);
-    // O solo é o mesmo em todos os destinos, por clareza de jogabilidade.
-    ctx.fillStyle=stage.ground;ctx.fillRect(0,WORLD.ground,virtualWidth,WORLD.height-WORLD.ground);
-    line([[0,WORLD.ground],[virtualWidth,WORLD.ground]],stage.ink,2);
-    const offset=distance%84;
-    for(let x=-offset;x<virtualWidth;x+=84)line([[x,274],[x+31,274]],"#ffffffb0",3);
-  }
-  function sceneTitle(stage) {
-    ctx.fillStyle=stage.ink;
-    ctx.font='650 11px system-ui, sans-serif';
-    ctx.fillText(`${stage.index + 1}/${STAGES.length} · ${stage.name.toLocaleUpperCase("pt-BR")}`,20,26);
+    drawScenery(ctx,{stage,distance:run.distance,width:virtualWidth,reducedMotion:prefersReducedMotion()});
   }
   function bossFigure(){
     const b=run.boss;if(!b)return;
@@ -452,7 +338,7 @@ function initRunner() {
     const bossX=virtualWidth-72,bossY=WORLD.ground-3;
     const motion=enemyMotionFor(b.type,phase,bossX);
     ctx.save();ctx.translate(bossX,bossY+motion.bob);ctx.rotate(motion.lean);
-    drawActor(ctx,{type:b.type,x:0,y:0,scale:1.62,phase,attacking:b.attackFlashFor>0,hurt:b.hitFlashFor>0});
+    drawActor(ctx,{type:b.type,x:0,y:0,scale:1.62,phase,preparing:b.nextAttack<.55&&b.fired<b.total,attacking:b.attackFlashFor>0,hurt:b.hitFlashFor>0});
     ctx.restore();
     if(b.nextAttack<.65&&b.fired<b.total&&!run.obstacles.some(o=>o.bossAttack&&!o.counted)){
       ctx.fillStyle="#843338";ctx.font="800 16px system-ui";ctx.textAlign="center";
@@ -460,14 +346,14 @@ function initRunner() {
     }
   }
   function character(){
-    const airborne=run.player.y>0,reduced=prefersReducedMotion();
+    const airborne=run.player.y>0||run.player.velocity>0,reduced=prefersReducedMotion();
     const active=run.status==="running"&&!reduced;
-    const phase=active?run.elapsed*12:0;
+    const phase=active?run.distance/20:0;
     const crouchTarget=run.player.crouching&&!airborne;
     const frameTime=performance.now();
     crouchPose=crouchAnimationStep(crouchPose,crouchTarget,(frameTime-lastPoseFrame)/1000,reduced);
     lastPoseFrame=frameTime;
-    const bounce=active&&!airborne?(1-crouchPose)*Math.abs(Math.sin(phase))*2:0;
+    const bounce=active&&!airborne?(1-crouchPose)*Math.abs(Math.sin(phase*Math.PI/4))*1.2:0;
     if(active&&!airborne){
       circle(PLAYER.x-8-run.distance%19,WORLD.ground-2,2.8,"#a6a7aa70");
       // Pequena poeira que acompanha o deslize, sem afetar a pista.
@@ -484,19 +370,20 @@ function initRunner() {
       ctx.stroke();ctx.restore();
       drawItem(ctx,{type:"shield",x:PLAYER.x+17,y:WORLD.ground-run.player.y-91+crouchPose*35,scale:.38});
     }
-    // Animação agachar ↔ levantar dura ~150ms: abaixa o corpo, flexiona
-    // a postura e alterna para o quadro de aterrissagem. Sem troca de hitbox.
+    // Slide desenhado na postura baixa: sem comprimir o rosto novamente.
     const feet=WORLD.ground-run.player.y-bounce;
     ctx.save();
-    if(crouchPose>.001&&!airborne){
+    if(crouchTarget){
       const pivot=PLAYER.x+17;
       ctx.translate(pivot,feet);
-      ctx.rotate(-.045*crouchPose);
-      ctx.scale(1+.09*crouchPose,1-.53*crouchPose);
+      ctx.rotate(-.018*crouchPose);
       ctx.translate(-pivot,-feet);
+    }else if(active&&!airborne&&run.elapsed<landingUntil){
+      const ease=(landingUntil-run.elapsed)/.12,pivot=PLAYER.x+17;
+      ctx.translate(pivot,feet);ctx.scale(1+.025*ease,1-.025*ease);ctx.translate(-pivot,-feet);
     }
     drawActor(ctx,{type:"flavio",x:PLAYER.x+17,y:feet,scale:.95,phase,airborne,
-      landing:run.elapsed<landingUntil||(crouchPose>.60&&!airborne),
+      falling:run.player.velocity<0,landing:crouchTarget,
       hurt:run.status==="over",alpha:run.shieldFor>0?.27:run.graceFor>0?.55:1});
     ctx.restore();
   }
@@ -524,12 +411,12 @@ function initRunner() {
     } else {
       scenery(stage);
     }
-    sceneTitle(stage);
     bossFigure();
     for(const item of run.pickups)pickup(item);
     for(const item of run.obstacles)obstacle(item);
     character();
   }
+  for(const id of ["game-sound","game-expand","game-crouch-mode","game-effects","game-assist"])$(id).disabled=false;
   updateUI();resize();draw();prepareSprites();
 }
 

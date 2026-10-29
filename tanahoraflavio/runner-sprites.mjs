@@ -1,7 +1,7 @@
 // Atlas e recortes gerados dos desenhos escolhidos, preservando os PNGs fontes.
-import {definitions} from './runner-sprite-data.mjs?v=08009af62666';
+import {definitions} from './runner-sprite-data.mjs?v=329f43f1ddf5';
 const sheets=new Map();let activeAttempt=null;
-const actorGroups={flavio:[0,1,2,3,4,5],xandao:[0,1,2],haddad:[4,5,6],lula:[8,9,10],pf:[3],janones:[7],army:[11],joice:[12]};
+const actorGroups={flavio:[0,1,2,3,4,5,6,7],xandao:[0,1,2],haddad:[4,5,6],lula:[8,9,10],pf:[3,13],janones:[7,14],army:[11,15],joice:[12]};
 export function loadSprites(onProgress=()=>{}){
  const entries=Object.entries(definitions),total=entries.length;
  if(sheets.size===total)return Promise.resolve();
@@ -37,20 +37,20 @@ export function loadSprites(onProgress=()=>{}){
  }catch(error){finish(error);}
  return attempt.promise;
 }
-export function spriteFrameFor(type,{phase=0,airborne=false,landing=false,hurt=false,attacking=false}={}){
+export function spriteFrameFor(type,{phase=0,airborne=false,falling=false,landing=false,hurt=false,attacking=false,preparing=false}={}){
  if(type==='flavio'){
-  if(hurt)return {sheet:'cast',index:15};
-  if(landing)return {sheet:'cast',index:14};
-  if(airborne)return {sheet:'cast',index:13};
-  return {sheet:'hero',index:Math.floor(Math.max(0,phase))%6};
+  if(hurt)return {sheet:'hero',index:11};
+  if(landing)return {sheet:'hero',index:10};
+  if(airborne)return {sheet:'hero',index:falling?9:8};
+  return {sheet:'hero',index:Math.floor(Math.max(0,phase))%8};
  }
  const group=actorGroups[type]||actorGroups.pf;
- return {sheet:'cast',index:group.length===3?group[attacking?2:Math.floor(Math.max(0,phase))%2]:group[0]};
+ return {sheet:'cast',index:group.length===3?group[attacking?2:preparing?1:0]:group[Math.floor(Math.max(0,phase))%group.length]};
 }
 // Cada atlas tem resolução própria. As poses do Flávio vindas do atlas
 // de elenco devem manter a altura aparente dos quadros de corrida.
 export function spriteScaleFor(type,sheetName,frames,scale=1){
- const indices=type==='flavio'&&sheetName==='cast'?[13,14,15]:(actorGroups[type]||actorGroups.pf);
+ const indices=actorGroups[type]||actorGroups.pf;
  const sourceHeight=Math.max(...indices.map(i=>frames[i]?.height||0));
  return sourceHeight>0?(type==='joice'?90:94)*scale/sourceHeight:0;
 }
@@ -62,13 +62,22 @@ export function portraitCropFor(frame){
  // Preservar toda a largura, recortando somente a parte inferior para retrato.
  return {x:frame.x,y:frame.y,width:frame.width,height:frame.height*.76};
 }
-export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,airborne=false,landing=false,attacking=false,hurt=false,alpha=1}={}){
- const selected=spriteFrameFor(type,{phase,airborne,landing,attacking,hurt});
+export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,airborne=false,falling=false,landing=false,attacking=false,preparing=false,hurt=false,alpha=1}={}){
+ const selected=spriteFrameFor(type,{phase,airborne,falling,landing,attacking,preparing,hurt});
  const sheet=sheets.get(selected.sheet);if(!sheet)return false;
  const frame=sheet.frames[selected.index];
- const factor=spriteScaleFor(type,selected.sheet,sheet.frames,scale);
+ let factor=spriteScaleFor(type,selected.sheet,sheet.frames,scale);
  if(!factor)return false;
- const dx=x+(frame.x-frame.center)*factor,dy=y-frame.height*factor;
+ // A pose horizontal conserva proporções; cabe abaixo do ataque alto sem esmagar o rosto.
+ if(type==='flavio'&&selected.index===10)factor=Math.min(factor,48*scale/frame.height);
+ const dx=x+(frame.x-frame.center)*factor;
+ let baseline=frame.groundY??frame.y+frame.height;
+ if(type==='flavio'&&airborne){
+  const offsets=sheet.frames.slice(0,8).map(f=>(f.groundY??f.y+f.height)-(f.anchorY??f.y+f.height));
+  const reference=offsets.reduce((a,b)=>a+b,0)/offsets.length;
+  baseline=(frame.anchorY??baseline)+reference;
+ }
+ const dy=y+(frame.y-baseline)*factor;
  context.save();context.globalAlpha*=alpha;context.imageSmoothingEnabled=true;
  // Preservar a orientação original também no salto, agachamento e impacto.
  if(hurt&&type!=='flavio'){context.shadowColor='#ffd56b';context.shadowBlur=9;}

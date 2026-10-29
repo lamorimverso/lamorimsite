@@ -71,12 +71,13 @@ test('segurar Abaixar protege contra a mão em L do Lula, mas não contra martel
  step(low,120*1.4);
  assert.equal(low.status,'over','martelo baixo exige salto');
 });
-test('não pode pular enquanto agachado nem abaixar em pleno salto',()=>{
+test('pular sai do agachamento sem permitir abaixar em pleno salto',()=>{
  const r=createRun();startRun(r);
  assert.equal(crouchRun(r,true),true);
- assert.equal(jumpRun(r),false);
- assert.equal(crouchRun(r,false),false);
  assert.equal(jumpRun(r),true);
+ assert.equal(r.player.crouchHeld,true);assert.equal(r.player.crouching,false);
+ assert.equal(crouchRun(r,false),false);
+ assert.equal(jumpRun(r),false);
  assert.equal(crouchRun(r,true),false);
 });
 test('martelo e mandado alternam, e Lua usa a mão em L no alto',()=>{

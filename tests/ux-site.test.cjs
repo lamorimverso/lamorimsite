@@ -19,13 +19,17 @@ before(async()=>{
  browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{})});
 });
 after(async()=>{await browser?.close();await new Promise(resolve=>server?.close(resolve));});
-async function open({instrument=false,init,blockEntry=false,legacyFirst=false,...options}={}){
+async function open({instrument=false,instrumentAudio=false,init,blockEntry=false,legacyFirst=false,...options}={}){
  const context=await browser.newContext(options);
  await context.route(/^https:\/\//,route=>route.abort());
  if(init)await context.addInitScript(init);
  if(instrument){
   const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-core.mjs'),'utf8');
   await context.route('**/runner-core.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+'\nconst originalCreateRun=createRun;createRun=(...args)=>{const run=originalCreateRun(...args);globalThis.__testRun=run;return run;};'}));
+ }
+ if(instrumentAudio){
+  const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-audio.mjs'),'utf8');
+  await context.route('**/runner-audio.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+'\nconst originalAudio=createGameAudio;createGameAudio=(...args)=>{const audio=originalAudio(...args),effect=audio.effect;globalThis.__testEffects=[];audio.effect=(name)=>{__testEffects.push(name);return effect(name);};return audio;};'}));
  }
  if(blockEntry)await context.route('**/runner.mjs*',route=>route.abort());
  if(legacyFirst){
@@ -99,6 +103,42 @@ test('alternância de agachamento funciona por toque e preferências sobrevivem 
  }finally{await context.close();}
 });
 
+test('perda de foco descarta salto que aguardava o pouso',async()=>{
+ const {context,page,errors}=await open({instrument:true});
+ try{
+  await begin(page);
+  const state=await page.evaluate(()=>{
+   const r=__testRun;r.player.y=2;r.player.velocity=-100;
+   const canvas=document.getElementById('runner-canvas');
+   canvas.dispatchEvent(new KeyboardEvent('keydown',{code:'Space',bubbles:true}));
+   const queued=r.player.jumpBufferedUntil>r.elapsed;
+   window.dispatchEvent(new Event('blur'));
+   return {queued,deadline:r.player.jumpBufferedUntil,held:r.player.crouchHeld};
+  });
+  assert.equal(state.queued,true,'o teste realmente pressionou salto no ar');
+  assert.equal(state.deadline,0,'voltar à aba não executa uma intenção antiga');
+  assert.equal(state.held,false);
+  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+  await page.waitForFunction(()=>__testRun.player.y===0);
+  assert.equal(await page.evaluate(()=>__testRun.player.velocity),0);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('salto executado no pouso produz um único efeito de salto',async()=>{
+ const {context,page,errors}=await open({instrument:true,instrumentAudio:true});
+ try{
+  await begin(page);
+  await page.evaluate(()=>{
+   __testRun.player.y=2;__testRun.player.velocity=-100;
+   document.getElementById('runner-canvas').dispatchEvent(new KeyboardEvent('keydown',{code:'Space',bubbles:true}));
+  });
+  await page.waitForFunction(()=>__testRun.player.y>20);
+  assert.equal(await page.evaluate(()=>__testEffects.filter(x=>x==='jump').length),1,'o comando guardado tem o mesmo retorno sonoro do salto imediato');
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
 test('progresso distingue a rota dos metros e chefão mostra a ação correta',async()=>{
  const {context,page,errors}=await open({instrument:true});
  try{
@@ -156,6 +196,16 @@ test('falha de módulo oferece recarregar em vez de carregar eternamente',async(
  }finally{await context.close();}
 });
 
+test('controles aguardam a inicialização antes de aceitar mudanças',async()=>{
+ const {context,page,errors}=await open({blockEntry:true});
+ try{
+  for(const id of ['game-sound','game-expand','game-crouch-mode','game-effects','game-assist']){
+   assert.equal(await page.locator('#'+id).isEnabled(),false,`${id} não aceita ação que seria perdida antes do módulo`);
+  }
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
 test('ajustes e início continuam funcionando com armazenamento bloqueado',async()=>{
  const {context,page,errors}=await open({instrument:true,init:()=>Object.defineProperty(window,'localStorage',{get(){throw new DOMException('blocked','SecurityError');}})});
  try{
@@ -203,7 +253,7 @@ test('HUD do chefão fica fora da pista e não desloca pista ou controles',async
 test('HTML antigo no cache se atualiza sem travar a inicialização',async()=>{
  const {context,page,errors}=await open({legacyFirst:true});
  try{
-  await page.waitForURL(url=>url.searchParams.get('ui')==='20261028-ux', {timeout:4000});
+  await page.waitForURL(url=>url.searchParams.get('ui')==='20261029-clean', {timeout:4000});
   await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
   assert.equal(await page.locator('#game-settings').count(),1);
   assert.match(await page.locator('#days').textContent(),/^\d+$/);

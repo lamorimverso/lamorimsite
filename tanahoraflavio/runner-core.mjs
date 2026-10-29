@@ -52,6 +52,7 @@ const assistance = run => run.assisted ? .82 : 1;
 // Primeiro contato horizontal usa o mesmo recuo de 3 px da colisão abaixo.
 const contactX = PLAYER.x+PLAYER.width-6;
 const approachSpeed = (run,distance,seconds) => Math.max(1,distance)/seconds*assistance(run);
+const JUMP_BUFFER_SECONDS = .12;
 
 export function difficultyAt(distance) {
  const d=Number.isFinite(distance)?Math.max(0,distance):0,p=d/(d+25000);
@@ -78,7 +79,7 @@ export function pursuitAt(seconds,rng=()=>.5) {
 }
 export function createRun({assisted=false}={}) {
  return {status:'ready',assisted:assisted===true,elapsed:0,distance:0,routeDistance:0,viewportWidth:WORLD.width,bonus:0,collected:0,passports:0,lives:1,
-  event:'',events:0,player:{y:0,velocity:0,crouching:false,crouchHeld:false},obstacles:[],pickups:[],lastHit:null,
+  event:'',events:0,player:{y:0,velocity:0,crouching:false,crouchHeld:false,jumpBufferedUntil:0},obstacles:[],pickups:[],lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,shieldFor:0,graceFor:0,
   lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:null,bossCooldown:0,
@@ -86,8 +87,12 @@ export function createRun({assisted=false}={}) {
 }
 export function startRun(run){if(run.status==='ready')run.status='running';}
 export function jumpRun(run){
- if(run.status!=='running'||run.player.y>0||run.player.velocity>0||run.player.crouching)return false;
- run.player.velocity=610;return true;
+ if(run.status!=='running')return false;
+ if(run.player.y>0||run.player.velocity>0){run.player.jumpBufferedUntil=run.elapsed+JUMP_BUFFER_SECONDS;return false;}
+ run.player.jumpBufferedUntil=0;run.player.crouching=false;run.player.velocity=610;return true;
+}
+export function clearRunInput(run){
+ run.player.crouchHeld=false;run.player.crouching=false;run.player.jumpBufferedUntil=0;
 }
 // A intenção permanece durante o salto, sem encolher a colisão no ar.
 // Soltar/cancelar limpa também uma intenção ainda aguardando o pouso.
@@ -196,9 +201,14 @@ export function advanceRun(run,seconds,rng=Math.random){
  const balance=difficultyAt(run.distance),travel=balance.speed*assistance(run)*dt;run.distance+=travel;
  if(!run.boss&&!run.raid)run.routeDistance+=travel;
  run.bossCooldown=Math.max(0,run.bossCooldown-dt);
+ // A tolerância só absorve erro de ponto flutuante no limite exato de 120ms.
+ if(run.player.jumpBufferedUntil<run.elapsed-1e-8)run.player.jumpBufferedUntil=0;
  run.player.velocity-=1750*dt;run.player.y=Math.max(0,run.player.y+run.player.velocity*dt);
  if(run.player.y>0)run.player.crouching=false;
- if(run.player.y===0){run.player.velocity=0;run.player.crouching=!!run.player.crouchHeld;}
+ if(run.player.y===0){
+  run.player.velocity=0;run.player.crouching=!!run.player.crouchHeld;
+  if(run.player.jumpBufferedUntil>0)jumpRun(run);
+ }
  run.shieldFor=Math.max(0,run.shieldFor-dt);run.graceFor=Math.max(0,run.graceFor-dt);
  for(const obstacle of run.obstacles){
   obstacle.x-=Number.isFinite(obstacle.speed)?obstacle.speed*dt:travel;

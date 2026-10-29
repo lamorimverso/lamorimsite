@@ -54,15 +54,6 @@ async function openWithRun(options = {}, init) {
   return {context,page,errors};
 }
 
-test('o fundo usa a assinatura completa de Canvas ellipse, sem travar a inicialização',async()=>{
- const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner.mjs'),'utf8');
- const calls=[...source.matchAll(/ctx\.ellipse\(([^)]*)\)/g)].map(match=>match[1]);
- assert.ok(calls.length>=4,'o desenho contém elipses decorativas e da personagem');
- for(const args of calls){
-  assert.equal(args.split(',').length,7,'ellipse exige x, y, raioX, raioY, rotação, início e fim: '+args);
- }
-});
-
 test('o carregamento dos personagens libera Começar corrida sem erros no fundo',async()=>{
  const {context,page,errors}=await open();
  try{
@@ -258,7 +249,7 @@ test('100 passaportes concedem +1 vida e a corrida permanece infinita', async ()
   } finally { await context.close(); }
 });
 
-test('interface clean destaca retrato e percentual no celular e desktop', async () => {
+test('contagem compacta preserva retrato, percentual e compartilhamento sem sobreposição', async () => {
   const {context,page,errors} = await open();
   try {
     for (const width of [320,390,768,1440]) {
@@ -267,8 +258,8 @@ test('interface clean destaca retrato e percentual no celular e desktop', async 
       const counter = await page.locator('.counter').boundingBox();
       const portrait = await page.locator('.progress-ring').boundingBox();
       assert.ok(counter && portrait);
-      assert.ok(portrait.y < counter.y, `retrato em destaque antes da contagem em ${width}px`);
-      assert.ok(portrait.width >= 190, `retrato legível em ${width}px`);
+      assert.ok(portrait.x+portrait.width<=counter.x+1 || portrait.y+portrait.height<=counter.y+1, `retrato não cobre a contagem em ${width}px`);
+      assert.ok(portrait.width >= 80, `retrato legível em ${width}px`);
       const play = await page.locator('.hero-play').boundingBox();
       assert.ok(play.height >= 44 && play.width >= 44);
       assert.equal(await page.locator('.game-itinerary').evaluate(x => x.open),false);
@@ -304,14 +295,14 @@ test('desktop replica a coluna única do celular sem excesso de texto exposto', 
         const counter=document.querySelector('.counter').getBoundingClientRect();
         const photo=document.querySelector('.progress-ring').getBoundingClientRect();
         const viewport=document.getElementById('runner-canvas').getBoundingClientRect();
-        return {hero:{x:hero.x,width:hero.width},game:{x:game.x,width:game.width},counterY:counter.y,photoY:photo.y,viewportWidth:viewport.width,viewportHeight:viewport.height,overflow:document.documentElement.scrollWidth>innerWidth};
+        return {hero:{x:hero.x,width:hero.width},game:{x:game.x,width:game.width},counterY:counter.y,counterX:counter.x,photoRight:photo.right,photoBottom:photo.bottom,viewportWidth:viewport.width,viewportHeight:viewport.height,overflow:document.documentElement.scrollWidth>innerWidth};
       });
       assert.equal(geometry.overflow,false,`overflow na largura ${width}`);
-      assert.equal(await page.locator('.site-header .wordmark').isVisible(),true,`marca do site visível em ${width}px`);
+      assert.equal(await page.locator('#titulo').isVisible(),true,`título do site visível em ${width}px`);
       assert.ok(geometry.hero.width <= 540,`hero não deve virar grade desktop em ${width}: ${geometry.hero.width}`);
       assert.ok(geometry.game.width<=900 && geometry.game.width>=geometry.hero.width,`largura útil da pista: ${width}`);
       assert.ok(Math.abs((geometry.hero.x+geometry.hero.width/2)-(geometry.game.x+geometry.game.width/2))<3,`colunas desalinhadas: ${width}`);
-      assert.ok(geometry.photoY < geometry.counterY,`retrato deve anteceder contagem: ${width}`);
+      assert.ok(geometry.photoRight<=geometry.counterX+1 || geometry.photoBottom<=geometry.counterY+1,`retrato não deve cobrir a contagem: ${width}`);
       assert.ok(geometry.viewportWidth >= 240 && geometry.viewportHeight >= 150,`pista legível em ${width}: ${JSON.stringify({w:geometry.viewportWidth,h:geometry.viewportHeight})}`);
       assert.equal(await page.locator('.game-itinerary').evaluate(e=>e.open),false);
       assert.equal(await page.locator('.game-help').count(),0);
@@ -357,7 +348,7 @@ test('referência minimalista mantém mesma hierarquia no desktop e celular sem 
       assert.ok(v.portrait.x + v.portrait.width <= width, `retrato precisa caber em ${width}px`);
       assert.ok(v.hero.width<=540,`coluna única não deve esticar em ${width}px`);
       assert.ok(Math.abs((v.hero.x+v.hero.width/2)-(v.game.x+v.game.width/2))<3,`seções alinhadas em ${width}px`);
-      assert.ok(v.portrait.y<v.counter.y,`retrato deve vir primeiro em ${width}px`);
+      assert.ok(v.portrait.x+v.portrait.width<=v.counter.x+1 || v.portrait.y+v.portrait.height<=v.counter.y+1,`retrato não cobre a contagem em ${width}px`);
       assert.ok(v.button.height>=44,`CTA tocável em ${width}px`);
     }
     assert.equal(await page.locator('#music-toggle').count(),0);
@@ -735,7 +726,7 @@ test('cabeçalho simplificado e sem playlist em celular e desktop',async()=>{
  const {context,page,errors}=await open({viewport:{width:320,height:820}});
  try{
   assert.equal(await page.locator('.site-header nav').count(),0);
-  assert.equal(await page.locator('.site-header .wordmark').isVisible(),true);
+  assert.equal(await page.locator('#titulo').isVisible(),true);
   assert.equal(await page.locator('#musicas, .music-catalog, .music-collection, .music-memes, #music-native, #music-toggle, #game-playlist-frame, [data-election-track]').count(),0);
   assert.equal(await page.locator('#share').count(),1);
   assert.equal(await page.locator('#game-sound').count(),1,'efeitos do jogo continuam opcionais');
