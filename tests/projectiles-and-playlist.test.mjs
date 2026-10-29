@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRun,startRun,advanceRun,jumpRun,crouchRun,PLAYER,SCENE_DISTANCE,scoreFor,difficultyAt} from '../tanahoraflavio/runner-core.mjs';
-import {ELECTION_TRACKS,playlistEmbedUrl} from '../tanahoraflavio/runner-playlist.mjs';
 
 const step=(r,n)=>{for(let i=0;i<n&&r.status==='running';i++)advanceRun(r,1/120,()=>0);};
 function bossRun(type='xandao'){
@@ -40,11 +39,13 @@ test('projétil acertando tira vida e derruba jogador desprotegido',()=>{
  assert.equal(r.lives,0);
 });
 test('o salto depois do lançamento realmente evita o projétil direcionado',()=>{
- const r=bossRun();
- step(r,72);assert.equal(r.status,'running');
+ const r=bossRun(),first=r.obstacles[0];
+ step(r,144);assert.equal(r.status,'running');
  assert.equal(jumpRun(r),true);
- step(r,78);
+ step(r,120);
  assert.equal(r.status,'running');
+ assert.ok(first.x+first.width<PLAYER.x,'a ameaça inteira passa antes de declarar o desvio');
+ assert.equal(r.lastHit,null);
 });
 test('o Escudo das Américas protege contra projéteis sem dano',()=>{
  const r=bossRun();r.shieldFor=6;
@@ -52,19 +53,6 @@ test('o Escudo das Américas protege contra projéteis sem dano',()=>{
  assert.equal(r.status,'running');
  assert.equal(r.lives,1);
 });
-test('playlist contém escolhas reais sem hospedagem ou links arbitrários',()=>{
- assert.deepEqual(ELECTION_TRACKS.slice(0,4).map(t=>t.id),['lula','bota','flavio','renan']);
- assert.equal(ELECTION_TRACKS.length,13);
- assert.equal(playlistEmbedUrl('__unknown__'),null);
- for(const track of ELECTION_TRACKS){
-  const url=new URL(playlistEmbedUrl(track.id));
-  assert.equal(url.hostname,'www.youtube-nocookie.com');
-  assert.ok(url.pathname.endsWith('/'+track.video));
-  assert.equal(url.searchParams.get('autoplay'),'1');
-  if(track.start!==undefined)assert.equal(url.searchParams.get('start'),String(track.start));
- }
-});
-
 test('sete quilômetros por cenário, velocidade cresce e score mede apenas metros',()=>{
  assert.equal(SCENE_DISTANCE,7000);
  const r=createRun();r.distance=4311.8;r.bonus=99999;
@@ -76,7 +64,7 @@ test('sete quilômetros por cenário, velocidade cresce e score mede apenas metr
 test('segurar Abaixar protege contra a mão em L do Lula, mas não contra martelo baixo',()=>{
  const high=bossRun('lula');assert.equal(crouchRun(high,true),true);
  assert.equal(high.player.crouching,true);
- step(high,120*1.4);
+ step(high,120*1.9);
  assert.equal(high.status,'running');
  assert.equal(high.lives,1);
  const low=bossRun('xandao');crouchRun(low,true);

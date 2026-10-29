@@ -24,68 +24,9 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='.9em' font-size='54'%3E%E2%8F%B3%3C/text%3E%3C/svg%3E">
   <link rel="canonical" href="https://lamorimverso.github.io/lamorimsite/tanahoraflavio/">
   <title>Tá na hora, Flávio! · Contagem e minigame</title>
-  <style>
-:root{--purple:#7b43ba;--dark:#4d267b;--ink:#241b2b;--muted:#746d7b;--line:#ece6f0;--pale:#f7f2fb;--white:#fff;color-scheme:light}
-*{box-sizing:border-box}
-body{margin:0;background:#faf9fc;color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
-.wrap{max-width:780px;margin:0 auto;padding:18px 12px 32px}
-.hero{background:#fff;border:1px solid var(--line);border-radius:24px;text-align:center;padding:clamp(22px,4vw,38px) 15px 25px}
-h1{font-size:clamp(36px,6.5vw,58px);letter-spacing:-.055em;line-height:1.08;margin:0 0 22px;font-weight:900}
-h1 .title-name{color:var(--purple)}
-h1 .title-followup{display:block;margin:10px auto 0;max-width:590px;font-size:clamp(21px,3.8vw,32px);line-height:1.2;letter-spacing:-.025em;font-weight:700}
-h1 .title-followup strong{color:var(--purple);font-weight:900}
-.ring-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;margin:0 0 23px}
-.progress-ring{--remaining:100%;position:relative;width:min(298px,74vw);aspect-ratio:1;border-radius:50%;padding:10px;background:conic-gradient(var(--purple) 0 var(--remaining),#eae5ef var(--remaining) 100%)}
-.portrait{height:100%;width:100%;border-radius:50%;border:7px solid #fff;overflow:hidden;background:white}
-.portrait img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 25%;filter:grayscale(1)}
-.percent-badge{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);min-width:134px;background:white;border:1px solid var(--line);border-radius:12px;box-shadow:0 7px 19px #49276620;padding:10px 16px}
-.percent-badge strong{display:block;font-weight:900;line-height:1;font-size:30px;color:var(--dark);font-variant-numeric:tabular-nums}
-.percent-badge small{display:block;font-size:10px;color:var(--muted);margin-top:4px}
-.ring-label{font-size:11px;font-weight:800;color:var(--dark);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
-.counter-label{font-size:15px;margin:0 0 14px;font-weight:850}
-.counter{width:min(100%,555px);margin:auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
-.unit{background:var(--pale);border:1px solid #eee7f3;border-radius:13px;padding:19px 5px 14px;min-width:0}
-.digit{font-weight:900;font-variant-numeric:tabular-nums;color:var(--dark);font-size:clamp(27px,5vw,46px);line-height:1;letter-spacing:-.04em}
-.unit-label{display:block;color:#746879;font-size:10px;letter-spacing:.07em;font-weight:800;text-transform:uppercase;margin-top:10px}
-.target{font-size:11px;color:var(--muted);line-height:1.5;margin:17px 0 0}
-.legal-note{max-width:590px;margin:11px auto 0;font-size:11px;line-height:1.55;color:var(--muted)}
-.legal-note a{color:var(--dark);font-weight:750;text-underline-offset:2px}
-.share{border:0;margin-top:18px;border-radius:9px;padding:11px 18px;background:#efe7f8;color:var(--dark);font-size:12px;font-weight:800;cursor:pointer}
-.share:hover{background:#e7d8f4}
-.share-message{font-size:11px;color:var(--dark);min-height:12px;margin-top:5px}
-.done{display:none;margin:13px auto;padding:14px;background:var(--pale);border-radius:10px;color:var(--dark);font-weight:800}
-body.finished .counter{display:none}
-body.finished .done{display:block}
 
-.music{width:min(100%,555px);margin:16px auto 0;padding:12px 14px;background:#f9f6fd;border:1px solid var(--line);border-radius:12px}
-.music-copy{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.music h2{margin:0;font-size:14px;font-weight:850;white-space:nowrap}
-.audio-button{border:0;background:var(--purple);color:#fff;font-size:13px;font-weight:800;border-radius:10px;padding:11px 15px;cursor:pointer}
-.audio-button:hover{background:var(--dark)}
-.audio-button:focus-visible,.share:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid #b18ad4;outline-offset:3px}
-.audio-status{font-size:11px;line-height:1.5;text-align:center;color:var(--muted);margin:8px 0 0}
-.audio-status:empty{display:none}
-.music-panel[hidden]{display:none}
-.music-panel{margin-top:10px;padding-top:12px;border-top:1px solid var(--line)}
-.music-frame{width:min(100%,310px);height:215px;margin:auto;background:#1c1424;border-radius:9px;overflow:hidden}
-.music-frame iframe{display:block;width:100%;height:100%;border:0}
-.sources{margin-top:14px}
-.sources summary{cursor:pointer;font-size:12px;color:var(--muted);padding:13px;text-align:center;list-style:none}
-.sources summary::-webkit-details-marker{display:none}
-.sources summary::after{content:"  ▾"}
-.sources[open] summary::after{content:"  ▴"}
-.bottom{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:9px}
-.panel{border-radius:14px;border:1px solid var(--line);background:white;padding:16px 19px}
-.panel h2{font-size:13px;margin:0 0 7px}
-.panel p{margin:0;color:var(--muted);font-size:11px;line-height:1.7}
-footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-height:1.7}.music-credit{display:inline-block;margin-top:9px}.music-credit a{color:var(--dark);font-weight:750;text-underline-offset:3px}
-@media(max-width:620px){.bottom{grid-template-columns:1fr}}
-@media(max-width:420px){.wrap{padding:12px 8px 25px}.hero{border-radius:18px;padding:24px 11px}h1{font-size:38px}h1 .title-followup{font-size:clamp(20px,6vw,26px)}.counter{gap:6px}.unit{padding:16px 2px 13px;border-radius:10px}.digit{font-size:clamp(24px,8vw,35px)}.unit-label{font-size:9px;letter-spacing:0}.music{padding:15px}.music-copy{justify-content:center}.music h2{text-align:center;flex-basis:100%}}
-@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
-</style>
-  <link rel="stylesheet" href="enhancements.css?v=20261027-mobile-desktop5">
-  <link rel="stylesheet" href="minimal.css?v=20261028-dodge-km-v1" >
-  <script type="module" src="runner.mjs?v=20261028-clean-scene-v1"></script>
+  <link rel="stylesheet" href="game.css?v=f455da95ea80">
+  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=8fce36b7652c"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -102,8 +43,8 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
         </div>
         <div class="ring-wrap">
           <div class="progress-ring" id="progress-ring" role="img" aria-label="Porcentagem do intervalo restante para 1º de fevereiro de 2027">
-            <div class="portrait"><img src="retrato.webp" alt="Retrato ilustrativo em preto e branco" width="280" height="280" fetchpriority="high"></div>
-            <div class="percent-badge" aria-hidden="true"><strong id="percent-number">--%</strong><small>do prazo restante</small></div>
+            <div class="portrait"><img src="retrato.webp?v=c4efef532066" alt="Retrato ilustrativo em preto e branco" width="280" height="280" fetchpriority="high"></div>
+            <div class="percent-badge" aria-hidden="true" title="Período da contagem: 26/10/2026 a 01/02/2027"><strong id="percent-number">--%</strong><small>da contagem restante</small></div>
           </div>
         </div>
         <div class="count-content">
@@ -129,56 +70,70 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
       <section class="game-card" id="game" aria-labelledby="game-title">
         <div class="game-heading">
           <div><h2 id="game-title">Corre, Flávio!</h2></div>
-          <button type="button" id="game-sound" class="game-sound" aria-label="Som do jogo" aria-pressed="true">Som ligado</button>
+          <div class="game-actions"><button type="button" id="game-sound" class="game-sound" aria-label="Som do jogo" aria-pressed="true">Som ligado</button>
+          <button type="button" id="game-expand" class="game-expand" aria-label="Ampliar jogo" aria-pressed="false" title="Ampliar jogo"><span aria-hidden="true">⤢</span></button></div>
         </div>
         <div class="game-topline">
-        <div class="game-stage-header">
-          <div><span id="game-phase" class="sr-only">Cenário 1 de 5</span><strong id="game-stage-name">Brasília</strong><small id="game-difficulty">Risco 1 · 0 m</small></div>
-          <span class="game-stage-clock" id="game-stage-time">7.000 m até Rio</span>
-        </div>
         <div class="game-scoreboard" aria-label="Placar">
           <div><span>Metros</span><strong id="game-score">0000</strong></div>
           <div><span>Vidas</span><strong id="game-lives">1</strong></div>
           <div><span>Passaportes</span><strong id="game-passports">0</strong><div class="passport-track" title="100 passaportes = +1 vida" aria-hidden="true"><span id="game-passport-progress"></span></div></div>
         </div>
+        <div class="game-stage-header">
+          <div><span id="game-phase" class="sr-only">Cenário 1 de 5</span><strong id="game-stage-name">Brasília</strong><small id="game-difficulty">Risco 1 · 0 m</small></div>
+          <span class="game-stage-clock" id="game-stage-time">7.000 m até Rio</span>
         </div>
-        <div class="game-boss" id="game-boss" hidden aria-label="Confronto com chefe">
-          <div class="game-boss-heading"><span>CHEFÃO</span><strong id="game-boss-name">Chefão sorteado</strong></div>
-          <div class="game-boss-health" id="game-boss-health" role="progressbar" aria-label="Ataques superados" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0"><span id="game-boss-progress"></span></div>
-          <small class="game-boss-weapon" id="game-boss-weapon">Desvie dos ataques para fugir</small>
         </div>
         <div class="game-internal-metrics sr-only" aria-hidden="true">
           <span id="game-time">00:00</span>
           <span id="game-passport-next">100</span>
 
         </div>
-        <div class="game-viewport">
-          <aside class="game-raid" id="game-raid" aria-label="Evento de Joice Hasselmann" hidden>
-            <canvas id="game-joice-portrait" width="78" height="96" aria-hidden="true"></canvas>
-            <div><strong id="game-raid-title">JOICE AVISA</strong><p id="game-raid-copy">Toc, toc, toc…</p><a id="game-raid-source" href="https://www.mprj.mp.br/web/guest/visualizar?noticiaId=96203" target="_blank" rel="noopener noreferrer">Fonte</a></div>
-          </aside>
-          <canvas id="runner-canvas" width="900" height="300" tabindex="0" role="img" aria-label="Pista do jogo Corre, Flávio!" aria-describedby="game-instructions">Seu navegador não oferece Canvas. A contagem regressiva continua disponível acima.</canvas>
-          <div class="game-transition" id="game-transition" hidden aria-hidden="true">
-            <span id="game-transition-label">PRÓXIMA PARADA</span>
-            <strong id="game-transition-name">Rio de Janeiro</strong>
-            <div class="game-transition-track"><span id="game-transition-progress"></span></div>
+        <details class="game-settings" id="game-settings"><summary>Como jogar e ajustes</summary>
+          <div class="game-settings-content">
+            <p class="game-instructions" id="game-instructions">Toque em Pular ou use Espaço/↑ para saltar. Segure Abaixar ou use ↓/S para passar sob ataques altos. Flávio só desvia: observe o aviso do chefão. Cada cenário tem 7 km de rota; os metros totais também contam os encontros. A cada 100 passaportes, você ganha uma vida. O Escudo das Américas protege por seis segundos.</p>
+            <div class="game-options">
+              <label for="game-crouch-mode">Abaixar<select id="game-crouch-mode"><option value="hold">Segurar o botão</option><option value="toggle">Tocar para alternar</option></select></label>
+              <label for="game-effects">Efeitos visuais<select id="game-effects"><option value="system">Padrão do aparelho</option><option value="reduce">Reduzidos</option></select></label>
+              <label class="assist-option" for="game-assist"><input id="game-assist" type="checkbox">Ritmo mais tranquilo</label>
+            </div>
+            <p class="game-options-note">O ritmo tranquilo reduz a velocidade da corrida e dos perigos na próxima tentativa. Você pode mudar os efeitos e a forma de abaixar a qualquer momento.</p>
           </div>
-        <div class="game-hud" aria-label="Perseguição e vantagens">
+        </details>
+        <div class="game-viewport">
+                            <canvas id="runner-canvas" width="900" height="300" tabindex="0" role="img" aria-label="Pista do jogo Corre, Flávio!" aria-describedby="game-instructions">Seu navegador não oferece Canvas. A contagem regressiva continua disponível acima.</canvas>
+                  <div class="game-hud" aria-label="Perseguição e vantagens">
           <div class="pursuit-chip"><span class="sr-only">Na perseguição: </span><strong id="game-threat">1/5 · PF</strong></div>
           <div class="power-chip"><span class="sr-only">Vantagem ativa: </span><strong id="game-power">Sem efeito ativo</strong></div>
           <div class="ammo-chip" hidden><span class="sr-only">Munição especial: </span><strong id="game-ammo">Sem arma</strong></div>
         </div>
-          <div class="game-overlay" id="game-overlay"><span class="game-overlay-badge" id="game-overlay-badge">Corrida fictícia</span><strong id="game-overlay-title">Pronto para correr?</strong><p id="game-overlay-copy">Pule e sobreviva.</p></div>
+          <div class="game-overlay" id="game-overlay"><span class="game-overlay-badge" id="game-overlay-badge">Corrida fictícia</span><strong id="game-overlay-title">Pronto para correr?</strong><p id="game-overlay-copy">Pule ou abaixe para desviar.</p><p class="game-start-hint" id="game-start-hint">↑ Pular · ↓ Abaixar — observe os perigos</p></div>
         </div>
         <div class="route-meter" role="progressbar" aria-label="Metros no cenário atual" aria-valuemin="0" aria-valuemax="7000" aria-valuenow="0" id="game-progress"><span></span></div>
         <div class="game-controls">
           <button type="button" id="game-jump" aria-label="Pular" disabled><span aria-hidden="true">↑</span> Pular</button>
-          <button type="button" id="game-crouch" aria-label="Abaixar, segure para agachar" aria-pressed="false" disabled><span aria-hidden="true">↓</span> Abaixar</button>
+          <button type="button" id="game-crouch" aria-label="Abaixar" aria-pressed="false" disabled><span aria-hidden="true">↓</span> Abaixar</button>
           <button type="button" class="game-primary" id="game-start" disabled>Carregando desenhos…</button>
         </div>
         <p class="game-loading-note" id="game-loading-note" role="status">Preparando os personagens…</p>
-        <p class="game-objective" id="game-objective">100 passaportes = +1 vida</p>
-        <p class="game-instructions sr-only" id="game-instructions">Toque ou use Espaço ou seta para cima para pular. Segure Abaixar, seta para baixo ou tecla S para agachar sob ataques altos. Flávio não ataca: supere os chefões desviando. Cada cenário tem sete quilômetros; a velocidade aumenta com os metros. Colete passaportes raros para ganhar vida a cada cem e o Escudo das Américas para seis segundos de invisibilidade.</p>
+        <div class="game-feedback">
+<div class="game-boss" id="game-boss" hidden aria-label="Confronto com chefe">
+          <div class="game-boss-heading"><span>CHEFÃO</span><strong id="game-boss-name">Chefão sorteado</strong></div>
+          <div class="game-boss-health" id="game-boss-health" role="progressbar" aria-label="Ataques superados" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0"><span id="game-boss-progress"></span></div>
+          <small class="game-boss-weapon" id="game-boss-weapon">Desvie dos ataques para fugir</small>
+        </div>
+<aside class="game-raid" id="game-raid" aria-label="Evento de Joice Hasselmann" hidden>
+            <canvas id="game-joice-portrait" width="78" height="96" aria-hidden="true"></canvas>
+            <div><strong id="game-raid-title">JOICE AVISA</strong><p id="game-raid-copy">Toc, toc, toc…</p><a id="game-raid-source" href="https://www.mprj.mp.br/web/guest/visualizar?noticiaId=96203" target="_blank" rel="noopener noreferrer">Fonte</a></div>
+          </aside>
+<div class="game-transition" id="game-transition" hidden aria-hidden="true">
+            <span id="game-transition-label">PRÓXIMA PARADA</span>
+            <strong id="game-transition-name">Rio de Janeiro</strong>
+            <div class="game-transition-track"><span id="game-transition-progress"></span></div>
+          </div>
+<p class="game-objective" id="game-objective">100 passaportes = +1 vida</p>
+        </div>
+
         <p class="game-status sr-only" id="game-status" role="status" aria-live="polite">Tudo pronto. A corrida começa quando você quiser.</p>
         <details class="game-itinerary"><summary>Destinos</summary>
         <ol class="game-route" aria-label="Rota da corrida">
@@ -210,7 +165,7 @@ footer{text-align:center;font-size:10px;color:#877d91;margin-top:18px;line-heigh
     const remaining = Math.max(0, end - Date.now());
     const percent = Math.max(0,Math.min(100, remaining / (end-start) * 100));
     $("progress-ring").style.setProperty("--remaining", percent.toFixed(5) + "%");
-    $("progress-ring").setAttribute("aria-label",percent.toFixed(1).replace(".",",")+" por cento do prazo restante");
+    $("progress-ring").setAttribute("aria-label",percent.toFixed(1).replace(".",",")+" por cento do período da contagem restante, de 26 de outubro de 2026 a 1º de fevereiro de 2027");
     $("percent-number").textContent = percent.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1}) + "%";
     $("days").textContent = String(Math.floor(remaining/86400000));
     $("hours").textContent = pad(Math.floor(remaining % 86400000 / 3600000));

@@ -5,11 +5,13 @@ on:
     paths:
       - 'tanahoraflavio/**'
       - 'tests/**'
+      - 'tools/**'
       - '.github/workflows/site-responsive-ci.yml'
   pull_request:
     paths:
       - 'tanahoraflavio/**'
       - 'tests/**'
+      - 'tools/**'
       - '.github/workflows/site-responsive-ci.yml'
   workflow_dispatch:
 
@@ -24,14 +26,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install Playwright
-        run: npm install --no-save --ignore-scripts playwright@1.56.1
+      - name: Install test and artwork tools
+        run: npm install --no-save --ignore-scripts playwright@1.56.1 sharp@0.35.5
+      - name: Check resource versions
+        run: node tools/version-runner-assets.mjs --check
       - name: Verify preinstalled Chrome
         run: test -x /usr/bin/google-chrome
       - name: Test runner and desktop/mobile UI
         env:
           PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/google-chrome
-        run: node --test tests/*.test.*
+        run: node --test --test-concurrency=1 tests/*.test.*
       - name: Capture desktop and mobile screens
         if: success()
         run: |

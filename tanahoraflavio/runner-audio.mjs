@@ -1,6 +1,8 @@
 // Som sintetizado localmente; sem gravação nem imitação da voz da pessoa retratada.
 export function createGameAudio() {
  let enabled=true,context=null,utterance=null,nodes=[];
+ const preferenceKey='tanahoraflavio.runner.sound.v1';
+ try{enabled=window.localStorage?.getItem(preferenceKey)!=='off';}catch{/* Armazenamento é opcional. */}
  const stop=()=>{
   for(const node of nodes){try{node.stop();}catch{/* Nó já encerrado. */}}nodes=[];
   if(utterance&&'speechSynthesis' in window){try{window.speechSynthesis.cancel();}catch{/* Legenda permanece. */}}
@@ -59,7 +61,7 @@ export function createGameAudio() {
   }catch{utterance=null;}
  };
  return {get enabled(){return enabled;},prime,stop,effect,
-  toggle(){enabled=!enabled;if(!enabled)stop();else prime();return enabled;},
+  toggle(){enabled=!enabled;try{window.localStorage?.setItem(preferenceKey,enabled?'on':'off');}catch{/* A escolha vale nesta sessão. */}if(!enabled)stop();else prime();return enabled;},
   event(phase,fact){stop();if(!enabled)return;if(phase==='warning')knocks();
    if(phase==='active')speak('Toc, toc, toc! É a Polícia Federal! '+fact.text);
   }};

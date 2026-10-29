@@ -31,7 +31,7 @@ test('o retrato da Joice preserva toda a largura para não cortar o microfone',(
  assert.ok(crop.height>f.height*.7&&crop.height<=f.height);
 });
 
-test('o Flávio é espelhado para a direita sem virar perseguidores',()=>{
+test('o herói mantém quadros orientados à direita sem alterar a orientação dos perseguidores',()=>{
  assert.equal(spriteFacesRight('flavio'),true);
  for(const type of ['pf','janones','army','xandao','haddad','lula'])assert.equal(spriteFacesRight(type),false);
  assert.equal(spriteFrameFor('flavio',{phase:3}).index,3);

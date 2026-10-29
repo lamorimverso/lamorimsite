@@ -1,16 +1,30 @@
-import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, difficultyAt, createRun, startRun, jumpRun, crouchRun, advanceRun, stageAt, stageTransitionAt, scoreFor } from "./runner-core.mjs?v=20261028-dodge-km-v1";
-import { RAID_FACTS } from "./runner-core.mjs?v=20261028-dodge-km-v1";
-import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep } from "./runner-art.mjs?v=20261028-clean-scene-v1";
-import { createGameAudio } from "./runner-audio.mjs?v=20261028-aimed-shots-v1";
-import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=20261028-aimed-shots-v1";
+import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, startRun, jumpRun, crouchRun, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=ab4da0cf70b4";
+import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep } from "./runner-art.mjs?v=30d4c3e4a4ef";
+import { createGameAudio } from "./runner-audio.mjs?v=02bf65775963";
+import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
 
 function initRunner() {
   const $ = id => document.getElementById(id);
   const canvas = $("runner-canvas"), section = $("game");
   if (!canvas || !section) return;
+  // Uma aba pode ter conservado o HTML anterior enquanto os módulos já
+  // mudaram. Atualizar a página uma vez evita inicializar sobre IDs antigos.
+  if(!$("game-settings")||!$("game-start-hint")||!$("game-expand")){
+    const url=new URL(location.href);
+    if(url.searchParams.get("ui")!=="20261028-ux"){
+      url.searchParams.set("ui","20261028-ux");location.replace(url.href);
+    }else{
+      const button=$("game-start"),note=$("game-loading-note");
+      if(button){button.disabled=false;button.textContent="Recarregar jogo";button.addEventListener("click",()=>location.reload(),{once:true});}
+      if(note){note.hidden=false;note.textContent="A página precisa ser atualizada para carregar o jogo. Tente recarregar.";}
+    }
+    return;
+  }
   const ctx = canvas.getContext("2d");
   if (!ctx) {
-    $("game-status").textContent = "O jogo não está disponível neste navegador. A contagem continua funcionando.";
+    $("game-loading-note").textContent = "O jogo não está disponível neste navegador. A contagem continua funcionando.";
+    $("game-status").textContent = $("game-loading-note").textContent;
+    $("game-start").textContent="Jogo indisponível";
     $("game-start").disabled = true;
     return;
   }
@@ -20,7 +34,20 @@ function initRunner() {
     const stored = Number(localStorage.getItem(recordKey));
     if (Number.isSafeInteger(stored) && stored >= 0 && stored <= 10000000) best = stored;
   } catch { /* O modo privado e o armazenamento bloqueado não impedem jogar. */ }
-  let run=createRun(),frameId=0;
+  const preferences={crouchMode:"hold",effects:"system",assisted:false};
+  const preferencesKey="tanahoraflavio.runner.preferences.v1";
+  try{
+    const saved=JSON.parse(localStorage.getItem(preferencesKey)||"{}");
+    if(saved&&typeof saved==="object"){
+      if(["hold","toggle"].includes(saved.crouchMode))preferences.crouchMode=saved.crouchMode;
+      if(["system","reduce"].includes(saved.effects))preferences.effects=saved.effects;
+      preferences.assisted=saved.assisted===true;
+    }
+  }catch{/* Ajustes continuam disponíveis sem persistência. */}
+  $("game-crouch-mode").value=preferences.crouchMode;
+  $("game-effects").value=preferences.effects;
+  $("game-assist").checked=preferences.assisted;
+  let run=createRun({assisted:preferences.assisted}),frameId=0;
   const frameClock=createFrameClock(performance.now());
   let spritesReady=false,spritesFailed=false,loadedSprites=0,loadingSprites=false,landingUntil=0;
   let crouchPose=0,lastPoseFrame=performance.now();
@@ -29,12 +56,25 @@ function initRunner() {
   let lastCollected=0,lastPower="";
   let lastLives = 1, lastEvents = 0;
   const audio=createGameAudio();
+  $("game-sound").textContent=audio.enabled?"Som ligado":"Som desligado";
+  $("game-sound").setAttribute("aria-pressed",String(audio.enabled));
   let lastRaidKey="";
   const routeSeconds=()=>run.routeDistance/SCENE_DISTANCE*SCENE_SECONDS;
   const pad = number => String(number).padStart(2, "0");
   // A preferência pode mudar enquanto o jogo está aberto.
   const motionPreference = window.matchMedia?.("(prefers-reduced-motion: reduce)");
-  const prefersReducedMotion = () => motionPreference?.matches === true;
+  const prefersReducedMotion = () => preferences.effects==="reduce"||motionPreference?.matches === true;
+  function bossCue(){
+    if(!run.boss)return null;
+    const incoming=run.obstacles.filter(o=>o.bossAttack&&!o.counted&&o.x+o.width>=PLAYER.x).sort((a,b)=>a.x-b.x)[0];
+    return incoming||bossAttackFor(run.boss.type,Math.min(run.boss.fired,run.boss.total-1));
+  }
+  function dodgeHint(){
+    const hit=run.lastHit;if(!hit)return "Observe os perigos e tente novamente.";
+    const names={hammer:"Martelo",mandado:"Mandado",receipts:"Papéis",lhand:"Mão em L"};
+    if(hit.action==="crouch")return (names[hit.type]||"Ataque")+" no alto: abaixe para desviar.";
+    return (names[hit.type]||"Perigo")+" baixo: sincronize o salto para desviar.";
+  }
 
   function updateUI() {
     const clock=routeSeconds(),stage=stageAt(clock),score=scoreFor(run),difficulty=difficultyAt(run.distance);
@@ -56,32 +96,34 @@ function initRunner() {
     $("game-phase").textContent="Cenário "+(stage.index+1)+" de 5 · Volta "+lap;
     $("game-stage-name").textContent=stage.name;
     $("game-difficulty").textContent="Risco "+difficulty.level+" · "+score.toLocaleString("pt-BR")+" m";
-    $("game-stage-time").textContent=run.boss?"Desvie do chefão":Math.ceil(SCENE_DISTANCE-sceneElapsed).toLocaleString("pt-BR")+" m até "+STAGES[(stage.index+1)%5].short;
+    $("game-stage-time").textContent=run.boss?run.boss.remaining+" ataques para escapar do chefão":run.raid?"Perseguição especial · rota em espera":(sceneElapsed/1000).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+" / 7 km · até "+STAGES[(stage.index+1)%5].short;
     $("game-best").textContent=best.toLocaleString("pt-BR");
     $("game-time").textContent=pad(Math.floor(run.elapsed/60))+":"+pad(Math.floor(run.elapsed%60));
     $("game-progress").hidden=false;
     $("game-progress").setAttribute("aria-valuemax",String(SCENE_DISTANCE));
     $("game-progress").setAttribute("aria-valuenow",String(Math.floor(sceneElapsed)));
-    $("game-progress").setAttribute("aria-valuetext",stage.name+" · volta "+lap);
+    $("game-progress").setAttribute("aria-valuetext",stage.name+" · "+Math.floor(sceneElapsed).toLocaleString("pt-BR")+" de 7.000 metros de rota · volta "+lap);
     $("game-progress").firstElementChild.style.width=sceneElapsed/SCENE_DISTANCE*100+"%";
     section.dataset.runState=run.status;
+    section.dataset.reducedMotion=String(prefersReducedMotion());
     section.dataset.art=spritesReady?"loaded":spritesFailed?"error":"loading";
     const power=run.shieldFor>0?"shield":run.graceFor>0?"recovery":"none";
     section.dataset.power=power;section.dataset.ammo="none";
     $("game-power").textContent=power==="shield"?"Escudo das Américas · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo";
     $("game-ammo").parentElement.hidden=true;
-    $("game-boss").hidden=!run.boss;section.dataset.boss=run.boss?.type||"none";
+    $("game-boss").hidden=run.status!=="running"||!run.boss;section.dataset.boss=run.boss?.type||"none";
     if(run.boss){
       const b=run.boss;
       $("game-boss-name").textContent=b.name+" · rodada "+b.level;
       $("game-boss-health").setAttribute("aria-valuemax",String(b.total));
       $("game-boss-health").setAttribute("aria-valuenow",String(b.total-b.remaining));
       $("game-boss-progress").style.width=100*(b.total-b.remaining)/b.total+"%";
-      $("game-boss-weapon").textContent="Desvie de "+b.remaining+" ataque"+(b.remaining===1?"":"s")+" para escapar";
+      $("game-boss-weapon").textContent=(bossCue().action==="crouch"?"↓ Abaixe":"↑ Pule")+" · "+b.remaining+" ataque"+(b.remaining===1?"":"s")+" para escapar";
       $("game-boss").style.setProperty("--boss-accent",b.color);
     }
     $("game-threat").textContent=run.raid?.phase==="active"?"PF em operação":"Inimigos sorteados · "+stage.short;
-    $("game-objective").textContent=run.boss?"Só o chefão ataca. Pule para desviar e escapar!":"Faltam "+(100-run.passports%100)+" passaportes para +1 vida";
+    $("game-objective").textContent=run.status==="running"&&run.boss?(bossCue().action==="crouch"?"↓ Abaixe para passar sob o ataque alto.":"↑ Pule para superar o ataque baixo."):"Faltam "+(100-run.passports%100)+" passaportes para +1 vida";
+    $("game-objective").hidden=run.status==="running"&&(!!run.boss||!!run.raid||!banner.hidden);
     const raid=run.status==="running"?run.raid:null;
     $("game-raid").hidden=!raid;section.dataset.raid=raid?.phase||"none";
     if(raid){
@@ -101,13 +143,14 @@ function initRunner() {
     $("game-loading-note").hidden=spritesReady;
     $("game-loading-note").textContent=spritesFailed?"Os desenhos não carregaram. Toque no botão para tentar novamente.":"Preparando os personagens…";
     $("game-overlay").hidden=run.status==="running";
+    $("game-start-hint").hidden=run.status!=="ready";
     if(run.status==="over"){
       $("game-overlay-title").textContent="Foi pego pela Polícia Federal!";
-      $("game-overlay-copy").textContent=score.toLocaleString("pt-BR")+" metros percorridos · "+run.passports+" passaportes. Tente novamente!";
+      $("game-overlay-copy").textContent=dodgeHint()+" "+score.toLocaleString("pt-BR")+" m · "+run.passports+" passaportes.";
       $("game-overlay-badge").textContent="Perseguição fictícia";audio.stop();
     }
     if(lastStatus!==run.status||lastStage!==stage.index||lastCollected!==run.collected||lastPower!==power||lastLives!==run.lives||lastEvents!==run.events){
-      let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="over"?"Foi pego pela Polícia Federal! "+score+" metros percorridos. Toque em Tentar de novo.":stage.name+" · continue pulando os perigos.";
+      let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="over"?"Foi pego pela Polícia Federal! "+dodgeHint()+" "+score+" metros percorridos. Toque em Tentar de novo.":stage.name+" · pule ou abaixe conforme o perigo.";
       if(run.status==="running"){
         if(run.events>lastEvents)message=run.event;
         else if(lastCollected!==run.collected)message="Passaporte coletado. Faltam "+(100-run.passports%100)+" para uma vida.";
@@ -168,7 +211,8 @@ function initRunner() {
     if(!spritesReady){if(spritesFailed)prepareSprites();return;}
     cancelAnimationFrame(frameId);frameId=0;resumeFromGesture();
     audio.stop();audio.prime();lastRaidKey="";
-    run=createRun();run.viewportWidth=virtualWidth;startRun(run);landingUntil=0;
+    run=createRun({assisted:preferences.assisted});run.viewportWidth=virtualWidth;startRun(run);landingUntil=0;
+    $("game-settings").open=false;
     crouchPose=0;lastPoseFrame=performance.now();
     lastCollected=0;lastPower="";lastStatus="";lastEvents=0;lastLives=1;
     resetFrameClock(frameClock,performance.now());
@@ -189,6 +233,20 @@ function initRunner() {
     const enabled=audio.toggle();$("game-sound").textContent=enabled?"Som ligado":"Som desligado";
     $("game-sound").setAttribute("aria-pressed",String(enabled));lastRaidKey="";updateUI();
   });
+  function savePreferences(){try{localStorage.setItem(preferencesKey,JSON.stringify(preferences));}catch{/* A sessão atual permanece funcional. */}}
+  $("game-crouch-mode").addEventListener("change",()=>{crouch(false);preferences.crouchMode=$("game-crouch-mode").value;savePreferences();});
+  $("game-effects").addEventListener("change",()=>{preferences.effects=$("game-effects").value;savePreferences();updateUI();draw();});
+  $("game-assist").addEventListener("change",()=>{preferences.assisted=$("game-assist").checked;savePreferences();});
+  let expanded=false;
+  function setExpanded(active){
+    expanded=!!active;section.classList.toggle("is-expanded",expanded);document.body.classList.toggle("game-expanded",expanded);
+    $("game-expand").setAttribute("aria-pressed",String(expanded));
+    $("game-expand").setAttribute("aria-label",expanded?"Recolher jogo":"Ampliar jogo");
+    $("game-expand").title=expanded?"Recolher jogo":"Ampliar jogo";
+    resize();resumeFromGesture();
+  }
+  $("game-expand").addEventListener("click",()=>setExpanded(!expanded));
+  document.addEventListener("keydown",event=>{if(event.code==="Escape"&&expanded){event.preventDefault();setExpanded(false);canvas.focus({preventScroll:true});}});
   function bindJump(target){
     const activate=()=>{jump();canvas.focus({preventScroll:true});};
     if("PointerEvent" in window)target.addEventListener("pointerdown",event=>{
@@ -204,15 +262,15 @@ function initRunner() {
     if(event.button!==0||run.status!=="running")return;
     event.preventDefault();resumeFromGesture();
     try{crouchButton.setPointerCapture?.(event.pointerId);}catch{/* navegador pode não reconhecer eventos de teste/assistivos */}
-    crouch(true);
+    if(preferences.crouchMode==="hold")crouch(true);
   });
-  const releaseCrouch=()=>crouch(false);
+  const releaseCrouch=()=>{if(preferences.crouchMode==="hold")crouch(false);};
   crouchButton.addEventListener("pointerup",releaseCrouch);
   crouchButton.addEventListener("pointercancel",releaseCrouch);
   crouchButton.addEventListener("lostpointercapture",releaseCrouch);
   // Enter/Espaço no botão: alternância acessível sem exigir manter tecla.
   crouchButton.addEventListener("click",event=>{
-    if(event.detail===0)crouch(!run.player.crouching);
+    if(preferences.crouchMode==="toggle"||event.detail===0){resumeFromGesture();crouch(!run.player.crouchHeld);}
   });
   section.addEventListener("keydown", event => {
     if (event.target.closest("button,a,input,select,textarea,summary") || event.ctrlKey || event.metaKey || event.altKey) return;
@@ -396,9 +454,9 @@ function initRunner() {
     ctx.save();ctx.translate(bossX,bossY+motion.bob);ctx.rotate(motion.lean);
     drawActor(ctx,{type:b.type,x:0,y:0,scale:1.62,phase,attacking:b.attackFlashFor>0,hurt:b.hitFlashFor>0});
     ctx.restore();
-    if(b.nextAttack<.65&&b.fired<b.total){
-      ctx.fillStyle="#a33e4b";ctx.font="900 11px system-ui";ctx.textAlign="center";
-      ctx.fillText(b.type==='xandao'&&b.fired%2===0?"PREPARE O SALTO":"PREPARE O AGACHAMENTO",virtualWidth-86,62);ctx.textAlign="start";
+    if(b.nextAttack<.65&&b.fired<b.total&&!run.obstacles.some(o=>o.bossAttack&&!o.counted)){
+      ctx.fillStyle="#843338";ctx.font="800 16px system-ui";ctx.textAlign="center";
+      ctx.fillText(bossAttackFor(b.type,b.fired).action==="jump"?"↑ PULE":"↓ ABAIXE",virtualWidth-86,62);ctx.textAlign="start";
     }
   }
   function character(){
