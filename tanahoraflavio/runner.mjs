@@ -1,7 +1,7 @@
-import {createVoiceDirector} from './runner-voice-director.mjs?v=95241cbb9b6a';
-import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=86f9956cf40d";
+import {createVoiceDirector} from './runner-voice-director.mjs?v=2073349101b7';
+import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=8066458e20b0";
 import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=eac2697a2d91";
-import { createGameAudio } from "./runner-audio.mjs?v=d5012cec23e6";
+import { createGameAudio } from "./runner-audio.mjs?v=e90e0bf72ae7";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=e04644dd1f8f";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=cb8316f1085d";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
@@ -106,7 +106,7 @@ function initRunner() {
     const sceneElapsed=run.routeDistance%SCENE_DISTANCE;
     $("game-phase").textContent="Cenário "+(stage.index+1)+" de 5 · Volta "+lap;
     $("game-stage-name").textContent=stage.name;
-    $("game-difficulty").textContent="Risco "+difficulty.level+" · "+score.toLocaleString("pt-BR")+" m";
+    $("game-difficulty").textContent="Risco "+difficulty.level+"/10 · "+Math.round(difficulty.speed)+" px/s";
     $("game-stage-time").textContent=run.status==="over"?"Fim da corrida":run.boss?run.boss.remaining+" ataques para escapar do chefão":run.raid?"Perseguição especial":campaignPhases[stage.index];
     $("game-best").textContent=best.toLocaleString("pt-BR");
     $("game-time").textContent=pad(Math.floor(run.elapsed/60))+":"+pad(Math.floor(run.elapsed%60));
@@ -202,13 +202,14 @@ function initRunner() {
     updateUI();
     if(run.lives<before.lives)audio.effect("hit");
     else if(before.boss&&!run.boss){audio.effect("victory");voices.event("victory",run);}
-    else if(!before.boss&&run.boss){audio.effect("boss");voices.event("boss",run);}
+    else if(!before.boss&&run.boss){audio.effect("boss");audio.character(run.boss.type);voices.event("boss",run);}
     else if(run.boss&&run.boss.fired>before.attacks)audio.effect("attack");
     else if(run.collected>before.collected)audio.effect(run.lastPickup==="ze-gotinha"?"transform":"pickup");
     if(run.spawnedObstacles>before.spawned){
       const newest=run.obstacles.at(-1);
       audio.effect(newest?.action==="crouch"?"high":"low");
-      if(newest?.type==="janones")voices.event("janones",run);
+      const actor=newest?.sourceActor||newest?.type;
+      if(actor){audio.character(actor);voices.event("actor",run,actor);}
     }
     if(run.collected>before.collected){
       if(run.lastPickup==="shield")voices.event("shield",run);
