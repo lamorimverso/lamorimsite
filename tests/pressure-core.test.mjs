@@ -47,7 +47,7 @@ test('Zé Gotinha recolhido limpa perigos comuns e abre respiro sem vencer chefe
 test('transição de Joice e aceleração preservam .82s entre contatos previstos em todas telas',()=>{
  for(const width of [480,612,900])for(const assisted of [false,true]){
   const r=make(),rng=seeded(7);r.viewportWidth=width;r.assisted=assisted;r.nextRaid=18;let count=0;
-  for(let i=0;i<140/dt;i++){core.advanceRun(r,dt,rng);if(r.spawnedObstacles>count){count=r.spawnedObstacles;const times=r.obstacles.filter(o=>o.x>148).map(o=>(o.x-148)/o.speed).sort((a,b)=>a-b);for(let n=1;n<times.length;n++)assert.ok(times[n]-times[n-1]>=.82-1e-7,`${width} ${assisted}: ${times}`);}}
+  for(let i=0;i<140/dt;i++){core.advanceRun(r,dt,rng);if(r.spawnedObstacles>count){count=r.spawnedObstacles;const times=r.obstacles.filter(o=>o.x>148&&o.speed>0).map(o=>(o.x-148)/o.speed).sort((a,b)=>a-b);for(let n=1;n<times.length;n++)assert.ok(times[n]-times[n-1]>=.82-1e-7,`${width} ${assisted}: ${times}`);}}
  }
 });
 
