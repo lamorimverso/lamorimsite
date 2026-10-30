@@ -2,7 +2,7 @@ import {createGameSoundtrack} from './runner-soundtrack.mjs?v=101619002437';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=e04644dd1f8f';
 // Efeitos locais e recorte de arquivo identificado; nenhuma imitação de voz.
 export function createGameAudio({onVoice=()=>{}}={}) {
- let enabled=true,context=null,utterance=null,nodes=[],primed=false,recording=null,raidVoice=false,raidPrepared=false,music=null,voicePriority=0,lastCueAt=-Infinity,lastNarrationAt=-Infinity;
+ let enabled=true,context=null,nodes=[],primed=false,recording=null,raidVoice=false,raidPrepared=false,music=null,voicePriority=0;
  const preferenceKey='tanahoraflavio.runner.sound.v1';
  try{enabled=window.localStorage?.getItem(preferenceKey)!=='off';}catch{/* Armazenamento é opcional. */}
  const stopRecording=()=>{
@@ -13,8 +13,6 @@ export function createGameAudio({onVoice=()=>{}}={}) {
   raidVoice=false;
   stopRecording();music?.stop();
   for(const node of nodes){try{node.stop();}catch{/* Nó já encerrado. */}}nodes=[];
-  if(utterance&&'speechSynthesis' in window){try{window.speechSynthesis.cancel();}catch{/* Legenda permanece. */}}
-  utterance=null;
  };
  const prime=()=>{
   if(!enabled)return;
@@ -28,7 +26,6 @@ export function createGameAudio({onVoice=()=>{}}={}) {
   if(!clip||!enabled||!primed||typeof window.Audio!=='function')return false;
   // Não cortar uma fala de prioridade igual com outra chegada no mesmo instante.
   if(recording&&priority<=voicePriority)return false;
-  if(utterance&&'speechSynthesis' in window){try{window.speechSynthesis.cancel();}catch{}utterance=null;}
   stopRecording();
   try{
    const url=new URL(clip.file,import.meta.url);url.searchParams.set('v',clip.sha256.slice(0,12));
@@ -72,55 +69,22 @@ export function createGameAudio({onVoice=()=>{}}={}) {
    osc.type=wave;osc.frequency.setValueAtTime(start,t);
    osc.frequency.exponentialRampToValueAtTime(end,t+length);
    gain.gain.setValueAtTime(.001,t);
-   gain.gain.linearRampToValueAtTime(volume,t+.015);
+   gain.gain.linearRampToValueAtTime(recording&&['high','low'].includes(name)?volume*.55:volume,t+.015);
    gain.gain.exponentialRampToValueAtTime(.001,t+length);
    osc.connect(gain);gain.connect(context.destination);osc.start(t);osc.stop(t+length+.015);
    nodes.push(osc);
    osc.onended=()=>{osc.disconnect();gain.disconnect();nodes=nodes.filter(n=>n!==osc);};
   }catch{/* Efeitos não podem interromper o jogo. */}
  };
- const speak=text=>{
-  if(!enabled||!('speechSynthesis' in window)||!window.SpeechSynthesisUtterance)return;
-  try{const voices=window.speechSynthesis.getVoices();
-   const pt=voices.find(v=>/^pt[-_]BR$/i.test(v.lang)&&v.localService===true);
-   if(!pt)return;
-   utterance=new window.SpeechSynthesisUtterance(text);utterance.lang='pt-BR';utterance.rate=1.2;utterance.volume=.65;utterance.voice=pt;
-   const current=utterance;current.onend=current.onerror=()=>{if(utterance===current)utterance=null;};
-   window.speechSynthesis.speak(utterance);
-  }catch{utterance=null;}
- };
-  // Cada personagem tem um sinal musical próprio. Sem imitar a voz de pessoas reais.
-  // Quando houver voz local pt-BR, um narrador neutro anuncia quem apareceu.
-  const characterTones={pf:[205,'Polícia Federal'],janones:[365,'Janones'],army:[190,'Exército'],
-   dilma:[310,'Dilma'],simone:[415,'Simone'],soraya:[470,'Soraya'],
-   haddad:[255,'Haddad'],lula:[345,'Lula'],xandao:[235,'Xandão'],
-   boulos:[280,'Boulos'],dino:[230,'Flávio Dino']};
-  const character=id=>{
-   const info=characterTones[id];
-   if(!info||!enabled||!primed||!context||context.state!=='running'||context.currentTime-lastCueAt<1.5)return false;
-   const now=context.currentTime;lastCueAt=now;
-   try{
-    const oscillator=context.createOscillator(),gain=context.createGain();
-    oscillator.type='triangle';oscillator.frequency.setValueAtTime(info[0],now);
-    oscillator.frequency.exponentialRampToValueAtTime(info[0]*1.32,now+.13);
-    gain.gain.setValueAtTime(.001,now);gain.gain.linearRampToValueAtTime(.038,now+.012);
-    gain.gain.exponentialRampToValueAtTime(.001,now+.18);
-    oscillator.connect(gain);gain.connect(context.destination);oscillator.start(now);oscillator.stop(now+.19);
-    nodes.push(oscillator);
-    oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();nodes=nodes.filter(n=>n!==oscillator);};
-   }catch{/* O personagem continua visível sem suporte a áudio. */}
-   if(!recording&&!utterance&&!['janones','haddad','lula'].includes(id)&&now-lastNarrationAt>=9){
-    speak('Atenção: '+info[1]);lastNarrationAt=now;
-   }
-   return true;
-  };
- return {get enabled(){return enabled;},prime,stop,effect,voice,character,
+ // Não há sintetizador de voz: só trechos identificados e efeitos originais.
+ // Ausência de clipe não é preenchida por uma voz inventada.
+ return {get enabled(){return enabled;},prime,stop,effect,voice,
   background(state){if(enabled&&primed)music?.update({...state,ducked:!!recording});},
   toggle(){enabled=!enabled;try{window.localStorage?.setItem(preferenceKey,enabled?'on':'off');}catch{/* A escolha vale nesta sessão. */}if(!enabled)stop();else prime();return enabled;},
   event(phase,fact){
    if(!enabled)return;
    if(phase==='warning'){raidPrepared=true;stopRecording();raidVoice=voice('joice',{priority:3,loop:true});if(!raidVoice)knocks();}
-   else if(phase==='active'){if(!raidVoice){if(raidPrepared)raidVoice=voice('joice',{priority:3,loop:true});if(!raidVoice){stopRecording();speak('Toc, toc, toc! É a Polícia Federal! '+(fact?.text||''));}}}
+   else if(phase==='active'){if(!raidVoice){if(raidPrepared)raidVoice=voice('joice',{priority:3,loop:true});if(!raidVoice)knocks();}}
    else {raidPrepared=false;raidVoice=false;stopRecording();}
   }};
 }
