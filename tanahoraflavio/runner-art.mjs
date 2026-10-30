@@ -89,7 +89,21 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
   c.translate(0,-(h-40)/2);
  }
 
- if(item.type==='barrier'){box(c,-22,-28,44,12,'#f1bd65');for(let i=-15;i<20;i+=14)line(c,[[i,-27],[i+7,-17]],'#543b42',4);line(c,[[-15,-16],[-17,0]],INK,4);line(c,[[15,-16],[17,0]],INK,4);}
+ if(item.type==='falling-case'){
+  // Mala em queda oblíqua, com silhueta de impacto claramente distinguível.
+  c.save();if(!reducedMotion)c.rotate(Math.sin(phase*.23)*.16);
+  box(c,-15,-33,30,30,'#9c5b83',5);box(c,-7,-39,14,7,'#e5ba88',2);
+  line(c,[[-10,-24],[-10,-8]],'#e8c6e7',2.5);line(c,[[10,-24],[10,-8]],'#e8c6e7',2.5);
+  c.restore();
+ }
+ else if(item.type==='rolling-case'){
+  // Obstáculo de solo com movimento de rotação, não uma simples imagem estática.
+  c.save();if(!reducedMotion)c.rotate(Math.sin(phase*.65)*.11);
+  box(c,-18,-29,36,26,'#7f5e96',5);
+  for(const wheel of [-11,11])oval(c,wheel,-2,4,4,'#2c2b3c','#f2cf86',1);
+  line(c,[[-14,-23],[14,-23]],'#cfacdc',2);c.restore();
+ }
+ else if(item.type==='barrier'){box(c,-22,-28,44,12,'#f1bd65');for(let i=-15;i<20;i+=14)line(c,[[i,-27],[i+7,-17]],'#543b42',4);line(c,[[-15,-16],[-17,0]],INK,4);line(c,[[15,-16],[17,0]],INK,4);}
  else if(item.type==='wind'){
   for(let i=0;i<3;i++){c.beginPath();c.moveTo(-19,-32+i*12);c.bezierCurveTo(6,-40+i*12,20,-21+i*12,8,-19+i*12);c.strokeStyle='#236a8b';c.lineWidth=3;c.stroke();}
  }
