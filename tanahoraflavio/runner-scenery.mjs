@@ -194,6 +194,30 @@ function drawMiddlePlane(c,layer,width){
  c.restore();
 }
 
+
+// Elementos ambientais discretos: sem colisão ou reinício na troca de etapa.
+function drawAmbientDetails(c,geometry,{distance=0,reducedMotion=false}={}){
+ const sway=reducedMotion?0:Math.sin(Math.max(0,distance)/235)*3;
+ for(const seg of geometry.layers[1].segments){
+  if(seg.alpha<=0)continue;
+  const x=seg.stationary?geometry.width*.6:seg.x+3650*geometry.layers[1].scale;
+  if(x<-45||x>geometry.width+45)continue;
+  const p=palettes[seg.stageId];c.save();c.globalAlpha*=.48*seg.alpha;
+  if(seg.stageId==='brasilia'||seg.stageId==='argentina'||seg.stageId==='casa-branca'){
+   line(c,[[x,227],[x,192]],p.ink,1.8);
+   shape(c,p.near,null,()=>{c.moveTo(x+1,192);c.quadraticCurveTo(x+15+sway,187,x+27+sway,194);c.lineTo(x+25+sway,204);c.quadraticCurveTo(x+12+sway,199,x+1,202);c.closePath();});
+   line(c,[[x+4,195],[x+19+sway,197]],p.stone,1.5);
+  }else if(seg.stageId==='rio'){
+   rect(c,x-10,217,28,4,p.ink+'55',null,2);
+   line(c,[[x+4,219],[x+4,207]],p.ink,2);
+   shape(c,p.far,null,()=>{c.moveTo(x-15,209);c.quadraticCurveTo(x+4,193,x+23,209);c.closePath();});
+  }else if(seg.stageId==='florida'){
+   c.save();c.translate(x,222);c.scale(.42,.42);palm(c,0,0,p);c.restore();
+  }
+  c.restore();
+ }
+}
+
 /** Draw a continuous journey without changing the caller's Canvas state or alpha. */
 export function drawJourneyScenery(c,options={}){
  const geometry=journeySceneryGeometry(options),width=geometry.width;
@@ -206,6 +230,7 @@ export function drawJourneyScenery(c,options={}){
   for(const item of geometry.clouds)cloud(c,item.x,item.y,item.scale);
   drawFarPlane(c,geometry.layers[0],width);
   drawMiddlePlane(c,geometry.layers[1],width);
+  drawAmbientDetails(c,geometry,options);
   for(const item of geometry.landmarks){
    if(item.alpha<=0||item.x<-180||item.x>width+180)continue;
    c.save();c.globalAlpha*=item.alpha;landmark(c,{id:item.stageId},palettes[item.stageId],item.x);c.restore();
