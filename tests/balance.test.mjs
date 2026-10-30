@@ -13,7 +13,7 @@ test('recompensas simultâneas ocupam um único grupo por obstáculo', () => {
   assert.equal(new Set(run.pickups.map(p => p.type)).size, 1, 'um único tipo por salto');
 });
 
-test('itens gerados ficam na trajetória do salto sobre o obstáculo', () => {
+test('recompensas acompanham a ação do perigo, com aliado independente', () => {
   for (const seed of [1, 92, 800]) {
     const run = running(), rng = seeded(seed);
     run.nextBossAt = Infinity; run.nextRaid = Infinity;
@@ -21,14 +21,14 @@ test('itens gerados ficam na trajetória do salto sobre o obstáculo', () => {
     for (let i = 0; i < 120 * 50; i++) {
       const old = new Set(run.pickups);
       advanceRun(run, 1 / 120, rng);
-      const added = run.pickups.filter(p => !old.has(p));
+      const added = run.pickups.filter(p => !old.has(p)&&p.type!=='ze-gotinha');
       if (added.length) {
         groups++;
         const obstacle = run.obstacles.at(-1);
         assert.ok(obstacle);
         for (const item of added) {
           assert.ok(Math.abs(item.x - (obstacle.x + obstacle.width / 2)) <= 36, 'coleta alinhada ao perigo');
-          assert.ok(item.y >= 96 && item.y <= 104, 'altura coletável durante o salto');
+          assert.equal(item.y,obstacle.action==='crouch'?18:100,'altura coletável na ação exigida');
         }
       }
       // A análise dos nascimentos não exige colidir com a onda anterior.

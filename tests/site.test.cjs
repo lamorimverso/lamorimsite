@@ -399,7 +399,7 @@ test("HUD do chefe surge pela distância e some ao vencer sem poluir a pista", a
     });
     await page.waitForFunction(()=>document.getElementById('game-boss').hidden===false);
     assert.match(await page.locator('#game-boss-name').textContent(),/(Xandão|Haddad|Lula).*rodada 1/);
-    const total=({xandao:'4',haddad:'5',lula:'6'})[await page.locator('#game').getAttribute('data-boss')];
+    const total=({xandao:'12',haddad:'9',lula:'10'})[await page.locator('#game').getAttribute('data-boss')];
     assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuenow'),'0');
     assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuemax'),total);
     assert.match(await page.locator('.game-boss-heading span').textContent(),/CHEFÃO/);
@@ -641,12 +641,12 @@ test('Joice anuncia evento com legenda e fonte, encerra e não muda a posição 
   const before=await page.locator('#runner-canvas').boundingBox();
   await page.evaluate(()=>{const r=globalThis.__testRun;r.nextRaid=0;r.nextBossAt=Infinity;r.nextObstacle=1000;r.obstacles=[];r.graceFor=100;});
   await page.waitForFunction(()=>document.getElementById('game').dataset.raid==='warning');
-  assert.match(await page.locator('#game-raid-source').textContent(),/Joice Hasselmann/);
+  assert.match(await page.locator('#game-raid-source').textContent(),/Joice/);
   assert.match(await page.locator('#game-raid-copy').textContent(),/Toc/);
   await page.evaluate(()=>{globalThis.__testRun.raid.remaining=.01;});
   await page.waitForFunction(()=>document.getElementById('game').dataset.raid==='active');
   assert.match(await page.locator('#game-raid-title').textContent(),/POLÍCIA FEDERAL/);
-  assert.match(await page.locator('#game-raid-source').getAttribute('href'),/^https:\/\/(www\.mprj\.mp\.br|portal\.stf\.jus\.br)\//);
+  assert.match(await page.locator('#game-raid-source').getAttribute('href'),/^https:\/\/www\.camara\.leg\.br\//);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   const after=await page.locator('#runner-canvas').boundingBox();assert.ok(Math.abs(before.y-after.y)<1);
   await page.evaluate(()=>{globalThis.__testRun.raid.remaining=.01;});

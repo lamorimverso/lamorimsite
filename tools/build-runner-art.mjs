@@ -9,7 +9,9 @@ import {join} from 'node:path';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const sources=[
  {name:'hero',file:'flavio-motion-v2',cols:4,rows:3},
- {name:'cast',file:'characters-motion-v2',cols:4,rows:4}
+ {name:'cast',file:'characters-motion-v2',cols:4,rows:4},
+ {name:'cameos',file:'cameos-motion-v1',cols:4,rows:4},
+ {name:'chase',file:'chase-motion-v1',cols:4,rows:4}
 ];
 
 function loadSharp(){
@@ -52,7 +54,7 @@ async function main(){
  const args=process.argv.slice(2);
  if(args.some(arg=>arg!=='--check'))throw new Error('Uso: node tools/build-runner-art.mjs [--check]');
  const check=args.includes('--check'),sharp=loadSharp(),atlases=[];
- const layout=JSON.parse(await readFile(join(root,'tools/runner-art-layout.json'),'utf8'));
+ const layout={...JSON.parse(await readFile(join(root,'tools/runner-art-layout.json'),'utf8')),...JSON.parse(await readFile(join(root,'tools/pressure-art-layout.json'),'utf8'))};
  for(const source of sources){
   const input=await readFile(join(root,'tanahoraflavio/assets',`${source.file}.png`));
   const {width,height}=await sharp(input).metadata();

@@ -256,9 +256,303 @@ export const frames={
       "groundY": 1202,
       "anchorY": 1104
     }
+  ],
+  "cameos": [
+    {
+      "x": 78,
+      "y": 91,
+      "width": 214,
+      "height": 231,
+      "center": 187,
+      "groundY": 318,
+      "anchorY": 229
+    },
+    {
+      "x": 401,
+      "y": 89,
+      "width": 175,
+      "height": 236,
+      "center": 496,
+      "groundY": 321,
+      "anchorY": 230
+    },
+    {
+      "x": 696,
+      "y": 90,
+      "width": 210,
+      "height": 235,
+      "center": 797,
+      "groundY": 321,
+      "anchorY": 230
+    },
+    {
+      "x": 1010,
+      "y": 90,
+      "width": 177,
+      "height": 233,
+      "center": 1099,
+      "groundY": 319,
+      "anchorY": 230
+    },
+    {
+      "x": 81,
+      "y": 391,
+      "width": 217,
+      "height": 235,
+      "center": 189,
+      "groundY": 622,
+      "anchorY": 531
+    },
+    {
+      "x": 400,
+      "y": 391,
+      "width": 184,
+      "height": 239,
+      "center": 499,
+      "groundY": 626,
+      "anchorY": 535
+    },
+    {
+      "x": 690,
+      "y": 392,
+      "width": 227,
+      "height": 235,
+      "center": 799,
+      "groundY": 623,
+      "anchorY": 532
+    },
+    {
+      "x": 1019,
+      "y": 394,
+      "width": 180,
+      "height": 238,
+      "center": 1109,
+      "groundY": 628,
+      "anchorY": 536
+    },
+    {
+      "x": 73,
+      "y": 683,
+      "width": 224,
+      "height": 236,
+      "center": 184,
+      "groundY": 915,
+      "anchorY": 823
+    },
+    {
+      "x": 402,
+      "y": 682,
+      "width": 205,
+      "height": 240,
+      "center": 501,
+      "groundY": 918,
+      "anchorY": 825
+    },
+    {
+      "x": 698,
+      "y": 683,
+      "width": 226,
+      "height": 238,
+      "center": 807,
+      "groundY": 917,
+      "anchorY": 824
+    },
+    {
+      "x": 1016,
+      "y": 685,
+      "width": 196,
+      "height": 238,
+      "center": 1110,
+      "groundY": 919,
+      "anchorY": 828
+    },
+    {
+      "x": 78,
+      "y": 971,
+      "width": 215,
+      "height": 225,
+      "center": 181,
+      "groundY": 1192,
+      "anchorY": 1106
+    },
+    {
+      "x": 400,
+      "y": 971,
+      "width": 180,
+      "height": 229,
+      "center": 497,
+      "groundY": 1196,
+      "anchorY": 1108
+    },
+    {
+      "x": 699,
+      "y": 971,
+      "width": 214,
+      "height": 225,
+      "center": 803,
+      "groundY": 1192,
+      "anchorY": 1106
+    },
+    {
+      "x": 1023,
+      "y": 970,
+      "width": 179,
+      "height": 229,
+      "center": 1102,
+      "groundY": 1195,
+      "anchorY": 1108
+    }
+  ],
+  "chase": [
+    {
+      "x": 63,
+      "y": 67,
+      "width": 235,
+      "height": 258,
+      "center": 191,
+      "groundY": 321,
+      "anchorY": 221
+    },
+    {
+      "x": 383,
+      "y": 70,
+      "width": 210,
+      "height": 258,
+      "center": 501,
+      "groundY": 324,
+      "anchorY": 225
+    },
+    {
+      "x": 684,
+      "y": 70,
+      "width": 226,
+      "height": 257,
+      "center": 799,
+      "groundY": 323,
+      "anchorY": 225
+    },
+    {
+      "x": 1006,
+      "y": 73,
+      "width": 206,
+      "height": 257,
+      "center": 1120,
+      "groundY": 326,
+      "anchorY": 227
+    },
+    {
+      "x": 55,
+      "y": 377,
+      "width": 246,
+      "height": 253,
+      "center": 186,
+      "groundY": 626,
+      "anchorY": 528
+    },
+    {
+      "x": 391,
+      "y": 377,
+      "width": 222,
+      "height": 255,
+      "center": 498,
+      "groundY": 628,
+      "anchorY": 530
+    },
+    {
+      "x": 684,
+      "y": 380,
+      "width": 230,
+      "height": 255,
+      "center": 794,
+      "groundY": 631,
+      "anchorY": 533
+    },
+    {
+      "x": 1010,
+      "y": 383,
+      "width": 212,
+      "height": 254,
+      "center": 1123,
+      "groundY": 633,
+      "anchorY": 536
+    },
+    {
+      "x": 55,
+      "y": 669,
+      "width": 251,
+      "height": 252,
+      "center": 202,
+      "groundY": 917,
+      "anchorY": 820
+    },
+    {
+      "x": 382,
+      "y": 671,
+      "width": 234,
+      "height": 252,
+      "center": 513,
+      "groundY": 919,
+      "anchorY": 823
+    },
+    {
+      "x": 683,
+      "y": 672,
+      "width": 243,
+      "height": 248,
+      "center": 818,
+      "groundY": 916,
+      "anchorY": 821
+    },
+    {
+      "x": 1010,
+      "y": 672,
+      "width": 215,
+      "height": 254,
+      "center": 1136,
+      "groundY": 922,
+      "anchorY": 824
+    },
+    {
+      "x": 66,
+      "y": 954,
+      "width": 243,
+      "height": 245,
+      "center": 184,
+      "groundY": 1195,
+      "anchorY": 1100
+    },
+    {
+      "x": 391,
+      "y": 957,
+      "width": 219,
+      "height": 250,
+      "center": 496,
+      "groundY": 1203,
+      "anchorY": 1107
+    },
+    {
+      "x": 679,
+      "y": 957,
+      "width": 240,
+      "height": 247,
+      "center": 804,
+      "groundY": 1200,
+      "anchorY": 1104
+    },
+    {
+      "x": 1012,
+      "y": 958,
+      "width": 218,
+      "height": 249,
+      "center": 1117,
+      "groundY": 1203,
+      "anchorY": 1106
+    }
   ]
 };
 export const definitions={
  hero:{url:new URL('./assets/flavio-motion-v2.webp',import.meta.url).href+'?v=d4bddf6ff0e6',cols:4,rows:3,width:1448,height:1086,sha256:'d4bddf6ff0e6659010e691fd5c8982c01a14824235c3f1a3b386ee3d741d9078',frames:frames.hero},
- cast:{url:new URL('./assets/characters-motion-v2.webp',import.meta.url).href+'?v=04f7ff7830e0',cols:4,rows:4,width:1254,height:1254,sha256:'04f7ff7830e096923631124437e9ffef5df9baae4176cafcc955b9937be24985',frames:frames.cast}
+ cast:{url:new URL('./assets/characters-motion-v2.webp',import.meta.url).href+'?v=04f7ff7830e0',cols:4,rows:4,width:1254,height:1254,sha256:'04f7ff7830e096923631124437e9ffef5df9baae4176cafcc955b9937be24985',frames:frames.cast},
+ cameos:{url:new URL('./assets/cameos-motion-v1.webp',import.meta.url).href+'?v=2142ad62a0c6',cols:4,rows:4,width:1254,height:1254,sha256:'2142ad62a0c60f1691b2d7b99867b6feab4c7318942641c15b68fc67d4895616',frames:frames.cameos},
+ chase:{url:new URL('./assets/chase-motion-v1.webp',import.meta.url).href+'?v=cb18f4109f77',cols:4,rows:4,width:1254,height:1254,sha256:'cb18f4109f77002591783375fb7263363f16e267acdcadcc8f0990dcec5a2680',frames:frames.chase}
 };

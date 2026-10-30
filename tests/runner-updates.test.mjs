@@ -25,13 +25,13 @@ test('100 passaportes ainda concedem uma vida e protegem no mesmo frame',()=>{
  assert.equal(r.status,'running');assert.equal(r.passports,100);assert.equal(r.lives,1);
  r.obstacles=[];collect(r,'passport');assert.equal(r.lives,1);
 });
-test('pista gera apenas passaportes e escudos úteis, sem armas do protagonista',()=>{
+test('pista gera passaportes, escudos e aliado úteis sem armas do protagonista',()=>{
  const r=running(),rng=seeded(54),types=new Set();r.nextBossAt=Infinity;r.nextRaid=Infinity;
  for(let i=0;i<120*100;i++){core.advanceRun(r,1/120,rng);
   r.pickups.forEach(p=>types.add(p.type));
   r.obstacles=r.obstacles.filter(o=>o.x>250);r.pickups=r.pickups.filter(p=>p.x>250);
  }
- assert.deepEqual([...types].sort(),['passport','shield']);
+ assert.deepEqual([...types].sort(),['passport','shield','ze-gotinha']);
  assert.equal('shots' in r,false);assert.equal('bibleCharges' in r,false);
 });
 test('chefões repetem a ordem Haddad, Lula e Xandão em cada sequência',()=>{
@@ -49,7 +49,7 @@ test('a distância e a rota crescem durante o chefão e o protagonista não atir
  step(r,.2);
  assert.ok(r.routeDistance>route);
  assert.ok(core.scoreFor(r)>start);
- assert.equal(r.boss.total,8);
+ assert.equal(r.boss.total,12);
  assert.equal('shots' in r,false);
 });
 test('Xandão usa martelo e mandado, Lula gesto em L e Haddad papéis',()=>{
@@ -58,7 +58,7 @@ test('Xandão usa martelo e mandado, Lula gesto em L e Haddad papéis',()=>{
   core.advanceRun(r,1/120,()=>.5);
   assert.equal(r.obstacles.at(-1).type,first);
   assert.ok(r.obstacles.at(-1).projectile);
-  r.boss.nextAttack=0;core.advanceRun(r,1/120,()=>.5);
+  r.boss.fired=type==='xandao'?2:1;r.boss.nextAttack=0;core.advanceRun(r,1/120,()=>.5);
   assert.equal(r.obstacles.at(-1).type,second);
  }
 });
@@ -73,18 +73,18 @@ test('ganho de pontos independe de coletas e não antecipa o chefão',()=>{
  core.advanceRun(r,.01,()=>.5);assert.equal(r.boss,null);
  assert.equal(core.scoreFor(r),Math.floor(r.distance));
 });
-test('Joice avisa por 1,2 segundo e intensifica perseguição por oito',()=>{
+test('Joice avisa por 1,2 segundo e intensifica perseguição por dez',()=>{
  const r=running();r.nextRaid=0;r.nextBossAt=Infinity;core.advanceRun(r,1/120,()=>.5);
  assert.equal(r.raid.phase,'warning');assert.equal(r.raid.remaining,1.2);r.shieldFor=50;
  step(r,1.22);assert.equal(r.raid.phase,'active');
- step(r,8.02);assert.equal(r.raid.phase,'recovery');
- step(r,2.02);assert.equal(r.raid,null);assert.ok(r.nextRaid>=28);
+ step(r,10.02);assert.equal(r.raid.phase,'recovery');
+ step(r,2.02);assert.equal(r.raid,null);assert.ok(r.nextRaid>=24);
 });
 test('ondas da PF no evento preservam intervalo mínimo de reação',()=>{
  const a=running(),b=running();a.nextBossAt=b.nextBossAt=Infinity;a.nextRaid=b.nextRaid=Infinity;
  b.raid={phase:'active',remaining:8,factIndex:0,id:1};a.nextObstacle=b.nextObstacle=0;
  core.advanceRun(a,1/120,()=>.5);core.advanceRun(b,1/120,()=>.5);
- assert.equal(b.obstacles[0].type,'pf');assert.ok(b.nextObstacle<a.nextObstacle);assert.ok(b.nextObstacle>=1.15);
+ assert.equal(b.obstacles[0].type,'pf');assert.ok(b.nextObstacle<a.nextObstacle);assert.ok(b.nextObstacle>=.90);
 });
 test('Joice não começa durante chefão ou transição de cenário',()=>{
  const b=running();triggerBoss(b);b.nextRaid=0;core.advanceRun(b,.01,()=>.5);assert.equal(b.raid,null);

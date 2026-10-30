@@ -12,7 +12,7 @@ test('URL versionada do recorte corresponde ao áudio incluído na publicação'
  for(const clip of Object.values(ARCHIVE_VOICES)){
   const bytes=await readFile(new URL('../tanahoraflavio/'+clip.file,import.meta.url));
   assert.equal(createHash('sha256').update(bytes).digest('hex'),clip.sha256,'mídia alterada exige versão nova');
-  assert.ok(clip.toSeconds>clip.fromSeconds&&clip.toSeconds-clip.fromSeconds<6,'recorte curto de um intervalo contínuo');
+  assert.ok(clip.toSeconds>clip.fromSeconds&&clip.toSeconds-clip.fromSeconds<6,'mídia curta de até seis segundos (edições de memes identificadas no manifesto)');
  }
 });
 test('recurso alterado invalida também o import e a entrada HTML, com geração estável',async()=>{

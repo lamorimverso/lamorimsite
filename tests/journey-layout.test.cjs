@@ -24,7 +24,7 @@ async function open(viewport={width:390,height:844},options={}){
  const context=await browser.newContext({viewport,...browserOptions});
  if(instrument){
   const core=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-core.mjs'),'utf8');
-  await context.route('**/runner-core.mjs*',route=>route.fulfill({contentType:'text/javascript',body:core+'\nconst original=createRun;createRun=(...a)=>{const r=original(...a);globalThis.__journeyRun=r;return r;};'}));
+  await context.route('**/runner-core.mjs*',route=>route.fulfill({contentType:'text/javascript',body:core+'\nconst original=createRun;createRun=(...a)=>{const r=original(...a);globalThis.__journeyRun=r;return r;};\nconst originalAdvance=advanceRun;advanceRun=(r,...a)=>{originalAdvance(r,...a);if(r.__resizeWatch&&r.viewportWidth===480){const o=r.obstacles[0];if(o&&o.x<=480&&r.__resizeWatch.visible===undefined)r.__resizeWatch.visible=r.elapsed;if(r.status===\'over\')r.__resizeWatch.hit=r.elapsed;}};'}));
   const art=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-sprites.mjs'),'utf8');
   await context.route('**/runner-sprites.mjs*',route=>route.fulfill({contentType:'text/javascript',body:art+'\nconst originalDraw=drawSpriteActor;drawSpriteActor=(c,args)=>{if(args.type===\'flavio\'){globalThis.__heroAlpha=args.alpha;(globalThis.__heroSteps??=[]).push(spriteFrameFor(\'flavio\',args).index);}if(args.type===\'joice\')globalThis.__joiceDrawn={x:args.x,y:args.y};return originalDraw(c,args);};'}));
   const scenery=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-scenery.mjs'),'utf8');
@@ -220,5 +220,54 @@ for(const viewport of [{width:320,height:568},{width:844,height:390}])test(`derr
   assert.ok(again.y>=0&&again.y+again.height<=viewport.height+1,'nova tentativa cabe sem procurar o botão');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+for(const width of [320,1440])test(`placar ${width}px agrupa cada rótulo acima de seu valor e centraliza as três colunas`,async()=>{
+ const {context,page,errors}=await open({width,height:900});
+ try{
+  const metrics=await page.locator('.game-scoreboard>div').evaluateAll(nodes=>nodes.map(e=>{
+   const label=e.querySelector('span').getBoundingClientRect(),value=e.querySelector('strong').getBoundingClientRect();
+   return {label:{x:label.x,width:label.width,bottom:label.bottom},value:{x:value.x,width:value.width,y:value.y}};
+  }));
+  for(const m of metrics){assert.ok(Math.abs(m.label.x+m.label.width/2-m.value.x-m.value.width/2)<2,'rótulo e valor alinhados');assert.ok(m.label.bottom<=m.value.y+1,'rótulo acima do valor');}
+  const board=await page.locator('.game-scoreboard').boundingBox(),card=await page.locator('#game').boundingBox();assert.ok(board.width<=540);assert.ok(Math.abs(board.x+board.width/2-card.x-card.width/2)<2);assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+test('Joice permanece na fase ativa e o cenário muda de vermelho escuro a normal suavemente',async()=>{
+ const {context,page,errors}=await open({width:390,height:844},{instrument:true});
+ try{
+  await page.locator('#game-start').click();
+  await page.evaluate(()=>{const r=__journeyRun;r.nextObstacle=r.nextBossAt=r.nextRaid=Infinity;r.raid={phase:'active',remaining:5,factIndex:0,id:1};globalThis.__joiceDrawn=null;});
+  await page.waitForFunction(()=>!!globalThis.__joiceDrawn);
+  const pixels=await page.evaluate(async()=>{
+   const {raidMoodFor,drawRaidAtmosphere}=await import('./runner-scenery.mjs');
+   const c=document.getElementById('runner-canvas'),ctx=c.getContext('2d'),p=ctx.getImageData(c.width/2,10,1,1).data;
+   const phases=[{phase:'warning',remaining:1.2},{phase:'warning',remaining:.8},{phase:'active',remaining:5},{phase:'recovery',remaining:1},{phase:'recovery',remaining:0}].map(raidMoodFor);
+   return {p:[...p],phases};
+  });
+  assert.ok(pixels.p[0]>pixels.p[1]*1.5&&pixels.p[0]<155,'céu vermelho escuro, sem clarear perigos');
+  assert.equal(pixels.phases[0],0);assert.ok(pixels.phases[1]>0&&pixels.phases[1]<1);assert.equal(pixels.phases[2],1);assert.ok(pixels.phases[3]>0&&pixels.phases[3]<1);assert.equal(pixels.phases[4],0);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('placar no modo paisagem fica inteiro acima da pista durante derrota',async()=>{
+ const {context,page}=await open({width:844,height:390},{instrument:true});
+ try{
+  await page.locator('#game-expand').click();await page.locator('#game-start').click();
+  await page.evaluate(()=>{const r=__journeyRun;r.nextObstacle=r.nextBossAt=r.nextRaid=Infinity;r.obstacles=[{x:125,width:34,height:44,type:'pf',action:'jump',speed:0}];});await page.getByRole('button',{name:'Tentar de novo',exact:true}).waitFor();
+  const board=await page.locator('.game-scoreboard').boundingBox(),track=await page.locator('.game-viewport').boundingBox();assert.ok(board.y>=0&&board.y+board.height<track.y-2,'nenhum valor cortado pela borda da pista');
+ }finally{await context.close();}
+});
+
+for(const assisted of [false,true])test(`resize real900→480 preserva reação mínima com assistência${assisted}`,async()=>{
+ const {context,page,errors}=await open({width:1440,height:1000},{instrument:true});
+ try{
+  if(assisted){await page.locator('#game-settings summary').click();await page.locator('#game-assist').check();}
+  await page.locator('#game-expand').click();await page.locator('#game-start').click();await page.waitForFunction(()=>__journeyRun.viewportWidth===900);
+  await page.evaluate(async()=>{const r=__journeyRun;Object.assign(r,{elapsed:200,distance:90000,routeDistance:90000,nextObstacle:0,nextBossAt:Infinity,nextRaid:Infinity,nextAllyAt:Infinity,nextPower:Infinity,nextPassport:Infinity,shieldFor:0,graceFor:0,boss:null,raid:null,obstacles:[],pickups:[],__resizeWatch:{}});const {advanceRun}=await import('./runner-core.mjs');advanceRun(r,1/120,()=>.9);r.nextObstacle=Infinity;});
+  await page.setViewportSize({width:390,height:844});await page.waitForFunction(()=>__journeyRun.viewportWidth===480);await page.waitForFunction(()=>__journeyRun.status==='over');
+  const delta=await page.evaluate(()=>__journeyRun.__resizeWatch.hit-__journeyRun.__resizeWatch.visible);assert.ok(delta>=(assisted ? .95/.82 : .95)-.025,'não perde reação ao mudar de orientação: '+delta);assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });

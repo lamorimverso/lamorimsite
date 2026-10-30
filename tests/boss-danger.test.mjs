@@ -31,6 +31,6 @@ test('todos os chefões conseguem atingir e derrotar jogador que não desvia',()
  }
 });
 test('aviso precede um ataque real sem dano instantâneo no jogador',()=>{
- const r=bossRun('lula');assert.ok(r.boss.nextAttack>=1.2);assert.equal(r.obstacles.length,0);
+ const r=bossRun('lula');assert.ok(r.boss.nextAttack>=1.09);assert.equal(r.obstacles.length,0);
  for(let i=0;i<120*.6;i++)advanceRun(r,1/120,()=>.5);assert.equal(r.status,'running');assert.equal(r.obstacles.length,0);
 });

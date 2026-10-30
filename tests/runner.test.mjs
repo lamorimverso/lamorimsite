@@ -37,7 +37,7 @@ test('dt inválido não altera estado e frame enorme é limitado',()=>{
 });
 test('dificuldade aumenta com distância e preserva intervalo completo entre saltos',()=>{
  const a=core.difficultyAt(0),b=core.difficultyAt(9000000);assert.ok(b.speed>a.speed);assert.ok(b.speed<=435);
- assert.ok(b.obstacleGap<a.obstacleGap);assert.ok(b.obstacleGap>=1.35);
+ assert.ok(b.obstacleGap<a.obstacleGap);assert.ok(b.obstacleGap>=1.12);
 });
 test('os cinco destinos repetem em voltas sem encerrar a partida',()=>{
  for(const [s,id] of [[0,'brasilia'],[20,'rio'],[40,'argentina'],[60,'florida'],[80,'casa-branca'],[100,'brasilia'],[120,'rio']])assert.equal(core.stageAt(s).id,id);

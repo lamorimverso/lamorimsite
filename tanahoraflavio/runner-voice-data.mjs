@@ -1,4 +1,6 @@
+import {MEME_VOICES} from './runner-meme-data.mjs?v=7d02847aff0a';
 export const ARCHIVE_VOICES=Object.freeze({
+ ...MEME_VOICES,
  joice:Object.freeze({
   file:'assets/audio/joice-toc-toc-v1.mp3',
   sha256:'662229f2765f9ee5f4ae496b90f2162a043a467620c848859791fede0f02b467',

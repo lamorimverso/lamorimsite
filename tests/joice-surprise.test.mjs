@@ -26,12 +26,12 @@ test('Joice aparece sem agenda fixa no HUD, primeiro entre 18 e 30 segundos eleg
   advance(r,.05,()=>random);assert.equal(r.raid?.phase,'warning');
  }
 });
-test('surpresa dá 1,2 segundo de reação, oito de perseguição e dois de retorno',()=>{
+test('surpresa dá 1,2 segundo de reação, dez de perseguição e dois de retorno',()=>{
  const r=run();r.nextRaid=0;core.advanceRun(r,dt);
  assert.equal(r.raid.remaining,1.2);advance(r,1.21);
- assert.equal(r.raid.phase,'active');assert.ok(r.raid.remaining>7.9);
- advance(r,8.01);assert.equal(r.raid.phase,'recovery');
- advance(r,2.01);assert.equal(r.raid,null);assert.ok(r.nextRaid>=28&&r.nextRaid<=48);
+ assert.equal(r.raid.phase,'active');assert.ok(r.raid.remaining>9.9);
+ advance(r,10.01);assert.equal(r.raid.phase,'recovery');
+ advance(r,2.01);assert.equal(r.raid,null);assert.ok(r.nextRaid>=24&&r.nextRaid<=36);
 });
 test('Joice produz mais ondas reais da PF sem reduzir abaixo do intervalo mínimo',()=>{
  for(const distance of [0,7000,28000,1000000]){
@@ -40,9 +40,9 @@ test('Joice produz mais ondas reais da PF sem reduzir abaixo do intervalo mínim
   surprise.raid={phase:'active',remaining:8,factIndex:0,id:1};
   core.advanceRun(normal,dt,()=>0);core.advanceRun(surprise,dt,()=>0);
   assert.equal(surprise.obstacles[0].type,'pf');
-  const expected=Math.max(1.15,core.difficultyAt(distance).obstacleGap*.78)-dt;
+  const expected=.98-.08*core.difficultyAt(distance,dt).pressure-dt;
   assert.ok(Math.abs(surprise.nextObstacle-expected)<1e-8,'onda usa o ritmo intensificado');
-  assert.ok(surprise.nextObstacle<normal.nextObstacle);assert.ok(surprise.nextObstacle>=1.15-dt-1e-8);
+  assert.ok(surprise.nextObstacle<normal.nextObstacle);assert.ok(surprise.nextObstacle>=.90-dt-1e-8);
  }
 });
 test('dificuldade cresce de forma perceptível e contínua a cada destino',()=>{
@@ -53,10 +53,10 @@ test('dificuldade cresce de forma perceptível e contínua a cada destino',()=>{
   assert.ok(points[i].obstacleApproach<points[i-1].obstacleApproach);
  }
  assert.ok(points[2].obstacleGap<=1.61,'14 km já exigem uma frequência maior de desvios');
- assert.ok(points[2].obstacleApproach<=1.42,'14 km já aproximam perigos com mais rapidez');
+ assert.ok(points[2].obstacleApproach<=1.52,'14 km já aproximam perigos com mais rapidez');
  for(const distance of [6999.99,7000,13999.99,14000]){
   const a=core.difficultyAt(distance),b=core.difficultyAt(distance+.01);
   assert.ok(Math.abs(a.speed-b.speed)<.001);assert.ok(Math.abs(a.obstacleGap-b.obstacleGap)<.001);
  }
- const limit=core.difficultyAt(1e12);assert.ok(limit.speed<=435);assert.ok(limit.obstacleGap>=1.35);assert.ok(limit.obstacleApproach>=1.1);
+ const limit=core.difficultyAt(1e12);assert.ok(limit.speed<=435);assert.ok(limit.obstacleGap>=1.12);assert.ok(limit.obstacleApproach>=.95);
 });

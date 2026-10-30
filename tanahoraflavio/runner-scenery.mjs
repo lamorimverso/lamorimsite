@@ -219,3 +219,26 @@ export function drawJourneyScenery(c,options={}){
   line(c,[[0,296],[width,296]],ink+'18',1);
  }finally{c.restore();}
 }
+
+// Joice muda a atmosfera aos poucos; silhuetas e perigos mantêm contraste.
+export function raidMoodFor(raid){
+ if(!raid)return 0;
+ const smooth=value=>{const t=Math.max(0,Math.min(1,value));return t*t*(3-2*t);};
+ return raid.phase==='warning'?smooth((1.2-raid.remaining)/.8):raid.phase==='active'?1:raid.phase==='recovery'?smooth(raid.remaining/2):0;
+}
+export function drawRaidAtmosphere(ctx,{strength=0,width=900,distance=0,reducedMotion=false}={}){
+ if(strength<=0)return;
+ ctx.save();ctx.globalAlpha*=strength;
+ const sky=ctx.createLinearGradient(0,0,0,246);
+ sky.addColorStop(0,'#450b22f5');sky.addColorStop(.65,'#8d1539c9');sky.addColorStop(1,'#551520a6');
+ ctx.fillStyle=sky;ctx.fillRect(0,0,width,246);
+ ctx.fillStyle='#350f23a6';ctx.beginPath();ctx.moveTo(0,205);
+ for(let x=0;x<width+90;x+=90){ctx.lineTo(x+18,179);ctx.lineTo(x+32,127);ctx.lineTo(x+42,185);ctx.lineTo(x+65,193);}
+ ctx.lineTo(width,246);ctx.lineTo(0,246);ctx.closePath();ctx.fill();
+ // Brasas estáveis, sem estrobo; o modo reduzido também evita deslocá-las.
+ for(let i=0;i<7;i++){
+  const x=(i*137+(reducedMotion?0:distance*.07))%(width+30)-15,y=63+i%3*42;
+  ctx.fillStyle='#f0a074a6';ctx.beginPath();ctx.ellipse(x,y,2,4,0,0,Math.PI*2);ctx.fill();
+ }
+ ctx.restore();
+}

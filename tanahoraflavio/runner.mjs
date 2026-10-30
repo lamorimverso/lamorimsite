@@ -1,8 +1,9 @@
-import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, startRun, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=6248a3197891";
-import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection } from "./runner-art.mjs?v=decf068b5878";
-import { createGameAudio } from "./runner-audio.mjs?v=8359de7489db";
-import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=1d92b4ea737d";
-import { drawJourneyScenery } from "./runner-scenery.mjs?v=fddd34f3a1ac";
+import {createVoiceDirector} from './runner-voice-director.mjs?v=4b55aad25332';
+import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=58166d5b034f";
+import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=4a60551e07be";
+import { createGameAudio } from "./runner-audio.mjs?v=bf5beb3a7f4c";
+import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=e04644dd1f8f";
+import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=1aa415bb9b80";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
 
 function initRunner() {
@@ -11,10 +12,10 @@ function initRunner() {
   if (!canvas || !section) return;
   // Uma aba pode ter conservado o HTML anterior enquanto os módulos já
   // mudaram. Atualizar a página uma vez evita inicializar sobre IDs antigos.
-  if(!$("game-settings")||!$("game-start-hint")||!$("game-expand-label")||!$("game-sound-label")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
+  if(!$("game-settings")||!$("game-start-hint")||!$("game-expand-label")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
     const url=new URL(location.href);
-    if(url.searchParams.get("ui")!=="20261029-endless"){
-      url.searchParams.set("ui","20261029-endless");location.replace(url.href);
+    if(url.searchParams.get("ui")!=="20261030-pressure"){
+      url.searchParams.set("ui","20261030-pressure");location.replace(url.href);
     }else{
       const button=$("game-start"),note=$("game-loading-note");
       if(button){button.disabled=false;button.textContent="Recarregar jogo";button.addEventListener("click",()=>location.reload(),{once:true});}
@@ -58,7 +59,12 @@ function initRunner() {
   let lastStatus = "", lastStage = -1, virtualWidth = 900, measuredWidth = 0, measuredDpr = 0;
   let lastCollected=0,lastPower="";
   let lastLives = 1, lastEvents = 0;
-  const audio=createGameAudio();
+  const audio=createGameAudio({onVoice:clip=>{
+    const note=$("game-voice-note");note.hidden=!clip;
+    note.textContent=clip?"Áudio de arquivo · "+(clip.label||clip.quote):"";
+    note.title=clip?clip.speaker+". "+clip.context:"";
+  }});
+  const voices=createVoiceDirector({play:(id,options)=>audio.voice(id,options)});
   $("game-sound-label").textContent=audio.enabled?"Som ligado":"Som desligado";
   $("game-sound").title=$("game-sound-label").textContent;
   $("game-sound").setAttribute("aria-pressed",String(audio.enabled));
@@ -72,17 +78,17 @@ function initRunner() {
   function bossCue(){
     if(!run.boss)return null;
     const incoming=run.obstacles.filter(o=>o.bossAttack&&!o.counted&&o.x+o.width>=PLAYER.x).sort((a,b)=>a.x-b.x)[0];
-    return incoming||bossAttackFor(run.boss.type,Math.min(run.boss.fired,run.boss.total-1));
+    return incoming||bossAttackFor(run.boss.type,Math.min(run.boss.fired,run.boss.total-1),run.boss.round-1);
   }
   function dodgeHint(){
     const hit=run.lastHit;if(!hit)return "Observe os perigos e tente novamente.";
-    const names={hammer:"Martelo",mandado:"Mandado",receipts:"Papéis",lhand:"Mão em L"};
+    const names={wind:"Vento",microphone:"Microfone","paper-gate":"Papéis",popcorn:"Pipoca",hammer:"Martelo",mandado:"Mandado",receipts:"Papéis",lhand:"Mão em L"};
     if(hit.action==="crouch")return (names[hit.type]||"Ataque")+" no alto: abaixe para desviar.";
     return (names[hit.type]||"Perigo")+" baixo: sincronize o salto para desviar.";
   }
 
   function updateUI() {
-    const clock=routeSeconds(),stage=stageAt(clock),score=scoreFor(run),difficulty=difficultyAt(run.distance);
+    const clock=routeSeconds(),stage=stageAt(clock),score=scoreFor(run),difficulty=difficultyAt(run.distance,run.elapsed);
     const transition=stageTransitionAt(clock),banner=$("game-transition");
     banner.hidden=run.status!=="running"||!transition.active||!!run.raid;
     if(!banner.hidden){
@@ -124,7 +130,7 @@ function initRunner() {
       $("game-boss-health").setAttribute("aria-label",b.objective||"Ataques superados");
       $("game-boss-progress").style.width=100*(b.total-b.remaining)/b.total+"%";
       const dodged=b.total-b.remaining;
-      const goal=b.goalKind==="pairs"?Math.floor(dodged/2)+"/3 sequências alto/baixo":b.goalKind==="hammer-mandado"?Math.floor(dodged/2)+"/4 pares martelo/mandado":dodged+"/"+b.total+" papéis";
+      const goal=dodged+"/"+b.total+" "+(b.goalKind==="papers"?"papéis":b.goalKind==="patterns"?"gestos em L":"ataques");
       $("game-boss-weapon").textContent=(bossCue().action==="crouch"?"↓ Abaixe":"↑ Pule")+" · "+goal;
       $("game-boss").style.setProperty("--boss-accent",b.color);
     }
@@ -136,14 +142,14 @@ function initRunner() {
     if(raid){
       const fact=RAID_FACTS[raid.factIndex];
       $("game-raid-title").textContent=raid.phase==="warning"?"JOICE APARECEU!":raid.phase==="active"?"É A POLÍCIA FEDERAL! · "+Math.ceil(raid.remaining)+" s":"RITMO NORMAL VOLTANDO";
-      $("game-raid-copy").textContent=raid.phase==="warning"?"Toc, toc, toc… prepare o salto!":fact.text;
-      $("game-raid-source").textContent=raid.phase==="warning"?"Joice Hasselmann · Câmara · 22/06/2022":fact.source;
-      $("game-raid-source").href=raid.phase==="warning"?ARCHIVE_VOICES.joice.source:fact.url;
+      $("game-raid-copy").textContent=raid.phase==="warning"?"Toc, toc, toc… prepare os reflexos!":raid.phase==="active"?"↑ Pule a PF · ↓ Abaixe dos microfones":"Respire: o cenário e o ritmo estão voltando.";
+      $("game-raid-source").textContent="Áudio de arquivo · Joice · Câmara";
+      $("game-raid-source").href=ARCHIVE_VOICES.joice.source;
       const raidKey=raid.id+":"+raid.phase;
       if(raidKey!==lastRaidKey){audio.event(raid.phase,fact);lastRaidKey=raidKey;}
     }else if(lastRaidKey){audio.stop();lastRaidKey="";}
     $("game-start").disabled=!spritesReady&&!spritesFailed;
-    $("game-start").textContent=!spritesReady?(spritesFailed?"Tentar carregar desenhos":"Carregando desenhos · "+loadedSprites+"/2"):run.status==="ready"?"Começar corrida":run.status==="over"?"Tentar de novo":"Recomeçar corrida";
+    $("game-start").textContent=!spritesReady?(spritesFailed?"Tentar carregar desenhos":"Carregando desenhos · "+loadedSprites+"/"+SPRITE_SHEET_COUNT):run.status==="ready"?"Começar corrida":run.status==="over"?"Tentar de novo":"Recomeçar corrida";
     $("game-loading-note").hidden=spritesReady;
     $("game-loading-note").textContent=spritesFailed?"Os desenhos não carregaram. Toque no botão para tentar novamente.":"Preparando os personagens…";
     $("game-overlay").hidden=run.status==="running";
@@ -185,7 +191,7 @@ function initRunner() {
     frameId=0;if(run.status!=="running")return;
     const timing=advanceFrameClock(frameClock,now),wasAirborne=run.player.y>0;
     const before={lives:run.lives,collected:run.collected,boss:run.boss?.type,
-      attacks:run.boss?.fired||0};
+      passports:run.passports,spawned:run.spawnedObstacles,attacks:run.boss?.fired||0};
     let bufferedTakeoff=false;
     for(let i=0;i<timing.steps&&run.status==="running";i++){
       const pending=run.player.jumpBufferedUntil>0&&run.player.velocity<=0;
@@ -195,10 +201,19 @@ function initRunner() {
     if(wasAirborne&&run.player.y===0)landingUntil=run.elapsed+.12;
     updateUI();
     if(run.lives<before.lives)audio.effect("hit");
-    else if(before.boss&&!run.boss)audio.effect("victory");
-    else if(!before.boss&&run.boss){audio.effect("boss");audio.voice(run.boss.type);}
+    else if(before.boss&&!run.boss){audio.effect("victory");voices.event("victory",run);}
+    else if(!before.boss&&run.boss){audio.effect("boss");voices.event("boss",run);}
     else if(run.boss&&run.boss.fired>before.attacks)audio.effect("attack");
     else if(run.collected>before.collected)audio.effect("pickup");
+    if(run.spawnedObstacles>before.spawned)audio.effect(run.obstacles.at(-1)?.action==="crouch"?"high":"low");
+    if(run.collected>before.collected){
+      if(run.lastPickup==="shield")voices.event("shield",run);
+      else if(run.lastPickup==="ze-gotinha")voices.event("ally",run);
+      else if(Math.floor(run.passports/25)>Math.floor(before.passports/25))voices.event("milestone",run);
+    }
+    const nearest=Math.min(Infinity,...run.obstacles.filter(o=>o.x+o.width>PLAYER.x).map(o=>(o.x-148)/(o.speed||1)));
+    voices.update(run,{safe:nearest>.9});
+    audio.background({active:run.status==="running",pressure:difficultyAt(run.distance,run.elapsed).pressure,boss:!!run.boss,raid:run.raid?.phase==="active"});
     if(bufferedTakeoff&&run.status==="running")audio.effect("jump");
     draw();schedule();
   }
@@ -224,14 +239,14 @@ function initRunner() {
   function begin(){
     if(!spritesReady){if(spritesFailed)prepareSprites();return;}
     cancelAnimationFrame(frameId);frameId=0;resumeFromGesture();
-    audio.stop();audio.prime();lastRaidKey="";
+    audio.stop();audio.prime();voices.reset();lastRaidKey="";
     trackPointers.clear();
     run=createRun({assisted:preferences.assisted});run.viewportWidth=virtualWidth;startRun(run);landingUntil=0;
     $("game-settings").open=false;
     crouchPose=0;lastPoseFrame=performance.now();
     lastCollected=0;lastPower="";lastStatus="";lastEvents=0;lastLives=1;
     resetFrameClock(frameClock,performance.now());
-    updateUI();section.dispatchEvent(new Event("runner:start"));draw();resumeFromGesture();syncActivity();canvas.focus({preventScroll:true});
+    updateUI();section.dispatchEvent(new Event("runner:start"));draw();resumeFromGesture();syncActivity();voices.event("start",run);canvas.focus({preventScroll:true});
   }
   function jump(){
     resumeFromGesture();
@@ -323,7 +338,7 @@ function initRunner() {
     if (!width || (width === measuredWidth && dpr === measuredDpr)) return;
     measuredWidth = width; measuredDpr = dpr;
     virtualWidth = Math.min(900, Math.max(480, Math.round(width * 1.15)));
-    run.viewportWidth=virtualWidth;
+    resizeRun(run,virtualWidth);
     canvas.style.aspectRatio = `${virtualWidth} / ${WORLD.height}`;
     canvas.width = Math.round(width * dpr);
     canvas.height = Math.round(width * WORLD.height / virtualWidth * dpr);
@@ -341,16 +356,16 @@ function initRunner() {
   }
   function bossFigure(){
     const b=run.boss;if(!b)return;
-    const phase=prefersReducedMotion()?0:run.elapsed*6;
+    const phase=run.elapsed*9;
     // Balanço sutil e passos para o chefe não parecer congelado.
     const bossX=virtualWidth-72,bossY=WORLD.ground-3;
-    const motion=enemyMotionFor(b.type,phase,bossX);
+    const motion=enemyMotionFor(b.type,prefersReducedMotion()?0:phase,bossX);
     ctx.save();ctx.translate(bossX,bossY+motion.bob);ctx.rotate(motion.lean);
     drawActor(ctx,{type:b.type,x:0,y:0,scale:1.62,phase,preparing:b.nextAttack<.55&&b.fired<b.total,attacking:b.attackFlashFor>0,hurt:b.hitFlashFor>0});
     ctx.restore();
     if(b.nextAttack<.65&&b.fired<b.total&&!run.obstacles.some(o=>o.bossAttack&&!o.counted)){
       ctx.fillStyle="#843338";ctx.font="800 16px system-ui";ctx.textAlign="center";
-      ctx.fillText(bossAttackFor(b.type,b.fired).action==="jump"?"↑ PULE":"↓ ABAIXE",virtualWidth-86,62);ctx.textAlign="start";
+      ctx.fillText(bossAttackFor(b.type,b.fired,b.round-1).action==="jump"?"↑ PULE":"↓ ABAIXE",virtualWidth-86,62);ctx.textAlign="start";
     }
   }
   function character(){
@@ -394,26 +409,35 @@ function initRunner() {
   }
   function joiceFigure(){
     const raid=run.raid;if(run.status!=="running"||!raid)return;
-    const leaving=raid.phase==="active"?Math.min(1,(8-raid.remaining)/.65):0;
-    if(raid.phase!=="warning"&&(raid.phase!=="active"||leaving>=1||prefersReducedMotion()))return;
-    drawActor(ctx,{type:"joice",x:virtualWidth-62+leaving*130,y:WORLD.ground-2,scale:1.08,phase:0});
+    if(raid.phase==='recovery')return;
+    drawActor(ctx,{type:"joice",x:virtualWidth-62,y:WORLD.ground-2,scale:1.08,phase:run.elapsed*10});
   }
   function obstacle(item){
     if(item.projectile){
       // O rastro confirma visualmente que o ataque parte do chefão rumo ao jogador.
       const y=WORLD.ground-item.y;
       line([[item.x+item.width*.78,y-2],[item.x+item.width+22,y-7]],"#bd526e",3);
-      drawThreat(ctx,item,y+item.height/2,prefersReducedMotion()?0:run.elapsed*8);
-    }else drawThreat(ctx,item,WORLD.ground,prefersReducedMotion()?0:run.elapsed*8);
+      drawThreat(ctx,item,y+item.height/2,run.elapsed*10,{reducedMotion:prefersReducedMotion()});
+    }else drawThreat(ctx,item,WORLD.ground,run.elapsed*10,{reducedMotion:prefersReducedMotion()});
   }
   function pickup(item){
+    if(item.type==="ze-gotinha"){
+      drawActor(ctx,{type:"ze-gotinha",x:item.x,y:WORLD.ground,scale:.72,phase:run.elapsed*10});return;
+    }
     drawItem(ctx,{type:item.type,x:item.x,y:WORLD.ground-item.y,scale:item.type==="shield"?.86:.8});
   }
   function draw() {
     ctx.setTransform(canvas.width/virtualWidth,0,0,canvas.height/WORLD.height,0,0);
     drawJourneyScenery(ctx,{routeDistance:run.routeDistance,distance:run.distance,width:virtualWidth,reducedMotion:prefersReducedMotion()});
+    drawRaidAtmosphere(ctx,{strength:raidMoodFor(run.raid),width:virtualWidth,distance:run.distance,reducedMotion:prefersReducedMotion()});
     bossFigure();
     joiceFigure();
+    if(run.cameo&&!run.boss&&!run.raid){
+      const actor=run.cameo.type;
+      drawActor(ctx,{type:actor,x:virtualWidth-60,y:WORLD.ground-2,scale:1.05,phase:run.elapsed*10});
+      ctx.fillStyle="#59344f";ctx.font="700 12px system-ui";ctx.textAlign="center";
+      ctx.fillText(({dilma:"Dilma",simone:"Simone",soraya:"Soraya"})[actor]+" · ↓",virtualWidth-60,130);ctx.textAlign="start";
+    }
     for(const item of run.pickups)pickup(item);
     for(const item of run.obstacles)obstacle(item);
     character();

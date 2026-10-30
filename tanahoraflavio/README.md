@@ -16,14 +16,14 @@ Site estático em `tanahoraflavio/`, atualmente no repositório público `lamori
 ## Minigame: Corre, Flávio!
 
 - Corrida infinita para teclado e toque, sem pausa manual. Tecla Espaço, ↑, pista ou Pular acionam o salto; ↓/S ou **Abaixar** reduz a altura do personagem, no chão. Segurar durante o salto guarda a intenção até o pouso; a opção tocar para alternar dispensa pressão prolongada. Pular sai do agachamento imediatamente; no celular, outro dedo pode saltar em Pular ou na pista enquanto Abaixar continua pressionado. Uma nova pressão no ar pode aguardar o pouso por até120ms, sem salto duplo. Perda de foco/visibilidade limpa intenções pendentes e suspende a simulação.
-- Cinco cenários em voltas: Brasília → Rio → Argentina → Flórida → Casa Branca → Brasília. **Cada cenário percorre 7.000 metros (7 km)** e uma volta totaliza **35 km**, incluindo os encontros. A paisagem continua passando durante chefões/Joice, sem congelar a rota. A velocidade de deslocamento cresce a cada quilômetro até limite jogável.
+- Cinco cenários em voltas: Brasília → Rio → Argentina → Flórida → Casa Branca → Brasília. **Cada cenário percorre 7.000 metros (7 km)** e uma volta totaliza **35 km**, incluindo os encontros. A paisagem continua passando durante chefões/Joice, sem congelar a rota. A pressão combina distância e tempo (q=min(1,.55*d/40000+.45*t/140)); velocidade250→435, reação comum1.65→.95s e chefe1.15→.85s. Contatos são separados por pelo menos.82s.
 - O placar e o recorde mostram **metros percorridos**. Passaportes e bônus não alteram o placar. O recorde usa chave própria no armazenamento para não interpretar pontuações antigas como metros.
-- Chefes em ordem **Haddad → Lula → Xandão**, repetida. Primeiro em **22.000 metros de rota**, depois29.000/36.000/43.000… a cada7km, fora de transições/eventos. Haddad exige5papéis; Lula3sequências alto/baixo (6ataques); Xandão4martelos e4mandados (8ataques). Somente chefes atacam: **Flávio não possui armas nem disparos automáticos**; vence ao desviar e continuar vivo.
-- **Xandão** alterna martelo baixo (salto) e mandado de papel alto (abaixar). **Haddad** arremessa papéis e **Lula** lança o gesto caricatural de mão em L, alternando ataques altos (abaixar) e baixos (pular). O aviso usa o mesmo padrão do motor e prioriza o ataque que ainda está vindo. A mira é estável durante cada arremesso e nunca persegue o jogador no ar. Cada chefão tem indicador dos ataques já evitados, em vez de barra de HP.
+- Chefes em ordem **Haddad → Lula → Xandão**, repetida. Primeiro a partir de **22.000 metros de rota**; cada vitória reserva pelo menos **7 km de corrida** até o seguinte, fora de transições/eventos. Haddad exige9papéis, Lula10gestos em L e Xandão12martelos/mandados. A cada volta, somam-se2ataques, até+4. **Flávio só desvia; não possui armas.**
+- Chefes usam padrões próprios com ações repetidas, e a sequência muda nas voltas seguintes. O aviso consulta a mesma fonte do motor e prioriza o ataque em voo. Perigos altos são colunas visíveis que exigem abaixar; não é possível saltar sobre elas. Cada chefe mostra ataques evitados, em vez de HP.
 - **Passaporte:** aparece em grupos espaçados de três, menos frequentes que antes; **100 coletados = +1 vida**, repetidamente. O item não concede pontos artificiais e não aparece em excesso.
 - **Escudo das Américas:** proteção por **6 segundos**, representada por um objeto sólido azul/dourado diante do braço, com o desenho das Américas. Flávio permanece visível; acompanha salto/agachamento. Outro escudo não nasce quando um efeito já está ativo ou há um escudo próximo.
-- **Joice Hasselmann** surge em eventos com **1,2 s de aviso, 8 s de perseguição intensificada da PF e 2 s de recuperação**. Primeira aparição entre18–30s elegíveis, seguintes28–48s; personagem entra na pista, sem colisão própria, e ondas usam fator.78 com mínimo1,15s. Áudio original do plenário de22/06/2022 creditado na ajuda. Não coincide com chefões ou transições de cenário.
-- Os desenhos anteriores ficam preservados. Novos atlas cartoon2D usam oito passos de Flávio, salto de subida/descida, slide e derrota; PF, Janones e Exército alternam pernas. Flávio continua olhando à direita. As poses preservam a proporção da arte, com registro de torso e pés. O slide recebe ajuste uniforme de escala para caber abaixo do ataque alto; o rosto não é achatado. A animação não altera colisões. Chefões sinalizam preparo e lançamento sem alternar continuamente as armas.
+- **Joice Hasselmann:** aviso1,2s, perseguição10s, recuperação2s. Primeira18–30s, recorrência24–36s; relógio continua durante chefes e fica pendente. Mais ondas (gap.98→.90s), PF baixa e microfones altos, personagem correndo durante a fase ativa e atmosfera vinho/vermelha que entra/sai gradualmente, sem flashes. Não sobrepõe chefes. Áudio real da Câmara creditado na ajuda.
+- Os desenhos anteriores são preservados. Dois atlas extras com4poses por personagem (Dilma, Simone, Soraya, ZéGotinha, Haddad, Lula, Xandão e Joice) usam PNGs originais e WebP lossless, recortes/pivôs explícitos. PF, Janones e Exército mantêm2poses. Movimento reduzido retira decoração e conserva a passada essencial; Flávio continua olhando àdireita.
 - Paisagens em três planos de coordenadas contínuas: o próximo lugar entra pela direita, os monumentos passam e saem pela esquerda; cores/fronteiras se misturam numa faixa espacial, sem reset em7km/35km. O chão é contínuo e não cria colisões. Movimento reduzido fixa posições decorativas e dissolve a identidade do destino nos1000m finais.
 - Derrota com ilustração nova de Flávio algemado e a legenda exata “Foi pego pela Polícia Federal!” abaixo, preservando causa do impacto e nova tentativa. Os atlas originais continuam intactos.
 - Começa com uma vida. Colisão sem proteção encerra a partida; vidas extras concedem 1,2 s de recuperação após um impacto.
@@ -52,7 +52,7 @@ Execute `node --test --test-concurrency=1 tests/*.test.*` (dependências de dese
 - Novos PNGs flavio-motion-v2/characters-motion-v2 foram gerados por imagem a partir dos personagens anteriores, com revisão de anatomia, transparência e recortes. As escolhas visuais não equivalem a validação com jogadores nem prova de qualidade igual às referências.
 - Controles de ajuste aguardam seus eventos estarem ligados antes de aceitar interação, evitando perder escolhas feitas enquanto o módulo carrega.
 - Fases ficcionais inspiradas no calendárioTSE2026 aparecem no progresso existente; ajuda explica roteiro/ordem/objetivos e referencia o calendário. Não se afirmam candidaturas/resultados reais nem fatos sobre as personagens.
-- Recorte de Haddad: RádioGov/EBC,07/10/2025,3,45s, contexto econômico original identificado. Toca na chegada do chefe após gesto inicial, para com som desligado/blur/derrota; falha de mídia não impede jogar. Proveniência/termos em assets/audio/README.md. A fala foi alinhada por ASR, sem audição humana nesta sessão.
+- Áudio contextual:9memes curtos da referência indicada pelo usuário, além de Joice/Haddad. Diretor limita repetição e usa silêncio14–22s; falas ambiente só em janelas seguras. Trilha original em WebAudio acompanha pressão/chefes/Joice, abaixa sob a fala, para no mute/derrota/aba oculta. Fontes e limites em assets/audio/README.md.
 
 Para regenerar a arte: `node tools/build-runner-art.mjs`. Para atualizar versões após qualquer mudança de recurso: `node tools/version-runner-assets.mjs`. O CI usa as verificações `--check`; uma mudança na dependência invalida o import e o HTML automaticamente. O CSS atual está concentrado em `game.css`.
 
@@ -81,3 +81,18 @@ A página não possui backend, banco ou senhas embutidas. Evite incluir identifi
 O fim do mandato não transfere automaticamente todos os processos para outra instância. Veja a [decisão do STF](https://noticias.stf.jus.br/postsnoticias/acoes-contra-autoridades-permanecem-no-stf-mesmo-apos-saida-do-cargo/).
 
 - Direção final Endless Runner: sem botões Pular/Abaixar nem barra de percurso. Toque/deslize para cima na pista pula; deslize para baixo e segure abaixa; solte para levantar. Modo alternar responde a novo deslize para baixo. Dois dedos e teclado permanecem. Cena contínua em encontros; curva de frequência/reação distância/(distância+10.000), mantendo limites de velocidade e colisão. Nota de foro/STF retirada conforme print.
+
+## Papéis desta revisão
+
+| Elemento | Ação ou recompensa |
+|---|---|
+| Dilma / vento | Abaixe da coluna de vento. |
+| Simone / papéis | Abaixe da parede de papéis. |
+| Soraya / microfones | Abaixe da coluna de microfones. |
+| Popcorn | Pule o balde de pipoca baixo. |
+| Zé Gotinha | Recolha para limpar perigos comuns e ganhar2,5s de respiro; não elimina chefes. |
+| Vozes de arquivo | Sinalizam largada, marcos, coleta, vitória e surpresa; sem alterar colisões. |
+
+Auditoria e comparação mensurável: [revisão de30/10](../docs/auditoria-gameplay-2026-10-30.md). Não se afirma equivalência comercial com jogos de referência, diversão comprovada ou compatibilidade em aparelhos físicos/Safari.
+
+Ao redimensionar, `resizeRun` preserva o prazo dos perigos futuros, a fração percorrida no voo e as coletas associadas. Perigos já em contato permanecem no lugar. Isso mantém a reação calibrada ao girar/recolher a pista, sem teleporte de colisões ou mudança na física do herói.

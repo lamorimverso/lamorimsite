@@ -1,0 +1,382 @@
+{
+  "schema": 1,
+  "note": "Unmodified built-in imagegen PNG outputs. Explicit crops, not equal-grid crops: source art is arranged as 4 columns and 4 character rows, but feet can extend across nominal row boundaries. Each crop has 4px padding around its main connected figure (8-connected alpha>2, component area>=1000); all smaller components are antialias speckles and do not determine the main figure bounds. center=[atlasX,atlasY] is an estimated torso pivot from the alpha-weighted horizontal band at 56%-66% of the figure height, in source pixels. groundY is the exclusive lower edge of the main figure, maxVisibleY+1. Source PNG bytes and alpha are preserved. All figures face left.",
+  "rowOrder": {
+    "cameos": [
+      "dilma",
+      "simone",
+      "soraya",
+      "zegotinha"
+    ],
+    "chase": [
+      "haddad",
+      "lula",
+      "xandao",
+      "joice"
+    ]
+  },
+  "cameosSize": [
+    1254,
+    1254
+  ],
+  "chaseSize": [
+    1254,
+    1254
+  ],
+  "cameos": [
+    {
+      "x": 78,
+      "y": 91,
+      "width": 214,
+      "height": 231,
+      "center": [
+        187,
+        229
+      ],
+      "groundY": 318
+    },
+    {
+      "x": 401,
+      "y": 89,
+      "width": 175,
+      "height": 236,
+      "center": [
+        496,
+        230
+      ],
+      "groundY": 321
+    },
+    {
+      "x": 696,
+      "y": 90,
+      "width": 210,
+      "height": 235,
+      "center": [
+        797,
+        230
+      ],
+      "groundY": 321
+    },
+    {
+      "x": 1010,
+      "y": 90,
+      "width": 177,
+      "height": 233,
+      "center": [
+        1099,
+        230
+      ],
+      "groundY": 319
+    },
+    {
+      "x": 81,
+      "y": 391,
+      "width": 217,
+      "height": 235,
+      "center": [
+        189,
+        531
+      ],
+      "groundY": 622
+    },
+    {
+      "x": 400,
+      "y": 391,
+      "width": 184,
+      "height": 239,
+      "center": [
+        499,
+        535
+      ],
+      "groundY": 626
+    },
+    {
+      "x": 690,
+      "y": 392,
+      "width": 227,
+      "height": 235,
+      "center": [
+        799,
+        532
+      ],
+      "groundY": 623
+    },
+    {
+      "x": 1019,
+      "y": 394,
+      "width": 180,
+      "height": 238,
+      "center": [
+        1109,
+        536
+      ],
+      "groundY": 628
+    },
+    {
+      "x": 73,
+      "y": 683,
+      "width": 224,
+      "height": 236,
+      "center": [
+        184,
+        823
+      ],
+      "groundY": 915
+    },
+    {
+      "x": 402,
+      "y": 682,
+      "width": 205,
+      "height": 240,
+      "center": [
+        501,
+        825
+      ],
+      "groundY": 918
+    },
+    {
+      "x": 698,
+      "y": 683,
+      "width": 226,
+      "height": 238,
+      "center": [
+        807,
+        824
+      ],
+      "groundY": 917
+    },
+    {
+      "x": 1016,
+      "y": 685,
+      "width": 196,
+      "height": 238,
+      "center": [
+        1110,
+        828
+      ],
+      "groundY": 919
+    },
+    {
+      "x": 78,
+      "y": 971,
+      "width": 215,
+      "height": 225,
+      "center": [
+        181,
+        1106
+      ],
+      "groundY": 1192
+    },
+    {
+      "x": 400,
+      "y": 971,
+      "width": 180,
+      "height": 229,
+      "center": [
+        497,
+        1108
+      ],
+      "groundY": 1196
+    },
+    {
+      "x": 699,
+      "y": 971,
+      "width": 214,
+      "height": 225,
+      "center": [
+        803,
+        1106
+      ],
+      "groundY": 1192
+    },
+    {
+      "x": 1023,
+      "y": 970,
+      "width": 179,
+      "height": 229,
+      "center": [
+        1102,
+        1108
+      ],
+      "groundY": 1195
+    }
+  ],
+  "chase": [
+    {
+      "x": 63,
+      "y": 67,
+      "width": 235,
+      "height": 258,
+      "center": [
+        191,
+        221
+      ],
+      "groundY": 321
+    },
+    {
+      "x": 383,
+      "y": 70,
+      "width": 210,
+      "height": 258,
+      "center": [
+        501,
+        225
+      ],
+      "groundY": 324
+    },
+    {
+      "x": 684,
+      "y": 70,
+      "width": 226,
+      "height": 257,
+      "center": [
+        799,
+        225
+      ],
+      "groundY": 323
+    },
+    {
+      "x": 1006,
+      "y": 73,
+      "width": 206,
+      "height": 257,
+      "center": [
+        1120,
+        227
+      ],
+      "groundY": 326
+    },
+    {
+      "x": 55,
+      "y": 377,
+      "width": 246,
+      "height": 253,
+      "center": [
+        186,
+        528
+      ],
+      "groundY": 626
+    },
+    {
+      "x": 391,
+      "y": 377,
+      "width": 222,
+      "height": 255,
+      "center": [
+        498,
+        530
+      ],
+      "groundY": 628
+    },
+    {
+      "x": 684,
+      "y": 380,
+      "width": 230,
+      "height": 255,
+      "center": [
+        794,
+        533
+      ],
+      "groundY": 631
+    },
+    {
+      "x": 1010,
+      "y": 383,
+      "width": 212,
+      "height": 254,
+      "center": [
+        1123,
+        536
+      ],
+      "groundY": 633
+    },
+    {
+      "x": 55,
+      "y": 669,
+      "width": 251,
+      "height": 252,
+      "center": [
+        202,
+        820
+      ],
+      "groundY": 917
+    },
+    {
+      "x": 382,
+      "y": 671,
+      "width": 234,
+      "height": 252,
+      "center": [
+        513,
+        823
+      ],
+      "groundY": 919
+    },
+    {
+      "x": 683,
+      "y": 672,
+      "width": 243,
+      "height": 248,
+      "center": [
+        818,
+        821
+      ],
+      "groundY": 916
+    },
+    {
+      "x": 1010,
+      "y": 672,
+      "width": 215,
+      "height": 254,
+      "center": [
+        1136,
+        824
+      ],
+      "groundY": 922
+    },
+    {
+      "x": 66,
+      "y": 954,
+      "width": 243,
+      "height": 245,
+      "center": [
+        184,
+        1100
+      ],
+      "groundY": 1195
+    },
+    {
+      "x": 391,
+      "y": 957,
+      "width": 219,
+      "height": 250,
+      "center": [
+        496,
+        1107
+      ],
+      "groundY": 1203
+    },
+    {
+      "x": 679,
+      "y": 957,
+      "width": 240,
+      "height": 247,
+      "center": [
+        804,
+        1104
+      ],
+      "groundY": 1200
+    },
+    {
+      "x": 1012,
+      "y": 958,
+      "width": 218,
+      "height": 249,
+      "center": [
+        1117,
+        1106
+      ],
+      "groundY": 1203
+    }
+  ]
+}

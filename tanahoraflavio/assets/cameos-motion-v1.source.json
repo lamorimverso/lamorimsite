@@ -1,0 +1,40 @@
+{
+  "tool": "built-in image_gen",
+  "useCase": "illustration-story",
+  "generatedAt": "2026-10-30",
+  "reference": "characters-motion-v2.png",
+  "referenceRole": "style and caricature costume reference",
+  "referenceSha256": "755785d30aa94beda139ef50b3272f6a726b2ca261e0dfded0703a39b8aabc45",
+  "prompt": "Use case: illustration-story.\nAsset type: production transparent sprite atlas for a side-scrolling Brazilian political satire game, exactly a 4-column by 4-row sprite sheet (16 separate whole figures).\nInput image 1 is DRAWING STYLE REFERENCE ONLY: polished satirical chibi caricatures with large expressive heads, thick dark clean outlines and soft cel shading. Do not reuse the old poses or old characters.\nPrimary request: generate four NEW characters with a real four-frame LEFT-FACING RUN CYCLE for EACH. Each row is one consistent character repeated in 4 anatomically different successive running poses. All 16 figures are in strict profile / slight three-quarter profile facing and moving to the LEFT. Empty hands pumping with the running motion.\nRow 1: Dilma Rousseff caricature, older Brazilian woman, recognizable round expressive face, short chestnut swept bob hairstyle, red blazer, white blouse, red trousers and dark running shoes.\nRow 2: Simone Tebet caricature, middle-aged Brazilian woman, expressive oval face, shoulder-length straight dark-brown side-parted hair, teal blue blazer, white blouse, navy trousers and dark running shoes.\nRow 3: Soraya Thronicke caricature, middle-aged Brazilian woman, long flowing golden blonde side-parted hair, dark navy blazer, purple top, dark trousers and dark running shoes.\nRow 4: Zé Gotinha, friendly white teardrop-headed Brazilian vaccination mascot caricature, pointed droplet top, black oval eyes and smiling mouth, rounded white body and arms, TWO fully visible articulated white legs, bright blue running shoes. NO logos or clothing marks.\nCRITICAL ANIMATION: across every row, columns 1, 2, 3, 4 are four DISTINCT anatomical poses of a full run stride, not the same silhouette shifted. Column 1: long stride, front leg reaching LEFT and rear leg extending RIGHT. Column 2: passing pose, one knee driven up and forward LEFT and the other foot underneath the hip. Column 3: opposite-leg long stride with reversed lead legs and reversed arm positions. Column 4: opposite passing pose, rear heel folded high behind the body and front leg reaching down. Separate the legs so both thighs, knees and shoes are readable. Bend elbows and alternate arms naturally. Exactly two arms and two legs per figure.\nComposition: square atlas. Imagine an invisible exact 4x4 grid. Each whole figure is centered inside its own cell, occupies about 72% cell height and no more than 78% cell width. Identical size and costume per row; consistent head height and hip anchor, soles on a common ground baseline within each row. At least 10% transparent safe margin inside EVERY cell on all sides, especially feet and moving hair. NO figure, shoe, hand, hair, shadow or contour may cross into another cell. All 16 figures and all shoes fully inside the canvas.\nStyle: clean professional colorful 2D cartoon game sprites matching the reference, strong readable silhouette at small scale, friendly humorous exaggerated faces, coherent anatomy.\nBackdrop: genuinely transparent alpha, no floor, no ground, no shadows, no grid or cell outlines.\nText: none. No captions, names, letters, logos, watermark, speech balloons, props, weapons, effects, motion trails or detached debris. Generate only the sixteen isolated full-body sprites.",
+  "revisionPrompt": "Use case: precise-object-edit.\nAsset type: production transparent 4-column × 4-row animated game sprite sheet.\nInput image 1 is the EDIT TARGET. Preserve its exact sixteen character identities, hairstyles, costumes, left-facing direction, drawing style and four DIFFERENT run-cycle leg poses per row.\nCHANGE ONLY THE SHEET LAYOUT AND SPRITE SCALE: every complete sprite must be 20% SMALLER (uniform scale 0.80) than it is in the input. Re-center each of the sixteen complete figures in its correct cell of a strict invisible equally spaced 4×4 grid. The current input characters are too large and too close between rows. Correct that. Shrink the entire figure including hair, hands and shoes. Do not crop any part.\nUse a square canvas. Normalized cell boundaries are x=0%,25%,50%,75%,100% and y=0%,25%,50%,75%,100%. Within each cell, the whole sprite including its outer contour must fit inside the central 78% of width and central 78% of height, leaving at least 11% of that cell as genuine transparent space on every side. All four poses in a row share the same sole baseline. Keep character size consistent across each row. Keep all four distinct anatomical leg poses; do not repeat one silhouette.\nCRITICAL: no character, flowing hair, shoe or contour may cross its own invisible cell boundary. Do not add a visible grid. Preserve exactly 16 isolated full-body figures, exactly 4 columns and 4 rows, on a genuinely transparent alpha background. Preserve two arms and two articulated legs per figure, clear alternating running poses and LEFT-facing direction. No floor, no shadows, no new props, no letters, no logos, no text, no decorative marks, no weapons, no extra objects.",
+  "history": [
+    {
+      "kind": "initial-generation",
+      "file": "/workspace/scratch/11d2fc137a81/generated_images/exec-168c860a-5b68-4eaf-8345-3a9a41f60160.png",
+      "pngSha256": "178ce86b7d7cd6b48b6181d07eb3a2dee98460fbf73007cfca691c08468ab209"
+    },
+    {
+      "kind": "imagegen-margin-edit-selected",
+      "file": "/workspace/scratch/11d2fc137a81/generated_images/exec-d821c022-900b-45a5-b403-3cf14d1be8fe.png",
+      "pngSha256": "216ebe4995a257c7e8ad61e2785d0991148ee2b2f9eb4f7c2740de4f1e40b86f"
+    }
+  ],
+  "pngSha256": "216ebe4995a257c7e8ad61e2785d0991148ee2b2f9eb4f7c2740de4f1e40b86f",
+  "width": 1254,
+  "height": 1254,
+  "rows": [
+    "dilma",
+    "simone",
+    "soraya",
+    "zegotinha"
+  ],
+  "columns": [
+    "long stride",
+    "raised-knee passing",
+    "opposite stride",
+    "heel-folded passing"
+  ],
+  "orientation": "left",
+  "processing": "Raw generated PNG copied byte-for-byte; no pixel edits, no alpha edits, no resampling. WebP conversion delegated to build integration.",
+  "layout": "tools/pressure-art-layout.json"
+}
