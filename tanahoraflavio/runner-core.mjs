@@ -352,7 +352,7 @@ export function advanceRun(run,seconds,rng=Math.random){
     if(rear){
      // O aviso de retaguarda surge antes da entrada física do perseguidor.
      // A velocidade precisa atravessar toda a hitbox durante a janela de salto.
-     const start=-65,width=foe.width;
+     const start=-125,width=foe.width;
      anchor={x:start,width,height:foe.height,type:foe.type,action:'jump',
       approach:'rear',speed:rearSpeed(run,start,width)};
     }else if(falling){
