@@ -210,3 +210,9 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
 /* A progressão passa a ser observável sem criar mais um painel. */
 #game-difficulty{display:block;color:#655575;font-size:10px;line-height:1.5}
 @media(max-width:380px){#game-difficulty{font-size:9px}}
+
+/* Títulos de chefão variam de tamanho: nunca deslocar o canvas ao aparecer. */
+.game-stage-header{min-height:34px;height:34px;box-sizing:border-box}
+.game-stage-header>div:first-child{min-width:0;flex:1}
+.game-stage-header strong,#game-difficulty{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.game-stage-clock{max-width:48%;flex:0 1 48%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
