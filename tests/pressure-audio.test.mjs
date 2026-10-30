@@ -19,17 +19,20 @@ test('trilha gera música contínua, abaixa sob fala e para sem acumular notas n
  music.stop();assert.equal(ctx.gains[0].gain.value,0);assert.ok(ctx.notes.every(n=>n.node.stopped));
  const before=ctx.notes.length;ctx.currentTime=600;music.update({active:true,raid:true,pressure:1});assert.ok(ctx.notes.length-before<12,'nenhuma rajada de notas atrasadas');
 });
-test('diretor escolhe falas contextuais, respeita silêncio, perigo e fim da partida',async()=>{
+test('diretor restringe memes à cena e respeita prioridade e silêncio em perigo',async()=>{
  const {createVoiceDirector}=await import(moduleAt('runner-voice-director.mjs')),played=[];
  const d=createVoiceDirector({play:(id,options)=>{played.push({id,options});return true;},random:()=>0});
- const r={status:'running',elapsed:0,boss:null,raid:null};d.event('start',r);assert.equal(played.length,1);const first=played[0].id;
- for(let t=1;t<14;t++){r.elapsed=t;d.update(r,{safe:true});}assert.equal(played.length,1);
- r.elapsed=20;d.event('shield',r);d.update(r,{safe:false});assert.equal(played.length,1,'evita distrair numa janela crítica');
- d.update(r,{safe:true});assert.ok(['defende-meu-pai','mesmo-mundo'].includes(played.at(-1).id));
- r.elapsed=50;r.raid={phase:'active'};d.update(r,{safe:true});assert.equal(played.length,2);
- r.raid=null;r.elapsed=75;d.update(r,{safe:true});assert.equal(played.length,3);assert.notEqual(played.at(-1).id,first);
- r.status='over';r.elapsed=150;d.update(r,{safe:true});assert.equal(played.length,3);
- d.reset();r.status='running';r.elapsed=0;d.event('start',r);assert.equal(played.length,4);
+ const r={status:'running',elapsed:0,boss:null,raid:null};
+ for(const event of ['start','shield','milestone','victory'])d.event(event,r);
+ d.update(r,{safe:true});assert.equal(played.length,0,'sem falas políticas aleatórias');
+ r.elapsed=20;d.event('actor',r,'janones');d.update(r,{safe:false});assert.equal(played.length,0);
+ d.update(r,{safe:true});assert.equal(played.length,1);assert.equal(played[0].id,'pessoal-urgente');
+ r.elapsed=21;d.event('actor',r,'simone');d.update(r,{safe:true});assert.equal(played.length,1);
+ r.elapsed=40;r.raid={phase:'active'};d.event('actor',r,'lula');d.update(r,{safe:true});assert.equal(played.length,1);
+ r.raid=null;r.elapsed=50;r.boss={type:'haddad'};d.event('boss',r);d.update(r,{safe:true});
+ assert.equal(played.at(-1).id,'haddad');assert.equal(played.at(-1).options.priority,2);
+ r.status='over';r.elapsed=80;d.event('actor',r,'janones');d.update(r,{safe:true});assert.equal(played.length,2);
+ d.reset();r.status='running';r.boss=null;r.elapsed=0;d.event('start',r);d.update(r,{safe:true});assert.equal(played.length,2);
 });
 test('reprodução integra trilha após gesto e respeita prioridade, mute e parada',()=>{
  const previous=globalThis.window,ctx=soundContext(),tracks=[],captions=[];
