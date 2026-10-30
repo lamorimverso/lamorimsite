@@ -49,3 +49,18 @@ test('todos os nove memes publicados decodificam no navegador com os arquivos lo
   });assert.equal(clips.length,9);for(const c of clips){assert.equal(c.status,200);assert.ok(c.duration>1&&c.duration<6,c.id);}
  }finally{await context.close();}
 });
+
+test('arranjo chiptune renderiza sinal contínuo sem saturação na emenda do loop',async()=>{
+ const {context,page}=await open();try{
+  const metrics=await page.evaluate(async()=>{
+   const {createGameSoundtrack}=await import('./runner-soundtrack.mjs');
+   const sampleRate=22050,seconds=16,offline=new OfflineAudioContext(1,sampleRate*seconds,sampleRate);let clock=0;
+   const adapter={get currentTime(){return clock;},state:'running',destination:offline.destination,createGain:()=>offline.createGain(),createOscillator:()=>offline.createOscillator()};
+   const music=createGameSoundtrack(adapter);for(let i=0;i<seconds*100;i++){clock=i/100;music.update({active:true,pressure:1,raid:true});}
+   const buffer=await offline.startRendering(),samples=buffer.getChannelData(0);let peak=0,square=0;for(const v of samples){peak=Math.max(peak,Math.abs(v));square+=v*v;}
+   const seam=64*60/123/4;let around=0,count=0;for(let i=Math.floor((seam-.05)*sampleRate);i<Math.floor((seam+.05)*sampleRate);i++){around+=samples[i]**2;count++;}
+   return {peak,rms:Math.sqrt(square/samples.length),seamRms:Math.sqrt(around/count)};
+  });
+  assert.ok(metrics.peak<.25,'volume reserva espaço para vozes e efeitos');assert.ok(metrics.rms>.002,'música audível');assert.ok(metrics.seamRms>.0001,'emenda não fica vazia');
+ }finally{await context.close();}
+});

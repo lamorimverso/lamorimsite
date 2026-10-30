@@ -140,4 +140,8 @@ O arquivo “faz-o-l” foi excluído: orador não identificado com confiança. 
 
 ## Trilha e efeitos
 
-Música original sintetizada por `runner-soundtrack.mjs`, sem samples musicais ou serviços externos. Inicia após gesto, acompanha pressão, usa volume menor durante gravações e para ao ocultar o jogo ou desligar o som. Efeitos curtos diferenciados para perigo alto/baixo, salto, coleta e impacto.
+Fundo instrumental em8bits: recriação compacta do contorno do solo de **Solinho do Fora PT**, de **Prismah**. Compositores creditados na fonte: **Filipe Pinheiro e Ismael Brazzao**. Referência primária: https://music.apple.com/us/album/solinho-do-fora-pt-single/6817769503 (consulta30/10/2026).
+
+A prévia pública da fonte foi usada apenas para análise musical. Nenhum trecho da gravação, canto ou voz foi incluído na trilha. A implementação sintetiza notas emWebAudio: lead quadrado, baixo triangular e percussão curta. Grade16passos/compasso,64passos/ciclo,123BPM estimados da prévia. É um arranjo compacto emloop, com transposição de oitava e simplificação de harmônicos; não se alega transcrição idêntica ou autorização comercial da composição. Não é a gravação original nem uma música original inédita do jogo.
+
+A melodia e o andamento ficam estáveis; pressão/chefes/Joice variam a percussão de apoio. Inicia após gesto, abaixa sob as falas de arquivo e para ao ocultar o jogo ou desligar o som. Os efeitos de perigo/salto/coleta/impacto e as falas de arquivo são canais separados da trilha instrumental.
