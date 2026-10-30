@@ -107,7 +107,7 @@ export function pursuitAt(seconds,rng=()=>.5) {
 function rearSpeed(run,x,width){
  const front=run.obstacles.filter(o=>o.x>contactX&&o.speed>0).map(o=>(o.x-contactX)/o.speed);
  const rear=run.obstacles.filter(o=>o.approach==='rear'&&o.speed<0).map(o=>(rearContact-(o.x+o.width-3))/-o.speed);
- const seconds=Math.max(1.04,...front.concat(rear).filter(t=>t>0).map(t=>t+REACTION_GAP));
+ const seconds=Math.max(run.assisted?1.22:1.06,...front.concat(rear).filter(t=>t>0).map(t=>t+REACTION_GAP));
  return -(rearContact-(x+width-3))/seconds;
 }
 export function createRun({assisted=false}={}) {
@@ -257,7 +257,7 @@ function advanceRaid(run,dt,rng){
   if(raid.remaining<=1e-8){
    if(raid.phase==='warning'){raid.phase='active';raid.remaining=10;announce(run,'Toc, toc, toc… é a Polícia Federal! Pule a PF e abaixe dos microfones por dez segundos.');}
    else if(raid.phase==='active'){raid.phase='recovery';raid.remaining=2;announce(run,'A perseguição especial terminou. O ritmo normal está voltando.');}
-   else{run.raid=null;run.nextRaid=24+random(rng)*12;run.bossCooldown=Math.max(2.5,run.bossCooldown);}
+   else{run.raid=null;run.nextRaid=26+random(rng)*10;run.bossCooldown=Math.max(2.5,run.bossCooldown);}
   }return;
  }
  run.nextRaid-=dt;
@@ -350,7 +350,9 @@ export function advanceRun(run,seconds,rng=Math.random){
     const rolling=activeStyles&&roll>=.42&&roll<.62;
     const popcorn=activeStyles&&roll>=.62&&roll<.76;
     if(rear){
-     const start=8,width=foe.width;
+     // O aviso de retaguarda surge antes da entrada física do perseguidor.
+     // A velocidade precisa atravessar toda a hitbox durante a janela de salto.
+     const start=-65,width=foe.width;
      anchor={x:start,width,height:foe.height,type:foe.type,action:'jump',
       approach:'rear',speed:rearSpeed(run,start,width)};
     }else if(falling){
