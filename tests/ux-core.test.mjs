@@ -151,10 +151,11 @@ export function legalPilot(seed,{width=900,assisted=false,limit=340,resize=false
   const eta=o=>o.approach==='rear'
     ?(core.PLAYER.x+5-(o.x+o.width-3))/-o.speed
     :(o.x-148)/(o.speed||1);
+  // Manter o desvio até o obstáculo sair por inteiro da hitbox.
+  // Filtrar só por ETA interrompia o agachamento no meio de papéis altos.
   const threats=run.obstacles.filter(o=>{
-    const seconds=eta(o);
-    if(o.approach==='rear')return o.speed<0&&seconds>-.15;
-    return o.x<run.viewportWidth&&o.x+o.width-3>core.PLAYER.x+5&&seconds>-.15;
+    if(o.approach==='rear')return o.speed<0&&o.x<core.PLAYER.x+core.PLAYER.width-3;
+    return o.x<run.viewportWidth&&o.x+o.width-3>core.PLAYER.x+5;
   });
   const danger=threats.sort((a,b)=>eta(a)-eta(b))[0];
   const speed=Math.abs(danger?.speed??core.difficultyAt(run.distance).speed*(assisted ? .82 : 1));
