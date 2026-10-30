@@ -71,8 +71,15 @@ for(const [type,total,goalKind,types,actions,objective] of [
   assert.equal(run.boss,null);
   assert.equal(run.bossesDefeated,1);
   assert.equal(attacks.length,total);
-  assert.deepEqual(attacks.map(attack=>attack.type),types);
-  assert.deepEqual(attacks.map(attack=>attack.action),actions);
+  // Os três primeiros ensinam as armas, depois o chefe sorteia trajetórias.
+  assert.deepEqual(attacks.slice(0,3).map(attack=>attack.type),types.slice(0,3));
+  assert.deepEqual(attacks.slice(0,3).map(attack=>attack.action),actions.slice(0,3));
+  const valid=type==='haddad'?['receipts','stamp']:type==='lula'?['lhand']:['hammer','mandado'];
+  assert.ok(attacks.every(attack=>valid.includes(attack.type)));
+  assert.ok(attacks.some(attack=>attack.action==='jump'));
+  assert.ok(attacks.some(attack=>attack.action==='crouch'));
+  assert.ok(attacks.some(attack=>attack.approach==='drop'||attack.approach==='sweep')||
+    new Set(attacks.map(attack=>attack.action)).size>1,'não apresenta um único padrão');
   assert.ok(attacks.every(attack=>attack.x+attack.width<core.PLAYER.x),'o último ataque precisa passar inteiro');
   for(const round of [0,3,30]){
    const config=core.bossAtRound(round,type);

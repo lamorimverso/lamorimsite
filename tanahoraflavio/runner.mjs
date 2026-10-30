@@ -1,6 +1,6 @@
 import {createVoiceDirector} from './runner-voice-director.mjs?v=e9e904bed9c1';
-import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=f090026d80cf";
-import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=64b06a32e0a2";
+import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=e98dc087adbb";
+import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=342fe2c68f28";
 import { createGameAudio } from "./runner-audio.mjs?v=2d425a66c731";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=e04644dd1f8f";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=cb8316f1085d";
@@ -78,7 +78,7 @@ function initRunner() {
   function bossCue(){
     if(!run.boss)return null;
     const incoming=run.obstacles.filter(o=>o.bossAttack&&!o.counted&&o.x+o.width>=PLAYER.x).sort((a,b)=>a.x-b.x)[0];
-    return incoming||bossAttackFor(run.boss.type,Math.min(run.boss.fired,run.boss.total-1),run.boss.round-1);
+    return incoming||(run.boss.plannedFor===run.boss.fired?run.boss.plannedAttack:bossAttackFor(run.boss.type,Math.min(run.boss.fired,run.boss.total-1),run.boss.round-1));
   }
   function dodgeHint(){
     const hit=run.lastHit;if(!hit)return "Observe os perigos e tente novamente.";
@@ -131,7 +131,8 @@ function initRunner() {
       $("game-boss-progress").style.width=100*(b.total-b.remaining)/b.total+"%";
       const dodged=b.total-b.remaining;
       const goal=dodged+"/"+b.total+" "+(b.goalKind==="papers"?"papéis":b.goalKind==="patterns"?"gestos em L":"ataques");
-      $("game-boss-weapon").textContent=(bossCue().action==="crouch"?"↓ Abaixe":"↑ Pule")+" · "+goal;
+      $("game-boss-weapon").textContent=(bossCue().action==="crouch"?"↓ Abaixe":"↑ Pule")+
+        (bossCue().approach==="drop"?" · VEM DO ALTO!":"")+" · "+goal;
       $("game-boss").style.setProperty("--boss-accent",b.color);
     }
     $("game-threat").textContent=run.raid?.phase==="active"?"PF em operação":"Inimigos sorteados · "+stage.short;
@@ -214,7 +215,9 @@ function initRunner() {
     if(run.collected>before.collected){
       if(run.lastPickup==="ze-gotinha")voices.event("ally",run);
     }
-    const nearest=Math.min(Infinity,...run.obstacles.filter(o=>o.x+o.width>PLAYER.x).map(o=>(o.x-148)/(o.speed||1)));
+    const nearest=Math.min(Infinity,...run.obstacles.map(o=>o.approach==='rear'?
+      (o.x+o.width>=PLAYER.x?0:(PLAYER.x-(o.x+o.width))/-o.speed):
+      (o.x+o.width>PLAYER.x?(o.x-148)/(o.speed||1):Infinity)));
     voices.update(run,{safe:nearest>.9});
     audio.background({active:run.status==="running",pressure:difficultyAt(run.distance,run.elapsed).pressure,boss:!!run.boss,raid:run.raid?.phase==="active"});
     if(bufferedTakeoff&&run.status==="running")audio.effect("jump");
@@ -370,7 +373,7 @@ function initRunner() {
     ctx.restore();
     if(b.nextAttack<.65&&b.fired<b.total&&!run.obstacles.some(o=>o.bossAttack&&!o.counted)){
       ctx.fillStyle="#843338";ctx.font="800 16px system-ui";ctx.textAlign="center";
-      ctx.fillText(bossAttackFor(b.type,b.fired,b.round-1).action==="jump"?"↑ PULE":"↓ ABAIXE",virtualWidth-86,62);ctx.textAlign="start";
+      ctx.fillText(bossCue().action==="jump"?"↑ PULE":"↓ ABAIXE",virtualWidth-86,62);ctx.textAlign="start";
     }
   }
   function character(){
@@ -407,14 +410,16 @@ function initRunner() {
       ctx.translate(pivot,feet);ctx.scale(1+.025*ease,1-.025*ease);ctx.translate(-pivot,-feet);
     }
     if(run.player.isJacare)drawJacare(ctx,{x:PLAYER.x+17,y:feet,phase,age:run.player.jacareAge,reducedMotion:prefersReducedMotion()});
-    else if(run.player.restoreFlashFor>0&&!prefersReducedMotion()){
-      ctx.save();ctx.globalAlpha=Math.min(.55,run.player.restoreFlashFor/.48*.55);
-      ctx.strokeStyle="#5ba86d";ctx.lineWidth=3;ctx.beginPath();
-      ctx.ellipse(PLAYER.x+17,feet-27,22,32,0,0,Math.PI*2);ctx.stroke();ctx.restore();
+    else{
+      drawActor(ctx,{type:"flavio",x:PLAYER.x+17,y:feet,scale:.95,phase,airborne,
+        falling:run.player.velocity<0,landing:crouchTarget,
+        hurt:run.status==="over",alpha:run.graceFor>0&&run.shieldFor<=0?.55:1});
+      if(run.player.restoreFlashFor>0&&!prefersReducedMotion()){
+        ctx.save();ctx.globalAlpha=Math.min(.55,run.player.restoreFlashFor/.48*.55);
+        ctx.strokeStyle="#5ba86d";ctx.lineWidth=3;ctx.beginPath();
+        ctx.ellipse(PLAYER.x+17,feet-27,22,32,0,0,Math.PI*2);ctx.stroke();ctx.restore();
+      }
     }
-    else drawActor(ctx,{type:"flavio",x:PLAYER.x+17,y:feet,scale:.95,phase,airborne,
-      falling:run.player.velocity<0,landing:crouchTarget,
-      hurt:run.status==="over",alpha:run.graceFor>0&&run.shieldFor<=0?.55:1});
     ctx.restore();
     drawProtection(ctx,{...protection,foreground:true});
   }
@@ -424,6 +429,19 @@ function initRunner() {
     drawActor(ctx,{type:"joice",x:virtualWidth-62,y:WORLD.ground-2,scale:1.08,phase:run.elapsed*10});
   }
   function obstacle(item){
+    if(item.approach==='drop'){
+      // Alerta visual obrigatório, inclusive para quem reduz movimento.
+      const time=Math.max(0,(item.x-148)/Math.max(1,item.speed));
+      if(time<1.6){
+        ctx.save();ctx.globalAlpha=.20+Math.max(0,1-time/1.6)*.26;
+        ctx.fillStyle="#a34855";ctx.beginPath();
+        ctx.ellipse(PLAYER.x+17,WORLD.ground+3,16,4,0,0,Math.PI*2);ctx.fill();ctx.restore();
+      }
+    }
+    if(item.approach==='rear'&&item.x<PLAYER.x){
+      ctx.save();ctx.fillStyle="#a23d50";ctx.font="800 12px system-ui";
+      ctx.fillText("ATENÇÃO ATRÁS",12,WORLD.ground-96);ctx.restore();
+    }
     if(item.projectile){
       // O rastro confirma visualmente que o ataque parte do chefão rumo ao jogador.
       const y=WORLD.ground-item.y;

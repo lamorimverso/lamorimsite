@@ -60,6 +60,9 @@ const announce = (run,text) => {run.event=text;run.events++;};
 const assistance = run => run.assisted ? .82 : 1;
 // Primeiro contato horizontal usa o mesmo recuo de 3 px da colisão abaixo.
 const contactX = PLAYER.x+PLAYER.width-6;
+const REACTION_GAP = .82;
+// A retaguarda se aproxima pela esquerda; outras ameaças continuam pela direita.
+const rearContact = PLAYER.x+5;
 const JUMP_BUFFER_SECONDS = .12;
 const JACARE_ENTRY_GRACE = .9;
 const JACARE_RESTORE_GRACE = .55;
@@ -77,9 +80,13 @@ export function difficultyAt(distance,elapsed=0) {
 }
 // Uma onda mais rápida nunca alcança a anterior e forma um par impossível.
 function threatSpeed(run,x,seconds,visibleX=x){
- const pending=run.obstacles.filter(o=>o.x>contactX&&o.speed>0);
+ const pending=run.obstacles.filter(o=>o.x>contactX&&o.speed>0)
+  .map(o=>(o.x-contactX)/o.speed);
+ const rear=run.obstacles.filter(o=>o.approach==='rear'&&o.speed<0)
+  .map(o=>(rearContact-(o.x+o.width-3))/-o.speed)
+  .filter(t=>t>0);
  const speed=Math.max(1,visibleX-contactX)/seconds*assistance(run);
- const nextContact=Math.max((x-contactX)/speed,...pending.map(o=>(o.x-contactX)/o.speed+.82));
+ const nextContact=Math.max((x-contactX)/speed,...pending.concat(rear).map(t=>t+REACTION_GAP));
  return Math.max(1,x-contactX)/nextContact;
 }
 export function stageAt(seconds) {
@@ -96,13 +103,20 @@ export function stageTransitionAt(seconds) {
 export function pursuitAt(seconds,rng=()=>.5) {
  const pool=POOLS[stageAt(seconds).index];return foeFor(pool[Math.floor(random(rng)*pool.length)]);
 }
+// Retaguarda usa a mesma janela de leitura, sem disputar o contato com um perigo frontal.
+function rearSpeed(run,x,width){
+ const front=run.obstacles.filter(o=>o.x>contactX&&o.speed>0).map(o=>(o.x-contactX)/o.speed);
+ const rear=run.obstacles.filter(o=>o.approach==='rear'&&o.speed<0).map(o=>(rearContact-(o.x+o.width-3))/-o.speed);
+ const seconds=Math.max(run.assisted?1.22:1.06,...front.concat(rear).filter(t=>t>0).map(t=>t+REACTION_GAP));
+ return -(rearContact-(x+width-3))/seconds;
+}
 export function createRun({assisted=false}={}) {
  return {status:'ready',assisted:assisted===true,elapsed:0,distance:0,routeDistance:0,viewportWidth:WORLD.width,bonus:0,collected:0,passports:0,lives:1,
   event:'',events:0,player:{y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareAge:0,restoreFlashFor:0,jumpBufferedUntil:0},obstacles:[],pickups:[],lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,shieldFor:0,graceFor:0,
   lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:null,bossCooldown:0,
-  raid:null,nextRaid:null,raids:0,lastFact:-1,cameo:null,overheadCount:0,lastOverheadActor:null,lastAction:null,actionStreak:0,nextAllyAt:14000,alliesMet:0};
+  raid:null,nextRaid:null,raids:0,lastFact:-1,cameo:null,overheadCount:0,lastOverheadActor:null,lastAction:null,actionStreak:0,attackStyles:[],nextAllyAt:14000,alliesMet:0};
 }
 // Reenquadra ondas ainda à frente, preservando prazo de contato e trajetória.
 // Perigos cujo contato já começou ficam onde estão: nunca reaparecem no caminho.
@@ -186,9 +200,20 @@ function beginBoss(run){
  run.boss={type:conf.foe.type,name:conf.foe.name,color:conf.foe.color,level:conf.level,supreme:conf.supreme,
   objective:conf.objective,goalKind:conf.goalKind,
   round:conf.round,total:conf.attacks,remaining:conf.attacks,fired:0,interval:conf.interval,nextAttack:1.1,
-  hitFlashFor:0,attackFlashFor:0};
+  hitFlashFor:0,attackFlashFor:0,lastAction:null,actionStreak:0,
+  plannedFor:0,plannedAttack:{...bossAttackFor(conf.foe.type,0,conf.round-1),approach:'diagonal'}};
  run.obstacles=[];run.nextObstacle=Math.max(1.8,run.nextObstacle);
  announce(run,'CHEFÃO '+conf.foe.name+'! '+conf.objective);
+}
+function chooseBossPattern(boss,rng,pressure){
+ // A abertura ensina o tipo de ameaça; depois o próprio chefe improvisa.
+ if(boss.fired<3)return {...bossAttackFor(boss.type,boss.fired,boss.round-1),approach:'diagonal'};
+ let action=random(rng)<(.48+.06*pressure)?'crouch':'jump';
+ if(action===boss.lastAction&&boss.actionStreak>=2)action=action==='jump'?'crouch':'jump';
+ const type=boss.type==='xandao'?(action==='jump'?'hammer':'mandado'):
+  boss.type==='lula'?'lhand':(action==='jump'&&random(rng)<.48?'stamp':'receipts');
+ const approach=action==='jump'&&random(rng)<.48?'drop':action==='crouch'&&random(rng)<.45?'sweep':'diagonal';
+ return {type,action,approach};
 }
 function advanceBoss(run,dt,rng,balance){
  const boss=run.boss;if(!boss)return;
@@ -196,17 +221,25 @@ function advanceBoss(run,dt,rng,balance){
  boss.nextAttack-=dt;
  if(boss.fired>=boss.total||boss.nextAttack>0)return;
  // Cada chefão ataca com armas específicas; Flávio não dispara.
- const pattern=bossAttackFor(boss.type,boss.fired,boss.round-1),attackType=pattern.type;
+ const pattern=boss.plannedFor===boss.fired?boss.plannedAttack:bossAttackFor(boss.type,boss.fired,boss.round-1);
+ const attackType=pattern.type;
  const [width,baseHeight]=({hammer:[46,44],mandado:[42,44],
-  lhand:[46,46],receipts:[44,40]})[attackType];
+  lhand:[46,46],receipts:[44,40],stamp:[44,36]})[attackType];
  const height=pattern.action==='crouch'?84:baseHeight;
  const x=visibleWidth(run)-104;
+ const entry=pattern.approach||'diagonal';
+ const fromY=entry==='drop'?155:pattern.action==='jump'?77:90;
+ const toY=pattern.action==='jump'?(entry==='drop'?22:PLAYER.height/2):90;
  const attack={x,width,height,type:attackType,action:pattern.action,owner:boss.type,bossAttack:true,counted:false,
-  speed:threatSpeed(run,x,balance.bossApproach),
+  approach:entry,speed:threatSpeed(run,x,balance.bossApproach),
   projectile:true,launchX:x+width/2,targetX:PLAYER.x+PLAYER.width/2,
-  launchY:pattern.action==='jump'?77:90,targetY:pattern.action==='jump'?PLAYER.height/2:90,y:pattern.action==='jump'?77:90};
+  launchY:fromY,targetY:toY,y:fromY};
  run.obstacles.push(attack);
  boss.attackFlashFor=.26;boss.fired++;
+ boss.actionStreak=pattern.action===boss.lastAction?(boss.actionStreak||0)+1:1;
+ boss.lastAction=pattern.action;
+ boss.plannedFor=boss.fired;
+ boss.plannedAttack=chooseBossPattern(boss,rng,balance.pressure);
  boss.nextAttack+=boss.interval+random(rng)*.22;
  return attack;
 }
@@ -224,7 +257,7 @@ function advanceRaid(run,dt,rng){
   if(raid.remaining<=1e-8){
    if(raid.phase==='warning'){raid.phase='active';raid.remaining=10;announce(run,'Toc, toc, toc… é a Polícia Federal! Pule a PF e abaixe dos microfones por dez segundos.');}
    else if(raid.phase==='active'){raid.phase='recovery';raid.remaining=2;announce(run,'A perseguição especial terminou. O ritmo normal está voltando.');}
-   else{run.raid=null;run.nextRaid=24+random(rng)*12;run.bossCooldown=Math.max(2.5,run.bossCooldown);}
+   else{run.raid=null;run.nextRaid=26+random(rng)*10;run.bossCooldown=Math.max(2.5,run.bossCooldown);}
   }return;
  }
  run.nextRaid-=dt;
@@ -277,7 +310,8 @@ export function advanceRun(run,seconds,rng=Math.random){
  }
  for(const pickup of run.pickups)pickup.x-=Number.isFinite(pickup.speed)?pickup.speed*dt:travel;
  resolveBossDodges(run);
- run.obstacles=run.obstacles.filter(o=>o.x+o.width>-20);run.pickups=run.pickups.filter(p=>p.x>-30);
+ run.obstacles=run.obstacles.filter(o=>o.approach==='rear'?o.x<PLAYER.x+PLAYER.width+80:o.x+o.width>-20);
+ run.pickups=run.pickups.filter(p=>p.x>-30);
  // Uma Joice já vencida tem prioridade sobre o próximo marco de chefe.
  advanceRaid(run,dt,rng);
  if(!run.boss&&!run.raid&&run.bossCooldown<=0&&run.routeDistance>=run.nextBossAt&&!stageTransitionAt(routeClock(run)).active)beginBoss(run);
@@ -296,6 +330,8 @@ export function advanceRun(run,seconds,rng=Math.random){
    else if(run.elapsed>=10&&previous===action&&run.actionStreak>=2&&balance.pressure>.52&&random(rng)<.38)action=inverted;
    run.actionStreak=action===run.lastAction?run.actionStreak+1:1;run.lastAction=action;
    const x=visibleWidth(run)+40,approach=raidActive?Math.max(.85,balance.obstacleApproach-.15):balance.obstacleApproach;
+   // A partir da segunda etapa, baixos podem rolar, cair de cima ou avançar pela retaguarda.
+   // Cada estilo compete por um único intervalo: jamais surgem dois contatos simultâneos.
    if(action==='crouch'){
     const performers=['dilma','simone','soraya'];
     const available=performers.filter(actor=>actor!==run.lastOverheadActor);
@@ -307,11 +343,32 @@ export function advanceRun(run,seconds,rng=Math.random){
     if(!raidActive)run.cameo={type,remaining:1.4};
    }else{
     const foe=raidActive?foeFor('pf'):pursuitAt(routeClock(run),rng);
-    const popcorn=!raidActive&&run.spawnedObstacles%9===8;
-    anchor={x,width:popcorn?40:foe.width,height:popcorn?35:foe.height,type:popcorn?'popcorn':foe.type,action,
-     speed:threatSpeed(run,x,approach,visibleWidth(run))};
+    const roll=random(rng);
+    const activeStyles=run.elapsed>=12&&!raidActive;
+    const rear=activeStyles&&balance.pressure>.24&&roll<.18;
+    const falling=activeStyles&&balance.pressure>.12&&roll>=.18&&roll<.42;
+    const rolling=activeStyles&&roll>=.42&&roll<.62;
+    const popcorn=activeStyles&&roll>=.62&&roll<.76;
+    if(rear){
+     // O aviso de retaguarda surge antes da entrada física do perseguidor.
+     // A velocidade precisa atravessar toda a hitbox durante a janela de salto.
+     const start=-125,width=foe.width;
+     anchor={x:start,width,height:foe.height,type:foe.type,action:'jump',
+      approach:'rear',speed:rearSpeed(run,start,width)};
+    }else if(falling){
+     anchor={x,width:36,height:36,type:'falling-case',action:'jump',approach:'drop',
+      speed:threatSpeed(run,x,approach,visibleWidth(run)),projectile:true,
+      launchX:x+18,targetX:PLAYER.x+17,launchY:160,targetY:24,y:160};
+    }else{
+     const type=rolling?'rolling-case':popcorn?'popcorn':foe.type;
+     anchor={x,width:rolling?40:popcorn?40:foe.width,
+      height:rolling?30:popcorn?35:foe.height,type,action,
+      approach:rolling?'rolling':'front',speed:threatSpeed(run,x,approach,visibleWidth(run))};
+    }
    }
    run.obstacles.push(anchor);run.spawnedObstacles++;
+   run.attackStyles.push(anchor.approach||'overhead');
+   if(run.attackStyles.length>16)run.attackStyles.shift();
    const gap=raidActive ? .98-.08*balance.pressure:run.raid?.phase==='recovery'?
     (.98-.08*balance.pressure)+(balance.obstacleGap-.98+.08*balance.pressure)*(1-run.raid.remaining/2):balance.obstacleGap;
    // Microvariação de intervalo aumenta a incerteza sem criar colisões inevitáveis.
@@ -323,7 +380,8 @@ export function advanceRun(run,seconds,rng=Math.random){
   run.pickups.push({type:'ze-gotinha',x:visibleWidth(run)+40,y:20,speed:balance.speed*assistance(run),value:0});
   run.nextAllyAt+=35000;run.alliesMet++;
  }
- run.nextPickup-=dt;run.nextPassport-=dt;run.nextPower-=dt;rewardForObstacle(run,anchor,balance,rng);
+ run.nextPickup-=dt;run.nextPassport-=dt;run.nextPower-=dt;
+ if(anchor?.approach!=='rear')rewardForObstacle(run,anchor,balance,rng);
  const left=PLAYER.x+5,right=PLAYER.x+PLAYER.width-3,bottom=run.player.y+3,
   top=run.player.y+(run.player.crouching||run.player.isJacare?25:PLAYER.height-5);
  // Coleta antes do impacto: o escudo ou o centésimo passaporte já valem neste frame.
