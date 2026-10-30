@@ -89,7 +89,7 @@ export function createGameAudio({onVoice=()=>{}}={}) {
   event(phase,fact){
    if(!enabled)return;
    if(phase==='warning'){stopRecording();raidVoice=voice('joice',{priority:3,loop:true});if(!raidVoice)knocks();}
-   else if(phase==='active'){if(!raidVoice){stopRecording();speak('Toc, toc, toc! É a Polícia Federal! '+(fact?.text||''));}}
+   else if(phase==='active'){if(!raidVoice){raidVoice=voice('joice',{priority:3,loop:true});if(!raidVoice)knocks();}}
    else stopRecording();
   }};
 }
