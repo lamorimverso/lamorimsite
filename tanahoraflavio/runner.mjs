@@ -3,7 +3,7 @@ import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, diffi
 import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=4a60551e07be";
 import { createGameAudio } from "./runner-audio.mjs?v=ca8d75b10b65";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=e04644dd1f8f";
-import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=1aa415bb9b80";
+import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=cb8316f1085d";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
 
 function initRunner() {
