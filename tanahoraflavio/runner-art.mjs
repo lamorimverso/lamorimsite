@@ -23,6 +23,23 @@ export function drawItem(c,{type,x,y,scale=1}){
   else{oval(c,-1,-2,6.5,6.5,'#274d80','#f2cf77',1.5);line(c,[[-7,-2],[5,-2]],'#f2cf77',1);line(c,[[-1,-8],[-1,4]],'#f2cf77',1);line(c,[[-6,10],[5,10]],'#f2cf77',1.5);}
  }c.restore();
 }
+
+ // Jacaré cartunesco original: representação satírica, sem efeito médico real.
+export function drawJacare(c,{x,y,phase=0}){
+ c.save();c.translate(x,y);
+ const bob=Math.sin(phase*.6)*1.2;c.translate(0,bob);
+ path(c,[[-17,-12],[-35,-19],[-30,-8],[-17,-4]],'#438957','#22523c');
+ oval(c,0,-12,23,11,'#4c9b61','#22523c',2.2);
+ oval(c,18,-6,17,6,'#70b66d','#22523c',1.7);
+ for(let i=0;i<3;i++)path(c,[[-13+i*11,-20],[-8+i*11,-27],[-2+i*11,-20]],'#36754c',null);
+ oval(c,-11,-23,5,6,'#69b86d','#22523c',1.5);oval(c,-11,-24,2,2,'#171e24',null);
+ oval(c,8,-23,5,6,'#69b86d','#22523c',1.5);oval(c,8,-24,2,2,'#171e24',null);
+ line(c,[[7,-4],[30,-4]],'#255337',1.8);
+ for(let i=0;i<3;i++)path(c,[[10+i*6,-4],[13+i*6,-1],[15+i*6,-4]],CREAM,null);
+ for(const px of [-10,12]){oval(c,px,-1,5,3,'#326b4b',null);}
+ c.restore();
+}
+
 // Objeto à frente do braço: não envolve o corpo nem muda sua opacidade/colisão.
 export function drawProtection(c,{x,y,crouching=false,remaining=0,foreground=false}){
  if(remaining<=0||!foreground)return;
@@ -73,8 +90,11 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
   for(const [px,py] of [[-14,-28],[-6,-32],[3,-30],[12,-31],[17,-25]])oval(c,px,py,6,5,'#fff2bd','#a58049',1);
  }
  else if(item.type==='case'){box(c,-17,-31,34,28,'#906490');box(c,-6,-37,12,6,'#e1b985',2);line(c,[[-8,-28],[-8,-7]],'#d9b88a',2);line(c,[[8,-28],[8,-7]],'#d9b88a',2);oval(c,-10,0,3,3,INK);oval(c,10,0,3,3,INK);}
- else if(item.type==='stamp'){box(c,-21,-15,42,13,'#a53e54');box(c,-8,-31,16,16,'#81584a');line(c,[[-23,-1],[23,-1]],'#e1a05e',3);}
- else if((item.type==='receipts'||item.type==='paper-gate')){for(let i=0;i<3;i++){box(c,-18+i*10,-34+i*4,20,25,'#fff1cf',2);for(let j=0;j<3;j++)line(c,[[-14+i*10,-28+i*4+j*5],[-3+i*10,-28+i*4+j*5]],'#417884',1.5);}}
+ else if(item.type==='stamp'){box(c,-21,-15,42,13,'#a53e54');box(c,-8,-31,16,16,'#81584a');line(c,[[-23,-1],[23,-1]],'#e1a05e',3);text(c,'TAXA',0,-5,8,'#fff7e3');}
+ else if((item.type==='receipts'||item.type==='paper-gate')){
+  for(let i=0;i<3;i++){box(c,-18+i*10,-34+i*4,20,25,'#fff1cf',2);for(let j=0;j<3;j++)line(c,[[-14+i*10,-28+i*4+j*5],[-3+i*10,-28+i*4+j*5]],'#417884',1.5);}
+  if(item.owner==='haddad')text(c,'TAXA',2,-35,7,'#a33e52');
+ }
  else if(item.type==='hammer'){
   // Martelo do chefão Xandão: cabo de madeira, cabeça metálica.
   c.save();c.rotate(-.35);
