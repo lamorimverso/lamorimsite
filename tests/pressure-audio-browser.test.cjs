@@ -32,8 +32,11 @@ const rms=(page,{tail=false}={})=>page.evaluate(async tail=>{
 test('navegador reproduz voz real e música sem coletas; mute e perda de foco silenciam',async()=>{
  const {context,page,errors}=await open();try{
   assert.equal(await page.evaluate(()=>!!window.__musicContext),false,'não liga áudio antes de jogar');
-  await page.locator('#game-start').click();await page.evaluate(()=>{__audioRun.nextObstacle=__audioRun.nextRaid=__audioRun.nextBossAt=Infinity;});
-  await page.waitForFunction(()=>window.__tracks.some(p=>!p.paused&&p.currentTime>0));assert.equal(await page.locator('#game-voice-note').isVisible(),true);
+  await page.locator('#game-start').click();
+  // A nova política não toca políticos aleatórios na largada: teste um chefe real.
+  await page.evaluate(()=>{const r=__audioRun;r.nextObstacle=r.nextRaid=Infinity;r.nextBossAt=0;r.bossBag=['haddad'];r.graceFor=30;});
+  await page.waitForFunction(()=>window.__tracks.some(p=>p.src.includes('haddad-direction-v1.mp3')&&!p.paused&&p.currentTime>0));
+  assert.equal(await page.locator('#game-voice-note').isVisible(),true);
   await page.waitForTimeout(700);assert.ok(await rms(page)>.0005,'trilha tem sinal sonoro real fora das coletas');
   await page.locator('#game-sound').click();assert.equal(await page.locator('#game-voice-note').isVisible(),false);assert.equal(await page.evaluate(()=>__tracks.every(p=>p.paused)),true);assert.ok(await rms(page,{tail:true})<.00001);
   await page.locator('#game-sound').click();await page.waitForTimeout(400);assert.ok(await rms(page)>.0005,'religar retoma música sem reiniciar a partida');
