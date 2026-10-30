@@ -164,7 +164,7 @@ export function legalPilot(seed,{width=900,assisted=false,limit=340,resize=false
   const crouch=!!danger&&action==='crouch'&&until<.65;
   if(crouch&&!run.player.crouchHeld)crouches++;
   core.crouchRun(run,crouch);
-  const jumpAhead=danger?.approach==='rear'?.23:(danger ? .35-(danger.width+20)/(2*speed) : 0);
+  const jumpAhead=danger?.approach==='rear'?.22:(danger ? .35-(danger.width+20)/(2*speed) : 0);
   if(danger&&action==='jump'&&until<=jumpAhead&&until>-.1&&core.jumpRun(run))jumps++;
   core.advanceRun(run,DT,rng);peak=Math.max(peak,run.player.y);
   if(run.shieldFor>0)shieldFrames++;
