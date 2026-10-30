@@ -1,7 +1,7 @@
 import {createVoiceDirector} from './runner-voice-director.mjs?v=4b55aad25332';
 import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=58166d5b034f";
 import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=4a60551e07be";
-import { createGameAudio } from "./runner-audio.mjs?v=f56789c2ba39";
+import { createGameAudio } from "./runner-audio.mjs?v=037a5bf724f0";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=e04644dd1f8f";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=1aa415bb9b80";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
@@ -183,7 +183,7 @@ function initRunner() {
     cancelAnimationFrame(frameId);frameId=0;
     resetFrameClock(frameClock,performance.now());
     if(document.hidden||!windowFocused||!inView||run.status!=="running"){
-      audio.stop();clearRunInput(run);trackPointers.clear();
+      audio.stop();lastRaidKey="";clearRunInput(run);trackPointers.clear();
     }
     schedule();
   }
