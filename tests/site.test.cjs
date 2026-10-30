@@ -669,7 +669,7 @@ test('ocultar a página corta o áudio original de Joice, sem narrador artificia
  });
  try{
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
-  await page.evaluate(()=>{const r=globalThis.__testRun;r.nextBossAt=Infinity;r.nextObstacle=1000;r.obstacles=[];r.raid={phase:'active',remaining:8,factIndex:0,id:1};});
+  await page.evaluate(()=>{const r=globalThis.__testRun;r.nextBossAt=Infinity;r.nextObstacle=1000;r.obstacles=[];r.raid={phase:'warning',remaining:1.2,factIndex:0,id:1};});
   await page.waitForFunction(()=>window.__raidTracks.some(p=>p.src.includes('joice-toc-toc-v1.mp3')&&!p.paused));
   assert.equal(await page.evaluate(()=>window.__narrationCalls),0,'não cria falas por IA');
   await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});
