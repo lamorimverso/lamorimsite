@@ -39,21 +39,39 @@ test('ameaças altas variam com sementes diferentes sem repetir ordem fixa',()=>
  assert.ok(new Set(routes).size>1,'o elenco não segue um ciclo idêntico em todas as corridas');
 });
 
-test('o diretor fala do personagem quando a pista é segura, sem esperar 14 segundos do ambiente',()=>{
+test('somente inimigos com meme atribuído agendam fala, sem locução para os outros',()=>{
  const events=[],director=createVoiceDirector({random:()=>0,play:(id,settings)=>{events.push({id,settings});return true;}});
  const run={status:'running',elapsed:0,boss:null,raid:null};
- director.event('start',run);assert.equal(events.length,1);
+ director.event('start',run);director.update(run,{safe:true});
+ assert.equal(events.length,0,'a largada não escolhe voz política aleatória');
  run.elapsed=3;director.event('actor',run,'janones');director.update(run,{safe:false});
- assert.equal(events.length,1,'não toca durante uma janela perigosa');
+ assert.equal(events.length,0,'respeita aviso de perigo');
  director.update(run,{safe:true});
- assert.equal(events.length,2);assert.equal(events.at(-1).id,'pessoal-urgente');
+ assert.equal(events.length,1);assert.equal(events.at(-1).id,'pessoal-urgente');
  run.elapsed=5;director.event('actor',run,'janones');director.update(run,{safe:true});
- assert.equal(events.length,2,'mesmo personagem não cria spam');
+ assert.equal(events.length,1,'sem spam do mesmo meme');
  run.elapsed=25;director.event('actor',run,'simone');director.update(run,{safe:true});
- assert.equal(events.length,3,'personagem sem arquivo não ocupa a fila das falas reais');
+ assert.equal(events.length,1,'sem voz inventada para quem não tem clipe');
+ run.elapsed=35;director.event('actor',run,'lula');director.update(run,{safe:true});
+ assert.ok(['bora-pra-rua','picanha','mesmo-mundo','ate-teu-pai'].includes(events.at(-1).id));
 });
 
-test('gravações existentes funcionam e cada personagem sem arquivo tem sinal e locução neutra opcional',()=>{
+test('voz de meme pertence ao personagem e referência do Zé Gotinha é atribuída a Lula',async()=>{
+ const {MEME_SCENES}=await import('../tanahoraflavio/runner-voice-director.mjs');
+ const {ARCHIVE_VOICES}=await import('../tanahoraflavio/runner-voice-data.mjs');
+ const speakers={janones:/Janones/,lula:/Lula da Silva/,haddad:/Haddad/,'ze-gotinha':/Lula da Silva/};
+ for(const [actor,clips] of Object.entries(MEME_SCENES)){
+  for(const id of clips){
+   assert.ok(ARCHIVE_VOICES[id],`sem arquivo para ${actor} / ${id}`);
+   assert.match(ARCHIVE_VOICES[id].speaker,speakers[actor],`atribuição incorreta: ${actor} / ${id}`);
+  }
+ }
+ assert.ok(!('simone' in MEME_SCENES));
+ assert.ok(!('soraya' in MEME_SCENES));
+ assert.ok(!('xandao' in MEME_SCENES));
+});
+
+test('meme gravado toca, sem sintetizar voz ou acionar áudio após mute',()=>{
  const previous=globalThis.window,notes=[],tracks=[],spoken=[];
  const param=()=>({setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){},setTargetAtTime(){}});
  const ctx={currentTime:20,state:'running',destination:{},resume:()=>Promise.resolve(),
@@ -66,15 +84,12 @@ test('gravações existentes funcionam e cada personagem sem arquivo tem sinal e
  };
  try{
   const audio=createGameAudio();audio.prime();
-  assert.equal(audio.character('simone'),true);
-  assert.ok(notes.length>=1);
-  assert.equal(spoken[0]?.text,'Atenção: Simone');
-  assert.equal(audio.character('soraya'),false,'espaçamento entre anúncios');
-  ctx.currentTime=30;
-  assert.equal(audio.voice('pessoal-urgente',{priority:1}),true,'arquivo de Janones já está disponível');
+  assert.equal(typeof audio.character,'undefined','sem anunciante de IA para personagens');
+  assert.equal(audio.voice('pessoal-urgente',{priority:1}),true);
   assert.ok(tracks.at(-1).src.includes('meme-pessoal-urgente'));
-  assert.equal(audio.character('pf'),true);
-  assert.equal(spoken.length,1,'locução não atravessa um arquivo de voz');
-  audio.toggle();assert.equal(audio.character('army'),false);
+  audio.event('active',{text:'Não sintetize o texto.'});
+  assert.equal(spoken.length,0,'nem raid sem clipe usa voz gerada');
+  audio.toggle();assert.equal(audio.voice('haddad'),false);
+  assert.equal(spoken.length,0);
  }finally{if(previous===undefined)delete globalThis.window;else globalThis.window=previous;}
 });
