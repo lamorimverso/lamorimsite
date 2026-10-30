@@ -25,29 +25,18 @@ export function drawItem(c,{type,x,y,scale=1}){
 }
 
  // Jacaré cartunesco original: representação satírica, sem efeito médico real.
-// Jacaré vetorial animado; o volume fica dentro da hitbox do motor.
-// 'age' controla a metamorfose, sem transformar isso em um segundo salto.
-export function drawJacare(c,{x,y,phase=0,age=1,reducedMotion=false}={}){
+export function drawJacare(c,{x,y,phase=0}){
  c.save();c.translate(x,y);
- const motion=reducedMotion?0:Math.sin(phase*.95);
- const morph=reducedMotion?1:Math.min(1,.82+Math.max(0,age)/.30*.18);
- c.translate(0,-Math.abs(motion)*1.15);
- c.scale(morph,morph);
- const tailWave=reducedMotion?0:Math.sin(phase*.70)*3;
- path(c,[[-16,-12],[-34,-18-tailWave],[-32,-9+tailWave],[-17,-4]],'#438957','#22523c');
- oval(c,0,-13,23,11,'#4c9b61','#22523c',2.2);
- oval(c,18,-8,17,6,'#70b66d','#22523c',1.7);
+ const bob=Math.sin(phase*.6)*1.2;c.translate(0,bob);
+ path(c,[[-17,-12],[-35,-19],[-30,-8],[-17,-4]],'#438957','#22523c');
+ oval(c,0,-12,23,11,'#4c9b61','#22523c',2.2);
+ oval(c,18,-6,17,6,'#70b66d','#22523c',1.7);
  for(let i=0;i<3;i++)path(c,[[-13+i*11,-20],[-8+i*11,-27],[-2+i*11,-20]],'#36754c',null);
- // Os pés se alternam em vez de acompanhar um desenho rígido deslizando.
- for(let i=0;i<2;i++){
-  const px=i===0?-12:12,stride=reducedMotion?0:Math.sin(phase*1.6+i*Math.PI)*3.2;
-  oval(c,px+stride,-2.4,5.5,3.5,'#326b4b',null);
-  line(c,[[px+stride-3,-.7],[px+stride+4,-.7]],'#22523c',1.5);
- }
  oval(c,-11,-23,5,6,'#69b86d','#22523c',1.5);oval(c,-11,-24,2,2,'#171e24',null);
  oval(c,8,-23,5,6,'#69b86d','#22523c',1.5);oval(c,8,-24,2,2,'#171e24',null);
- line(c,[[7,-5],[31,-5]],'#255337',1.8);
- for(let i=0;i<3;i++)path(c,[[10+i*6,-5],[13+i*6,-2],[15+i*6,-5]],CREAM,null);
+ line(c,[[7,-4],[30,-4]],'#255337',1.8);
+ for(let i=0;i<3;i++)path(c,[[10+i*6,-4],[13+i*6,-1],[15+i*6,-4]],CREAM,null);
+ for(const px of [-10,12]){oval(c,px,-1,5,3,'#326b4b',null);}
  c.restore();
 }
 
