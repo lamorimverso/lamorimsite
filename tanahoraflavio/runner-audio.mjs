@@ -23,16 +23,16 @@ export function createGameAudio({onVoice=()=>{}}={}) {
    if(context?.state==='suspended')context.resume().catch(()=>{});
   }catch{context=null;}
  };
- const voice=(name,{priority=2}={})=>{
+ const voice=(name,{priority=2,loop=false}={})=>{
   const clip=ARCHIVE_VOICES[name];
   if(!clip||!enabled||!primed||typeof window.Audio!=='function')return false;
   if(recording&&priority<voicePriority)return false;
   stopRecording();
   try{
    const url=new URL(clip.file,import.meta.url);url.searchParams.set('v',clip.sha256.slice(0,12));
-   const player=new window.Audio(url.href);recording=player;voicePriority=priority;player.volume=.68;player.preload='none';
+   const player=new window.Audio(url.href);recording=player;voicePriority=priority;player.volume=.68;player.loop=loop===true;player.preload='none';
    onVoice(clip);player.onended=()=>{if(recording===player){recording=null;voicePriority=0;onVoice(null);}};
-   player.play()?.catch?.(()=>{if(recording===player)stopRecording();});
+   player.play()?.catch?.(()=>{if(recording===player){stopRecording();raidVoice=false;}});
    return true;
   }catch{stopRecording();return false;}
  };
@@ -88,7 +88,7 @@ export function createGameAudio({onVoice=()=>{}}={}) {
   toggle(){enabled=!enabled;try{window.localStorage?.setItem(preferenceKey,enabled?'on':'off');}catch{/* A escolha vale nesta sessão. */}if(!enabled)stop();else prime();return enabled;},
   event(phase,fact){
    if(!enabled)return;
-   if(phase==='warning'){stopRecording();raidVoice=voice('joice',{priority:3});if(!raidVoice)knocks();}
+   if(phase==='warning'){stopRecording();raidVoice=voice('joice',{priority:3,loop:true});if(!raidVoice)knocks();}
    else if(phase==='active'){if(!raidVoice){stopRecording();speak('Toc, toc, toc! É a Polícia Federal! '+(fact?.text||''));}}
    else stopRecording();
   }};
