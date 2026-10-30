@@ -1,6 +1,6 @@
 import {createVoiceDirector} from './runner-voice-director.mjs?v=e9e904bed9c1';
 import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=f090026d80cf";
-import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=eac2697a2d91";
+import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=64b06a32e0a2";
 import { createGameAudio } from "./runner-audio.mjs?v=2d425a66c731";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=e04644dd1f8f";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=cb8316f1085d";
@@ -119,7 +119,7 @@ function initRunner() {
     section.dataset.art=spritesReady?"loaded":spritesFailed?"error":"loading";
     const power=run.shieldFor>0?"shield":run.graceFor>0?"recovery":"none";
     section.dataset.power=run.player.isJacare?"jacare":power;section.dataset.ammo="none";
-    $("game-power").textContent=run.player.isJacare?"Jacaré fictício · ↑ para voltar a Flávio (cloroquina de videogame)":power==="shield"?"Escudo das Américas · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo";
+    $("game-power").textContent=run.player.isJacare?"JACARÉ · ↑ volta ao normal; próximo ↑ pula":power==="shield"?"Escudo das Américas · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo";
     $("game-ammo").parentElement.hidden=true;
     $("game-boss").hidden=run.status!=="running"||!run.boss;section.dataset.boss=run.boss?.type||"none";
     if(run.boss){
@@ -406,7 +406,12 @@ function initRunner() {
       const ease=(landingUntil-run.elapsed)/.12,pivot=PLAYER.x+17;
       ctx.translate(pivot,feet);ctx.scale(1+.025*ease,1-.025*ease);ctx.translate(-pivot,-feet);
     }
-    if(run.player.isJacare)drawJacare(ctx,{x:PLAYER.x+17,y:feet,phase});
+    if(run.player.isJacare)drawJacare(ctx,{x:PLAYER.x+17,y:feet,phase,age:run.player.jacareAge,reducedMotion:prefersReducedMotion()});
+    else if(run.player.restoreFlashFor>0&&!prefersReducedMotion()){
+      ctx.save();ctx.globalAlpha=Math.min(.55,run.player.restoreFlashFor/.48*.55);
+      ctx.strokeStyle="#5ba86d";ctx.lineWidth=3;ctx.beginPath();
+      ctx.ellipse(PLAYER.x+17,feet-27,22,32,0,0,Math.PI*2);ctx.stroke();ctx.restore();
+    }
     else drawActor(ctx,{type:"flavio",x:PLAYER.x+17,y:feet,scale:.95,phase,airborne,
       falling:run.player.velocity<0,landing:crouchTarget,
       hurt:run.status==="over",alpha:run.graceFor>0&&run.shieldFor<=0?.55:1});
