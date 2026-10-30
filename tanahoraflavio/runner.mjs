@@ -1,4 +1,4 @@
-import {createVoiceDirector} from './runner-voice-director.mjs?v=a850f0f9d9bf';
+import {createVoiceDirector} from './runner-voice-director.mjs?v=2073349101b7';
 import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=8066458e20b0";
 import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=eac2697a2d91";
 import { createGameAudio } from "./runner-audio.mjs?v=e90e0bf72ae7";
