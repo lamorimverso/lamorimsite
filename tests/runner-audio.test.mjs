@@ -11,17 +11,34 @@ function browserSpeech(voices) {
  return {window,emitted,get speaking(){return speaking;}};
 }
 function withBrowser(fixture,fn){const previous=globalThis.window;globalThis.window=fixture.window;try{fn();}finally{if(previous===undefined)delete globalThis.window;else globalThis.window=previous;}}
-test('narração usa voz pt-BR local mesmo quando uma voz remota vem primeiro',()=>{
- const fixture=browserSpeech([{name:'Remota',lang:'pt-BR',localService:false},{name:'Local',lang:'pt-BR',localService:true}]);
- withBrowser(fixture,()=>{createGameAudio().event('active',{text:'Notícia histórica com fonte.'});assert.equal(fixture.emitted.length,1);assert.equal(fixture.emitted[0].voice.name,'Local');});
-});
-test('sem voz local não envia texto ao sintetizador remoto',()=>{
- const fixture=browserSpeech([{name:'Remota',lang:'pt-BR',localService:false}]);
- withBrowser(fixture,()=>{createGameAudio().event('active',{text:'Notícia histórica com fonte.'});assert.equal(fixture.emitted.length,0);});
-});
-test('desligar som cancela narração em curso e impede novas falas',()=>{
+test('nenhuma fase da Joice chama sintetizador de fala por IA',()=>{
  const fixture=browserSpeech([{name:'Local',lang:'pt-BR',localService:true}]);
- withBrowser(fixture,()=>{const audio=createGameAudio();audio.event('active',{text:'Notícia.'});assert.equal(fixture.speaking,true);audio.toggle();assert.equal(fixture.speaking,false);audio.event('active',{text:'Outra notícia.'});assert.equal(fixture.emitted.length,1);});
+ withBrowser(fixture,()=>{
+  const audio=createGameAudio();
+  audio.event('warning',{text:'Texto histórico'});
+  audio.event('active',{text:'Texto histórico'});
+  audio.event('recovery',{text:'Texto histórico'});
+  assert.equal(fixture.emitted.length,0);
+  assert.equal(fixture.speaking,false);
+ });
+});
+test('voz sintética disponível não é usada para preencher fala de inimigo',()=>{
+ const fixture=browserSpeech([{name:'Local',lang:'pt-BR',localService:true}]);
+ withBrowser(fixture,()=>{
+  const audio=createGameAudio();
+  assert.equal(typeof audio.character,'undefined');
+  audio.event('active',{text:'Não narre a cena'});
+  assert.equal(fixture.emitted.length,0);
+ });
+});
+test('mute impede novos memes e não utiliza sintetizador',()=>{
+ const fixture=browserSpeech([{name:'Local',lang:'pt-BR',localService:true}]);
+ withBrowser(fixture,()=>{
+  const audio=createGameAudio();audio.toggle();
+  audio.event('active',{text:'Não falar'});
+  assert.equal(audio.voice('haddad'),false);
+  assert.equal(fixture.emitted.length,0);
+ });
 });
 test('escolha de som desligado permanece ao criar uma nova sessão',()=>{
  const fixture=browserSpeech([]),saved=new Map();
