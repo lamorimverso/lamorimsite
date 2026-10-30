@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import {createRun,startRun,advanceRun,jumpRun,crouchRun,PLAYER,SCENE_DISTANCE,scoreFor,difficultyAt} from '../tanahoraflavio/runner-core.mjs';
 
 const step=(r,n)=>{for(let i=0;i<n&&r.status==='running';i++)advanceRun(r,1/120,()=>0);};
-function bossRun(type='xandao'){
+function bossRun(type='xandao',fired=0){
  const r=createRun();startRun(r);r.viewportWidth=480;r.nextRaid=Infinity;
  r.bossBag=[type];r.nextBossAt=0;
  advanceRun(r,1/120,()=>0);
- r.boss.nextShot=100;r.boss.nextAttack=0;
+ r.boss.fired=fired;r.boss.nextAttack=0;
  advanceRun(r,1/120,()=>0);
  return r;
 }
@@ -41,7 +41,8 @@ test('projétil acertando tira vida e derruba jogador desprotegido',()=>{
 });
 test('o salto depois do lançamento realmente evita o projétil direcionado',()=>{
  const r=bossRun(),first=r.obstacles[0];
- step(r,144);assert.equal(r.status,'running');
+ r.boss.nextAttack=Infinity;
+ step(r,Math.floor(((first.x-148)/first.speed-.26)*120));assert.equal(r.status,'running');
  assert.equal(jumpRun(r),true);
  step(r,120);
  assert.equal(r.status,'running');
@@ -63,7 +64,7 @@ test('sete quilômetros por cenário, velocidade cresce e score mede apenas metr
  assert.ok(speeds.at(-1)<=435,'velocidade máxima ainda permite reação');
 });
 test('segurar Abaixar protege contra a mão em L do Lula, mas não contra martelo baixo',()=>{
- const high=bossRun('lula');assert.equal(crouchRun(high,true),true);
+ const high=bossRun('lula',1);assert.equal(crouchRun(high,true),true);
  assert.equal(high.player.crouching,true);
  step(high,120*1.9);
  assert.equal(high.status,'running');
@@ -81,11 +82,11 @@ test('pular sai do agachamento sem permitir abaixar em pleno salto',()=>{
  assert.equal(jumpRun(r),false);
  assert.equal(crouchRun(r,true),false);
 });
-test('martelo e mandado alternam, e Lua usa a mão em L no alto',()=>{
+test('Xandão mistura martelos e mandados, e Lula usa a mão em L no alto',()=>{
  const x=bossRun('xandao');assert.equal(x.obstacles[0].type,'hammer');
- x.boss.nextAttack=0;advanceRun(x,1/120,()=>0);
+ x.boss.fired=2;x.boss.nextAttack=0;advanceRun(x,1/120,()=>0);
  assert.equal(x.obstacles.at(-1).type,'mandado');
- assert.equal(x.obstacles.at(-1).targetY,70);
- const lula=bossRun('lula');assert.equal(lula.obstacles[0].type,'lhand');
- assert.equal(lula.obstacles[0].targetY,70);
+ assert.equal(x.obstacles.at(-1).targetY,90);
+ const lula=bossRun('lula',1);assert.equal(lula.obstacles[0].type,'lhand');
+ assert.equal(lula.obstacles[0].targetY,90);
 });

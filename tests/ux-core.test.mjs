@@ -43,17 +43,17 @@ test('soltar ou cancelar no ar limpa a intenção antes do pouso',()=>{
 // A constant-high pattern lets holding Down defeat the entire encounter.
 test('padrão público mistura salto e abaixar usando as armas de cada chefão',()=>{
  assert.equal(typeof core.bossAttackFor,'function');
- for(const [type,expected] of [
-  ['xandao',[{type:'hammer',action:'jump'},{type:'mandado',action:'crouch'}]],
-  ['haddad',[{type:'receipts',action:'crouch'},{type:'receipts',action:'jump'}]],
-  ['lula',[{type:'lhand',action:'crouch'},{type:'lhand',action:'jump'}]]
+ for(const [type,actions] of [
+  ['xandao',['jump','jump','crouch','jump']],
+  ['haddad',['crouch','jump','jump','crouch']],
+  ['lula',['jump','crouch','jump','jump']]
  ]){
   for(let fired=0;fired<4;fired++){
-   assert.deepEqual(core.bossAttackFor(type,fired),expected[fired%2]);
+   const action=actions[fired],weapon=type==='xandao'?(action==='jump'?'hammer':'mandado'):type==='lula'?'lhand':'receipts';
+   assert.deepEqual(core.bossAttackFor(type,fired),{type:weapon,action});
    const run=isolatedBoss(type,612,0,false,fired),attack=run.obstacles.at(-1);
-   assert.equal(attack.type,expected[fired%2].type);
-   assert.equal(attack.action,expected[fired%2].action);
-   assert.equal(attack.targetY,expected[fired%2].action==='jump'?29:70);
+   assert.equal(attack.type,weapon);assert.equal(attack.action,action);
+   assert.equal(attack.targetY,action==='jump'?29:90);
   }
  }
 });
@@ -62,7 +62,7 @@ test('o impacto registra a ação que teria evitado o perigo real',()=>{
  const common=running();common.obstacles=[{x:125,width:34,height:44,type:'pf'}];
  core.advanceRun(common,DT,()=>0);
  assert.deepEqual(common.lastHit,{type:'pf',action:'jump'});
- const high=isolatedBoss('lula');step(high,2);
+ const high=isolatedBoss('lula',900,0,false,1);step(high,2);
  assert.equal(high.status,'over');assert.deepEqual(high.lastHit,{type:'lhand',action:'crouch'});
  const low=isolatedBoss('haddad',900,0,false,1);core.crouchRun(low,true);step(low,2);
  assert.equal(low.status,'over');assert.deepEqual(low.lastHit,{type:'receipts',action:'jump'});
@@ -86,15 +86,15 @@ function bossContact(width,distance,assisted=false){
 }
 
 test('primeira visibilidade de inimigos comuns dá a mesma janela em celular e desktop',()=>{
- for(const [distance,min,max] of [[0,1.81,1.89],[9000000,1.07,1.15]]){
+ for(const [distance,min,max] of [[0,1.62,1.68],[9000000,.92,.98]]){
   const times=[480,612,900].map(width=>commonContact(width,distance));
   assert.ok(times.every(t=>t>=min&&t<=max),`${distance}m: ${times}`);
   assert.ok(Math.max(...times)-Math.min(...times)<.026,`largura não altera a reação: ${times}`);
  }
 });
 
-test('lançamento de chefão dá 1,35 a 1 segundo até contato em qualquer largura',()=>{
- for(const [distance,min,max] of [[0,1.32,1.38],[9000000,.98,1.03]]){
+test('lançamento de chefão dá 1,15 a .85 segundo até contato em qualquer largura',()=>{
+ for(const [distance,min,max] of [[0,1.12,1.18],[9000000,.83,.88]]){
   const times=[480,612,900].map(width=>bossContact(width,distance));
   assert.ok(times.every(t=>t>=min&&t<=max),`${distance}m: ${times}`);
   assert.ok(Math.max(...times)-Math.min(...times)<.026,`largura não altera a reação: ${times}`);
@@ -116,7 +116,7 @@ test('assistência alonga aproximação e deslocamento em 82% sem mudar o salto'
 });
 
 test('coletas de ataque alto ficam ao alcance de abaixar e acompanham o perigo',()=>{
- for(const [type,fired,height] of [['lula',0,18],['haddad',0,18],['xandao',1,18],['xandao',0,100]]){
+ for(const [type,fired,height] of [['lula',1,18],['haddad',0,18],['xandao',2,18],['xandao',0,100]]){
   const run=running();run.viewportWidth=612;run.nextRaid=Infinity;run.bossBag=[type];run.nextBossAt=0;
   core.advanceRun(run,DT,()=>0);run.boss.fired=fired;run.boss.nextAttack=0;
   run.nextPower=Infinity;run.nextPassport=0;core.advanceRun(run,DT,()=>0);
@@ -142,10 +142,11 @@ test('objetos manuais sem speed mantêm velocidade do mundo',()=>{
 
 // This pilot only reads the visible hazards and presses the actual controls.
 // It never rewrites position, items, immunity, lives, deadlines, or obstacles.
-export function legalPilot(seed,{width=900,assisted=false,limit=340}={}){
+export function legalPilot(seed,{width=900,assisted=false,limit=340,resize=false}={}){
  const run=running({assisted}),rng=seeded(seed);run.viewportWidth=width;
- let jumps=0,crouches=0,peak=0,shieldFrames=0;
+ let jumps=0,crouches=0,peak=0,shieldFrames=0,widthChanges=0;
  for(let i=0;i<120*limit&&run.status==='running'&&run.passports<100;i++){
+  if(resize&&i>0&&i%(120*12)===0){const width=[480,900,612,900][(i/(120*12)-1)%4];if(width!==run.viewportWidth){core.resizeRun(run,width);widthChanges++;}}
   const danger=run.obstacles.find(o=>o.x<run.viewportWidth&&o.x+o.width-3>core.PLAYER.x+5);
   const speed=danger?.speed??core.difficultyAt(run.distance).speed*(assisted ? .82 : 1);
   const action=danger?.action??(danger?.projectile&&danger.targetY>50?'crouch':'jump');
@@ -158,7 +159,7 @@ export function legalPilot(seed,{width=900,assisted=false,limit=340}={}){
   core.advanceRun(run,DT,rng);peak=Math.max(peak,run.player.y);
   if(run.shieldFor>0)shieldFrames++;
  }
- return {run,jumps,crouches,peak,shieldFrames};
+ return {run,jumps,crouches,peak,shieldFrames,widthChanges};
 }
 
 test('piloto legal coleta cem passaportes em 150–330 s sem imunidade ou teleporte artificial',()=>{
@@ -172,5 +173,12 @@ test('piloto legal coleta cem passaportes em 150–330 s sem imunidade ou telepo
   assert.ok(peak>95&&peak<110,'respeita o alcance físico do salto');
   assert.ok(shieldFrames>0&&shieldFrames/run.elapsed/120<.3,'apenas escudos coletados e temporários');
   assert.ok(run.bossesDefeated>=3,'a economia inclui os chefões da rota');
+ }
+});
+
+test('piloto legal continua coletando após rotações repetidas sem mudar física ou proteção',()=>{
+ for(const assisted of [false,true])for(const seed of [7,103,8801]){
+  const {run,widthChanges}=legalPilot(seed,{width:900,assisted,resize:true});
+  assert.equal(run.status,'running',`${seed}/${assisted} perdeu por ${JSON.stringify(run.lastHit)}`);assert.equal(run.lastHit,null);assert.ok(run.passports>=100);assert.equal(run.lives,2);assert.ok(widthChanges>=10);
  }
 });

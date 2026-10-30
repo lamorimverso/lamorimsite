@@ -1,4 +1,4 @@
-import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=6f0169adaf25";
+import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=2d33118db0c5";
 // Personagens em atlas WebP; itens e perigos continuam vetoriais em Canvas.
 const INK='#292337',CREAM='#fff6e5';
 function oval(c,x,y,rx,ry,fill,stroke=INK,w=1.8){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=w;c.stroke();}}
@@ -7,7 +7,7 @@ function path(c,points,fill,stroke=INK){c.beginPath();points.forEach(([x,y],i)=>
 function line(c,points,color=INK,width=2){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.strokeStyle=color;c.lineWidth=width;c.lineCap='round';c.lineJoin='round';c.stroke();}
 function text(c,value,x,y,size=7,color=CREAM){c.fillStyle=color;c.font='900 '+size+'px system-ui';c.textAlign='center';c.fillText(value,x,y);}
 
-export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait} from "./runner-sprites.mjs?v=6f0169adaf25";
+export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=2d33118db0c5";
 export function drawItem(c,{type,x,y,scale=1}){
  c.save();c.translate(x,y);c.scale(scale,scale);
  if(type==='shield'){
@@ -33,8 +33,7 @@ export function drawProtection(c,{x,y,crouching=false,remaining=0,foreground=fal
  drawItem(c,{type:'shield',x:cx,y:cy,scale:crouching?1.1:1.4});
  c.restore();
 }
-// Inimigos com um único quadro ganham passos discretos, sem alterar a
-// física da colisão. Com movimento reduzido (phase=0), ficam estáticos.
+// As poses de corrida são essenciais; reduzir efeitos só retira balanço e poeira.
 // Animação visual contínua do agachamento (0 em pé, 1 totalmente abaixado).
 // Estado físico/agachamento continua sob controle do motor para colisões exatas.
 export function crouchAnimationStep(pose,target,seconds,reducedMotion=false){
@@ -52,12 +51,30 @@ export function enemyMotionFor(type,phase=0,x=0){
  const stride=phase*.8+(Math.abs(x)%67)/67*Math.PI*2;
  return {bob:-Math.abs(Math.sin(stride))*2.4,lean:Math.sin(stride)*.034};
 }
-export function drawThreat(c,item,ground,phase){
+export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
  const x=item.x+item.width/2;c.save();c.translate(x,ground);
+ if(item.action==='crouch'){
+  // A coluna inteira é o perigo alto: não existe colisão invisível acima do ícone.
+  const h=item.height||72,w=item.width||46;
+  box(c,-w/2,-h,w,h,item.type==='wind'?'#b6e0ec':'#f3d7be',7,'#80527d');
+  line(c,[[-w/2+5,-h+6],[w/2-5,-h+6]],'#fff4e7',2);
+  c.translate(0,-(h-40)/2);
+ }
+
  if(item.type==='barrier'){box(c,-22,-28,44,12,'#f1bd65');for(let i=-15;i<20;i+=14)line(c,[[i,-27],[i+7,-17]],'#543b42',4);line(c,[[-15,-16],[-17,0]],INK,4);line(c,[[15,-16],[17,0]],INK,4);}
+ else if(item.type==='wind'){
+  for(let i=0;i<3;i++){c.beginPath();c.moveTo(-19,-32+i*12);c.bezierCurveTo(6,-40+i*12,20,-21+i*12,8,-19+i*12);c.strokeStyle='#236a8b';c.lineWidth=3;c.stroke();}
+ }
+ else if(item.type==='microphone'){
+  line(c,[[-9,-3],[8,-23]],'#444056',6);oval(c,10,-27,10,9,'#716a83','#2d283e',2);line(c,[[4,-30],[14,-24]],'#cbc4d5',2);
+ }
+ else if(item.type==='popcorn'){
+  path(c,[[-19,-25],[19,-25],[14,-1],[-14,-1]],'#e15262');for(let i=-9;i<=9;i+=9)line(c,[[i,-22],[i*.7,-4]],'#fff5db',4);
+  for(const [px,py] of [[-14,-28],[-6,-32],[3,-30],[12,-31],[17,-25]])oval(c,px,py,6,5,'#fff2bd','#a58049',1);
+ }
  else if(item.type==='case'){box(c,-17,-31,34,28,'#906490');box(c,-6,-37,12,6,'#e1b985',2);line(c,[[-8,-28],[-8,-7]],'#d9b88a',2);line(c,[[8,-28],[8,-7]],'#d9b88a',2);oval(c,-10,0,3,3,INK);oval(c,10,0,3,3,INK);}
  else if(item.type==='stamp'){box(c,-21,-15,42,13,'#a53e54');box(c,-8,-31,16,16,'#81584a');line(c,[[-23,-1],[23,-1]],'#e1a05e',3);}
- else if(item.type==='receipts'){for(let i=0;i<3;i++){box(c,-18+i*10,-34+i*4,20,25,'#fff1cf',2);for(let j=0;j<3;j++)line(c,[[-14+i*10,-28+i*4+j*5],[-3+i*10,-28+i*4+j*5]],'#417884',1.5);}}
+ else if((item.type==='receipts'||item.type==='paper-gate')){for(let i=0;i<3;i++){box(c,-18+i*10,-34+i*4,20,25,'#fff1cf',2);for(let j=0;j<3;j++)line(c,[[-14+i*10,-28+i*4+j*5],[-3+i*10,-28+i*4+j*5]],'#417884',1.5);}}
  else if(item.type==='hammer'){
   // Martelo do chefão Xandão: cabo de madeira, cabeça metálica.
   c.save();c.rotate(-.35);
@@ -82,7 +99,7 @@ export function drawThreat(c,item,ground,phase){
   line(c,[[-9,-10],[-4,-8]],'#ae6e57',1.5);c.restore();
  }
  else {
-  const movement=enemyMotionFor(item.type,phase,x);
+  const movement=enemyMotionFor(item.type,reducedMotion?0:phase,x);
   c.translate(0,movement.bob);c.rotate(movement.lean);
   drawActor(c,{type:item.type,x:0,y:0,scale:item.height/66,phase});
  }

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {definitions} from '../tanahoraflavio/runner-sprite-data.mjs';
 
 let moduleId=0;
+const sheetCount=Object.keys(definitions).length;
 
 async function browserEvents(t){
  const images=[],timers=[];
@@ -56,12 +57,12 @@ test('imagem que não responde encerra em 15 s e permite carregar novamente',asy
  lateLoad();lateError();deadline.callback();
  assert.deepEqual(progress,[],'eventos da tentativa encerrada não afetam a nova');
  assert.equal(sprites.drawSpriteActor(drawingContext()),false,'a folha antiga não é instalada');
- for(const image of images.slice(2))load(image);
+ for(const image of images.slice(sheetCount))load(image);
  await retry;
  const context=drawingContext();
  assert.equal(sprites.drawSpriteActor(context),true);
- assert.equal(context.drawn[0][0],images[2],'a renderização usa a tentativa nova');
- assert.deepEqual(progress,[[1,2],[2,2]]);
+ assert.equal(context.drawn[0][0],images[sheetCount],'a renderização usa a tentativa nova');
+ assert.deepEqual(progress,Array.from({length:sheetCount},(_,i)=>[i+1,sheetCount]));
  assert.ok(timers.every(timer=>timer.cleared),'não restam prazos ativos após concluir');
 });
 
@@ -79,12 +80,12 @@ test('erro de imagem descarta a tentativa incompleta e ignora seus callbacks tar
  const retry=sprites.loadSprites(count=>progress.push(count));
  oldLoad();oldError();
  assert.deepEqual(progress,[]);
- for(const image of images.slice(2))load(image);
+ for(const image of images.slice(sheetCount))load(image);
  await retry;
  const context=drawingContext();
  sprites.drawSpriteActor(context,{type:'xandao'});
- assert.equal(context.drawn[0][0],images[3]);
- assert.deepEqual(progress,[1,2]);
+ assert.equal(context.drawn[0][0],images[sheetCount+Object.keys(definitions).indexOf('chase')]);
+ assert.deepEqual(progress,Array.from({length:sheetCount},(_,i)=>i+1));
 });
 
 test('recortes pré-calculados conservam a orientação original à direita em todas as poses do herói',async t=>{
@@ -111,7 +112,7 @@ test('recortes pré-calculados conservam a orientação original à direita em t
  assert.ok(boss.drawn[0][7]>20&&boss.drawn[0][8]>60);
  assert.deepEqual(boss.transforms,[]);
  await sprites.loadSprites();
- assert.equal(images.length,2,'o atlas pronto continua em memória');
+ assert.equal(images.length,sheetCount,'o atlas pronto continua em memória');
 });
 
 test('atlas com dimensões incompatíveis é rejeitado e pode ser tentado de novo',async t=>{
@@ -121,7 +122,7 @@ test('atlas com dimensões incompatíveis é rejeitado e pode ser tentado de nov
  load(images[0],{width:10,height:10});
  assert.match((await firstResult).message,/dimens|atlas/i);
  const retry=sprites.loadSprites();
- for(const image of images.slice(2))load(image);
+ for(const image of images.slice(sheetCount))load(image);
  await retry;
  assert.equal(sprites.drawSpriteActor(drawingContext()),true);
 });

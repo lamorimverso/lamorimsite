@@ -27,7 +27,7 @@ test('a primeira aparição espera 22 km de rota sem variação aleatória',()=>
  }
 });
 
-test('a campanha repete Haddad, Lula e Xandão em marcos exatos de 7 km',()=>{
+test('campanha repete a ordem e reserva sete quilômetros depois de cada vitória',()=>{
  for(const random of [0,.999]){
   const run=isolatedRoute(),rng=()=>random,seen=[];
   run.routeDistance=21990;
@@ -42,18 +42,17 @@ test('a campanha repete Haddad, Lula e Xandão em marcos exatos de 7 km',()=>{
    previousBoss=run.boss;
   }
   assert.equal(run.bossesDefeated,6,'a sequência termina por desvios reais');
-  assert.deepEqual(seen,[
-   {type:'haddad',at:22000},{type:'lula',at:29000},{type:'xandao',at:36000},
-   {type:'haddad',at:43000},{type:'lula',at:50000},{type:'xandao',at:57000}
-  ]);
-  assert.equal(run.nextBossAt,64000);
+  assert.deepEqual(seen.map(s=>s.type),['haddad','lula','xandao','haddad','lula','xandao']);
+  assert.equal(seen[0].at,22000);
+  for(let i=1;i<seen.length;i++)assert.ok(seen[i].at-seen[i-1].at>=7000);
+  assert.ok(run.nextBossAt>=run.routeDistance+7000-1e-7);
  }
 });
 
 for(const [type,total,goalKind,types,actions,objective] of [
- ['haddad',5,'papers',['receipts','receipts','receipts','receipts','receipts'],['crouch','jump','crouch','jump','crouch'],/5 papéis/],
- ['lula',6,'pairs',['lhand','lhand','lhand','lhand','lhand','lhand'],['crouch','jump','crouch','jump','crouch','jump'],/3 sequências.*altos.*baixos/],
- ['xandao',8,'hammer-mandado',['hammer','mandado','hammer','mandado','hammer','mandado','hammer','mandado'],['jump','crouch','jump','crouch','jump','crouch','jump','crouch'],/4 martelos.*4 mandados/]
+ ['haddad',9,'papers',Array(9).fill('receipts'),['crouch','jump','jump','crouch','crouch','jump','crouch','jump','jump'],/9 papéis/],
+ ['lula',10,'patterns',Array(10).fill('lhand'),['jump','crouch','jump','jump','crouch','crouch','jump','crouch','jump','crouch'],/10 gestos em L/],
+ ['xandao',12,'hammer-mandado',['hammer','hammer','mandado','hammer','mandado','mandado','hammer','mandado','hammer','mandado','mandado','hammer'],['jump','jump','crouch','jump','crouch','crouch','jump','crouch','jump','crouch','crouch','jump'],/12 martelos e mandados/]
 ]){
  test(`${type} tem objetivo próprio e só termina após os ${total} ataques reais passarem`,()=>{
   const run=isolatedRoute(),attacks=[];
@@ -77,10 +76,10 @@ for(const [type,total,goalKind,types,actions,objective] of [
   assert.ok(attacks.every(attack=>attack.x+attack.width<core.PLAYER.x),'o último ataque precisa passar inteiro');
   for(const round of [0,3,30]){
    const config=core.bossAtRound(round,type);
-   assert.equal(config.attacks,total,'a meta permanece completa nas voltas seguintes');
+   assert.equal(config.attacks,total+2*Math.min(2,Math.floor(round/3)),'voltas aumentam a meta até quatro ataques extras');
    assert.equal(config.goalKind,goalKind);
-   assert.match(config.objective,objective);
-   assert.ok(config.interval>=1.5,'o ritmo preserva o limite seguro existente');
+   assert.ok(config.objective.includes(String(config.attacks)));
+   assert.ok(config.interval>=1.04,'o ritmo preserva o novo limite seguro');
   }
  });
 }
@@ -101,7 +100,7 @@ test('um encontro alcançado espera Joice encerrar enquanto a rota continua',()=
  advance(run);
  assert.equal(run.boss,null);assert.equal(run.nextBossAt,22000);
  assert.ok(run.routeDistance>23000);assert.ok(run.distance>0);
- for(let i=0;i<30&&!run.boss;i++)advance(run);
+ for(let i=0;i<120*3&&!run.boss;i++)advance(run);
  assert.equal(run.boss?.type,'haddad');assert.equal(run.nextBossAt,22000);
 });
 
@@ -112,8 +111,8 @@ test('marcos vencidos durante o intervalo de segurança continuam pendentes em o
  for(let i=0;i<30&&!run.boss;i++)advance(run);
  assert.equal(run.boss?.type,'haddad');
  for(let i=0;i<120*30&&run.boss;i++)advance(run);
- assert.equal(run.nextBossAt,29000,'o próximo marco não salta para além da rota');
+ assert.ok(run.nextBossAt>=run.routeDistance+7000-1e-7,'vitória abre trecho de corrida sem fila acumulada');
  assert.equal(run.boss,null);assert.ok(run.bossCooldown>0);
- for(let i=0;i<120*12&&!run.boss;i++)advance(run);
- assert.equal(run.boss?.type,'lula');assert.equal(run.nextBossAt,29000);
+ const next=run.nextBossAt;for(let i=0;i<120*40&&!run.boss;i++)advance(run);
+ assert.equal(run.boss?.type,'lula');assert.equal(run.nextBossAt,next);
 });

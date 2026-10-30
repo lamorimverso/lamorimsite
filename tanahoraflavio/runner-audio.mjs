@@ -1,16 +1,17 @@
-import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=1d92b4ea737d';
+import {createGameSoundtrack} from './runner-soundtrack.mjs?v=49d440710b77';
+import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=e04644dd1f8f';
 // Efeitos locais e recorte de arquivo identificado; nenhuma imitação de voz.
-export function createGameAudio() {
- let enabled=true,context=null,utterance=null,nodes=[],primed=false,recording=null,raidVoice=false;
+export function createGameAudio({onVoice=()=>{}}={}) {
+ let enabled=true,context=null,utterance=null,nodes=[],primed=false,recording=null,raidVoice=false,music=null,voicePriority=0;
  const preferenceKey='tanahoraflavio.runner.sound.v1';
  try{enabled=window.localStorage?.getItem(preferenceKey)!=='off';}catch{/* Armazenamento é opcional. */}
  const stopRecording=()=>{
   if(recording){try{recording.pause();recording.currentTime=0;}catch{/* A mídia pode já ter sido liberada. */}}
-  recording=null;
+  recording=null;voicePriority=0;onVoice(null);
  };
  const stop=()=>{
   raidVoice=false;
-  stopRecording();
+  stopRecording();music?.stop();
   for(const node of nodes){try{node.stop();}catch{/* Nó já encerrado. */}}nodes=[];
   if(utterance&&'speechSynthesis' in window){try{window.speechSynthesis.cancel();}catch{/* Legenda permanece. */}}
   utterance=null;
@@ -18,17 +19,19 @@ export function createGameAudio() {
  const prime=()=>{
   if(!enabled)return;
   primed=true;
-  try{const Audio=window.AudioContext||window.webkitAudioContext;if(Audio&&!context)context=new Audio();
+  try{const Audio=window.AudioContext||window.webkitAudioContext;if(Audio&&!context){context=new Audio();music=createGameSoundtrack(context);}
    if(context?.state==='suspended')context.resume().catch(()=>{});
   }catch{context=null;}
  };
- const voice=name=>{
+ const voice=(name,{priority=2}={})=>{
   const clip=ARCHIVE_VOICES[name];
   if(!clip||!enabled||!primed||typeof window.Audio!=='function')return false;
+  if(recording&&priority<voicePriority)return false;
   stopRecording();
   try{
    const url=new URL(clip.file,import.meta.url);url.searchParams.set('v',clip.sha256.slice(0,12));
-   const player=new window.Audio(url.href);recording=player;player.volume=.72;player.preload='none';
+   const player=new window.Audio(url.href);recording=player;voicePriority=priority;player.volume=.68;player.preload='none';
+   onVoice(clip);player.onended=()=>{if(recording===player){recording=null;voicePriority=0;onVoice(null);}};
    player.play()?.catch?.(()=>{if(recording===player)stopRecording();});
    return true;
   }catch{stopRecording();return false;}
@@ -54,7 +57,8 @@ export function createGameAudio() {
    hit:[125,44,.24,'triangle',.12],
    pickup:[660,880,.1,'sine',.07],
    boss:[165,85,.25,'triangle',.105],
-   victory:[440,780,.23,'sine',.085]
+   victory:[440,780,.23,'sine',.085],
+   high:[880,610,.13,'sine',.065],low:[150,100,.13,'triangle',.075]
   };
   const spec=sounds[name];if(!spec||nodes.length>=12)return;
   try{
@@ -80,11 +84,12 @@ export function createGameAudio() {
   }catch{utterance=null;}
  };
  return {get enabled(){return enabled;},prime,stop,effect,voice,
+  background(state){if(enabled&&primed)music?.update({...state,ducked:!!recording});},
   toggle(){enabled=!enabled;try{window.localStorage?.setItem(preferenceKey,enabled?'on':'off');}catch{/* A escolha vale nesta sessão. */}if(!enabled)stop();else prime();return enabled;},
   event(phase,fact){
    if(!enabled)return;
-   if(phase==='warning'){stop();raidVoice=voice('joice');if(!raidVoice)knocks();}
-   else if(phase==='active'){if(!raidVoice){stop();speak('Toc, toc, toc! É a Polícia Federal! '+(fact?.text||''));}}
-   else stop();
+   if(phase==='warning'){stopRecording();raidVoice=voice('joice',{priority:3});if(!raidVoice)knocks();}
+   else if(phase==='active'){if(!raidVoice){stopRecording();speak('Toc, toc, toc! É a Polícia Federal! '+(fact?.text||''));}}
+   else stopRecording();
   }};
 }

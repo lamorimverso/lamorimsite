@@ -1,7 +1,9 @@
 // Atlas e recortes gerados dos desenhos escolhidos, preservando os PNGs fontes.
-import {definitions} from './runner-sprite-data.mjs?v=329f43f1ddf5';
+import {definitions} from './runner-sprite-data.mjs?v=ed5243a1383f';
 const sheets=new Map();let activeAttempt=null;
 const actorGroups={flavio:[0,1,2,3,4,5,6,7],xandao:[0,1,2],haddad:[4,5,6],lula:[8,9,10],pf:[3,13],janones:[7,14],army:[11,15],joice:[12]};
+const runningGroups={haddad:{sheet:'chase',start:0},lula:{sheet:'chase',start:4},xandao:{sheet:'chase',start:8},joice:{sheet:'chase',start:12},dilma:{sheet:'cameos',start:0},simone:{sheet:'cameos',start:4},soraya:{sheet:'cameos',start:8},'ze-gotinha':{sheet:'cameos',start:12}};
+export const SPRITE_SHEET_COUNT=Object.keys(definitions).length;
 export function loadSprites(onProgress=()=>{}){
  const entries=Object.entries(definitions),total=entries.length;
  if(sheets.size===total)return Promise.resolve();
@@ -44,13 +46,16 @@ export function spriteFrameFor(type,{phase=0,airborne=false,falling=false,landin
   if(airborne)return {sheet:'hero',index:falling?9:8};
   return {sheet:'hero',index:Math.floor(Math.max(0,phase))%8};
  }
+ const running=runningGroups[type];
+ if(running&&!attacking&&!preparing)return {sheet:running.sheet,index:running.start+Math.floor(Math.max(0,phase))%4};
  const group=actorGroups[type]||actorGroups.pf;
  return {sheet:'cast',index:group.length===3?group[attacking?2:preparing?1:0]:group[Math.floor(Math.max(0,phase))%group.length]};
 }
 // Cada atlas tem resolução própria. As poses do Flávio vindas do atlas
 // de elenco devem manter a altura aparente dos quadros de corrida.
 export function spriteScaleFor(type,sheetName,frames,scale=1){
- const indices=actorGroups[type]||actorGroups.pf;
+ const running=runningGroups[type];
+ const indices=running&&sheetName===running.sheet?Array.from({length:4},(_,i)=>running.start+i):actorGroups[type]||actorGroups.pf;
  const sourceHeight=Math.max(...indices.map(i=>frames[i]?.height||0));
  return sourceHeight>0?(type==='joice'?90:94)*scale/sourceHeight:0;
 }

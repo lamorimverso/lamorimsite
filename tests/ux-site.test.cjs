@@ -195,9 +195,9 @@ test('progresso distingue a rota dos metros e chefão mostra a ação correta',a
   assert.equal(await page.locator('.game-stage-header').isVisible(),true);
   assert.equal(await page.locator('#game-progress').count(),0);
   assert.match(await page.locator('#game-stage-time').textContent(),/ataques|chefão/i);
-  assert.match(await page.locator('#game-objective').textContent(),/abaix/i);
+  assert.match(await page.locator('#game-objective').textContent(),/pule/i);
   await page.evaluate(()=>{__testRun.boss.fired=1;__testRun.boss.nextAttack=.5;});
-  await page.waitForFunction(()=>/pule/i.test(document.getElementById('game-objective').textContent));
+  await page.waitForFunction(()=>/abaix/i.test(document.getElementById('game-objective').textContent));
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
@@ -302,7 +302,7 @@ test('HUD do chefão fica fora da pista e não desloca pista ou controles',async
 test('HTML antigo no cache se atualiza sem travar a inicialização',async()=>{
  const {context,page,errors}=await open({legacyFirst:true});
  try{
-  await page.waitForURL(url=>url.searchParams.get('ui')==='20261029-endless', {timeout:4000});
+  await page.waitForURL(url=>url.searchParams.get('ui')==='20261030-pressure', {timeout:4000});
   await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
   assert.equal(await page.locator('#game-settings').count(),1);
   assert.match(await page.locator('#days').textContent(),/^\d+$/);

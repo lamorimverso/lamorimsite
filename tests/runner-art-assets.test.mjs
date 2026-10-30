@@ -26,7 +26,7 @@ function imageDecoder(){
 
 test('recortes explícitos incluem cada personagem sem cortar nem capturar vizinhos',async()=>{
  const {definitions,frames}=await manifest(),sharp=imageDecoder();
- for(const [name,filename,count] of [['hero','flavio-motion-v2',12],['cast','characters-motion-v2',16]]){
+ for(const [name,filename,count] of [['hero','flavio-motion-v2',12],['cast','characters-motion-v2',16],['cameos','cameos-motion-v1',16],['chase','chase-motion-v1',16]]){
   const {data,info:{width,height}}=await sharp(join(root,'tanahoraflavio/assets',filename+'.png')).ensureAlpha().raw().toBuffer({resolveWithObject:true});
   assert.equal(frames[name].length,count);
   assert.deepEqual([definitions[name].width,definitions[name].height],[width,height]);
@@ -50,7 +50,7 @@ test('recortes explícitos incluem cada personagem sem cortar nem capturar vizin
 test('WebP preserva cada pixel visível e dimensões dos PNGs com menos bytes e hash real',async()=>{
  const {definitions}=await manifest();
  const sharp=imageDecoder();
- for(const [name,filename] of [['hero','flavio-motion-v2'],['cast','characters-motion-v2']]){
+ for(const [name,filename] of [['hero','flavio-motion-v2'],['cast','characters-motion-v2'],['cameos','cameos-motion-v1'],['chase','chase-motion-v1']]){
   const definition=definitions[name],url=new URL(definition.url);
   assert.equal(url.pathname.endsWith(`${filename}.webp`),true);
   const source=await readFile(join(root,'tanahoraflavio/assets',`${filename}.png`));
