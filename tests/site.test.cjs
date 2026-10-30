@@ -656,21 +656,24 @@ test('Joice anuncia evento com legenda e fonte, encerra e não muda a posição 
   assert.equal(await page.locator('#runner-canvas').isVisible(),true);assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
-test('ocultar a página interrompe a narração da Joice e congela seu evento',async()=>{
+test('ocultar a página corta o áudio original de Joice, sem narrador artificial, e congela evento',async()=>{
  const {context,page,errors}=await openWithRun({},()=>{
-  window.__narrationActive=false;
+  window.__narrationCalls=0;
   window.SpeechSynthesisUtterance=class{constructor(text){this.text=text;}};
   Object.defineProperty(window,'speechSynthesis',{configurable:true,value:{
-   getVoices:()=>[{name:'Voz local de teste',lang:'pt-BR',localService:true}],
-   speak:()=>{window.__narrationActive=true;},cancel:()=>{window.__narrationActive=false;}
+   getVoices:()=>[{name:'Voz local',lang:'pt-BR',localService:true}],
+   speak:()=>{window.__narrationCalls++;},cancel:()=>{}
   }});
+  const NativeAudio=window.Audio;window.__raidTracks=[];
+  window.Audio=function(...args){const player=new NativeAudio(...args);window.__raidTracks.push(player);return player;};
  });
  try{
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
   await page.evaluate(()=>{const r=globalThis.__testRun;r.nextBossAt=Infinity;r.nextObstacle=1000;r.obstacles=[];r.raid={phase:'active',remaining:8,factIndex:0,id:1};});
-  await page.waitForFunction(()=>window.__narrationActive);
+  await page.waitForFunction(()=>window.__raidTracks.some(p=>p.src.includes('joice-toc-toc-v1.mp3')&&!p.paused));
+  assert.equal(await page.evaluate(()=>window.__narrationCalls),0,'não cria falas por IA');
   await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});
-  assert.equal(await page.evaluate(()=>window.__narrationActive),false);
+  assert.equal(await page.evaluate(()=>window.__raidTracks.every(p=>p.paused)),true,'clipe interrompido ao ocultar');
   const remaining=await page.evaluate(()=>globalThis.__testRun.raid.remaining);
   await page.waitForTimeout(150);assert.equal(await page.evaluate(()=>globalThis.__testRun.raid.remaining),remaining);
   assert.deepEqual(errors,[]);
