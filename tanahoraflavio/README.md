@@ -13,6 +13,14 @@ Site estático em `tanahoraflavio/`, atualmente no repositório público `lamori
 - Contagem e retrato grandes centralizados no topo; ao descer, o mesmo bloco se transforma no cabeçalho compacto acima do jogo. Compartilhar preservado, sem navegação em abas nem playlist.
 - Efeitos sonoros originais e um recorte curto de arquivo de Haddad, identificados na ajuda e controlados pelo botão de som. Nenhuma gravação musical nem imitação de voz.
 
+## Ajuste de áudio e dificuldade — 30/10/2026
+
+- **Raiz da falha sonora:** os recortes de memes já constavam do manifesto `runner-voice-data.mjs`, porém a fila de vozes impunha 14–22 s de silêncio e aguardava risco baixo; os personagens muitas vezes deixavam a tela antes da chamada. O diretor agora reserva uma janela contextual de 3 s para Janones e outros personagens com gravações existentes; ainda respeita mute, prioridades e perigo imediato.
+- **Personagens sem gravação licenciada e atribuída:** cada tipo de perseguidor utiliza um sinal musical sintético curto distinto. Quando o navegador disponibiliza voz local pt-BR, um narrador genérico anuncia o nome — sem imitar pessoas reais; não é um arquivo da figura pública. Não inventar falas nem afirmar que uma gravação faltante está disponível.
+- **Progressão:** velocidade lógica inicia em 270 px/s e aproxima-se de 435 px/s ao longo de várias voltas, com escala contínua dependente de distância e tempo. A dificuldade não satura automaticamente no primeiro circuito. Os intervalos e o elenco de obstáculos têm microvariações determinísticas por semente, sem reduzir o isolamento mínimo de contatos de 0,82 s.
+- **Anti-previsibilidade:** personagens de perigos altos são escolhidos por sorteio com impedimento de repetição imediata; a mesma ação não aparece quatro vezes seguidas após a introdução. O HUD mostra risco/10 e a velocidade lógica em px/s, que não representa km/h.
+- **Validação:** regressões específicas em `tests/runner-character-pressure.test.mjs`, além da suíte histórica de física, chefões, celular, áudio, e equilíbrio.
+
 ## Minigame: Corre, Flávio!
 
 - Corrida infinita para teclado e toque, sem pausa manual. Tecla Espaço, ↑, pista ou Pular acionam o salto; ↓/S ou **Abaixar** reduz a altura do personagem, no chão. Segurar durante o salto guarda a intenção até o pouso; a opção tocar para alternar dispensa pressão prolongada. Pular sai do agachamento imediatamente; no celular, outro dedo pode saltar em Pular ou na pista enquanto Abaixar continua pressionado. Uma nova pressão no ar pode aguardar o pouso por até120ms, sem salto duplo. Perda de foco/visibilidade limpa intenções pendentes e suspende a simulação.
