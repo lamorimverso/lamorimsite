@@ -61,6 +61,9 @@ const assistance = run => run.assisted ? .82 : 1;
 // Primeiro contato horizontal usa o mesmo recuo de 3 px da colisão abaixo.
 const contactX = PLAYER.x+PLAYER.width-6;
 const JUMP_BUFFER_SECONDS = .12;
+const JACARE_ENTRY_GRACE = .9;
+const JACARE_RESTORE_GRACE = .55;
+const JACARE_RESTORE_FLASH = .48;
 
 export function difficultyAt(distance,elapsed=0) {
  const d=Number.isFinite(distance)?Math.max(0,distance):0,t=Number.isFinite(elapsed)?Math.max(0,elapsed):0;
@@ -95,7 +98,7 @@ export function pursuitAt(seconds,rng=()=>.5) {
 }
 export function createRun({assisted=false}={}) {
  return {status:'ready',assisted:assisted===true,elapsed:0,distance:0,routeDistance:0,viewportWidth:WORLD.width,bonus:0,collected:0,passports:0,lives:1,
-  event:'',events:0,player:{y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jumpBufferedUntil:0},obstacles:[],pickups:[],lastHit:null,
+  event:'',events:0,player:{y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareAge:0,restoreFlashFor:0,jumpBufferedUntil:0},obstacles:[],pickups:[],lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,shieldFor:0,graceFor:0,
   lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:null,bossCooldown:0,
@@ -128,7 +131,14 @@ export function jumpRun(run){
  if(run.status!=='running')return false;
  // Antídoto exclusivamente cartunesco: o primeiro ↑ restaura o herói,
  // sem conceder um salto gratuito que possa contornar um ataque.
- if(run.player.isJacare){run.player.isJacare=false;run.player.jumpBufferedUntil=0;run.player.crouchHeld=false;run.player.crouching=false;announce(run,'Cloroquina de videogame! Flávio voltou ao normal. Isto é ficção, não orientação médica.');return false;}
+ if(run.player.isJacare){
+  run.player.isJacare=false;run.player.jacareAge=0;
+  run.player.restoreFlashFor=JACARE_RESTORE_FLASH;
+  run.graceFor=Math.max(run.graceFor,JACARE_RESTORE_GRACE);
+  run.player.jumpBufferedUntil=0;run.player.crouchHeld=false;run.player.crouching=false;
+  announce(run,'Antídoto fictício de videogame: voltou a Flávio! Próximo ↑ pula. Vacinas não transformam pessoas em jacarés; cloroquina não reverte vacinas.');
+  return false;
+ }
  if(run.player.y>0||run.player.velocity>0){run.player.jumpBufferedUntil=run.elapsed+JUMP_BUFFER_SECONDS;return false;}
  run.player.jumpBufferedUntil=0;run.player.crouching=false;run.player.velocity=610;return true;
 }
@@ -240,6 +250,8 @@ function rewardForObstacle(run,obstacle,balance,rng){
 export function advanceRun(run,seconds,rng=Math.random){
  if(run.status!=='running'||!Number.isFinite(seconds)||seconds<=0)return;
  const dt=Math.min(seconds,.05);run.elapsed+=dt;
+ if(run.player.isJacare)run.player.jacareAge+=dt;
+ run.player.restoreFlashFor=Math.max(0,run.player.restoreFlashFor-dt);
  if(run.nextBossAt===null)run.nextBossAt=nextBossDistance(0);
  if(run.nextRaid===null)run.nextRaid=18+random(rng)*12;
  const balance=difficultyAt(run.distance,run.elapsed),travel=balance.speed*assistance(run)*dt;run.distance+=travel;
@@ -319,13 +331,24 @@ export function advanceRun(run,seconds,rng=Math.random){
   const hit=right>p.x-12&&left<p.x+12&&top>p.y-12&&bottom<p.y+12;
   if(hit){
    run.collected++;run.lastPickup=p.type;
-   if(p.type==='ze-gotinha'){run.obstacles=run.obstacles.filter(o=>o.bossAttack);run.nextObstacle=Math.max(2.5,run.nextObstacle);run.player.isJacare=true;run.player.crouching=false;run.player.crouchHeld=false;run.player.jumpBufferedUntil=0;announce(run,'Jacaré fictício! Não pode pular. Aperte ↑ ou toque na pista para voltar a Flávio com o antídoto de videogame.');}
+   if(p.type==='ze-gotinha'){
+    run.obstacles=run.obstacles.filter(o=>o.bossAttack);
+    run.nextObstacle=Math.max(2.5,run.nextObstacle);
+    run.graceFor=Math.max(run.graceFor,JACARE_ENTRY_GRACE);
+    run.player.isJacare=true;run.player.jacareAge=0;run.player.restoreFlashFor=0;
+    run.player.crouching=false;run.player.crouchHeld=false;run.player.jumpBufferedUntil=0;
+    announce(run,'Zé Gotinha: transformação fictícia em jacaré! Não pode saltar. Pressione ↑ uma vez para voltar à forma humana; ↑ novamente para pular. Vacinas não causam isso.');
+   }
    if(p.type==='shield'){run.shieldFor=6;announce(run,'Escudo das Américas! Proteção por 6 segundos.');}
    if(p.type==='passport'&&++run.passports%100===0){run.lives++;announce(run,'100 passaportes! Uma vida extra; total: '+run.lives+'.');}
   }return !hit;
  });
+ // A largura visual do jacaré é de aproximadamente 70 px (120-15 a 154+17).
+ // O humano mantém as margens antigas para preservar o restante da física.
+ const collisionLeft=run.player.isJacare?PLAYER.x-15:left;
+ const collisionRight=run.player.isJacare?PLAYER.x+PLAYER.width+17:right;
  const hit=run.shieldFor<=0&&run.graceFor<=0&&run.obstacles.find(o=>
-  right>o.x+3&&left<o.x+o.width-3&&(
+  collisionRight>o.x+3&&collisionLeft<o.x+o.width-3&&(
    o.projectile?(bottom<o.y+o.height/2&&top>o.y-o.height/2):(bottom<o.height&&top>0)
   ));
  if(hit){
