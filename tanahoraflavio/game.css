@@ -197,3 +197,7 @@ body{background:radial-gradient(ellipse at 50% 210px,#f2eef9 0,#faf9fc 44%,#fff 
 @media(prefers-reduced-motion:reduce){.game-transition-track>span{transition:none}.game-card[data-run-state="running"][data-power="shield"] .game-hud{animation:none}}
 .game-card[data-reduced-motion="true"] .game-transition-track>span{transition:none}
 .game-card[data-reduced-motion="true"][data-power="shield"] .game-hud{animation:none}
+
+/* A forma de jacaré exige comando de retorno visível mesmo sem escudo. */
+.game-card[data-power="jacare"] .game-hud{display:flex;background:#e8f6e9f5;border-color:#7ea981}
+.game-card[data-power="jacare"] .game-hud strong{color:#22573a}
