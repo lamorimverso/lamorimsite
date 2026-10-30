@@ -58,6 +58,9 @@ export function createGameAudio({onVoice=()=>{}}={}) {
    pickup:[660,880,.1,'sine',.07],
    boss:[165,85,.25,'triangle',.105],
    victory:[440,780,.23,'sine',.085],
+   stage:[380,550,.23,'triangle',.075],
+   transform:[320,105,.36,'triangle',.105],
+   restore:[260,690,.23,'sine',.08],
    high:[880,610,.13,'sine',.065],low:[150,100,.13,'triangle',.075]
   };
   const spec=sounds[name];if(!spec||nodes.length>=12)return;
