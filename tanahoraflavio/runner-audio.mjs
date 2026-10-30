@@ -2,7 +2,7 @@ import {createGameSoundtrack} from './runner-soundtrack.mjs?v=101619002437';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=e04644dd1f8f';
 // Efeitos locais e recorte de arquivo identificado; nenhuma imitação de voz.
 export function createGameAudio({onVoice=()=>{}}={}) {
- let enabled=true,context=null,utterance=null,nodes=[],primed=false,recording=null,raidVoice=false,music=null,voicePriority=0;
+ let enabled=true,context=null,utterance=null,nodes=[],primed=false,recording=null,raidVoice=false,raidPrepared=false,music=null,voicePriority=0;
  const preferenceKey='tanahoraflavio.runner.sound.v1';
  try{enabled=window.localStorage?.getItem(preferenceKey)!=='off';}catch{/* Armazenamento é opcional. */}
  const stopRecording=()=>{
@@ -91,8 +91,8 @@ export function createGameAudio({onVoice=()=>{}}={}) {
   toggle(){enabled=!enabled;try{window.localStorage?.setItem(preferenceKey,enabled?'on':'off');}catch{/* A escolha vale nesta sessão. */}if(!enabled)stop();else prime();return enabled;},
   event(phase,fact){
    if(!enabled)return;
-   if(phase==='warning'){stopRecording();raidVoice=voice('joice',{priority:3,loop:true});if(!raidVoice)knocks();}
-   else if(phase==='active'){if(!raidVoice){raidVoice=voice('joice',{priority:3,loop:true});if(!raidVoice)knocks();}}
-   else stopRecording();
+   if(phase==='warning'){raidPrepared=true;stopRecording();raidVoice=voice('joice',{priority:3,loop:true});if(!raidVoice)knocks();}
+   else if(phase==='active'){if(!raidVoice){if(raidPrepared)raidVoice=voice('joice',{priority:3,loop:true});if(!raidVoice){stopRecording();speak('Toc, toc, toc! É a Polícia Federal! '+(fact?.text||''));}}}
+   else {raidPrepared=false;raidVoice=false;stopRecording();}
   }};
 }
