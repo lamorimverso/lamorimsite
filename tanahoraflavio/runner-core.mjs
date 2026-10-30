@@ -64,9 +64,11 @@ const JUMP_BUFFER_SECONDS = .12;
 
 export function difficultyAt(distance,elapsed=0) {
  const d=Number.isFinite(distance)?Math.max(0,distance):0,t=Number.isFinite(elapsed)?Math.max(0,elapsed):0;
- const pressure=Math.min(1,.55*d/40000+.45*t/140),p=d/(d+10000);
+ // Pressão cresce por várias voltas em vez de saturar na primeira.
+ // O tempo e a distância continuam contínuos ao atravessar os cenários.
+ const pressure=1-Math.exp(-(d/62000+t/500)),p=d/(d+10000);
  return {level:1+Math.floor(9*pressure),pressure,
-  speed:250+185*pressure,obstacleGap:Math.max(1.12,1.70-.58*pressure),
+  speed:270+165*pressure,obstacleGap:Math.max(1.12,1.70-.58*pressure),
   pickupGap:12+8*p,passportGap:5.2+1.2*p,powerGap:24+32*p,
   bossApproach:Math.max(.85,1.15-.30*pressure),obstacleApproach:Math.max(.95,1.65-.70*pressure)};
 }
@@ -97,7 +99,7 @@ export function createRun({assisted=false}={}) {
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,shieldFor:0,graceFor:0,
   lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:null,bossCooldown:0,
-  raid:null,nextRaid:null,raids:0,lastFact:-1,cameo:null,overheadCount:0,lastAction:null,actionStreak:0,nextAllyAt:14000,alliesMet:0};
+  raid:null,nextRaid:null,raids:0,lastFact:-1,cameo:null,overheadCount:0,lastOverheadActor:null,lastAction:null,actionStreak:0,nextAllyAt:14000,alliesMet:0};
 }
 // Reenquadra ondas ainda à frente, preservando prazo de contato e trajetória.
 // Perigos cujo contato já começou ficam onde estão: nunca reaparecem no caminho.
@@ -273,12 +275,20 @@ export function advanceRun(run,seconds,rng=Math.random){
   run.nextObstacle-=dt;
   if(run.nextObstacle<=0){
    const raidActive=run.raid?.phase==='active';
-   let action=run.elapsed<10?'jump':random(rng)<(raidActive ? .44 : .38)?'crouch':'jump';
-   if(action===run.lastAction&&run.actionStreak>=3&&run.elapsed>=10)action=action==='jump'?'crouch':'jump';
+   // O sorteio é contextual, mas não impõe um ciclo previsível de ações.
+   // O limite de três perigos iguais evita ensinar uma estratégia automática.
+   const previous=run.lastAction;
+   const inverted=previous==='jump'?'crouch':'jump';
+   let action=run.elapsed<10?'jump':random(rng)<(raidActive ? .49 : .40+.08*balance.pressure)?'crouch':'jump';
+   if(run.elapsed>=10&&previous===action&&run.actionStreak>=3)action=inverted;
+   else if(run.elapsed>=10&&previous===action&&run.actionStreak>=2&&balance.pressure>.52&&random(rng)<.38)action=inverted;
    run.actionStreak=action===run.lastAction?run.actionStreak+1:1;run.lastAction=action;
    const x=visibleWidth(run)+40,approach=raidActive?Math.max(.85,balance.obstacleApproach-.15):balance.obstacleApproach;
    if(action==='crouch'){
-    const type=raidActive?'joice':['dilma','simone','soraya'][run.overheadCount++%3];
+    const performers=['dilma','simone','soraya'];
+    const available=performers.filter(actor=>actor!==run.lastOverheadActor);
+    const type=raidActive?'joice':available[Math.floor(random(rng)*available.length)];
+    if(!raidActive){run.lastOverheadActor=type;run.overheadCount++;}
     const attackType={dilma:'wind',simone:'paper-gate',soraya:'microphone',joice:'microphone'}[type];
     anchor={x,width:46,height:72,type:attackType,action,sourceActor:type,projectile:true,
      launchX:x+23,targetX:PLAYER.x+17,launchY:84,targetY:84,y:84,speed:threatSpeed(run,x,approach,visibleWidth(run))};
@@ -292,7 +302,9 @@ export function advanceRun(run,seconds,rng=Math.random){
    run.obstacles.push(anchor);run.spawnedObstacles++;
    const gap=raidActive ? .98-.08*balance.pressure:run.raid?.phase==='recovery'?
     (.98-.08*balance.pressure)+(balance.obstacleGap-.98+.08*balance.pressure)*(1-run.raid.remaining/2):balance.obstacleGap;
-   run.nextObstacle+=gap+random(rng)*(raidActive ? .04 : .14);
+   // Microvariação de intervalo aumenta a incerteza sem criar colisões inevitáveis.
+   // A aproximação de cada perigo ainda passa pelo limitador de 0,82 s.
+   run.nextObstacle+=gap+(raidActive?random(rng)*.04:random(rng)*(.16+.06*(1-balance.pressure)));
   }
  }
  if(!run.boss&&!run.raid&&run.routeDistance>=run.nextAllyAt){
