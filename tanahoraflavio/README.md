@@ -21,6 +21,17 @@ Site estático em `tanahoraflavio/`, atualmente no repositório público `lamori
 - **Anti-previsibilidade:** personagens de perigos altos são escolhidos por sorteio com impedimento de repetição imediata; a mesma ação não aparece quatro vezes seguidas após a introdução. O HUD mostra risco/10 e a velocidade lógica em px/s, que não representa km/h.
 - **Validação:** regressões específicas em `tests/runner-character-pressure.test.mjs`, além da suíte histórica de física, chefões, celular, áudio, e equilíbrio.
 
+## Ataques multidirecionais e antirrepetição — 30/10/2026
+
+A dificuldade agora pode combinar perigos vindos **da direita**, perseguições **pela retaguarda**, objetos que **descem do alto** e malas que **rolam pelo chão**, além dos perigos altos que exigem abaixar. Os estilos entram progressivamente conforme a pressão cresce; nos primeiros segundos a corrida continua ensinando o salto. Durante os ataques traseiros, a pista avisa "ATENÇÃO ATRÁS"; quedas projetam sombra na pista antes do contato.
+
+- Chefe: as três primeiras investidas ensinam o comportamento; depois a direção, a trajetória e a ordem são sorteadas com limite para ações idênticas consecutivas. Os indicadores do HUD leem a próxima investida **já planejada**.
+- Legibilidade: as chegadas previstas mantêm distância mínima de aproximadamente 0,82 s, tanto em tela pequena quanto em tela grande. O nível assistido mantém velocidade reduzida.
+- Equilíbrio: a retaguarda também entra no cálculo de conflitos de contato com a frente; perigos que já atravessaram o jogador são retirados da lista, evitando crescimento de memória.
+- A velocidade continua limitada a 435 px/s no motor, mas padrões e caminhos deixam de seguir uma sequência fixa.
+- A restauração do jacaré mantém Flávio visível durante o efeito de retorno (o brilho é uma sobreposição, não substitui o sprite).
+- O teste `tests/attack-directions.test.mjs` cobre origens dos ataques, sementes aleatórias reproduzíveis, intervalo de contato e uso de uma única estratégia.
+
 ## Minigame: Corre, Flávio!
 
 - Corrida infinita para teclado e toque, sem pausa manual. Tecla Espaço, ↑, pista ou Pular acionam o salto; ↓/S ou **Abaixar** reduz a altura do personagem, no chão. Segurar durante o salto guarda a intenção até o pouso; a opção tocar para alternar dispensa pressão prolongada. Pular sai do agachamento imediatamente; no celular, outro dedo pode saltar em Pular ou na pista enquanto Abaixar continua pressionado. Uma nova pressão no ar pode aguardar o pouso por até120ms, sem salto duplo. Perda de foco/visibilidade limpa intenções pendentes e suspende a simulação.
