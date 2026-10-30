@@ -206,3 +206,7 @@ body{background:radial-gradient(ellipse at 50% 210px,#f2eef9 0,#faf9fc 44%,#fff 
 body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px,#f2eef9 0,#faf9fc 44%,#fff 88%)}
 .game-card{box-sizing:border-box;width:100%;max-width:900px;margin:4px auto 0}
 @media(max-width:600px){.game-card{margin:2px auto 0}}
+
+/* A progressão passa a ser observável sem criar mais um painel. */
+#game-difficulty{display:block;color:#655575;font-size:10px;line-height:1.5}
+@media(max-width:380px){#game-difficulty{font-size:9px}}
