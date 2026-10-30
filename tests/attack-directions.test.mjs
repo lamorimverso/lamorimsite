@@ -61,7 +61,7 @@ test('chefões improvisam depois da abertura, com aviso do ataque efetivamente p
  const combos=[];
  for(const type of ['haddad','lula','xandao']){
   for(const seed of [7,418]){
-   const r=running(612);r.nextBossAt=0;r.bossBag=[type];r.shieldFor=Infinity;
+   const r=running(612);r.routeDistance=36000;r.nextBossAt=0;r.bossBag=[type];r.shieldFor=Infinity;
    core.advanceRun(r,dt,seeded(seed));const boss=r.boss;
    assert.ok(boss);
    const rng=seeded(seed),attacks=[];
