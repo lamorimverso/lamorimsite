@@ -1,6 +1,6 @@
 // O sorteio escolhe uma fala pertinente; a janela de silêncio protege as decisões.
 const groups={start:['bora-pra-rua','pessoal-urgente'],shield:['defende-meu-pai','mesmo-mundo'],
- ally:['cade-ze-gotinha','passarinho'],milestone:['picanha','explode-video'],victory:['ate-teu-pai','picanha'],
+ janones:['pessoal-urgente'],ally:['cade-ze-gotinha','passarinho'],milestone:['picanha','explode-video'],victory:['ate-teu-pai','picanha'],
  ambient:['passarinho','mesmo-mundo','explode-video']};
 export function createVoiceDirector({play,random=Math.random}){
  let nextAt=0,lastId='',pending=null;
