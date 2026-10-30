@@ -24,7 +24,9 @@ export function createVoiceDirector({play,random=Math.random}){
      actorPending={ids,expires:run.elapsed+3};
     return;
    }
-   const bossVoices={haddad:['haddad'],lula:['ate-teu-pai'],xandao:['pessoal-urgente']};
+   // Não associar gravação de Janones ao personagem Xandão.
+   // Chefes sem gravação própria recebem sinal/locução neutra pelo áudio do jogo.
+   const bossVoices={haddad:['haddad'],lula:['ate-teu-pai']};
    const ids=kind==='boss'?bossVoices[run.boss?.type]:groups[kind];if(!ids)return;
    const priority=kind==='boss'||kind==='victory'?2:1;
    if(kind==='start'){emit(ids,priority,run.elapsed);return;}
@@ -35,6 +37,13 @@ export function createVoiceDirector({play,random=Math.random}){
    if(pending&&run.elapsed>pending.expires)pending=null;
    if(actorPending&&run.elapsed>actorPending.expires)actorPending=null;
    if(!safe)return;
+   if(pending?.boss){
+    const id=select(pending.ids);
+    if(play(id,{priority:2})){
+     lastId=id;nextAt=run.elapsed+8;pending=null;
+    }
+    return;
+   }
    if(actorPending&&!run.boss&&run.elapsed>=nextActorAt){
     const id=select(actorPending.ids);
     if(play(id,{priority:1})){
