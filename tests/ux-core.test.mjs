@@ -147,14 +147,23 @@ export function legalPilot(seed,{width=900,assisted=false,limit=340,resize=false
  let jumps=0,crouches=0,peak=0,shieldFrames=0,widthChanges=0;
  for(let i=0;i<120*limit&&run.status==='running'&&run.passports<100;i++){
   if(resize&&i>0&&i%(120*12)===0){const width=[480,900,612,900][(i/(120*12)-1)%4];if(width!==run.viewportWidth){core.resizeRun(run,width);widthChanges++;}}
-  const danger=run.obstacles.find(o=>o.x<run.viewportWidth&&o.x+o.width-3>core.PLAYER.x+5);
-  const speed=danger?.speed??core.difficultyAt(run.distance).speed*(assisted ? .82 : 1);
+  // O piloto considera o alerta de retaguarda antes de o inimigo entrar na tela.
+  const eta=o=>o.approach==='rear'
+    ?(core.PLAYER.x+5-(o.x+o.width-3))/-o.speed
+    :(o.x-148)/(o.speed||1);
+  const threats=run.obstacles.filter(o=>{
+    const seconds=eta(o);
+    if(o.approach==='rear')return o.speed<0&&seconds>-.15;
+    return o.x<run.viewportWidth&&o.x+o.width-3>core.PLAYER.x+5&&seconds>-.15;
+  });
+  const danger=threats.sort((a,b)=>eta(a)-eta(b))[0];
+  const speed=Math.abs(danger?.speed??core.difficultyAt(run.distance).speed*(assisted ? .82 : 1));
   const action=danger?.action??(danger?.projectile&&danger.targetY>50?'crouch':'jump');
-  const until=danger?(danger.x-148)/speed:Infinity;
+  const until=danger?eta(danger):Infinity;
   const crouch=!!danger&&action==='crouch'&&until<.65;
   if(crouch&&!run.player.crouchHeld)crouches++;
   core.crouchRun(run,crouch);
-  const jumpAhead=danger ? .35-(danger.width+20)/(2*speed) : 0;
+  const jumpAhead=danger?.approach==='rear'?.34:(danger ? .35-(danger.width+20)/(2*speed) : 0);
   if(danger&&action==='jump'&&until<=jumpAhead&&until>-.1&&core.jumpRun(run))jumps++;
   core.advanceRun(run,DT,rng);peak=Math.max(peak,run.player.y);
   if(run.shieldFor>0)shieldFrames++;
