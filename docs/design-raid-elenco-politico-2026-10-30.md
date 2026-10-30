@@ -44,6 +44,7 @@
 - Joice: evento de pressão próprio, **não** substituir chefes.
 
 **Aliados e participações satíricas (propostas):**
+- Daniel Vorcaro (Banco Master): **aliado apenas na narrativa satírica**, com cartão imaginário "Crédito Relâmpago" que atrai passaportes próximos por 3 s e possui cooldown; não representa produto bancário, benefício real, relação jurídica com Flávio ou aprovação de ações reais. Referências documentais: https://apublica.org/2026/10/banco-master-a-amigo-vorcaro-se-disse-apoiador-da-direita/ e https://www.aosfatos.org/noticias/esquerda-e-direita-omitem-fatos-para-tentar-culpar-adversarios-caso-master/. Não usar montagens IA como prova de relações reais.
 - Jair Bolsonaro: grito de incentivo / bônus visual temporário de indicação de rota; não combate, não dano.
 - Michelle Bolsonaro: bônus temporário de visibilidade do próximo perigo por poucos segundos.
 - Eduardo Bolsonaro: bônus único de antecipação de um evento (sem blindar contra colisão).
@@ -121,3 +122,22 @@ A classificação entre amigo e antagonista é uma **convenção de gameplay**, 
 - `https://portal.stf.jus.br/textos/verTexto.asp?pagina=AlexandreMoraesDiscursos&servico=bibliotecaConsultaProdutoBibliotecaPastaMinistro` — discursos primários.
 - `https://www.cnnbrasil.com.br/internacional/javier-milei-o-candidato-motosserra-desafia-a-esquerda-e-a-direita-da-argentina/` — origem do símbolo.
 - `https://www.leagueoflegends.com/en-us/news/dev/clarity-in-league/` — prioridade de sinais.
+
+## Pedidos adicionais de 30/10 — identidade de memes, transformação e aliados
+
+As mecânicas a seguir são **pedidos e propostas**, não funcionalidades comprovadamente publicadas.
+
+| Elemento | Referência pesquisada | Comportamento de jogo planejado |
+|---|---|---|
+| Fernando Haddad / "Taxad" | https://economia.uol.com.br/noticias/redacao/2024/07/16/bicho-taxao-e-taxa-humana-o-que-esta-por-tras-dos-memes-sobre-haddad.htm | Preservar chefão; recibos, carimbos "TAXA" e barreiras fiscais fictícias exigem salto ou abaixar. O meme não comprova aumento universal de tributos. |
+| André Janones / "Exército do Lula" | https://www.congressoemfoco.com.br/noticia/123195/pessoal-urgente--audios-de-janones-no-exercito-do-lula-viram-meme | Encontrar Janones em agrupamento com os perseguidores fictícios e reprodução contextual de "Pessoal, urgente" onde áudio/licença permitirem; sem duplicação e sem ocultar avisos. |
+| Simone Tebet / "Gostosas com Lula" | https://jr.jor.br/2026/10/24/apoiadores-chegam-para-ato-de-lula-na-avenida-paulista/ | Badge de adesivo cenográfico, colorido, ligado ao perigo alto da Simone. A frase é **texto de adesivo de apoiadores**, não uma fala autêntica de Simone. |
+| Soraya Thronicke / Padre Kelmon | https://cultura.uol.com.br/eleicoes/noticias/2022/09/30/164_padre-de-festa-junina-bolsonara-e-outras-gafes-do-debate.html | Cameo com a frase documentada "padre de festa junina"; criar elementos visuais de quermesse sem associar uma crença como fato. Voz de arquivo apenas se autorizado. |
+| Zé Gotinha e jacaré | https://noticias.uol.com.br/politica/ultimas-noticias/2023/05/03/jair-bolsonaro-vacina-covid-19.htm | Ao pegar o mascote, transformar Flávio em **jacaré cartunesco temporário que não pula**. Comando para cima restaura a forma normal por **antídoto imaginário chamado "cloroquina de videogame"**; o primeiro comando serve para recuperar a forma, o segundo permite pular. Manter 2,5 s sem perigos comuns para dar chance real de reação. |
+| Daniel Vorcaro / Banco Master | https://apublica.org/2026/10/banco-master-a-amigo-vorcaro-se-disse-apoiador-da-direita/ | Cameo aliado fictício com "Crédito Relâmpago": atrai passaportes por 3 s, sem mexer em saldo, dinheiro real, pontuação em metros nem atribuir crime ao personagem. |
+
+**Aviso obrigatório de sátira e saúde:** vacinas não transformam pessoas em jacarés; cloroquina e hidroxicloroquina não revertem vacinas e não são recomendadas pela OMS para prevenção/tratamento da Covid-19. A pílula é um elemento de comédia puramente imaginário, sem instruções de uso reais. Fonte de saúde: https://www.who.int/news-room/questions-and-answers/item/coronavirus-disease-%28covid-19%29-hydroxychloroquine.
+
+**Limite de fala:** adesivos, memes escritos ou falas de terceiros não podem ser apresentados como áudio pronunciado por Simone Tebet, Soraya ou Vorcaro. O catálogo de áudios continua exigindo fonte primária, atribuição e direito de uso para voz original.
+
+**Ordem sugerida:** incorporar Vorcaro e referências ao catálogo; testar a transformação do jacaré isoladamente; dar identidade fiscal ao chefe existente; acrescentar sinalização contextual para Janones, Simone e Soraya; só depois ampliar áudio e elenco.
