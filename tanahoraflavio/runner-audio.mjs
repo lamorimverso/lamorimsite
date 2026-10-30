@@ -1,4 +1,4 @@
-import {createGameSoundtrack} from './runner-soundtrack.mjs?v=49d440710b77';
+import {createGameSoundtrack} from './runner-soundtrack.mjs?v=101619002437';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=e04644dd1f8f';
 // Efeitos locais e recorte de arquivo identificado; nenhuma imitação de voz.
 export function createGameAudio({onVoice=()=>{}}={}) {

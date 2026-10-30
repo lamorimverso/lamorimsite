@@ -52,7 +52,7 @@ Execute `node --test --test-concurrency=1 tests/*.test.*` (dependências de dese
 - Novos PNGs flavio-motion-v2/characters-motion-v2 foram gerados por imagem a partir dos personagens anteriores, com revisão de anatomia, transparência e recortes. As escolhas visuais não equivalem a validação com jogadores nem prova de qualidade igual às referências.
 - Controles de ajuste aguardam seus eventos estarem ligados antes de aceitar interação, evitando perder escolhas feitas enquanto o módulo carrega.
 - Fases ficcionais inspiradas no calendárioTSE2026 aparecem no progresso existente; ajuda explica roteiro/ordem/objetivos e referencia o calendário. Não se afirmam candidaturas/resultados reais nem fatos sobre as personagens.
-- Áudio contextual:9memes curtos da referência indicada pelo usuário, além de Joice/Haddad. Diretor limita repetição e usa silêncio14–22s; falas ambiente só em janelas seguras. Trilha original em WebAudio acompanha pressão/chefes/Joice, abaixa sob a fala, para no mute/derrota/aba oculta. Fontes e limites em assets/audio/README.md.
+- Áudio contextual:9memes curtos da referência indicada pelo usuário, além de Joice/Haddad. Diretor limita repetição e usa silêncio14–22s; falas ambiente só em janelas seguras. Arranjo instrumental em8bits emWebAudio usa melodia/andamento fixos e percussão com intensidade por pressão/chefes/Joice, abaixa sob a fala, para no mute/derrota/aba oculta. Fontes e limites em assets/audio/README.md.
 
 Para regenerar a arte: `node tools/build-runner-art.mjs`. Para atualizar versões após qualquer mudança de recurso: `node tools/version-runner-assets.mjs`. O CI usa as verificações `--check`; uma mudança na dependência invalida o import e o HTML automaticamente. O CSS atual está concentrado em `game.css`.
 
@@ -96,3 +96,5 @@ O fim do mandato não transfere automaticamente todos os processos para outra in
 Auditoria e comparação mensurável: [revisão de30/10](../docs/auditoria-gameplay-2026-10-30.md). Não se afirma equivalência comercial com jogos de referência, diversão comprovada ou compatibilidade em aparelhos físicos/Safari.
 
 Ao redimensionar, `resizeRun` preserva o prazo dos perigos futuros, a fração percorrida no voo e as coletas associadas. Perigos já em contato permanecem no lugar. Isso mantém a reação calibrada ao girar/recolher a pista, sem teleporte de colisões ou mudança na física do herói.
+
+A trilha é um loop instrumental sintetizado do motivo de Solinho do Fora PT (Prismah), com créditos e referência na ajuda. Nenhum canto ou sample da gravação da referência é reproduzido.
