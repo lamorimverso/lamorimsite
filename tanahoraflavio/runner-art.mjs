@@ -91,8 +91,10 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
  }
  else if(item.type==='case'){box(c,-17,-31,34,28,'#906490');box(c,-6,-37,12,6,'#e1b985',2);line(c,[[-8,-28],[-8,-7]],'#d9b88a',2);line(c,[[8,-28],[8,-7]],'#d9b88a',2);oval(c,-10,0,3,3,INK);oval(c,10,0,3,3,INK);}
  else if(item.type==='stamp'){box(c,-21,-15,42,13,'#a53e54');box(c,-8,-31,16,16,'#81584a');line(c,[[-23,-1],[23,-1]],'#e1a05e',3);text(c,'TAXA',0,-5,8,'#fff7e3');}
- else if((item.type==='receipts'||item.type==='paper-gate')){for(let i=0;i<3;i++){box(c,-18+i*10,-34+i*4,20,25,'#fff1cf',2);for(let j=0;j<3;j++)line(c,[[-14+i*10,-28+i*4+j*5],[-3+i*10,-28+i*4+j*5]],'#417884',1.5);}}
- if(item.owner==='haddad')text(c,'TAXA',2,-35,7,'#a33e52');}
+ else if((item.type==='receipts'||item.type==='paper-gate')){
+  for(let i=0;i<3;i++){box(c,-18+i*10,-34+i*4,20,25,'#fff1cf',2);for(let j=0;j<3;j++)line(c,[[-14+i*10,-28+i*4+j*5],[-3+i*10,-28+i*4+j*5]],'#417884',1.5);}
+  if(item.owner==='haddad')text(c,'TAXA',2,-35,7,'#a33e52');
+ }
  else if(item.type==='hammer'){
   // Martelo do chefão Xandão: cabo de madeira, cabeça metálica.
   c.save();c.rotate(-.35);
