@@ -1,9 +1,9 @@
-import {createVoiceDirector} from './runner-voice-director.mjs?v=4b55aad25332';
-import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=58166d5b034f";
-import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=4a60551e07be";
-import { createGameAudio } from "./runner-audio.mjs?v=ca8d75b10b65";
+import {createVoiceDirector} from './runner-voice-director.mjs?v=95241cbb9b6a';
+import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=86f9956cf40d";
+import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=eac2697a2d91";
+import { createGameAudio } from "./runner-audio.mjs?v=d5012cec23e6";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=e04644dd1f8f";
-import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=1aa415bb9b80";
+import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=cb8316f1085d";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
 
 function initRunner() {
@@ -82,7 +82,7 @@ function initRunner() {
   }
   function dodgeHint(){
     const hit=run.lastHit;if(!hit)return "Observe os perigos e tente novamente.";
-    const names={wind:"Vento",microphone:"Microfone","paper-gate":"Papéis",popcorn:"Pipoca",hammer:"Martelo",mandado:"Mandado",receipts:"Papéis",lhand:"Mão em L"};
+    const names={stamp:'Carimbo TAXA',wind:"Vento",microphone:"Microfone","paper-gate":"Papéis",popcorn:"Pipoca",hammer:"Martelo",mandado:"Mandado",receipts:"Papéis",lhand:"Mão em L"};
     if(hit.action==="crouch")return (names[hit.type]||"Ataque")+" no alto: abaixe para desviar.";
     return (names[hit.type]||"Perigo")+" baixo: sincronize o salto para desviar.";
   }
@@ -118,8 +118,8 @@ function initRunner() {
     }
     section.dataset.art=spritesReady?"loaded":spritesFailed?"error":"loading";
     const power=run.shieldFor>0?"shield":run.graceFor>0?"recovery":"none";
-    section.dataset.power=power;section.dataset.ammo="none";
-    $("game-power").textContent=power==="shield"?"Escudo das Américas · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo";
+    section.dataset.power=run.player.isJacare?"jacare":power;section.dataset.ammo="none";
+    $("game-power").textContent=run.player.isJacare?"Jacaré fictício · ↑ para voltar a Flávio (cloroquina de videogame)":power==="shield"?"Escudo das Américas · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo";
     $("game-ammo").parentElement.hidden=true;
     $("game-boss").hidden=run.status!=="running"||!run.boss;section.dataset.boss=run.boss?.type||"none";
     if(run.boss){
@@ -167,7 +167,7 @@ function initRunner() {
         if(run.events>lastEvents)message=run.event;
         else if(lastCollected!==run.collected)message="Passaporte coletado. Faltam "+(100-run.passports%100)+" para uma vida.";
         else if(lastPower==="shield"&&power!=="shield")message="O Escudo das Américas terminou. Volte a desviar!";
-        if(lastStage>=0&&lastStage!==stage.index)message="Chegamos a "+stage.name+"! A corrida continua.";
+        if(lastStage>=0&&lastStage!==stage.index){message="Chegamos a "+stage.name+"! A corrida continua.";audio.effect("stage");}
       }
       $("game-status").textContent=message;
       section.querySelectorAll("[data-stage]").forEach((stop,i)=>{stop.classList.toggle("is-current",i===stage.index);stop.classList.toggle("is-done",i<stage.index);if(i===stage.index)stop.setAttribute("aria-current","step");else stop.removeAttribute("aria-current");});
@@ -183,7 +183,7 @@ function initRunner() {
     cancelAnimationFrame(frameId);frameId=0;
     resetFrameClock(frameClock,performance.now());
     if(document.hidden||!windowFocused||!inView||run.status!=="running"){
-      audio.stop();clearRunInput(run);trackPointers.clear();
+      audio.stop();lastRaidKey="";clearRunInput(run);trackPointers.clear();
     }
     schedule();
   }
@@ -204,8 +204,12 @@ function initRunner() {
     else if(before.boss&&!run.boss){audio.effect("victory");voices.event("victory",run);}
     else if(!before.boss&&run.boss){audio.effect("boss");voices.event("boss",run);}
     else if(run.boss&&run.boss.fired>before.attacks)audio.effect("attack");
-    else if(run.collected>before.collected)audio.effect("pickup");
-    if(run.spawnedObstacles>before.spawned)audio.effect(run.obstacles.at(-1)?.action==="crouch"?"high":"low");
+    else if(run.collected>before.collected)audio.effect(run.lastPickup==="ze-gotinha"?"transform":"pickup");
+    if(run.spawnedObstacles>before.spawned){
+      const newest=run.obstacles.at(-1);
+      audio.effect(newest?.action==="crouch"?"high":"low");
+      if(newest?.type==="janones")voices.event("janones",run);
+    }
     if(run.collected>before.collected){
       if(run.lastPickup==="shield")voices.event("shield",run);
       else if(run.lastPickup==="ze-gotinha")voices.event("ally",run);
@@ -251,7 +255,9 @@ function initRunner() {
   function jump(){
     resumeFromGesture();
     if(["ready","over"].includes(run.status))begin();
+    const wasJacare=run.player.isJacare;
     if(jumpRun(run)){audio.effect("jump");draw();}
+    else if(wasJacare&&!run.player.isJacare){audio.effect("restore");updateUI();draw();}
   }
   function crouch(active){
     if(crouchRun(run,active)){draw();}
@@ -401,7 +407,8 @@ function initRunner() {
       const ease=(landingUntil-run.elapsed)/.12,pivot=PLAYER.x+17;
       ctx.translate(pivot,feet);ctx.scale(1+.025*ease,1-.025*ease);ctx.translate(-pivot,-feet);
     }
-    drawActor(ctx,{type:"flavio",x:PLAYER.x+17,y:feet,scale:.95,phase,airborne,
+    if(run.player.isJacare)drawJacare(ctx,{x:PLAYER.x+17,y:feet,phase});
+    else drawActor(ctx,{type:"flavio",x:PLAYER.x+17,y:feet,scale:.95,phase,airborne,
       falling:run.player.velocity<0,landing:crouchTarget,
       hurt:run.status==="over",alpha:run.graceFor>0&&run.shieldFor<=0?.55:1});
     ctx.restore();
@@ -424,7 +431,10 @@ function initRunner() {
     if(item.type==="ze-gotinha"){
       drawActor(ctx,{type:"ze-gotinha",x:item.x,y:WORLD.ground,scale:.72,phase:run.elapsed*10});return;
     }
-    drawItem(ctx,{type:item.type,x:item.x,y:WORLD.ground-item.y,scale:item.type==="shield"?.86:.8});
+    const phase=run.status==="running"?run.elapsed*6:0;
+    const bob=prefersReducedMotion()?0:Math.sin(phase+item.x*.017)*1.3;
+    const pulse=prefersReducedMotion()?1:1+.035*Math.sin(phase+item.x*.012);
+    drawItem(ctx,{type:item.type,x:item.x,y:WORLD.ground-item.y+bob,scale:(item.type==="shield"?.86:.8)*pulse});
   }
   function draw() {
     ctx.setTransform(canvas.width/virtualWidth,0,0,canvas.height/WORLD.height,0,0);
@@ -436,7 +446,7 @@ function initRunner() {
       const actor=run.cameo.type;
       drawActor(ctx,{type:actor,x:virtualWidth-60,y:WORLD.ground-2,scale:1.05,phase:run.elapsed*10});
       ctx.fillStyle="#59344f";ctx.font="700 12px system-ui";ctx.textAlign="center";
-      ctx.fillText(({dilma:"Dilma",simone:"Simone",soraya:"Soraya"})[actor]+" · ↓",virtualWidth-60,130);ctx.textAlign="start";
+      ctx.fillText(({dilma:"Dilma · ↓",simone:"Adesivo: Gostosas com Lula · ↓",soraya:"Padre de festa junina · ↓"})[actor],virtualWidth-87,130,165);ctx.textAlign="start";
     }
     for(const item of run.pickups)pickup(item);
     for(const item of run.obstacles)obstacle(item);

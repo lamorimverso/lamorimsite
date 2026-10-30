@@ -37,7 +37,7 @@ const BOSS_GOALS = Object.freeze({
 export const PICKUPS = Object.freeze([
  Object.freeze({type:'passport',name:'Passaporte',value:10,purpose:'100 passaportes = +1 vida'}),
  Object.freeze({type:'shield',name:'Escudo das Américas',value:0,purpose:'Proteção por 6 segundos'}),
- Object.freeze({type:'ze-gotinha',name:'Zé Gotinha',value:0,purpose:'Limpa perigos comuns e abre um respiro de 2,5 segundos'})
+ Object.freeze({type:'ze-gotinha',name:'Zé Gotinha',value:0,purpose:'Transforma Flávio em jacaré fictício até pressionar ↑; limpa perigos comuns por 2,5 segundos'})
 ]);
 // O protagonista não possui armas; chefões atacam e o jogador só desvia.
 // Texto de roteiro ficcional, sem atribuir gravações/falas autênticas à personagem.
@@ -93,7 +93,7 @@ export function pursuitAt(seconds,rng=()=>.5) {
 }
 export function createRun({assisted=false}={}) {
  return {status:'ready',assisted:assisted===true,elapsed:0,distance:0,routeDistance:0,viewportWidth:WORLD.width,bonus:0,collected:0,passports:0,lives:1,
-  event:'',events:0,player:{y:0,velocity:0,crouching:false,crouchHeld:false,jumpBufferedUntil:0},obstacles:[],pickups:[],lastHit:null,
+  event:'',events:0,player:{y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jumpBufferedUntil:0},obstacles:[],pickups:[],lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,shieldFor:0,graceFor:0,
   lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:null,bossCooldown:0,
@@ -124,6 +124,9 @@ export function resizeRun(run,width){
 export function startRun(run){if(run.status==='ready')run.status='running';}
 export function jumpRun(run){
  if(run.status!=='running')return false;
+ // Antídoto exclusivamente cartunesco: o primeiro ↑ restaura o herói,
+ // sem conceder um salto gratuito que possa contornar um ataque.
+ if(run.player.isJacare){run.player.isJacare=false;run.player.jumpBufferedUntil=0;run.player.crouchHeld=false;run.player.crouching=false;announce(run,'Cloroquina de videogame! Flávio voltou ao normal. Isto é ficção, não orientação médica.');return false;}
  if(run.player.y>0||run.player.velocity>0){run.player.jumpBufferedUntil=run.elapsed+JUMP_BUFFER_SECONDS;return false;}
  run.player.jumpBufferedUntil=0;run.player.crouching=false;run.player.velocity=610;return true;
 }
@@ -134,7 +137,7 @@ export function clearRunInput(run){
 // Soltar/cancelar limpa também uma intenção ainda aguardando o pouso.
 export function crouchRun(run,active){
  run.player.crouchHeld=!!active&&run.status==='running';
- const next=run.player.crouchHeld&&run.player.y===0&&run.player.velocity===0;
+ const next=!run.player.isJacare&&run.player.crouchHeld&&run.player.y===0&&run.player.velocity===0;
  run.player.crouching=next;
  return next;
 }
@@ -246,7 +249,7 @@ export function advanceRun(run,seconds,rng=Math.random){
  run.player.velocity-=1750*dt;run.player.y=Math.max(0,run.player.y+run.player.velocity*dt);
  if(run.player.y>0)run.player.crouching=false;
  if(run.player.y===0){
-  run.player.velocity=0;run.player.crouching=!!run.player.crouchHeld;
+  run.player.velocity=0;run.player.crouching=!run.player.isJacare&&!!run.player.crouchHeld;
   if(run.player.jumpBufferedUntil>0)jumpRun(run);
  }
  run.shieldFor=Math.max(0,run.shieldFor-dt);run.graceFor=Math.max(0,run.graceFor-dt);
@@ -298,13 +301,13 @@ export function advanceRun(run,seconds,rng=Math.random){
  }
  run.nextPickup-=dt;run.nextPassport-=dt;run.nextPower-=dt;rewardForObstacle(run,anchor,balance,rng);
  const left=PLAYER.x+5,right=PLAYER.x+PLAYER.width-3,bottom=run.player.y+3,
-  top=run.player.y+(run.player.crouching?25:PLAYER.height-5);
+  top=run.player.y+(run.player.crouching||run.player.isJacare?25:PLAYER.height-5);
  // Coleta antes do impacto: o escudo ou o centésimo passaporte já valem neste frame.
  run.pickups=run.pickups.filter(p=>{
   const hit=right>p.x-12&&left<p.x+12&&top>p.y-12&&bottom<p.y+12;
   if(hit){
    run.collected++;run.lastPickup=p.type;
-   if(p.type==='ze-gotinha'){run.obstacles=run.obstacles.filter(o=>o.bossAttack);run.nextObstacle=Math.max(2.5,run.nextObstacle);announce(run,'Zé Gotinha abriu caminho! Respiro de 2,5 segundos.');}
+   if(p.type==='ze-gotinha'){run.obstacles=run.obstacles.filter(o=>o.bossAttack);run.nextObstacle=Math.max(2.5,run.nextObstacle);run.player.isJacare=true;run.player.crouching=false;run.player.crouchHeld=false;run.player.jumpBufferedUntil=0;announce(run,'Jacaré fictício! Não pode pular. Aperte ↑ ou toque na pista para voltar a Flávio com o antídoto de videogame.');}
    if(p.type==='shield'){run.shieldFor=6;announce(run,'Escudo das Américas! Proteção por 6 segundos.');}
    if(p.type==='passport'&&++run.passports%100===0){run.lives++;announce(run,'100 passaportes! Uma vida extra; total: '+run.lives+'.');}
   }return !hit;

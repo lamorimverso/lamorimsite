@@ -43,3 +43,26 @@ test('reprodução integra trilha após gesto e respeita prioridade, mute e para
   const count=ctx.notes.length;ctx.currentTime=3;a.background({active:true});assert.equal(ctx.notes.length,count);a.toggle();a.background({active:true});assert.ok(ctx.notes.length>count);a.stop();
  }finally{if(previous===undefined)delete globalThis.window;else globalThis.window=previous;}
 });
+
+test('trecho de Joice permanece em loop durante a raid e para na recuperação e no mute',()=>{
+ const previous=globalThis.window,ctx=soundContext(),tracks=[];
+ globalThis.window={AudioContext:class{constructor(){return ctx;}},Audio:class{
+  constructor(src){this.src=src;this.loop=false;this.paused=false;tracks.push(this);}
+  play(){return Promise.resolve();}
+  pause(){this.paused=true;}
+ }};
+ try{
+  const a=createGameAudio();a.prime();a.event('warning');
+  assert.equal(tracks.length,1);assert.equal(tracks[0].loop,true,'raid mantém gravação de Joice até sua fase final');
+  a.event('active');assert.equal(tracks.length,1,'fase ativa não empilha a mesma voz');
+  assert.equal(tracks[0].paused,false);
+  a.stop();assert.equal(tracks[0].paused,true,'perda de foco interrompe o trecho');
+  a.event('active');assert.equal(tracks.length,2,'retomar a aba durante raid reinicia arquivo original');
+  assert.equal(tracks[1].loop,true);
+  a.event('recovery');assert.equal(tracks[1].paused,true,'recuperação interrompe reprodução');
+
+  a.event('warning');assert.equal(tracks.length,3);assert.equal(tracks[2].loop,true);
+  a.toggle();assert.equal(tracks[2].paused,true,'mute interrompe loop imediatamente');
+  a.event('active');assert.equal(tracks.length,3,'mute impede novas gravações');
+ }finally{if(previous===undefined)delete globalThis.window;else globalThis.window=previous;}
+});
