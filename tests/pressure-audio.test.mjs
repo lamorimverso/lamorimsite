@@ -57,8 +57,11 @@ test('trecho de Joice permanece em loop durante a raid e para na recuperação e
   a.event('active');assert.equal(tracks.length,1,'fase ativa não empilha a mesma voz');
   assert.equal(tracks[0].paused,false);
   a.event('recovery');assert.equal(tracks[0].paused,true,'recuperação interrompe reprodução');
-  a.event('warning');assert.equal(tracks.length,2);assert.equal(tracks[1].loop,true);
-  a.toggle();assert.equal(tracks[1].paused,true,'mute interrompe loop imediatamente');
-  a.event('active');assert.equal(tracks.length,2,'mute impede novas gravações');
+  a.event('active');assert.equal(tracks.length,2,'retomar uma aba durante raid reinicia arquivo original');
+  assert.equal(tracks[1].loop,true);a.stop();assert.equal(tracks[1].paused,true);
+
+  a.event('warning');assert.equal(tracks.length,3);assert.equal(tracks[2].loop,true);
+  a.toggle();assert.equal(tracks[2].paused,true,'mute interrompe loop imediatamente');
+  a.event('active');assert.equal(tracks.length,3,'mute impede novas gravações');
  }finally{if(previous===undefined)delete globalThis.window;else globalThis.window=previous;}
 });
