@@ -2,7 +2,7 @@ import {createGameSoundtrack} from './runner-soundtrack.mjs?v=101619002437';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=e04644dd1f8f';
 // Efeitos locais e recorte de arquivo identificado; nenhuma imitação de voz.
 export function createGameAudio({onVoice=()=>{}}={}) {
- let enabled=true,context=null,nodes=[],primed=false,recording=null,raidVoice=false,raidPrepared=false,music=null,voicePriority=0;
+ let enabled=true,context=null,nodes=[],primed=false,recording=null,raidVoice=false,raidPrepared=false,music=null,voicePriority=0,alertUntil=0;
  const preferenceKey='tanahoraflavio.runner.sound.v1';
  try{enabled=window.localStorage?.getItem(preferenceKey)!=='off';}catch{/* Armazenamento é opcional. */}
  const stopRecording=()=>{
@@ -10,7 +10,7 @@ export function createGameAudio({onVoice=()=>{}}={}) {
   recording=null;voicePriority=0;onVoice(null);
  };
  const stop=()=>{
-  raidVoice=false;
+  raidVoice=false;raidPrepared=false;alertUntil=0;
   stopRecording();music?.stop();
   for(const node of nodes){try{node.stop();}catch{/* Nó já encerrado. */}}nodes=[];
  };
@@ -29,7 +29,7 @@ export function createGameAudio({onVoice=()=>{}}={}) {
   stopRecording();
   try{
    const url=new URL(clip.file,import.meta.url);url.searchParams.set('v',clip.sha256.slice(0,12));
-   const player=new window.Audio(url.href);recording=player;voicePriority=priority;player.volume=.68;player.loop=loop===true;player.preload='none';
+   const player=new window.Audio(url.href);recording=player;voicePriority=priority;player.volume=(context?.currentTime||0)<alertUntil?.28:.68;player.loop=loop===true;player.preload='none';
    onVoice(clip);player.onended=()=>{if(recording===player){recording=null;voicePriority=0;onVoice(null);}};
    player.play()?.catch?.(()=>{if(recording===player){stopRecording();raidVoice=false;}});
    return true;
@@ -60,16 +60,20 @@ export function createGameAudio({onVoice=()=>{}}={}) {
    stage:[380,550,.23,'triangle',.075],
    transform:[320,105,.36,'triangle',.105],
    restore:[260,690,.23,'sine',.08],
-   high:[880,610,.13,'sine',.065],low:[150,100,.13,'triangle',.075]
+   high:[880,610,.13,'sine',.065],low:[150,100,.13,'triangle',.075],
+   drop:[660,220,.22,'square',.075],ally:[700,1100,.14,'sine',.065]
   };
   const spec=sounds[name];if(!spec||nodes.length>=12)return;
   try{
    const [start,end,length,wave,volume]=spec,t=context.currentTime;
+   if(['high','low','drop','attack','boss','hit'].includes(name)){
+    alertUntil=Math.max(alertUntil,t+length+.1);if(recording)recording.volume=.28;
+   }
    const osc=context.createOscillator(),gain=context.createGain();
    osc.type=wave;osc.frequency.setValueAtTime(start,t);
    osc.frequency.exponentialRampToValueAtTime(end,t+length);
    gain.gain.setValueAtTime(.001,t);
-   gain.gain.linearRampToValueAtTime(recording&&['high','low'].includes(name)?volume*.55:volume,t+.015);
+   gain.gain.linearRampToValueAtTime(volume,t+.015);
    gain.gain.exponentialRampToValueAtTime(.001,t+length);
    osc.connect(gain);gain.connect(context.destination);osc.start(t);osc.stop(t+length+.015);
    nodes.push(osc);
@@ -79,11 +83,16 @@ export function createGameAudio({onVoice=()=>{}}={}) {
  // Não há sintetizador de voz: só trechos identificados e efeitos originais.
  // Ausência de clipe não é preenchida por uma voz inventada.
  return {get enabled(){return enabled;},prime,stop,effect,voice,
-  background(state){if(enabled&&primed)music?.update({...state,ducked:!!recording});},
+  background(state){
+   if(!enabled||!primed)return;
+   const alert=(context?.currentTime||0)<alertUntil;
+   if(recording)recording.volume=alert?.28:.68;
+   music?.update({...state,ducked:!!recording||alert});
+  },
   toggle(){enabled=!enabled;try{window.localStorage?.setItem(preferenceKey,enabled?'on':'off');}catch{/* A escolha vale nesta sessão. */}if(!enabled)stop();else prime();return enabled;},
   event(phase,fact){
    if(!enabled)return;
-   if(phase==='warning'){raidPrepared=true;stopRecording();raidVoice=voice('joice',{priority:3,loop:true});if(!raidVoice)knocks();}
+   if(phase==='warning'){if(raidPrepared&&raidVoice&&recording)return;raidPrepared=true;stopRecording();raidVoice=voice('joice',{priority:3,loop:true});if(!raidVoice)knocks();}
    else if(phase==='active'){if(!raidVoice){raidPrepared=true;raidVoice=voice('joice',{priority:3,loop:true});if(!raidVoice)knocks();}}
    else {raidPrepared=false;raidVoice=false;stopRecording();}
   }};

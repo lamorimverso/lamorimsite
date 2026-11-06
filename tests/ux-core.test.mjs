@@ -144,18 +144,24 @@ test('objetos manuais sem speed mantêm velocidade do mundo',()=>{
 // It never rewrites position, items, immunity, lives, deadlines, or obstacles.
 export function legalPilot(seed,{width=900,assisted=false,limit=340,resize=false}={}){
  const run=running({assisted}),rng=seeded(seed);run.viewportWidth=width;
- let jumps=0,crouches=0,peak=0,shieldFrames=0,widthChanges=0;
+ let jumps=0,crouches=0,peak=0,shieldFrames=0,widthChanges=0,lastDrop=null,evade=0;
  for(let i=0;i<120*limit&&run.status==='running'&&run.passports<100;i++){
   if(resize&&i>0&&i%(120*12)===0){const width=[480,900,612,900][(i/(120*12)-1)%4];if(width!==run.viewportWidth){core.resizeRun(run,width);widthChanges++;}}
   // O piloto considera o alerta de retaguarda antes de o inimigo entrar na tela.
-  const eta=o=>o.approach==='rear'
-    ?(core.PLAYER.x+5-(o.x+o.width-3))/-o.speed
-    :(o.x-148)/(o.speed||1);
+  const eta=o=>core.threatTimeToContact(run,o);
+  const drop=run.obstacles.find(o=>o.falling&&o.age<o.warningFor+o.fallFor);
+  if(drop&&drop!==lastDrop){lastDrop=drop;evade=run.player.x<175?1:-1;}
+  const clearDrop=drop&&(evade<0?run.player.x+31<drop.x-10:run.player.x+5>drop.x+drop.width+10);
+  // Concluir o salto atual antes de recuar evita prolongar o contato com a onda já em voo.
+  // O aviso da queda reserva1,2s, mais que salto restante + deslocamento necessário.
+  core.moveRun(run,drop&&!clearDrop&&run.player.y===0?evade:0);
+  if(run.player.isJacare)core.jumpRun(run);
   // Manter o desvio até o obstáculo sair por inteiro da hitbox.
   // Filtrar só por ETA interrompia o agachamento no meio de papéis altos.
   const threats=run.obstacles.filter(o=>{
-    if(o.approach==='rear')return o.speed<0&&o.x<core.PLAYER.x+core.PLAYER.width-3;
-    return o.x<run.viewportWidth&&o.x+o.width-3>core.PLAYER.x+5;
+    if(o.falling||o.passed||o.counted)return false;
+    if(o.approach==='rear')return o.speed<0&&o.x<run.player.x+core.PLAYER.width-3;
+    return o.x<run.viewportWidth&&o.x+o.width-3>run.player.x+5;
   });
   const danger=threats.sort((a,b)=>eta(a)-eta(b))[0];
   const speed=Math.abs(danger?.speed??core.difficultyAt(run.distance).speed*(assisted ? .82 : 1));

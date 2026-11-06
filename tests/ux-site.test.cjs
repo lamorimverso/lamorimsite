@@ -19,9 +19,10 @@ before(async()=>{
  browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{})});
 });
 after(async()=>{await browser?.close();await new Promise(resolve=>server?.close(resolve));});
-async function open({instrument=false,instrumentAudio=false,init,blockEntry=false,legacyFirst=false,...options}={}){
+async function open({instrument=false,instrumentAudio=false,init,blockEntry=false,blockSupports=false,legacyFirst=false,...options}={}){
  const context=await browser.newContext(options);
  await context.route(/^https:\/\//,route=>route.abort());
+ if(blockSupports)await context.route(url=>/\/assets\/(?:allies-motion-|pursuers-motion-)/.test(url.pathname),route=>route.abort());
  if(init)await context.addInitScript(init);
  if(instrument){
   const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-core.mjs'),'utf8');
@@ -57,6 +58,42 @@ async function swipeDown(page,id=7){
  await track.dispatchEvent('pointerdown',{button:0,pointerId:id,pointerType:'touch',isPrimary:true,clientX:100,clientY:100});
  await track.dispatchEvent('pointermove',{pointerId:id,pointerType:'touch',clientX:100,clientY:135});
 }
+test('falha de apoios mantém largada funcional e oferece nova tentativa dentro da ajuda',async()=>{
+ const {context,page,errors}=await open({instrument:true,blockSupports:true,viewport:{width:390,height:844}});
+ try{
+  await begin(page);await page.waitForFunction(()=>__testRun.elapsed>.1);assert.equal(await page.evaluate(()=>__testRun.status),'running');
+  assert.equal(await page.evaluate(()=>__testRun.supportAvailable),false);
+  await page.locator('#game-settings summary').click();assert.equal(await page.getByRole('button',{name:'Carregar apoios',exact:true}).isVisible(),true);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('eixo lateral no teclado coexiste com salto e limpa a direção ao perder foco',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
+ try{
+  await begin(page);await page.locator('#runner-canvas').focus();await page.keyboard.down('ArrowRight');
+  await page.waitForFunction(()=>__testRun.player.x>180);await page.keyboard.press('Space');
+  await page.waitForFunction(()=>__testRun.player.y>30&&__testRun.player.x>180);
+  await page.keyboard.up('ArrowRight');await page.waitForFunction(()=>__testRun.player.moveHeld===0);
+  await page.keyboard.down('KeyA');await page.waitForFunction(()=>__testRun.player.moveHeld===-1);
+  await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
+  assert.equal(await page.evaluate(()=>__testRun.player.moveHeld),0);assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+test('deslize lateral e segundo dedo para salto mantêm comandos independentes',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844},hasTouch:true,isMobile:true});
+ try{
+  await begin(page);const c=page.locator('#runner-canvas');
+  await c.dispatchEvent('pointerdown',{button:0,pointerId:21,pointerType:'touch',isPrimary:true,clientX:100,clientY:100});
+  await c.dispatchEvent('pointermove',{pointerId:21,pointerType:'touch',clientX:145,clientY:102});
+  await page.waitForFunction(()=>__testRun.player.x>145);
+  await c.dispatchEvent('pointerdown',{button:0,pointerId:22,pointerType:'touch',isPrimary:false,clientX:200,clientY:110});
+  await c.dispatchEvent('pointerup',{pointerId:22,pointerType:'touch',clientX:200,clientY:110});
+  await page.waitForFunction(()=>__testRun.player.y>20&&__testRun.player.moveHeld===1);
+  await c.dispatchEvent('pointerup',{pointerId:21,pointerType:'touch',clientX:145,clientY:102});
+  assert.equal(await page.evaluate(()=>__testRun.player.moveHeld),0);assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
 
 test('primeira visita ensina pular e abaixar sem expor um bloco longo',async()=>{
  const {context,page,errors}=await open({viewport:{width:390,height:844}});
@@ -302,7 +339,7 @@ test('HUD do chefão fica fora da pista e não desloca pista ou controles',async
 test('HTML antigo no cache se atualiza sem travar a inicialização',async()=>{
  const {context,page,errors}=await open({legacyFirst:true});
  try{
-  await page.waitForURL(url=>url.searchParams.get('ui')==='20261030-pressure', {timeout:4000});
+  await page.waitForURL(url=>url.searchParams.get('ui')==='20261106-dossier', {timeout:4000});
   await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
   assert.equal(await page.locator('#game-settings').count(),1);
   assert.match(await page.locator('#days').textContent(),/^\d+$/);

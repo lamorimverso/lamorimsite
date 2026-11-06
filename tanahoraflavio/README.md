@@ -117,3 +117,15 @@ Auditoria e comparação mensurável: [revisão de30/10](../docs/auditoria-gamep
 Ao redimensionar, `resizeRun` preserva o prazo dos perigos futuros, a fração percorrida no voo e as coletas associadas. Perigos já em contato permanecem no lugar. Isso mantém a reação calibrada ao girar/recolher a pista, sem teleporte de colisões ou mudança na física do herói.
 
 A trilha é um loop instrumental sintetizado do motivo de Solinho do Fora PT (Prismah), com créditos e referência na ajuda. Nenhum canto ou sample da gravação da referência é reproduzido.
+
+## Pacote do dossiê —6/11/2026
+
+Esta seção substitui as descrições anteriores onde houve expansão. [Matriz de pedidos, resultados e limites](../docs/pack-atualizacao-2026-11-06.md).
+
+- Movimento lateral porA/D,←/→ oudeslize mantido; coletas, colisões, retaguarda, proteção e resize acompanham a posição real. A corrida continua automática eFlávio não recebe arma.
+- Quedas verticais duranteJoice e blitzPF têm alvo comprometido, aviso≥1,2s e duas fugas quando a posição permite; na borda, retornar à arena. Ataques anteriores continuam variáveis.
+- Ordem agoraHaddad→Lula→Xandão→Janones→PF. Metas iniciais9/10/12/9/8, crescimento+2 por ciclo completo de5, limitado a+4. Janones tem3blocos de mensagens; PF combina bloqueios/quedas. Preservados22km/intervalo≥7km.
+- Quinze apoios fictícios têm função temporária. Vorcaro atrai passaportes3s/cooldown24s; Milei remove um obstáculo cenográfico naArgentina; Trump alonga avisos naFlórida/Casa Branca; os demais ajudam na leitura/rota/coleta, conforme matriz.
+- Jacaré tem4passadas quadrúpedes, forma baixa sem salto; primeiro↑/toque restaura, seguinte salta. Graças, respiro e economia permanecem. A ajuda contextualiza a sátira sem aconselhar uso de medicamento.
+- Cinco atlas extras somam80poses. Largada espera somente4folhas originais; expansão carrega depois. Falha opcional não bloqueia a corrida nem cria um inimigo invisível. Retry fica na ajuda.
+- Retirado retrato extra abaixo da pista; estados usuais de carregamento ficam no botão/leitura assistiva. Alerta de perigo tem prioridade sobre voz/música. Vozes continuam reais/catalogadas, sem locução artificial. Candidato não revisado deTebet não foi integrado.

@@ -25,9 +25,9 @@
   <link rel="canonical" href="https://lamorimverso.github.io/lamorimsite/tanahoraflavio/">
   <title>Tá na hora, Flávio! · Contagem e minigame</title>
 
-  <link rel="stylesheet" href="game.css?v=e3f4a890bcd1">
+  <link rel="stylesheet" href="game.css?v=daa0a0d88217">
   <script defer src="page-layout.js?v=d515141f39cb"></script>
-  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=e943c9792387"></script>
+  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=d8a3ad414394"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -89,15 +89,17 @@
         </div>
         <details class="game-settings" id="game-settings"><summary title="Como jogar e ajustes"><span aria-hidden="true">?</span><span class="sr-only">Como jogar e ajustes</span></summary>
           <div class="game-settings-content">
-            <p class="game-instructions" id="game-instructions">Toque na pista ou deslize para cima para pular. Deslize para baixo e segure para abaixar; solte para levantar. No teclado, use Espaço/↑ e ↓/S. Outro dedo pode pular enquanto o primeiro abaixa. Flávio só desvia: observe o aviso do chefão. O cenário avança continuamente, com 7 km por ambiente. A cada 100 passaportes, você ganha uma vida. O Escudo das Américas protege por seis segundos.</p>
+            <p class="game-instructions" id="game-instructions">Toque na pista ou deslize para cima para pular. Deslize para baixo e segure para abaixar; solte para levantar. No teclado, use Espaço/↑ e ↓/S; A/D ou ←/→ movem na pista. No toque, deslize para o lado e segure para deslocar; solte para parar. Outro dedo pode pular enquanto o primeiro abaixa. Flávio só desvia: observe o aviso do chefão. O cenário avança continuamente, com 7 km por ambiente. A cada 100 passaportes, você ganha uma vida. O Escudo das Américas protege por seis segundos.</p>
             <div class="game-options">
               <label for="game-crouch-mode">Abaixar<select id="game-crouch-mode" disabled><option value="hold">Deslizar e segurar</option><option value="toggle">Deslizar para alternar</option></select></label>
               <label for="game-effects">Efeitos visuais<select id="game-effects" disabled><option value="system">Padrão do aparelho</option><option value="reduce">Reduzidos</option></select></label>
               <label class="assist-option" for="game-assist"><input id="game-assist" type="checkbox" disabled>Ritmo mais tranquilo</label>
             </div>
             <p class="game-options-note">O ritmo tranquilo reduz a velocidade da corrida e dos perigos na próxima tentativa. Você pode mudar os efeitos e a forma de abaixar a qualquer momento.</p>
-            <p class="game-options-note">Roteiro fictício inspirado no calendário de 2026: convenções em Brasília, campanha no Rio, primeiro turno na Argentina, reta final na Flórida e diplomação na Casa Branca. Haddad aparece a partir dos 22 km; depois vêm Lula e Xandão, em ordem. Cada vitória abre pelo menos 7 km de corrida antes do próximo chefe. Escape de 9 papéis, 10 gestos em L ou 12 martelos/mandados; as voltas seguintes acrescentam ataques. <a href="https://www.tse.jus.br/comunicacao/noticias/2026/Marco/eleicoes-2026-confira-as-principais-datas-do-calendario-eleitoral" target="_blank" rel="noopener noreferrer">Calendário real do TSE</a>.</p>
+            <div class="game-options-note" id="game-support-status" hidden>Os personagens de apoio não carregaram. A corrida continua disponível. <button type="button" id="game-support-retry" disabled>Carregar apoios</button></div>
+            <p class="game-options-note">Roteiro fictício inspirado no calendário de 2026: convenções em Brasília, campanha no Rio, primeiro turno na Argentina, reta final na Flórida e diplomação na Casa Branca. Haddad aparece a partir dos 22 km; depois vêm Lula, Xandão, Janones e a blitz fictícia da PF, em ordem. Cada vitória abre pelo menos 7 km de corrida antes do próximo chefe. Escape de 9 papéis, 10 gestos em L, 12 martelos/mandados, blocos de mensagens ou bloqueios da blitz; as voltas seguintes acrescentam ataques. <a href="https://www.tse.jus.br/comunicacao/noticias/2026/Marco/eleicoes-2026-confira-as-principais-datas-do-calendario-eleitoral" target="_blank" rel="noopener noreferrer">Calendário real do TSE</a>.</p>
             <p class="game-options-note">Perigos baixos pedem salto; os altos pedem abaixar. Dilma traz o vento, Simone os papéis e Soraya os microfones. A pipoca é um obstáculo baixo. Zé Gotinha desencadeia uma transformação satírica em jacaré (sem salto): pressione ↑ ou toque novamente para voltar à forma humana com a cloroquina fictícia de videogame; só o comando seguinte salta. A coleta limpa perigos comuns e oferece 2,5 segundos de respiro. Taxad lança recibos de TAXA; Simone faz referência ao adesivo Gostosas com Lula e Soraya ao meme do padre de festa junina. Vacinas não transformam pessoas em jacarés, e cloroquina não reverte vacinação nem trata Covid-19.</p>
+            <p class="game-options-note">Participações fictícias de apoio são verdes e aparecem espaçadas: Vorcaro atrai passaportes por 3 segundos; Milei abre um obstáculo cenográfico na Argentina; Trump alonga avisos na Flórida/Casa Branca. Outros aliados destacam perigos, coletas, destinos e objetivos temporários. Nenhum entrega arma ao corredor. Na queda, saia da faixa marcada no chão com movimento lateral; o alvo não acompanha você.</p>
             <p class="game-options-note">O fundo é uma recriação instrumental em 8 bits do solo de “Solinho do Fora PT”, do Prismah, sem canto. A melodia mantém o andamento e a percussão ganha intensidade na perseguição; o volume abaixa durante as vozes. Os memes curtos identificados de Lula e Janones vêm da <a href="https://cadeflavio.run/" target="_blank" rel="noopener noreferrer">referência Cadê o Flávio?</a>; são ativados por personagens e eventos correspondentes, sem narração artificial nem sorteios fora de contexto. “Defende meu pai” é Lula imitando Eduardo; “Cadê o Zé Gotinha?” também é Lula. Contextos e créditos em <a href="assets/audio/README.md" target="_blank" rel="noopener noreferrer">fontes dos áudios</a>. São gravações de arquivo e edições de memes, sem novas falas atribuídas às pessoas.</p>
             <p class="game-options-note">Fala de arquivo: “Mas a direção é correta.” — Haddad, <a href="https://radiogov.ebc.com.br/programas/bom-dia-ministro-2/curtas-ministro-preve-resultado-fiscal-melhor-que-nos-dois-governos-passados" target="_blank" rel="noopener noreferrer">Bom Dia, Ministro · Rádio Gov/EBC · 07/10/2025</a>, sobre negociações econômicas. A gravação original não se refere ao jogo. O recorte toca na chegada de Haddad e respeita o botão de som.</p>
             <p class="game-options-note">Joice aparece de surpresa e mistura ondas da PF e microfones por dez segundos, depois de um aviso curto. O áudio “toc, toc, toc” vem do <a href="https://www.camara.leg.br/evento-legislativo/65858" target="_blank" rel="noopener noreferrer">plenário da Câmara dos Deputados · 22/06/2022</a>, sobre Milton Ribeiro; não foi dito sobre Flávio. Recorte de 5,18 s, sem alterar palavras ou voz, sob <a href="https://www.camara.leg.br/tv/termos-de-uso/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. Respeita o botão de som.</p>
@@ -111,12 +113,12 @@
           <div class="power-chip"><span class="sr-only">Vantagem ativa: </span><strong id="game-power">Sem efeito ativo</strong></div>
           <div class="ammo-chip" hidden><span class="sr-only">Munição especial: </span><strong id="game-ammo">Sem arma</strong></div>
         </div>
-          <div class="game-overlay" id="game-overlay"><span class="game-overlay-badge" id="game-overlay-badge">Corrida fictícia</span><img class="game-captured" id="game-captured" src="assets/flavio-captured-v1.webp?v=35a44e31f10f" width="1334" height="1179" alt="Caricatura de Flávio com as mãos algemadas" fetchpriority="low" hidden><strong id="game-overlay-title">Pronto para correr?</strong><p id="game-overlay-copy">Pule ou abaixe para desviar.</p><p class="game-start-hint" id="game-start-hint">Toque para pular · Deslize ↓ para abaixar</p></div>
+          <div class="game-overlay" id="game-overlay"><span class="game-overlay-badge" id="game-overlay-badge">Corrida fictícia</span><img class="game-captured" id="game-captured" src="assets/flavio-captured-v1.webp?v=35a44e31f10f" width="1334" height="1179" alt="Caricatura de Flávio com as mãos algemadas" fetchpriority="low" hidden><strong id="game-overlay-title">Pronto para correr?</strong><p id="game-overlay-copy">Pule ou abaixe para desviar.</p><p class="game-start-hint" id="game-start-hint">Toque: pular · ↓: abaixar · ↔: mover</p></div>
         </div>
         <div class="game-controls">
           <button type="button" class="game-primary" id="game-start" disabled>Carregando desenhos…</button>
         </div>
-        <p class="game-loading-note" id="game-loading-note" role="status">Preparando os personagens…</p>
+        <p class="game-loading-note sr-only" id="game-loading-note" role="status">Preparando os personagens…</p>
 
         <div class="game-feedback">
 <div class="game-boss" id="game-boss" hidden aria-label="Confronto com chefe">
@@ -125,7 +127,7 @@
           <small class="game-boss-weapon" id="game-boss-weapon">Desvie dos ataques para fugir</small>
         </div>
 <aside class="game-raid" id="game-raid" aria-label="Evento de Joice Hasselmann" hidden>
-            <canvas id="game-joice-portrait" width="78" height="96" aria-hidden="true"></canvas>
+
             <div><strong id="game-raid-title">JOICE AVISA</strong><p id="game-raid-copy">Toc, toc, toc…</p><a id="game-raid-source" href="https://www.mprj.mp.br/web/guest/visualizar?noticiaId=96203" target="_blank" rel="noopener noreferrer">Fonte</a></div>
           </aside>
 <div class="game-transition" id="game-transition" hidden aria-hidden="true">

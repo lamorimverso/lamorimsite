@@ -145,3 +145,8 @@ Fundo instrumental em8bits: recriação compacta do contorno do solo de **Solinh
 A prévia pública da fonte foi usada apenas para análise musical. Nenhum trecho da gravação, canto ou voz foi incluído na trilha. A implementação sintetiza notas emWebAudio: lead quadrado, baixo triangular e percussão curta. Grade16passos/compasso,64passos/ciclo,123BPM estimados da prévia. É um arranjo compacto emloop, com transposição de oitava e simplificação de harmônicos; não se alega transcrição idêntica ou autorização comercial da composição. Não é a gravação original nem uma música original inédita do jogo.
 
 A melodia e o andamento ficam estáveis; pressão/chefes/Joice variam a percussão de apoio. Inicia após gesto, abaixa sob as falas de arquivo e para ao ocultar o jogo ou desligar o som. Os efeitos de perigo/salto/coleta/impacto e as falas de arquivo são canais separados da trilha instrumental.
+# Revisão de mixagem —6/11/2026
+
+O pacote do dossiê preserva os11arquivos de voz já catalogados(9memes de referência+Joice/Haddad). O repertório deLula inclui tambémPassarinho eDefende meu pai; a imitação não é identificada como gravação autêntica deEduardo. Alertas mantêm seu volume, abaixando temporariamente voz e música; Joice faz loop sem duplicação durante a perseguição e para em recovery/mute/foco/derrota.
+
+Nenhuma voz sintética foi adicionada. A pesquisa extra deDilma/Simone/Soraya/Moraes não produziu recorte pronto para release. Um candidato curto deTebet, oriundo deRádioGov/EBC, ficou fora dos assets porque seu trecho/transcrição ainda não foi conferido; não se presume autorização comercial. Os efeitos próprios e as legendas não imitam essas pessoas.

@@ -1,0 +1,551 @@
+{
+  "schema": 1,
+  "tool": "built-in image_gen",
+  "useCase": "illustration-story",
+  "generatedAt": "2026-11-06",
+  "sourceGeneratedPath": "/workspace/scratch/11d2fc137a81/generated_images/exec-2c639db7-be37-4ace-9510-7c61f21a475b.png",
+  "prompt": "Use case: illustration-story.\nAsset type: transparent production sprite atlas for a polished 2D side-scrolling Brazilian political satire game.\nInput images: two DRAWING STYLE REFERENCES ONLY. Match their premium editorial chibi caricature style: large recognizable expressive heads, compact bodies, clean dark ink contours, sophisticated colorful cel shading, coherent anatomy and crisp silhouettes at small scale. Create NEW actors, not recolored copies of the input.\nPrimary request: exactly FOUR ROWS and FOUR COLUMNS, 16 isolated whole figures. Each ROW has ONE consistent character in four successive LEFT-FACING running poses. No text.\nLAYOUT IS CRITICAL: square atlas, preferably 2048×2048. Strict equally spaced invisible 4×4 grid. Each entire figure occupies ONLY the central 64% of its cell height and no more than the central 68% of cell width. Leave at least 16% clear transparent margin on ALL FOUR sides INSIDE EVERY cell. Place row centers at y=12.5%,37.5%,62.5%,87.5% and column centers at x=12.5%,37.5%,62.5%,87.5%. These are small sprites with WIDE GAPS. Full heads, hair, hands, tails and feet stay inside each cell. No part of any character can enter an adjacent cell. The bottom row also needs a generous empty margin below all shoes.\nANIMATION: every figure faces and runs LEFT with a slight three-quarter side view, as in the references. Same character size, head height, costume and hip pivot throughout each row. Four distinct running anatomy silhouettes: column1 extended stride, lead leg reaching left and other leg extended behind; column2 passing pose, knee lifting forward and other foot beneath hip; column3 opposite extended stride with lead leg and arm swing REVERSED; column4 opposite passing with rear heel folded up and front foot reaching down. Both legs, knees and shoes readable, arms pumping alternately, hands empty. Exactly two arms and two legs per character. Same ground baseline for all four poses in each row.\nBackdrop: REAL TRANSPARENT ALPHA, no color background, no scene, no floor, no shadows, no visible grid. Feet run along the ground, no flying.\nText: NONE. No captions, names, letters, numbers, logos, slogans, watermarks, flags, speech balloons or attributed statements. No handheld objects, weapons, firearms, medicines, syringes, effects, motion streaks or debris.\nThese are humorous fictional game caricatures of adult public figures, not factual claims about relationships. Distinct face and hair for every actor. Keep the line weight, shading and body proportions coherent with both reference atlases.\nROW1: Daniel Vorcaro, adult Brazilian man, neatly styled wavy dark-brown hair, full close dark beard, broad defined face and thick brows. Dark navy suit, white open-collar shirt, dark shoes.\nROW2: Jair Bolsonaro, older Brazilian man, short dark-gray side-parted hair, long narrow lined face, prominent long nose and expressive thick brows. Dark navy suit, white shirt, green tie, dark shoes.\nROW3: Michelle Bolsonaro, adult Brazilian woman, short side-parted dark-brown bob, distinctive high arched eyebrows, expressive almond eyes. Navy blue pantsuit, white blouse, dark flat shoes.\nROW4: Eduardo Bolsonaro, adult Brazilian man, short dark-brown hair with receding temples, close full dark beard, broad face. Deep blue suit, white shirt, muted blue tie, dark shoes.",
+  "references": [
+    {
+      "path": "/workspace/scratch/11d2fc137a81/game-dossier-pack/tanahoraflavio/assets/cameos-motion-v1.png",
+      "role": "drawing style reference",
+      "sha256": "216ebe4995a257c7e8ad61e2785d0991148ee2b2f9eb4f7c2740de4f1e40b86f"
+    },
+    {
+      "path": "/workspace/scratch/11d2fc137a81/game-dossier-pack/tanahoraflavio/assets/chase-motion-v1.png",
+      "role": "drawing style reference",
+      "sha256": "da455747181517bab2c93e6bede67974894bfeaa164215f1425782ecff8fcd47"
+    }
+  ],
+  "pngPath": "/workspace/scratch/11d2fc137a81/game-dossier-pack/tanahoraflavio/assets/allies-motion-a-v1.png",
+  "webpPath": "/workspace/scratch/11d2fc137a81/game-dossier-pack/tanahoraflavio/assets/allies-motion-a-v1.webp",
+  "pngSha256": "fd9e4147feec70edbbd98902f6948bdba4b54c6999d381705b84de3771b3ea28",
+  "webpSha256": "a753772f68e1d49541e3ef560c21035995dbd6902861200c5a8a13be341306a8",
+  "width": 1254,
+  "height": 1254,
+  "grid": {
+    "rows": 4,
+    "columns": 4
+  },
+  "rows": [
+    "vorcaro",
+    "jair",
+    "michelle",
+    "eduardo"
+  ],
+  "actorNames": [
+    "Daniel Vorcaro",
+    "Jair Bolsonaro",
+    "Michelle Bolsonaro",
+    "Eduardo Bolsonaro"
+  ],
+  "columns": [
+    "extended stride",
+    "raised-knee passing",
+    "opposite extended stride",
+    "heel-folded passing"
+  ],
+  "orientation": "left",
+  "frames": [
+    {
+      "row": 0,
+      "column": 0,
+      "actor": "vorcaro",
+      "x": 61,
+      "y": 56,
+      "width": 242,
+      "height": 272,
+      "center": [
+        179,
+        220
+      ],
+      "groundY": 324,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 0,
+      "column": 1,
+      "actor": "vorcaro",
+      "x": 384,
+      "y": 57,
+      "width": 203,
+      "height": 275,
+      "center": [
+        492,
+        223
+      ],
+      "groundY": 328,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 0,
+      "column": 2,
+      "actor": "vorcaro",
+      "x": 681,
+      "y": 58,
+      "width": 235,
+      "height": 272,
+      "center": [
+        795,
+        221
+      ],
+      "groundY": 326,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 0,
+      "column": 3,
+      "actor": "vorcaro",
+      "x": 1010,
+      "y": 59,
+      "width": 201,
+      "height": 275,
+      "center": [
+        1114,
+        225
+      ],
+      "groundY": 330,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 1,
+      "column": 0,
+      "actor": "jair",
+      "x": 62,
+      "y": 368,
+      "width": 239,
+      "height": 261,
+      "center": [
+        177,
+        525
+      ],
+      "groundY": 625,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 1,
+      "column": 1,
+      "actor": "jair",
+      "x": 392,
+      "y": 368,
+      "width": 209,
+      "height": 263,
+      "center": [
+        499,
+        526
+      ],
+      "groundY": 627,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 1,
+      "column": 2,
+      "actor": "jair",
+      "x": 681,
+      "y": 368,
+      "width": 237,
+      "height": 261,
+      "center": [
+        795,
+        525
+      ],
+      "groundY": 625,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 1,
+      "column": 3,
+      "actor": "jair",
+      "x": 1010,
+      "y": 369,
+      "width": 209,
+      "height": 263,
+      "center": [
+        1112,
+        527
+      ],
+      "groundY": 628,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 2,
+      "column": 0,
+      "actor": "michelle",
+      "x": 61,
+      "y": 660,
+      "width": 246,
+      "height": 274,
+      "center": [
+        177,
+        825
+      ],
+      "groundY": 930,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 2,
+      "column": 1,
+      "actor": "michelle",
+      "x": 392,
+      "y": 659,
+      "width": 197,
+      "height": 280,
+      "center": [
+        495,
+        828
+      ],
+      "groundY": 935,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 2,
+      "column": 2,
+      "actor": "michelle",
+      "x": 685,
+      "y": 660,
+      "width": 239,
+      "height": 277,
+      "center": [
+        798,
+        827
+      ],
+      "groundY": 933,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 2,
+      "column": 3,
+      "actor": "michelle",
+      "x": 1016,
+      "y": 660,
+      "width": 197,
+      "height": 278,
+      "center": [
+        1114,
+        828
+      ],
+      "groundY": 934,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 3,
+      "column": 0,
+      "actor": "eduardo",
+      "x": 60,
+      "y": 955,
+      "width": 247,
+      "height": 267,
+      "center": [
+        181,
+        1115
+      ],
+      "groundY": 1218,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 3,
+      "column": 1,
+      "actor": "eduardo",
+      "x": 391,
+      "y": 954,
+      "width": 205,
+      "height": 273,
+      "center": [
+        497,
+        1118
+      ],
+      "groundY": 1223,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 3,
+      "column": 2,
+      "actor": "eduardo",
+      "x": 688,
+      "y": 956,
+      "width": 232,
+      "height": 266,
+      "center": [
+        799,
+        1115
+      ],
+      "groundY": 1218,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 3,
+      "column": 3,
+      "actor": "eduardo",
+      "x": 1019,
+      "y": 958,
+      "width": 199,
+      "height": 269,
+      "center": [
+        1116,
+        1120
+      ],
+      "groundY": 1223,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  ],
+  "analysis": {
+    "alphaMin": 0,
+    "alphaMax": 255,
+    "transparentPixels": 994456,
+    "nonzeroPixels": 578060,
+    "largeAlphaComponentCount": 16,
+    "components": [
+      {
+        "label": 1,
+        "area": 35271,
+        "bbox": [
+          65,
+          60,
+          299,
+          324
+        ]
+      },
+      {
+        "label": 5,
+        "area": 35046,
+        "bbox": [
+          685,
+          62,
+          912,
+          326
+        ]
+      },
+      {
+        "label": 3,
+        "area": 31722,
+        "bbox": [
+          388,
+          61,
+          583,
+          328
+        ]
+      },
+      {
+        "label": 7,
+        "area": 30988,
+        "bbox": [
+          1014,
+          63,
+          1207,
+          330
+        ]
+      },
+      {
+        "label": 130,
+        "area": 35067,
+        "bbox": [
+          66,
+          372,
+          297,
+          625
+        ]
+      },
+      {
+        "label": 133,
+        "area": 34492,
+        "bbox": [
+          685,
+          372,
+          914,
+          625
+        ]
+      },
+      {
+        "label": 132,
+        "area": 30758,
+        "bbox": [
+          396,
+          372,
+          597,
+          627
+        ]
+      },
+      {
+        "label": 135,
+        "area": 30681,
+        "bbox": [
+          1014,
+          373,
+          1215,
+          628
+        ]
+      },
+      {
+        "label": 223,
+        "area": 34038,
+        "bbox": [
+          65,
+          664,
+          303,
+          930
+        ]
+      },
+      {
+        "label": 224,
+        "area": 33899,
+        "bbox": [
+          689,
+          664,
+          920,
+          933
+        ]
+      },
+      {
+        "label": 222,
+        "area": 30897,
+        "bbox": [
+          396,
+          663,
+          585,
+          935
+        ]
+      },
+      {
+        "label": 225,
+        "area": 30500,
+        "bbox": [
+          1020,
+          664,
+          1209,
+          934
+        ]
+      },
+      {
+        "label": 320,
+        "area": 35156,
+        "bbox": [
+          64,
+          959,
+          303,
+          1218
+        ]
+      },
+      {
+        "label": 321,
+        "area": 33030,
+        "bbox": [
+          692,
+          960,
+          916,
+          1218
+        ]
+      },
+      {
+        "label": 319,
+        "area": 30501,
+        "bbox": [
+          395,
+          958,
+          592,
+          1223
+        ]
+      },
+      {
+        "label": 326,
+        "area": 30000,
+        "bbox": [
+          1023,
+          962,
+          1214,
+          1223
+        ]
+      }
+    ],
+    "warning": null,
+    "cropPaddingPx": 4,
+    "allFramePaddingVerified": true,
+    "neighborContamination": [],
+    "maxAlphaOutsideCrops": 1,
+    "webpAlphaExact": true,
+    "webpVisibleRgbExact": true,
+    "pngBytes": 1455384,
+    "webpBytes": 995556,
+    "verifiedAt": "2026-11-06"
+  },
+  "processing": "Raw image_gen PNG copied byte-for-byte; alpha and PNG pixels unmodified. WebP encoded losslessly. Crops are metadata only, 4px padding around 8-connected alpha>2 main components area>=1000. center=[atlasX,atlasY] is estimated torso pivot from alpha-weighted band 56%-66% of figure height. groundY is exclusive foreground bottom."
+}

@@ -2,7 +2,7 @@
 // Nunca narra a partida em voz artificial, nem atribui áudio de uma pessoa a outra.
 export const MEME_SCENES=Object.freeze({
  janones:Object.freeze(['pessoal-urgente','explode-video']),
- lula:Object.freeze(['bora-pra-rua','picanha','mesmo-mundo','ate-teu-pai']),
+ lula:Object.freeze(['bora-pra-rua','picanha','mesmo-mundo','ate-teu-pai','defende-meu-pai','passarinho']),
  haddad:Object.freeze(['haddad']),
  'ze-gotinha':Object.freeze(['cade-ze-gotinha'])
 });

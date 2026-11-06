@@ -228,8 +228,9 @@ export function drawJourneyScenery(c,options={}){
   c.fillStyle=haze;c.fillRect(0,0,width,246);
   oval(c,width-66,55,29,29,'#fff7d838');oval(c,width-66,55,21,21,'#fff9e5d9');
   for(const item of geometry.clouds)cloud(c,item.x,item.y,item.scale);
+  c.save();c.globalAlpha*=1-.45*Math.max(0,Math.min(1,Number(options.quiet)||0));
   drawFarPlane(c,geometry.layers[0],width);
-  drawMiddlePlane(c,geometry.layers[1],width);
+  drawMiddlePlane(c,geometry.layers[1],width);c.restore();
   drawAmbientDetails(c,geometry,options);
   for(const item of geometry.landmarks){
    if(item.alpha<=0||item.x<-180||item.x>width+180)continue;
@@ -239,8 +240,15 @@ export function drawJourneyScenery(c,options={}){
   rect(c,0,234,width,12,paletteGradient(c,geometry,'near',.36));
   line(c,[[0,234],[width,234]],paletteGradient(c,geometry,'ink',.33),1);
   const road='#dce3dc',ink='#577c86';
-  rect(c,0,246,width,54,road);line(c,[[0,246],[width,246]],ink,1.5);line(c,[[0,249],[width,249]],'#ffffffb3',2);
+  const surface=c.createLinearGradient(0,246,0,300);surface.addColorStop(0,'#e4e9e1');surface.addColorStop(1,'#cdd8d2');
+  rect(c,0,246,width,54,surface);line(c,[[0,246],[width,246]],ink,1.5);line(c,[[0,249],[width,249]],'#ffffffb3',2);
   for(let x=-geometry.roadOffset;x<width;x+=98)rect(c,x,275,38,3,'#ffffffa6',null,1);
+  if(!options.reducedMotion){
+   const travel=Number(options.distance??options.routeDistance)||0,first=Math.floor(travel*.32/160)-1;
+   c.save();c.globalAlpha*=.32*(1-.6*(Number(options.quiet)||0));
+   for(let i=first;i<first+Math.ceil(width/160)+3;i++){const x=i*160-travel*.32;oval(c,x,263,3,1.1,'#6d8a80');line(c,[[x+53,268],[x+58,265],[x+61,268]],'#6d8a80',1);}
+   c.restore();
+  }
   line(c,[[0,296],[width,296]],ink+'18',1);
  }finally{c.restore();}
 }

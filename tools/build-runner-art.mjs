@@ -11,7 +11,12 @@ const sources=[
  {name:'hero',file:'flavio-motion-v2',cols:4,rows:3},
  {name:'cast',file:'characters-motion-v2',cols:4,rows:4},
  {name:'cameos',file:'cameos-motion-v1',cols:4,rows:4},
- {name:'chase',file:'chase-motion-v1',cols:4,rows:4}
+ {name:'chase',file:'chase-motion-v1',cols:4,rows:4},
+ {name:'alliesA',file:'allies-motion-a-v1',cols:4,rows:4,actors:['vorcaro','jair','michelle','eduardo']},
+ {name:'alliesB',file:'allies-motion-b-v1',cols:4,rows:4,actors:['carlos','renan','silas','magno']},
+ {name:'alliesC',file:'allies-motion-c-v1',cols:4,rows:4,actors:['nikolas','tarcisio','damares','bia']},
+ {name:'alliesD',file:'allies-motion-d-v2',cols:4,rows:4,actors:['trump','milei','bolsominion','jacare']},
+ {name:'pursuers',file:'pursuers-motion-v1',cols:4,rows:4,actors:['boulos','dino','janones','pf']}
 ];
 
 function loadSharp(){
@@ -35,8 +40,8 @@ function explicitFrames(layout,source,width,height){
 
 function manifestFor(atlases){
  const frameSets=Object.fromEntries(atlases.map(atlas=>[atlas.name,atlas.frames]));
- const definitions=atlases.map(({name,file,cols,rows,width,height,sha256})=>
-  ` ${name}:{url:new URL('./assets/${file}.webp',import.meta.url).href+'?v=${sha256.slice(0,12)}',cols:${cols},rows:${rows},width:${width},height:${height},sha256:'${sha256}',frames:frames.${name}}`
+ const definitions=atlases.map(({name,file,cols,rows,width,height,sha256,actors})=>
+  ` ${name}:{url:new URL('./assets/${file}.webp',import.meta.url).href+'?v=${sha256.slice(0,12)}',cols:${cols},rows:${rows},width:${width},height:${height},sha256:'${sha256}',actors:${JSON.stringify(actors||null)},frames:frames.${name}}`
  ).join(',\n');
  return '// Gerado por tools/build-runner-art.mjs a partir dos PNGs originais.\n'+
   '// Recortes explícitos e pivôs revisados em tools/runner-art-layout.json.\n'+
@@ -54,7 +59,7 @@ async function main(){
  const args=process.argv.slice(2);
  if(args.some(arg=>arg!=='--check'))throw new Error('Uso: node tools/build-runner-art.mjs [--check]');
  const check=args.includes('--check'),sharp=loadSharp(),atlases=[];
- const layout={...JSON.parse(await readFile(join(root,'tools/runner-art-layout.json'),'utf8')),...JSON.parse(await readFile(join(root,'tools/pressure-art-layout.json'),'utf8'))};
+ const layout={...JSON.parse(await readFile(join(root,'tools/runner-art-layout.json'),'utf8')),...JSON.parse(await readFile(join(root,'tools/pressure-art-layout.json'),'utf8')),...JSON.parse(await readFile(join(root,'tools/dossier-art-layout.json'),'utf8'))};
  for(const source of sources){
   const input=await readFile(join(root,'tanahoraflavio/assets',`${source.file}.png`));
   const {width,height}=await sharp(input).metadata();
