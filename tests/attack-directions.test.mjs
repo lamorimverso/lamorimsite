@@ -8,9 +8,6 @@ function running(width=900){
  r.viewportWidth=width;r.shieldFor=Infinity;r.nextBossAt=r.nextRaid=r.nextAllyAt=Infinity;
  r.elapsed=80;r.distance=r.routeDistance=35000;return r;
 }
-const eta=o=>o.approach==='rear'
- ?(core.PLAYER.x+5-(o.x+o.width-3))/-o.speed
- :(o.x-(core.PLAYER.x+core.PLAYER.width-6))/o.speed;
 
 test('a corrida combina ataques da frente, da retaguarda, por cima e rolantes sem padrão fixo',()=>{
  const signatures=[],styles=new Set();
@@ -38,7 +35,7 @@ test('cada contato mantém tempo de reação inclusive da retaguarda e em celula
   for(let i=0;i<100/dt;i++){
    core.advanceRun(r,dt,rng);
    if(r.spawnedObstacles<=count)continue;
-   count=r.spawnedObstacles;const o=r.obstacles.at(-1),arrival=r.elapsed+eta(o);
+   count=r.spawnedObstacles;const o=r.obstacles.at(-1),arrival=r.elapsed+core.threatTimeToContact(r,o);
    assert.ok(arrival-previous>=.81,`intervalo entre contatos: ${width} ${seed} ${arrival-previous} ${o.approach}`);
    previous=arrival;
   }

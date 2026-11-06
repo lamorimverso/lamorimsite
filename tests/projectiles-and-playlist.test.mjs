@@ -13,7 +13,7 @@ function bossRun(type='xandao',fired=0){
 }
 test('primeiro chefe só chega após 22 km, mesmo que a corrida já dure um minuto',()=>{
  const r=createRun();startRun(r);r.nextRaid=Infinity;r.nextObstacle=1e8;
- r.nextPassport=r.nextPower=r.nextPickup=1e8;r.shieldFor=100;
+ r.nextPassport=r.nextPower=r.nextPickup=r.nextAllyAt=r.nextSupportAt=1e8;r.shieldFor=100;
  advanceRun(r,1/120,()=>0);
  assert.equal(r.nextBossAt,22000);
  step(r,120*60);
@@ -31,7 +31,8 @@ test('objeto sai da mão do chefão e viaja em linha reta até o Flávio',()=>{
  const initialX=shot.x;step(r,24);
  assert.ok(shot.x<initialX,'o disparo deve mover-se da direita para a esquerda');
  assert.ok(shot.y<77,'o ataque deve aproximar-se da altura real do jogador');
- const progress=(shot.launchX-(shot.x+shot.width/2))/(shot.launchX-shot.targetX);
+ const landingX=shot.targetX+PLAYER.width/2-6+shot.width/2;
+ const progress=(shot.launchX-(shot.x+shot.width/2))/(shot.launchX-landingX);
  assert.ok(Math.abs(shot.y-(shot.launchY+(shot.targetY-shot.launchY)*progress))<.0001);
 });
 test('projétil acertando tira vida e derruba jogador desprotegido',()=>{

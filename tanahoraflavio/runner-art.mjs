@@ -27,6 +27,11 @@ export function drawItem(c,{type,x,y,scale=1}){
  // Jacaré cartunesco original: representação satírica, sem efeito médico real.
 // Jacaré vetorial animado; o volume fica dentro da hitbox do motor.
 // 'age' controla a metamorfose, sem transformar isso em um segundo salto.
+export function jacareBlendFor(player,reducedMotion=false){
+ let jacare=player.isJacare?Math.min(1,Math.max(0,Number(player.jacareAge)||0)/.3):Math.min(1,Math.max(0,Number(player.restoreFlashFor)||0)/.48);
+ if(reducedMotion)jacare=player.isJacare?1:0;
+ return {human:1-jacare,jacare};
+}
 export function drawJacare(c,{x,y,phase=0,age=1,reducedMotion=false}={}){
  if(drawActor(c,{type:'jacare',x,y,phase,scale:1}))return;
  c.save();c.translate(x,y);
@@ -84,12 +89,31 @@ export function fallingThreatGeometry(item,ground=246){
  return {centerX:item.x+item.width/2,bodyY:ground-item.y,width:item.width,height:item.height,
   showBody:item.age>=item.warningFor,progress:Math.min(1,Math.max(0,item.age/item.warningFor)),ground};
 }
+export function manholeThreatGeometry(item,ground=246){
+ return {centerX:item.x+item.width/2,ground,width:item.width,
+  open:item.age>=item.warningFor&&item.age<item.warningFor+item.activeFor,
+  progress:Math.max(0,Math.min(1,item.age/item.warningFor))};
+}
+export function drawManholeThreat(c,item,ground=246){
+ const g=manholeThreatGeometry(item,ground);c.save();
+ // A fixed floor marker becomes the opening; it never chases the runner.
+ oval(c,g.centerX,ground+1,g.width/2,7,g.open?'#252438':'#9ba6a5','#655548',2);
+ if(g.open){
+  oval(c,g.centerX,ground+1,g.width/2-7,4,'#15172a',null);
+  for(const side of [-1,1])line(c,[[g.centerX+side*(g.width/2+3),ground-4],[g.centerX+side*(g.width/2+10),ground-10]],'#ba6942',3);
+ }else{
+  for(let dx=-18;dx<=18;dx+=9)line(c,[[g.centerX+dx,ground-2],[g.centerX+dx,ground+3]],'#526567',1.5);
+  line(c,[[item.x,ground+12],[item.x+g.width*g.progress,ground+12]],'#bb6841',3);
+  text(c,'↔',g.centerX,ground-23,20,'#8b3b3d');
+ }
+ c.restore();
+}
 export function drawFallingThreat(c,item,ground=246){
  const g=fallingThreatGeometry(item,ground);c.save();
  box(c,item.x+3,ground+3,item.width-6,5,'#a73e50',2,null);
  line(c,[[item.x+3,ground+11],[item.x+3+(item.width-6)*g.progress,ground+11]],'#da9a63',2);
  if(!g.showBody){
-  text(c,'↔',g.centerX,ground-80,23,'#8a3348');text(c,'SAIA DO ALVO',g.centerX,ground-64,8,'#6a3145');
+  text(c,'↔',g.centerX,ground-64,23,'#8a3348');
  }else{
   box(c,item.x,g.bodyY-item.height/2,item.width,item.height,'#8d557c',5,'#342a46');
   box(c,g.centerX-7,g.bodyY-item.height/2-6,14,6,'#e7c68d',2,'#342a46');

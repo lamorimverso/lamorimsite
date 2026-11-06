@@ -1,5 +1,5 @@
-import {createGameSoundtrack} from './runner-soundtrack.mjs?v=101619002437';
-import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=e04644dd1f8f';
+import {createGameSoundtrack} from './runner-soundtrack.mjs?v=eef47a2a323c';
+import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=e742e2b2daf2';
 // Efeitos locais e recorte de arquivo identificado; nenhuma imitação de voz.
 export function createGameAudio({onVoice=()=>{}}={}) {
  let enabled=true,context=null,nodes=[],primed=false,recording=null,raidVoice=false,raidPrepared=false,music=null,voicePriority=0,alertUntil=0;
@@ -31,7 +31,8 @@ export function createGameAudio({onVoice=()=>{}}={}) {
    const url=new URL(clip.file,import.meta.url);url.searchParams.set('v',clip.sha256.slice(0,12));
    const player=new window.Audio(url.href);recording=player;voicePriority=priority;player.volume=(context?.currentTime||0)<alertUntil?.28:.68;player.loop=loop===true;player.preload='none';
    onVoice(clip);player.onended=()=>{if(recording===player){recording=null;voicePriority=0;onVoice(null);}};
-   player.play()?.catch?.(()=>{if(recording===player){stopRecording();raidVoice=false;}});
+   const failed=()=>{if(recording===player){stopRecording();raidVoice=false;}};
+   player.onerror=failed;player.play()?.catch?.(failed);
    return true;
   }catch{stopRecording();return false;}
  };
@@ -83,7 +84,8 @@ export function createGameAudio({onVoice=()=>{}}={}) {
  // Não há sintetizador de voz: só trechos identificados e efeitos originais.
  // Ausência de clipe não é preenchida por uma voz inventada.
  return {get enabled(){return enabled;},prime,stop,effect,voice,
-  background(state){
+  background(state={}){
+   if(state.active===false){stop();return;}
    if(!enabled||!primed)return;
    const alert=(context?.currentTime||0)<alertUntil;
    if(recording)recording.volume=alert?.28:.68;
@@ -92,8 +94,8 @@ export function createGameAudio({onVoice=()=>{}}={}) {
   toggle(){enabled=!enabled;try{window.localStorage?.setItem(preferenceKey,enabled?'on':'off');}catch{/* A escolha vale nesta sessão. */}if(!enabled)stop();else prime();return enabled;},
   event(phase,fact){
    if(!enabled)return;
-   if(phase==='warning'){if(raidPrepared&&raidVoice&&recording)return;raidPrepared=true;stopRecording();raidVoice=voice('joice',{priority:3,loop:true});if(!raidVoice)knocks();}
-   else if(phase==='active'){if(!raidVoice){raidPrepared=true;raidVoice=voice('joice',{priority:3,loop:true});if(!raidVoice)knocks();}}
+   if(phase==='warning'){if(raidPrepared&&raidVoice)return;raidPrepared=true;stopRecording();raidVoice=voice('joice',{priority:3});if(!raidVoice)knocks();}
+   else if(phase==='active'){if(!raidVoice){raidPrepared=true;raidVoice=voice('joice',{priority:3});if(!raidVoice)knocks();}}
    else {raidPrepared=false;raidVoice=false;stopRecording();}
   }};
 }

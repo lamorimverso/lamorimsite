@@ -52,6 +52,91 @@ async function begin(page){
  await page.evaluate(()=>{if(globalThis.__testRun)__testRun.nextObstacle=1000;});
 }
 
+test('jacaré exige cinco comandos independentes e mantém progresso entre teclado e toque',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844},hasTouch:true,isMobile:true});
+ try{
+  await begin(page);
+  await page.evaluate(()=>{const r=__testRun;for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextPower','nextPassport'])r[k]=Infinity;r.obstacles=[];r.player.isJacare=true;r.player.jacareProgress=0;});
+  const canvas=page.locator('#runner-canvas');await canvas.focus();
+  await page.keyboard.down('ArrowUp');
+  await page.waitForFunction(()=>__testRun.player.jacareProgress===1);
+  await canvas.dispatchEvent('keydown',{code:'ArrowUp',repeat:false,bubbles:true});
+  await canvas.dispatchEvent('keydown',{code:'ArrowUp',repeat:true,bubbles:true});
+  assert.equal(await page.evaluate(()=>__testRun.player.jacareProgress),1);
+  await page.keyboard.up('ArrowUp');await page.keyboard.press('ArrowUp');
+  for(let i=0;i<2;i++){
+   await canvas.dispatchEvent('pointerdown',{button:0,pointerId:80+i,pointerType:'touch',isPrimary:true,clientX:100,clientY:100});
+   await canvas.dispatchEvent('pointerup',{pointerId:80+i,pointerType:'touch',clientX:100,clientY:100});
+  }
+  assert.equal(await page.evaluate(()=>__testRun.player.isJacare),true);
+  await page.waitForFunction(()=>document.getElementById('game-jacare-progress').getAttribute('aria-valuenow')==='4');
+  assert.equal(await page.locator('#game-jacare-progress .is-complete').count(),4);
+  await page.keyboard.press('ArrowUp');
+  assert.equal(await page.evaluate(()=>__testRun.player.isJacare),false);
+  assert.equal(await page.evaluate(()=>__testRun.player.velocity),0);
+  assert.equal(await page.locator('#game-jacare-progress').isVisible(),false);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('corrida conserva avisos funcionais sem legendas de música, ação ou transição',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:1440,height:900}});
+ try{
+  await begin(page);
+  await page.evaluate(()=>{const r=__testRun;r.obstacles=[];r.nextObstacle=Infinity;r.routeDistance=6800;r.cameo={type:'simone',remaining:4};r.raid={id:71,phase:'warning',remaining:1.2,factIndex:0};});
+  await page.waitForFunction(()=>document.querySelector('#game').dataset.raid==='warning');
+  assert.equal(await page.locator('#game-transition').isVisible(),false);
+  assert.equal(await page.locator('#game-voice-note').evaluate(e=>e.classList.contains('sr-only')),true);
+  assert.equal(await page.locator('#game-raid-copy').evaluate(e=>e.classList.contains('sr-only')),true);
+  assert.equal(await page.locator('#game-score').isVisible(),true);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+for(const viewport of [{width:390,height:844},{width:1440,height:900}])test(`teclado atravessa toda a largura útil da pista em ${viewport.width}px`,async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport});
+ try{
+  await begin(page);
+  await page.evaluate(()=>{const r=__testRun;for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextPower','nextPassport'])r[k]=Infinity;r.obstacles=[];});
+  await page.locator('#runner-canvas').focus();await page.keyboard.down('ArrowRight');
+  await page.waitForFunction(()=>__testRun.player.x===__testRun.viewportWidth-75,{},{timeout:6000});
+  await page.keyboard.up('ArrowRight');
+  assert.ok(await page.evaluate(()=>__testRun.player.x>__testRun.viewportWidth*.8));
+  await page.keyboard.down('ArrowLeft');await page.waitForFunction(()=>__testRun.player.x===26,{},{timeout:6000});
+  await page.keyboard.up('ArrowLeft');
+  assert.ok(await page.evaluate(()=>__testRun.distance>800),'a corrida e os metros continuam durante o movimento');
+  assert.equal(await page.evaluate(()=>__testRun.status),'running');assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('mudar foco dentro da página limpa teclas sem perder o progresso do jacaré',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:1440,height:900}});
+ try{
+  await begin(page);await page.evaluate(()=>{const r=__testRun;r.nextObstacle=r.nextRaid=r.nextBossAt=Infinity;r.obstacles=[];r.player.isJacare=true;r.player.jacareProgress=0;});
+  const c=page.locator('#runner-canvas');await c.focus();await page.keyboard.down('ArrowUp');await page.keyboard.down('ArrowRight');
+  await page.evaluate(()=>document.getElementById('share').focus({preventScroll:true}));
+  assert.equal(await page.evaluate(()=>__testRun.player.moveHeld),0);
+  await page.keyboard.up('ArrowUp');await page.keyboard.up('ArrowRight');await c.focus();await page.keyboard.press('ArrowUp');
+  assert.equal(await page.evaluate(()=>__testRun.player.jacareProgress),2);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+test('soltar uma fonte de agachamento preserva dedo ou outra tecla ainda pressionada',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844},hasTouch:true,isMobile:true});
+ try{
+  await begin(page);await page.evaluate(()=>{__testRun.nextObstacle=__testRun.nextBossAt=__testRun.nextRaid=Infinity;__testRun.obstacles=[];});
+  const c=page.locator('#runner-canvas');await c.focus();
+  await swipeDown(page,96);await page.keyboard.down('ArrowDown');await page.keyboard.up('ArrowDown');
+  assert.equal(await page.evaluate(()=>__testRun.player.crouchHeld),true,'dedo ainda segura');
+  await page.keyboard.down('ArrowDown');await c.dispatchEvent('pointerup',{pointerId:96,pointerType:'touch'});
+  assert.equal(await page.evaluate(()=>__testRun.player.crouchHeld),true,'tecla ainda segura');
+  await page.keyboard.down('KeyS');await page.keyboard.up('ArrowDown');
+  assert.equal(await page.evaluate(()=>__testRun.player.crouchHeld),true,'S ainda segura');
+  await page.keyboard.up('KeyS');assert.equal(await page.evaluate(()=>__testRun.player.crouchHeld),false);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
 
 async function swipeDown(page,id=7){
  const track=page.locator('#runner-canvas');
@@ -339,7 +424,7 @@ test('HUD do chefão fica fora da pista e não desloca pista ou controles',async
 test('HTML antigo no cache se atualiza sem travar a inicialização',async()=>{
  const {context,page,errors}=await open({legacyFirst:true});
  try{
-  await page.waitForURL(url=>url.searchParams.get('ui')==='20261106-dossier', {timeout:4000});
+  await page.waitForURL(url=>url.searchParams.get('ui')==='20261106-arena', {timeout:4000});
   await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
   assert.equal(await page.locator('#game-settings').count(),1);
   assert.match(await page.locator('#days').textContent(),/^\d+$/);

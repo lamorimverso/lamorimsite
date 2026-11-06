@@ -149,8 +149,8 @@ export function legalPilot(seed,{width=900,assisted=false,limit=340,resize=false
   if(resize&&i>0&&i%(120*12)===0){const width=[480,900,612,900][(i/(120*12)-1)%4];if(width!==run.viewportWidth){core.resizeRun(run,width);widthChanges++;}}
   // O piloto considera o alerta de retaguarda antes de o inimigo entrar na tela.
   const eta=o=>core.threatTimeToContact(run,o);
-  const drop=run.obstacles.find(o=>o.falling&&o.age<o.warningFor+o.fallFor);
-  if(drop&&drop!==lastDrop){lastDrop=drop;evade=run.player.x<175?1:-1;}
+  const drop=run.obstacles.find(o=>(o.falling||o.groundHazard)&&o.age<o.warningFor+(o.fallFor??o.activeFor));
+  if(drop&&drop!==lastDrop){lastDrop=drop;const bounds=core.playerBounds(run);evade=run.player.x<(bounds.min+bounds.max)/2?1:-1;}
   const clearDrop=drop&&(evade<0?run.player.x+31<drop.x-10:run.player.x+5>drop.x+drop.width+10);
   // Concluir o salto atual antes de recuar evita prolongar o contato com a onda já em voo.
   // O aviso da queda reserva1,2s, mais que salto restante + deslocamento necessário.
@@ -159,7 +159,7 @@ export function legalPilot(seed,{width=900,assisted=false,limit=340,resize=false
   // Manter o desvio até o obstáculo sair por inteiro da hitbox.
   // Filtrar só por ETA interrompia o agachamento no meio de papéis altos.
   const threats=run.obstacles.filter(o=>{
-    if(o.falling||o.passed||o.counted)return false;
+    if(o.falling||o.groundHazard||o.passed||o.counted)return false;
     if(o.approach==='rear')return o.speed<0&&o.x<run.player.x+core.PLAYER.width-3;
     return o.x<run.viewportWidth&&o.x+o.width-3>run.player.x+5;
   });

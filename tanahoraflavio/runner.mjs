@@ -1,12 +1,13 @@
 import {createVoiceDirector} from './runner-voice-director.mjs?v=088899f48fd6';
-import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=90c323f521f7";
-import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, drawFallingThreat, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=b1c7689663c0";
-import { createGameAudio } from "./runner-audio.mjs?v=36902e19e2a2";
-import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=e04644dd1f8f";
-import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=cb8b845086d4";
+import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=d02047b75eb2";
+import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=212932eb579d";
+import { createGameAudio } from "./runner-audio.mjs?v=c56c940ee35a";
+import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=e742e2b2daf2";
+import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=345593356f4f";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
 
 import {allyById} from './runner-allies.mjs?v=181506ec1b3c';
+import {createPressGate} from './runner-input.mjs?v=a944e3673de7';
 
 function initRunner() {
   const $ = id => document.getElementById(id);
@@ -14,10 +15,10 @@ function initRunner() {
   if (!canvas || !section) return;
   // Uma aba pode ter conservado o HTML anterior enquanto os módulos já
   // mudaram. Atualizar a página uma vez evita inicializar sobre IDs antigos.
-  if(!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-expand-label")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
+  if(!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-expand-label")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
     const url=new URL(location.href);
-    if(url.searchParams.get("ui")!=="20261106-dossier"){
-      url.searchParams.set("ui","20261106-dossier");location.replace(url.href);
+    if(url.searchParams.get("ui")!=="20261106-arena"){
+      url.searchParams.set("ui","20261106-arena");location.replace(url.href);
     }else{
       const button=$("game-start"),note=$("game-loading-note");
       if(button){button.disabled=false;button.textContent="Recarregar jogo";button.addEventListener("click",()=>location.reload(),{once:true});}
@@ -54,7 +55,8 @@ function initRunner() {
   $("game-assist").checked=preferences.assisted;
   let run=createRun({assisted:preferences.assisted}),frameId=0;
   run.supportAvailable=false;
-  const trackPointers=new Map(),moveKeys=new Set();
+  const trackPointers=new Map(),moveKeys=new Set(),jumpKeys=createPressGate();
+  const recoverySteps=[...document.querySelectorAll('#game-jacare-progress .game-recovery-step')];
   const frameClock=createFrameClock(performance.now());
   let spritesReady=false,spritesFailed=false,loadedSprites=0,loadingSprites=false,landingUntil=0;
   let supportReady=false,supportLoading=false,supportFailed=false;
@@ -95,9 +97,9 @@ function initRunner() {
   function updateUI() {
     const clock=routeSeconds(),stage=stageAt(clock),score=scoreFor(run),difficulty=difficultyAt(run.distance,run.elapsed);
     const transition=stageTransitionAt(clock),banner=$("game-transition");
-    banner.hidden=run.status!=="running"||!transition.active||!!run.raid;
-    if(!banner.hidden){
-      $("game-transition-label").textContent=transition.progress<.5?"PRÓXIMA PARADA":"CHEGANDO EM";
+    // Destinations remain accessible; the scenery itself communicates transitions.
+    banner.hidden=true;
+    if(transition.active){
       $("game-transition-name").textContent=transition.to.name;
       $("game-transition-progress").style.width=Math.round(transition.progress*100)+"%";
     }
@@ -124,12 +126,19 @@ function initRunner() {
     section.dataset.art=spritesReady?"loaded":spritesFailed?"error":"loading";
     const power=run.shieldFor>0?"shield":run.graceFor>0?"recovery":"none";
     section.dataset.power=run.player.isJacare?"jacare":power;section.dataset.ammo="none";
-    $("game-power").textContent=run.player.isJacare?"JACARÉ · ↑ volta ao normal; próximo ↑ pula":power==="shield"?"Escudo das Américas · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo";
+    $("game-power").textContent=run.player.isJacare?"↑ "+(run.player.jacareProgress||0)+"/5":power==="shield"?"Escudo das Américas · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo";
+    const recovery=$("game-jacare-progress"),progress=run.player.jacareProgress||0;
+    if(recovery){
+      recovery.hidden=run.status!=="running"||!run.player.isJacare;
+      recovery.setAttribute("aria-valuenow",String(progress));
+      recovery.setAttribute("aria-valuetext",progress+" de 5 comandos para recuperar a forma humana");
+      recoverySteps.forEach((step,i)=>step.classList.toggle("is-complete",i<progress));
+    }
     $("game-ammo").parentElement.hidden=true;
     $("game-boss").hidden=run.status!=="running"||!run.boss;section.dataset.boss=run.boss?.type||"none";
     if(run.boss){
       const b=run.boss;
-      $("game-boss-name").textContent=b.type==="janones"?"Janones · bloco "+Math.min(3,Math.floor((b.total-b.remaining)/Math.ceil(b.total/3))+1)+"/3":(b.type==="haddad"?"Haddad · Taxaad":b.type==="pf"?"Blitz da PF":b.name)+" · rodada "+b.level;
+      $("game-boss-name").textContent=b.type==="janones"?"Janones · bloco "+Math.min(3,Math.floor((b.total-b.remaining)/Math.ceil(b.total/3))+1)+"/3":(b.type==="haddad"?"Haddad · Taxad":b.type==="pf"?"Blitz da PF":b.name)+" · rodada "+b.level;
       $("game-boss-health").setAttribute("aria-valuemax",String(b.total));
       $("game-boss-health").setAttribute("aria-valuenow",String(b.total-b.remaining));
       $("game-boss-health").setAttribute("aria-label",b.objective||"Ataques superados");
@@ -153,7 +162,7 @@ function initRunner() {
       $("game-raid-source").href=ARCHIVE_VOICES.joice.source;
       const raidKey=raid.id+":"+raid.phase;
       if(raidKey!==lastRaidKey){audio.event(raid.phase,fact);lastRaidKey=raidKey;}
-    }else if(lastRaidKey){audio.stop();lastRaidKey="";}
+    }else if(lastRaidKey){audio.event("end");lastRaidKey="";}
     $("game-start").disabled=!spritesReady&&!spritesFailed;
     $("game-start").textContent=!spritesReady?(spritesFailed?"Tentar carregar desenhos":"Carregando desenhos · "+loadedSprites+"/"+CORE_SPRITE_SHEET_COUNT):run.status==="ready"?"Começar corrida":run.status==="over"?"Tentar de novo":"Recomeçar corrida";
     $("game-loading-note").hidden=spritesReady;
@@ -192,7 +201,7 @@ function initRunner() {
     cancelAnimationFrame(frameId);frameId=0;
     resetFrameClock(frameClock,performance.now());
     if(document.hidden||!windowFocused||!inView||run.status!=="running"){
-      audio.stop();lastRaidKey="";clearRunInput(run);trackPointers.clear();moveKeys.clear();
+      audio.stop();lastRaidKey="";clearRunInput(run);trackPointers.clear();moveKeys.clear();jumpKeys.clear();
     }
     schedule();
   }
@@ -260,7 +269,7 @@ function initRunner() {
     if(!spritesReady){if(spritesFailed)prepareSprites();return;}
     cancelAnimationFrame(frameId);frameId=0;resumeFromGesture();
     audio.stop();audio.prime();voices.reset();lastRaidKey="";
-    trackPointers.clear();moveKeys.clear();
+    trackPointers.clear();moveKeys.clear();jumpKeys.clear();
     run=createRun({assisted:preferences.assisted});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);landingUntil=0;
     if(!supportReady)prepareSupport();
     $("game-settings").open=false;
@@ -275,6 +284,7 @@ function initRunner() {
     const wasJacare=run.player.isJacare;
     if(jumpRun(run)){audio.effect("jump");draw();}
     else if(wasJacare&&!run.player.isJacare){audio.effect("restore");updateUI();draw();}
+    else if(wasJacare){updateUI();draw();}
   }
   function crouch(active){
     if(crouchRun(run,active)){draw();}
@@ -339,7 +349,7 @@ function initRunner() {
   }
   canvas.addEventListener("pointerup",releaseTrackPointer);
   canvas.addEventListener("lostpointercapture",releaseTrackPointer);
-  canvas.addEventListener("pointercancel",()=>{trackPointers.clear();moveKeys.clear();clearRunInput(run);crouch(false);});
+  canvas.addEventListener("pointercancel",()=>{trackPointers.clear();moveKeys.clear();jumpKeys.clear();clearRunInput(run);crouch(false);});
   canvas.addEventListener("click",event=>{
     // Alguns navegadores enviam click de toque com detail0; o pointer já o tratou.
     const physical=!!event.pointerType||performance.now()-lastPointerAt<500;
@@ -351,13 +361,14 @@ function initRunner() {
       event.preventDefault();moveKeys.add(event.code);resumeFromGesture();updateMovement();
     }else if (["Space","ArrowUp"].includes(event.code)) {
       event.preventDefault();
-      if (!event.repeat) jump();
+      if(jumpKeys.press(event.code,{repeat:event.repeat}))jump();
     } else if(["ArrowDown","KeyS"].includes(event.code)) {
       event.preventDefault();
       crouch(true);
     }
   });
   section.addEventListener("keyup",event=>{
+    if(["Space","ArrowUp"].includes(event.code))jumpKeys.release(event.code);
     if(["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code)){event.preventDefault();moveKeys.delete(event.code);updateMovement();}
     if(["ArrowDown","KeyS"].includes(event.code)){event.preventDefault();crouch(false);}
   });
@@ -440,11 +451,15 @@ function initRunner() {
       const ease=(landingUntil-run.elapsed)/.12,pivot=playerX(run)+17;
       ctx.translate(pivot,feet);ctx.scale(1+.025*ease,1-.025*ease);ctx.translate(-pivot,-feet);
     }
-    if(run.player.isJacare)drawJacare(ctx,{x:playerX(run)+17,y:feet,phase,age:run.player.jacareAge,reducedMotion:prefersReducedMotion()});
-    else{
+    const blend=jacareBlendFor(run.player,reduced);
+    if(blend.jacare>0){
+      ctx.save();ctx.globalAlpha*=blend.jacare;
+      drawJacare(ctx,{x:playerX(run)+17,y:feet,phase,age:run.player.jacareAge,reducedMotion:reduced});ctx.restore();
+    }
+    if(blend.human>0){
       drawActor(ctx,{type:"flavio",x:playerX(run)+17,y:feet,scale:.95,phase,airborne,
         falling:run.player.velocity<0,landing:crouchTarget,
-        hurt:run.status==="over",alpha:run.graceFor>0&&run.shieldFor<=0?.55:1});
+        hurt:run.status==="over",alpha:blend.human*(run.graceFor>0&&run.shieldFor<=0?.55:1)});
       if(run.player.restoreFlashFor>0&&!prefersReducedMotion()){
         ctx.save();ctx.globalAlpha=Math.min(.55,run.player.restoreFlashFor/.48*.55);
         ctx.strokeStyle="#5ba86d";ctx.lineWidth=3;ctx.beginPath();
@@ -461,17 +476,23 @@ function initRunner() {
   }
   function drawSupport(){
     const aid=run.aid;if(!aid||run.status!=="running")return;
-    const ally=allyById(aid.id),incoming=run.obstacles.filter(o=>!o.passed&&!o.counted).sort((a,b)=>threatTimeToContact(run,a)-threatTimeToContact(run,b));
+    const incoming=run.obstacles.filter(o=>!o.passed&&!o.counted).sort((a,b)=>threatTimeToContact(run,a)-threatTimeToContact(run,b));
     const arrow=o=>o?.action==="move"?"↔":o?.action==="crouch"?"↓":o?"↑":"…";
-    let label=aid.label;
-    if(["route","destination"].includes(aid.kind))label=STAGES[(stageAt(routeSeconds()).index+1)%5].name+" →";
-    if(aid.kind==="event")label=run.nextRaid<=0?"Joice aguarda uma abertura":"Joice · próxima janela em ~"+Math.ceil(run.nextRaid)+" s";
-    if(aid.kind==="sequence")label="Próximos perigos: "+incoming.slice(0,2).map(arrow).join("  ");
-    if(aid.kind==="predict")label="Próxima ação: "+arrow(run.boss?bossCue():incoming[0]);
-    if(aid.kind==="quest")label="Meta: faltam "+Math.max(0,aid.goal-run.passports)+" passaportes";
-    ctx.save();ctx.fillStyle="#f1fbf5ef";ctx.strokeStyle="#76a68d";ctx.lineWidth=1;
-    const w=Math.min(285,virtualWidth-22);ctx.beginPath();ctx.roundRect(virtualWidth-w-10,71,w,24,7);ctx.fill();ctx.stroke();
-    ctx.fillStyle="#245940";ctx.font="700 10px system-ui";ctx.textAlign="right";ctx.fillText((ally?.name||"Apoio")+" · "+label,virtualWidth-20,87,w-20);
+    const cue=aid.kind==="sequence"?incoming.slice(0,2).map(arrow).join("  "):aid.kind==="predict"?arrow(run.boss?bossCue():incoming[0]):aid.kind==="quest"?"▣ "+Math.max(0,aid.goal-run.passports):aid.kind==="event"?"◷ "+Math.max(0,Math.ceil(run.nextRaid||0))+" s":"";
+    ctx.save();
+    if(cue){
+      ctx.fillStyle="#f1fbf5ef";ctx.strokeStyle="#76a68d";ctx.lineWidth=1;
+      ctx.beginPath();ctx.roundRect(virtualWidth-96,71,76,24,7);ctx.fill();ctx.stroke();
+      ctx.fillStyle="#245940";ctx.font="700 12px system-ui";ctx.textAlign="center";ctx.fillText(cue,virtualWidth-58,87,68);
+    }
+    if(["route","destination"].includes(aid.kind)){
+      // Compact itinerary: keep the allies' route information without scene captions.
+      const index=stageAt(routeSeconds()).index;
+      for(let i=0;i<5;i++){
+        ctx.fillStyle=i===index?"#267448":"#b8d0bf";ctx.beginPath();ctx.arc(virtualWidth-91+i*14,83,i===index?4:2.5,0,Math.PI*2);ctx.fill();
+      }
+      ctx.strokeStyle="#267448";ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(virtualWidth-20,80);ctx.lineTo(virtualWidth-17,83);ctx.lineTo(virtualWidth-20,86);ctx.stroke();
+    }
     if(run.ally&&!run.cameo&&!run.boss&&!run.raid){drawActor(ctx,{type:aid.id,x:virtualWidth-62,y:WORLD.ground-2,scale:.92,phase:run.elapsed*9});}
     if(["collect","guide","magnet"].includes(aid.kind)){
       const p=run.pickups.filter(p=>p.type==="passport"&&p.x>playerX(run)&&p.x<playerX(run)+180).sort((a,b)=>a.x-b.x)[0];
@@ -485,6 +506,7 @@ function initRunner() {
   }
   function obstacle(item){
     if(item.falling){drawFallingThreat(ctx,item,WORLD.ground);return;}
+    if(item.groundHazard){drawManholeThreat(ctx,item,WORLD.ground);return;}
     if(item.approach==='drop'){
       // Alerta visual obrigatório, inclusive para quem reduz movimento.
       const time=Math.max(0,threatTimeToContact(run,item));
@@ -496,7 +518,7 @@ function initRunner() {
     }
     if(item.approach==='rear'&&item.x<playerX(run)){
       ctx.save();ctx.fillStyle="#a23d50";ctx.font="800 12px system-ui";
-      ctx.fillText("ATENÇÃO ATRÁS",12,WORLD.ground-96);ctx.restore();
+      ctx.fillText("→ !",12,WORLD.ground-96);ctx.restore();
     }
     if(item.projectile){
       // O rastro confirma visualmente que o ataque parte do chefão rumo ao jogador.
@@ -529,8 +551,6 @@ function initRunner() {
     if(run.cameo&&!run.boss&&!run.raid){
       const actor=run.cameo.type;
       drawActor(ctx,{type:actor,x:virtualWidth-60,y:WORLD.ground-2,scale:1.05,phase:run.elapsed*10});
-      ctx.fillStyle="#59344f";ctx.font="700 12px system-ui";ctx.textAlign="center";
-      ctx.fillText(({dilma:"Dilma · ↓",simone:"Adesivo: Gostosas com Lula · ↓",soraya:"Padre de festa junina · ↓"})[actor],virtualWidth-87,130,165);ctx.textAlign="start";
     }
     for(const item of run.pickups)pickup(item);
     for(const item of run.obstacles)obstacle(item);

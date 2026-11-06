@@ -4,7 +4,7 @@ import * as core from '../tanahoraflavio/runner-core.mjs';
 const dt=1/120;
 const make=()=>{const r=core.createRun();core.startRun(r);r.shieldFor=1000;r.nextRaid=r.nextBossAt=r.nextSupportAt=Infinity;return r;};
 const seeded=seed=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/2**32;};
-function simulate(r,seconds,rng=seeded(103)){for(let i=0;i<Math.ceil(seconds/dt);i++)core.advanceRun(r,dt,rng);}
+function simulate(r,seconds,rng=seeded(103)){for(let i=0;i<Math.ceil(seconds/dt);i++){if(r.player.isJacare)core.jumpRun(r);core.advanceRun(r,dt,rng);}}
 
 test('pressão cresce pelo tempo e distância até limites explícitos',()=>{
  const a=core.difficultyAt(0,0),b=core.difficultyAt(0,70),c=core.difficultyAt(20000,70),z=core.difficultyAt(1e12,1e9);
@@ -102,5 +102,5 @@ test('resize preserva janela visível, contatos, voo e recompensas normal/assist
  }
  const r=make();r.viewportWidth=900;r.obstacles=[{x:392,speed:400,width:34,height:44,type:'pf'},{x:760,speed:400,width:46,height:72,type:'microphone',action:'crouch',projectile:true,y:84,launchY:84,targetY:84,launchX:783,targetX:137}];
  const times=r.obstacles.map(o=>core.threatTimeToContact(r,o));core.resizeRun(r,480);const after=r.obstacles.map(o=>core.threatTimeToContact(r,o));assert.ok(after.every((t,i)=>Math.abs(t-times[i])<1e-9));assert.ok(after[1]-after[0]>=.82);
- const touching={x:145,speed:250,width:44,height:32,type:'barrier'};r.obstacles=[touching];core.resizeRun(r,900);assert.equal(touching.x,145);assert.equal(touching.speed,250,'não reposiciona nem ressuscita contato já iniciado');
+ const touching={x:r.player.x+25,speed:250,width:44,height:32,type:'barrier'},offset=touching.x-r.player.x;r.obstacles=[touching];core.resizeRun(r,900);assert.ok(Math.abs(touching.x-r.player.x-offset)<1e-9);assert.equal(touching.speed,250,'contato iniciado conserva posição relativa e velocidade ao reenquadrar');
 });

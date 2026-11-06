@@ -102,3 +102,30 @@ test('meme da Joice respeita gesto inicial, som desligado e cancelamento ao para
   audio.toggle();audio.event('warning',{});assert.equal(fixture.tracks.length,1);
  });
 });
+
+test('terminar a fala da Joice não repete o recorte na fase ativa nem no mesmo aviso',()=>{
+ const fixture=recordedAudio();
+ withBrowser(fixture,()=>{
+  const audio=createGameAudio();audio.prime();audio.event('warning');
+  const clip=fixture.tracks[0];assert.equal(clip.loop,false);
+  clip.onended();audio.event('warning');audio.event('active');
+  assert.equal(fixture.tracks.length,1,'um evento reproduz a fonte uma única vez');
+  audio.event('recovery');audio.event('warning');assert.equal(fixture.tracks.length,2,'um novo evento pode tocar novamente');
+ });
+});
+test('estado inativo interrompe voz e notas mesmo sem chamada explícita a stop',()=>{
+ const fixture=recordedAudio();
+ withBrowser(fixture,()=>{
+  const audio=createGameAudio();audio.prime();audio.voice('haddad');
+  audio.background({active:false});assert.equal(fixture.tracks[0].paused,1);
+ });
+});
+
+test('erro tardio da mídia libera a fala e não deixa o canal preso em prioridade alta',()=>{
+ const fixture=recordedAudio(),captions=[];
+ withBrowser(fixture,()=>{
+  const audio=createGameAudio({onVoice:clip=>captions.push(clip)});audio.prime();audio.voice('joice',{priority:3});
+  assert.equal(typeof fixture.tracks[0].onerror,'function');fixture.tracks[0].onerror();
+  assert.equal(captions.at(-1),null);assert.equal(audio.voice('haddad',{priority:1}),true);
+ });
+});

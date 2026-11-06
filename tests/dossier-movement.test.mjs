@@ -9,7 +9,7 @@ test('posição lateral responde ao comando e para ao soltar sem alterar os metr
  const r=isolated(),control=isolated();assert.equal(r.player.x,120);assert.equal(typeof core.moveRun,'function');
  core.moveRun(r,1);step(r,.4);step(control,.4);assert.ok(r.player.x>205&&r.player.x<220);assert.equal(r.distance,control.distance);
  core.moveRun(r,0);const x=r.player.x;step(r,.2);assert.equal(r.player.x,x);
- core.moveRun(r,-1);step(r,3);assert.equal(r.player.x,70);core.moveRun(r,1);step(r,3);assert.equal(r.player.x,280);
+ core.moveRun(r,-1);step(r,5);assert.equal(r.player.x,core.playerBounds(r).min);core.moveRun(r,1);step(r,5);assert.equal(r.player.x,core.playerBounds(r).max);
  core.moveRun(r,NaN);const held=r.player.x;step(r,.1);assert.equal(r.player.x,held,'entrada inválida não prende direção');
 });
 test('lateral coexiste com salto e intenção de abaixar, e clear limpa todos os comandos',()=>{
@@ -43,7 +43,7 @@ test('a mesma queda permite duas fugas laterais com comandos reais e alvo compro
 test('resize preserva prazo de chegada e alvo de queda com o herói deslocado',()=>{
  const r=isolated();r.player.x=230;r.obstacles=[{x:600,width:40,height:40,type:'barrier',speed:250}];
  const before=(600-(230+28))/250;core.resizeRun(r,480);const o=r.obstacles[0];assert.ok(Math.abs(core.threatTimeToContact(r,o)-before)<1e-9);
- assert.equal(typeof core.spawnFallingThreat,'function');const drop=core.spawnFallingThreat(r),x=drop.x;step(r,.3);core.resizeRun(r,900);assert.equal(drop.x,x);assert.ok(drop.age>=.3-1e-8);
+ assert.equal(typeof core.spawnFallingThreat,'function');const drop=core.spawnFallingThreat(r),offset=drop.x-r.player.x;step(r,.3);core.resizeRun(r,900);assert.ok(Math.abs(drop.x-r.player.x-offset)<1e-9,'alvo conserva posição relativa ao novo referencial, sem perseguir');assert.ok(drop.age>=.3-1e-8);
 });
 test('resize estreito conserva prazo sem tornar a travessia lenta demais para saltar',()=>{
  const r=isolated();r.player.x=230;r.obstacles=[{x:400,width:44,height:36,type:'barrier',speed:220}];

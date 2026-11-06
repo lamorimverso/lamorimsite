@@ -147,6 +147,36 @@ A prévia pública da fonte foi usada apenas para análise musical. Nenhum trech
 A melodia e o andamento ficam estáveis; pressão/chefes/Joice variam a percussão de apoio. Inicia após gesto, abaixa sob as falas de arquivo e para ao ocultar o jogo ou desligar o som. Os efeitos de perigo/salto/coleta/impacto e as falas de arquivo são canais separados da trilha instrumental.
 # Revisão de mixagem —6/11/2026
 
-O pacote do dossiê preserva os11arquivos de voz já catalogados(9memes de referência+Joice/Haddad). O repertório deLula inclui tambémPassarinho eDefende meu pai; a imitação não é identificada como gravação autêntica deEduardo. Alertas mantêm seu volume, abaixando temporariamente voz e música; Joice faz loop sem duplicação durante a perseguição e para em recovery/mute/foco/derrota.
+O pacote do dossiê preserva os11arquivos de voz já catalogados(9memes de referência+Joice/Haddad). O repertório deLula inclui tambémPassarinho eDefende meu pai; a imitação não é identificada como gravação autêntica deEduardo. Alertas mantêm seu volume, abaixando temporariamente voz e música. A revisão atual reproduz o recorte parcial da Joice uma única vez por perseguição, atravessando o aviso e a fase ativa sem reinício; recovery/mute/foco/derrota interrompem o áudio. A repetição em loop da revisão anterior foi removida para não apresentar a repetição de um recorte curto como sequência integral.
 
 Nenhuma voz sintética foi adicionada. A pesquisa extra deDilma/Simone/Soraya/Moraes não produziu recorte pronto para release. Um candidato curto deTebet, oriundo deRádioGov/EBC, ficou fora dos assets porque seu trecho/transcrição ainda não foi conferido; não se presume autorização comercial. Os efeitos próprios e as legendas não imitam essas pessoas.
+
+
+## Auditoria do pedido de três trilhas e Joice integral — 06/11/2026
+
+### Estado real das músicas
+
+| Pedido | Recurso encontrado | Situação |
+| --- | --- | --- |
+| Solinho do Fora PT | Arranjo WebAudio de 64 passos, já existente em `runner-soundtrack.mjs` | Preservado; autorização da composição continua sem documentação no repositório. |
+| Tan/Tá na Hora do Jair | Nenhum arquivo nem arranjo correspondente no código ou histórico disponível | Indisponível; referência exata, arranjo instrumental 8-bit e autorização pendentes. |
+| Tariflávio | Nenhum arquivo nem arranjo correspondente no código ou histórico disponível | Indisponível; referência exata, arranjo instrumental 8-bit e autorização pendentes. |
+
+O catálogo diferencia disponibilidade técnica de autorização. Não se declara que o arranjo existente possui licença confirmada. Não foram criadas novas melodias, importadas gravações musicais ou renomeadas variações do Solinho como as duas faixas pedidas.
+
+Referência candidata para “Tan na Hora do Jair”: o canal oficial MADERADA BRASIL publicou “TÁ NA HORA DO JAIR JÁ IR EMBORA - CLIPE OFICIAL - Maderada” em 18/09/2022, https://www.youtube.com/watch?v=gilUNUWcCc0 . Isso confirma o nome dessa obra, sem confirmar que seja a versão exata pretendida, nem conceder autorização de arranjo/reutilização. “Tariflávio” continua ambíguo: existe lançamento com esse título creditado a Gabinete do Refrão no catálogo Apple Music (https://music.apple.com/us/song/6804401043), enquanto resultados de pesquisa também apontam para “Tariflavio Bolsomaster”, de Marcelo. Nenhum desses achados foi importado ou apresentado como arranjo autorizado.
+
+O sequenciador agora aceita múltiplos arranjos reais por uma sacola de sorteio sem repetição, inclusive evitando repetição na fronteira entre sacolas. Usa um único bus musical, limita a duração das notas à fronteira da faixa e suaviza o volume na transição. No jogo publicado só existe uma opção executável; portanto **a playlist real de três músicas ainda não está entregue**. Os três scores curtos usados no teste automatizado são fixtures de agendamento e não são assets do jogo. Pressão, alertas e falas alteram a mixagem sem reiniciar o motivo ou o relógio musical.
+
+### Joice: trecho integral ainda pendente
+
+`ffprobe` confirmou novamente no arquivo local `joice-toc-toc-v1.mp3`: **5,224490 segundos e 63.052 bytes**. O hash e os bytes do áudio foram preservados. O manifesto registra expressamente `complete:false` e a frase final pretendida. O recorte catalogado termina após “três batidinhas na porta”; ele não é a sequência integral pedida.
+
+Verificações primárias feitas nesta revisão:
+
+- As notas taquigráficas oficiais de 22/06/2022, página 39 (https://escriba.camara.leg.br/escriba-servicosweb/pdf/65858), identificam Joice e continuam o meme com a pergunta de quem está dentro, a resposta e a identificação da Polícia Federal. Isso confirma que o texto da sequência continua após a citação catalogada; não fornece os tempos acústicos do trecho.
+- O evento oficial (https://www.camara.leg.br/evento-legislativo/65858) identifica a intervenção de Joice às 12:41, duração de 5m38s. O arquivo sonoro 552474 está listado em https://imagem.camara.leg.br/internet/audio/Resultado.asp?txtCodigo=552474 .
+- Os termos da TV Câmara, novamente consultados em https://www.camara.leg.br/tv/termos-de-uso/, aplicam CC BY 4.0 ao conteúdo gravado de atividades legislativas; os créditos à Câmara e o contexto original são preservados. Isso não constitui autorização geral para quaisquer outros memes ou músicas.
+- Não foi possível baixar novamente o MP3 original catalogado: o endereço `.gov.br` retornou HTTP 500; a alternativa de mesmo caminho em `.leg.br` terminou em timeout do proxy. Não havia original integral disponível localmente. Portanto **não foram confirmados a duração acústica final, um novo ponto de corte, nem a presença da frase final em um arquivo de release**. Não houve audição humana nesta sessão.
+
+A gravação parcial toca uma vez por evento. Sua conclusão natural não inicia novo player nem repete o arquivo ao entrar na fase ativa; fim/cancelamento do evento, mute, inatividade, foco e derrota param a gravação. Falha tardia da mídia libera o canal e a prioridade. Não há timer interno que corte a voz no meio da fase ativa. Quando uma fonte integral verificável estiver disponível, será necessário medir a duração, conferir o final real, criar novo arquivo/hash e garantir que a janela do evento seja suficiente; não se estendeu o evento com base em uma duração inventada. Nenhuma voz sintética foi usada.

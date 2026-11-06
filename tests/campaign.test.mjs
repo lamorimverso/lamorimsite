@@ -5,7 +5,7 @@ import * as core from '../tanahoraflavio/runner-core.mjs';
 const DT=1/120;
 function isolatedRoute(){
  const run=core.createRun();core.startRun(run);
- run.nextObstacle=run.nextRaid=run.nextPassport=run.nextPower=run.nextPickup=Infinity;
+ run.nextObstacle=run.nextRaid=run.nextPassport=run.nextPower=run.nextPickup=run.nextAllyAt=run.nextSupportAt=Infinity;
  run.shieldFor=Infinity;
  return run;
 }

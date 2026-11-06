@@ -140,6 +140,14 @@ function paletteGradient(c,geometry,key,alpha=1){
  }
  return gradient;
 }
+function daylightGradient(c,geometry,top,bottom,opacity){
+ // Reuse the route's blended channels: light must not jump at the 7 km borders.
+ const color=geometry.paletteStops[12].palette.haze;
+ const gradient=c.createLinearGradient(0,top,0,bottom);
+ gradient.addColorStop(0,`rgba(${color[0]},${color[1]},${color[2]},0)`);
+ gradient.addColorStop(1,`rgba(${color[0]},${color[1]},${color[2]},${opacity})`);
+ return gradient;
+}
 function farBuildings(c,x,p,variant){
  rect(c,x+8,190+variant*5,26,34-variant*5,p.far,null,2);
  rect(c,x+42,176+variant*7,35,48-variant*7,p.far,null,2);
@@ -221,17 +229,20 @@ function drawAmbientDetails(c,geometry,{distance=0,reducedMotion=false}={}){
 /** Draw a continuous journey without changing the caller's Canvas state or alpha. */
 export function drawJourneyScenery(c,options={}){
  const geometry=journeySceneryGeometry(options),width=geometry.width;
+ const quiet=Math.max(0,Math.min(1,Number(options.quiet)||0));
  c.save();
  try{
   c.fillStyle=paletteGradient(c,geometry,'sky');c.fillRect(0,0,width,300);
-  const haze=c.createLinearGradient(0,0,0,246);haze.addColorStop(0,'#fcf9ed00');haze.addColorStop(1,'#fcf9ed');
-  c.fillStyle=haze;c.fillRect(0,0,width,246);
+  c.fillStyle=daylightGradient(c,geometry,0,246,1);c.fillRect(0,0,width,246);
   oval(c,width-66,55,29,29,'#fff7d838');oval(c,width-66,55,21,21,'#fff9e5d9');
   for(const item of geometry.clouds)cloud(c,item.x,item.y,item.scale);
-  c.save();c.globalAlpha*=1-.45*Math.max(0,Math.min(1,Number(options.quiet)||0));
+  c.save();c.globalAlpha*=1-.45*quiet;
   drawFarPlane(c,geometry.layers[0],width);
+  // One translucent wash separates distant silhouettes from the greener middle
+  // plane. It never crosses the arena floor and adds no animated particles.
+  c.fillStyle=daylightGradient(c,geometry,132,238,.42);c.fillRect(0,132,width,106);
   drawMiddlePlane(c,geometry.layers[1],width);c.restore();
-  drawAmbientDetails(c,geometry,options);
+  c.save();c.globalAlpha*=1-.6*quiet;drawAmbientDetails(c,geometry,options);c.restore();
   for(const item of geometry.landmarks){
    if(item.alpha<=0||item.x<-180||item.x>width+180)continue;
    c.save();c.globalAlpha*=item.alpha;landmark(c,{id:item.stageId},palettes[item.stageId],item.x);c.restore();
@@ -245,7 +256,7 @@ export function drawJourneyScenery(c,options={}){
   for(let x=-geometry.roadOffset;x<width;x+=98)rect(c,x,275,38,3,'#ffffffa6',null,1);
   if(!options.reducedMotion){
    const travel=Number(options.distance??options.routeDistance)||0,first=Math.floor(travel*.32/160)-1;
-   c.save();c.globalAlpha*=.32*(1-.6*(Number(options.quiet)||0));
+   c.save();c.globalAlpha*=.32*(1-.6*quiet);
    for(let i=first;i<first+Math.ceil(width/160)+3;i++){const x=i*160-travel*.32;oval(c,x,263,3,1.1,'#6d8a80');line(c,[[x+53,268],[x+58,265],[x+61,268]],'#6d8a80',1);}
    c.restore();
   }

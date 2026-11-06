@@ -15,11 +15,11 @@ test('alerta de perigo mantém volume e abaixa a fala temporariamente, recuperan
   f.context.currentTime=2;a.background({active:true,raid:true});assert.equal(f.tracks[0].volume,normal);a.stop();
  });
 });
-test('Joice em loop é idempotente e retoma uma única fonte após stop ou mute',()=>{
+test('Joice toca uma vez por evento e retoma uma única fonte após stop ou mute',()=>{
  const f=fixture();inBrowser(f,()=>{
   const a=createGameAudio();a.prime();a.event('warning',{});a.event('warning',{});a.event('active',{});
-  assert.equal(f.tracks.length,1);assert.equal(f.tracks[0].loop,true);a.stop();assert.equal(f.tracks[0].paused,true);
-  a.event('active',{});assert.equal(f.tracks.length,2);assert.equal(f.tracks[1].loop,true);
+  assert.equal(f.tracks.length,1);assert.equal(f.tracks[0].loop,false);a.stop();assert.equal(f.tracks[0].paused,true);
+  a.event('active',{});assert.equal(f.tracks.length,2);assert.equal(f.tracks[1].loop,false);
   a.toggle();assert.equal(f.tracks[1].paused,true);a.event('active',{});assert.equal(f.tracks.length,2);
   a.toggle();a.event('active',{});assert.equal(f.tracks.length,3);a.event('recovery',{});assert.equal(f.tracks[2].paused,true);a.stop();
  });

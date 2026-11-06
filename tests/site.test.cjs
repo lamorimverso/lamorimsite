@@ -581,10 +581,10 @@ test('passagem gradual da paisagem e aviso de destino sem perder a jogabilidade'
     const argentina=await sample(57.5);
     assert.equal(await page.locator('#game-transition').isVisible(),false);
     const halfway=await sample(60);
-    assert.equal(await page.locator('#game-transition').isVisible(),true);
+    assert.equal(await page.locator('#game-transition').isVisible(),false,'a passagem visual não exibe legenda de cenário');
     assert.match(await page.locator('#game-transition-name').textContent(),/Flórida/);
     const transitionWidth=await page.locator('#game-transition-progress').evaluate(el=>parseFloat(el.style.width));
-    assert.ok(transitionWidth>=48 && transitionWidth<=65, `transição visível: ${transitionWidth}%`);
+    assert.ok(transitionWidth>=48 && transitionWidth<=65, `progresso interno da transição: ${transitionWidth}%`);
     const florida=await sample(62.5);
     assert.equal(await page.locator('#game-transition').isVisible(),false);
     // A cor no meio da passagem mistura os dois destinos gradualmente.
@@ -610,10 +610,10 @@ test('movimento reduzido mantém mudança de destino acessível', async () => {
       run.nextObstacle=run.nextPickup=run.nextPassport=run.nextPower=1e8;
       run.bossCooldown=1e8;
       run.shieldFor=100;
-      run.routeDistance=4750;run.nextBossAt=run.nextRaid=Infinity;
+      run.routeDistance=7001;run.nextBossAt=run.nextRaid=Infinity;
     });
-    await page.waitForFunction(()=>document.getElementById('game-transition').hidden===false);
-    assert.match(await page.locator('#game-transition-name').textContent(),/Rio/);
+    await page.waitForFunction(()=>document.getElementById('game-stage-name').textContent==='Rio de Janeiro');
+    assert.equal(await page.locator('#game-transition').isVisible(),false);
     assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
     assert.deepEqual(errors,[]);
   }finally{await context.close();}
@@ -634,7 +634,7 @@ test('som é opcional e falha de áudio não impede iniciar ou pular',async()=>{
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
-test('Joice anuncia evento com legenda e fonte, encerra e não muda a posição da pista',async()=>{
+test('Joice mantém fonte acessível sem legenda narrativa e não muda a posição da pista',async()=>{
  const {context,page,errors}=await openWithRun({viewport:{width:320,height:900},isMobile:true,hasTouch:true});
  try{
   await page.getByRole('button',{name:'Começar corrida',exact:true}).tap();
@@ -642,6 +642,7 @@ test('Joice anuncia evento com legenda e fonte, encerra e não muda a posição 
   await page.evaluate(()=>{const r=globalThis.__testRun;r.nextRaid=0;r.nextBossAt=Infinity;r.nextObstacle=1000;r.obstacles=[];r.graceFor=100;});
   await page.waitForFunction(()=>document.getElementById('game').dataset.raid==='warning');
   assert.match(await page.locator('#game-raid-source').textContent(),/Joice/);
+  assert.equal(await page.locator('#game-raid').evaluate(e=>e.classList.contains('sr-only')),true);
   assert.match(await page.locator('#game-raid-copy').textContent(),/Toc/);
   await page.evaluate(()=>{globalThis.__testRun.raid.remaining=.01;});
   await page.waitForFunction(()=>document.getElementById('game').dataset.raid==='active');
