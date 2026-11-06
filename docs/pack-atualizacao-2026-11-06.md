@@ -1,6 +1,6 @@
 # Corre, Flávio! — pacote do dossiê de jogabilidade
 
-Data:6/11/2026. Base anterior: `ec75721c7620342554da16f3535204f1a8181e0d`. Escopo: este jogo/site, seus testes e ferramentas de arte; outros sites, bots e n8n preservados. O documento original do dossiê está em [design-raid-elenco-politico-2026-10-30.md](design-raid-elenco-politico-2026-10-30.md). Foram recuperados também os pedidos posteriores de imprevisibilidade, áudio de arquivo sem narração artificial, correção do jacaré, cenários e interface limpa. A íntegra da transcrição não foi disponibilizada.
+Data: 6/11/2026. Base anterior: `ec75721c7620342554da16f3535204f1a8181e0d`. Escopo: este jogo/site, seus testes e ferramentas de arte; outros sites, bots e n8n preservados. O documento original do dossiê está em [design-raid-elenco-politico-2026-10-30.md](design-raid-elenco-politico-2026-10-30.md). Foram recuperados também os pedidos posteriores de imprevisibilidade, áudio de arquivo sem narração artificial, correção do jacaré, cenários e interface limpa. A íntegra da transcrição não foi disponibilizada.
 
 “AAA” orienta o acabamento e a verificação. Não é certificação, equivalência demonstrada com um jogo comercial nem resultado de playtest humano.
 
@@ -69,6 +69,23 @@ São papéis de sátira, não afirmações sobre relações reais.
 
 Em 6/11/2026, a suíte completa passou: **264 testes, 264 aprovados, nenhuma falha, cancelamento ou omissão**, em 68,0 segundos no Chromium 141 headless. Inclui execução real de controles, Canvas e áudio; não equivale a teste em aparelhos físicos.
 
-Versões de importação e arte lossless foram verificadas. A revisão independente e os dados de publicação serão acrescentados após sua conclusão.
+Versões de importação e arte lossless foram verificadas. A revisão independente leu o conjunto da branch e aprovou a integração: nenhum bloqueador crítico ou importante; mais **26/26 testes focados** aprovados. A prévia foi inspecionada no navegador: largada, avanço, derrota com algemas e modo ampliado. Não foi realizado benchmark representativo de dispositivos reais.
+
+Publicação acompanhada pelo [PR 28](https://github.com/lamorimverso/lamorimsite/pull/28). O histórico do PR registra o resultado final do CI, a integração e a confirmação pública; a árvore enviada foi comparada à árvore local testada.
+
+### Decisões e custos, na ordem da revisão
+
+1. **Continuar no Canvas existente:** a solicitação repetida autoriza implementar o dossiê, preservando a base. “AAA” é uma meta de acabamento; custo: a expectativa estética e de diversão ainda depende de playtest humano.
+2. **Garantir travessia mínima com aviso:** velocidade mínima de 180 mantém o salto possível; no resize, preservam-se posição, prazo e coleta. Custo: um projétil pode aguardar brevemente antes de continuar o voo.
+3. **Queda comprometida na posição real:** o centro permite duas fugas; nas bordas é necessário voltar ao corredor. Custo: a borda oferece uma direção de fuga, sem saída para fora da arena.
+4. **Usar o atlas D-v2:** jacaré baixo e quadrúpede, com D-v1 excluído da entrega. Custo: pequena variação nos três personagens novos do rascunho anterior; nenhum desenho já publicado foi substituído.
+5. **Elenco secundário opcional:** mantido como estudo, conforme o dossiê. Custo: essas figuras não entram nesta versão nem são anunciadas como entregues.
+6. **Não migrar de motor nesta atualização:** decisão confirmada na revisão, por compatibilidade com a base. Custo: o pacote continua sujeito aos limites do Canvas e não demonstra equivalência com outro motor.
+7. **Vozes somente com recortes conferidos:** texto e efeitos atendem aos personagens sem gravação integrada; nenhuma imitação sintética. Custo: nem todo personagem possui fala própria nesta versão.
+8. **Não certificar equivalência comercial AAA:** funcionamento e legibilidade foram revisados; percepção, Safari e aparelhos físicos permanecem pendentes. Custo: a qualidade percebida ainda não foi validada por jogadores.
+
+### Pendência menor adiada
+
+- `runner-core.mjs`, mensagem após a vitória: ainda celebra três chefões em múltiplos de três. O ciclo real, as metas e o agendamento já usam cinco; impacto restrito à comunicação. Sugestão registrada: usar o tamanho do elenco ou retirar a frase adicional.
 
 Rollback de conteúdo: commit-base `ec75721c7620342554da16f3535204f1a8181e0d`, sem reverter outros projetos. Nenhuma alteração deDNS, VPS ou credenciais foi feita.
