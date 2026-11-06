@@ -42,7 +42,7 @@ test('campanha repete a ordem e reserva sete quilômetros depois de cada vitóri
    previousBoss=run.boss;
   }
   assert.equal(run.bossesDefeated,6,'a sequência termina por desvios reais');
-  assert.deepEqual(seen.map(s=>s.type),['haddad','lula','xandao','haddad','lula','xandao']);
+  assert.deepEqual(seen.map(s=>s.type),['haddad','lula','xandao','janones','pf','haddad']);
   assert.equal(seen[0].at,22000);
   for(let i=1;i<seen.length;i++)assert.ok(seen[i].at-seen[i-1].at>=7000);
   assert.ok(run.nextBossAt>=run.routeDistance+7000-1e-7);
@@ -81,9 +81,9 @@ for(const [type,total,goalKind,types,actions,objective] of [
   assert.ok(attacks.some(attack=>attack.approach==='drop'||attack.approach==='sweep')||
     new Set(attacks.map(attack=>attack.action)).size>1,'não apresenta um único padrão');
   assert.ok(attacks.every(attack=>attack.x+attack.width<core.PLAYER.x),'o último ataque precisa passar inteiro');
-  for(const round of [0,3,30]){
+  for(const round of [0,5,30]){
    const config=core.bossAtRound(round,type);
-   assert.equal(config.attacks,total+2*Math.min(2,Math.floor(round/3)),'voltas aumentam a meta até quatro ataques extras');
+   assert.equal(config.attacks,total+2*Math.min(2,Math.floor(round/5)),'voltas completas aumentam a meta até quatro ataques extras');
    assert.equal(config.goalKind,goalKind);
    assert.ok(config.objective.includes(String(config.attacks)));
    assert.ok(config.interval>=1.04,'o ritmo preserva o novo limite seguro');

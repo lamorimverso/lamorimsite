@@ -64,8 +64,12 @@ test('pista sem botões/barra continua aceitando toque, deslize e cancelamento',
   for(const id of ['game-jump','game-crouch','game-progress'])assert.equal(await page.locator('#'+id).count(),0,'retira controles do print');
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
   await page.evaluate(()=>{const r=__journeyRun;r.nextObstacle=r.nextBossAt=r.nextRaid=Infinity;});
-  const track=page.locator('#runner-canvas');await track.tap();await page.waitForFunction(()=>__journeyRun.player.y>20);
-  assert.equal(await page.evaluate(()=>__journeyRun.player.jumpBufferedUntil),0,'toque não duplica salto');
+  const track=page.locator('#runner-canvas');
+  await page.evaluate(()=>{window.__tapEvents=[];for(const type of ['pointerdown','pointerup','click'])document.getElementById('runner-canvas').addEventListener(type,e=>__tapEvents.push({type,detail:e.detail,pointerType:e.pointerType}));});
+  await track.tap();await page.waitForFunction(()=>__journeyRun.player.y>20);
+  assert.equal(await page.evaluate(()=>__journeyRun.player.jumpBufferedUntil),0,'toque não duplica salto: '+JSON.stringify(await page.evaluate(()=>__tapEvents)));
+  await track.dispatchEvent('click',{detail:0});
+  assert.equal(await page.evaluate(()=>__journeyRun.player.jumpBufferedUntil),0,'compatibilidade sem pointerType também não duplica');
   await track.dispatchEvent('pointerdown',{button:0,pointerId:7,pointerType:'touch',isPrimary:true,clientX:100,clientY:100});
   await track.dispatchEvent('pointermove',{pointerId:7,pointerType:'touch',clientX:100,clientY:135});
   await page.waitForFunction(()=>__journeyRun.player.y===0);assert.equal(await page.evaluate(()=>__journeyRun.player.crouching),true);

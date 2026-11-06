@@ -1,14 +1,17 @@
 // Atlas e recortes gerados dos desenhos escolhidos, preservando os PNGs fontes.
-import {definitions} from './runner-sprite-data.mjs?v=ed5243a1383f';
+import {definitions} from './runner-sprite-data.mjs?v=4a931cb52b80';
 const sheets=new Map();let activeAttempt=null;
 const actorGroups={flavio:[0,1,2,3,4,5,6,7],xandao:[0,1,2],haddad:[4,5,6],lula:[8,9,10],pf:[3,13],janones:[7,14],army:[11,15],joice:[12]};
 const runningGroups={haddad:{sheet:'chase',start:0},lula:{sheet:'chase',start:4},xandao:{sheet:'chase',start:8},joice:{sheet:'chase',start:12},dilma:{sheet:'cameos',start:0},simone:{sheet:'cameos',start:4},soraya:{sheet:'cameos',start:8},'ze-gotinha':{sheet:'cameos',start:12}};
+for(const [sheet,definition] of Object.entries(definitions))for(const [row,type] of (definition.actors||[]).entries())runningGroups[type]={sheet,start:row*4};
 export const SPRITE_SHEET_COUNT=Object.keys(definitions).length;
-export function loadSprites(onProgress=()=>{}){
- const entries=Object.entries(definitions),total=entries.length;
- if(sheets.size===total)return Promise.resolve();
- if(activeAttempt)return activeAttempt.promise;
- const attempt={images:[],loaded:new Map(),settled:false};
+export const CORE_SPRITE_SHEET_COUNT=4;
+export function loadSprites(onProgress=()=>{},{coreOnly=false}={}){
+ const base=['hero','cast','cameos','chase'];
+ const entries=Object.entries(definitions).filter(([name])=>(!coreOnly||base.includes(name))&&!sheets.has(name)),total=entries.length;
+ if(!total)return Promise.resolve();
+ if(activeAttempt)return activeAttempt.coreOnly===coreOnly?activeAttempt.promise:activeAttempt.promise.then(()=>loadSprites(onProgress,{coreOnly}));
+ const attempt={images:[],loaded:new Map(),settled:false,coreOnly};
  attempt.promise=new Promise((resolve,reject)=>{attempt.resolve=resolve;attempt.reject=reject;});
  activeAttempt=attempt;
  function finish(error){
@@ -47,8 +50,8 @@ export function spriteFrameFor(type,{phase=0,airborne=false,falling=false,landin
   return {sheet:'hero',index:Math.floor(Math.max(0,phase))%8};
  }
  const running=runningGroups[type];
- if(running&&!attacking&&!preparing)return {sheet:running.sheet,index:running.start+Math.floor(Math.max(0,phase))%4};
- const group=actorGroups[type]||actorGroups.pf;
+ if(running&&(!attacking&&!preparing||!actorGroups[type]))return {sheet:running.sheet,index:running.start+Math.floor(Math.max(0,phase))%4};
+ const group=actorGroups[type];if(!group)return null;
  return {sheet:'cast',index:group.length===3?group[attacking?2:preparing?1:0]:group[Math.floor(Math.max(0,phase))%group.length]};
 }
 // Cada atlas tem resolução própria. As poses do Flávio vindas do atlas
@@ -57,7 +60,7 @@ export function spriteScaleFor(type,sheetName,frames,scale=1){
  const running=runningGroups[type];
  const indices=running&&sheetName===running.sheet?Array.from({length:4},(_,i)=>running.start+i):actorGroups[type]||actorGroups.pf;
  const sourceHeight=Math.max(...indices.map(i=>frames[i]?.height||0));
- return sourceHeight>0?(type==='joice'?90:94)*scale/sourceHeight:0;
+ return sourceHeight>0?(type==='jacare'?28:type==='joice'?90:94)*scale/sourceHeight:0;
 }
 // Os atlas originais já mostram Flávio olhando para o avanço (+X).
 // Esta informação descreve a arte; não é uma instrução para espelhá-la.
@@ -68,8 +71,14 @@ export function portraitCropFor(frame){
  return {x:frame.x,y:frame.y,width:frame.width,height:frame.height*.76};
 }
 export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,airborne=false,falling=false,landing=false,attacking=false,preparing=false,hurt=false,alpha=1}={}){
- const selected=spriteFrameFor(type,{phase,airborne,falling,landing,attacking,preparing,hurt});
- const sheet=sheets.get(selected.sheet);if(!sheet)return false;
+ let selected=spriteFrameFor(type,{phase,airborne,falling,landing,attacking,preparing,hurt});
+ if(!selected)return false;
+ let sheet=sheets.get(selected.sheet);
+ // PF/Janones conservam sua identidade do atlas original até a expansão chegar.
+ if(!sheet&&actorGroups[type]&&sheets.has('cast')){
+  const group=actorGroups[type];selected={sheet:'cast',index:group[Math.floor(Math.max(0,phase))%group.length]};sheet=sheets.get('cast');
+ }
+ if(!sheet)return false;
  const frame=sheet.frames[selected.index];
  let factor=spriteScaleFor(type,selected.sheet,sheet.frames,scale);
  if(!factor)return false;
@@ -84,6 +93,8 @@ export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,a
  }
  const dy=y+(frame.y-baseline)*factor;
  context.save();context.globalAlpha*=alpha;context.imageSmoothingEnabled=true;
+ // Os novos quadrúpedes vieram olhando à esquerda; só essa forma vira para a fuga.
+ if(type==='jacare'){context.translate(x,0);context.scale(-1,1);context.translate(-x,0);}
  // Preservar a orientação original também no salto, agachamento e impacto.
  if(hurt&&type!=='flavio'){context.shadowColor='#ffd56b';context.shadowBlur=9;}
  context.drawImage(sheet.image,frame.x,frame.y,frame.width,frame.height,dx,dy,frame.width*factor,frame.height*factor);

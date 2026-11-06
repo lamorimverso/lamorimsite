@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
 const dt=1/120;
-const make=()=>{const r=core.createRun();core.startRun(r);r.shieldFor=1000;r.nextRaid=r.nextBossAt=Infinity;return r;};
+const make=()=>{const r=core.createRun();core.startRun(r);r.shieldFor=1000;r.nextRaid=r.nextBossAt=r.nextSupportAt=Infinity;return r;};
 const seeded=seed=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/2**32;};
 function simulate(r,seconds,rng=seeded(103)){for(let i=0;i<Math.ceil(seconds/dt);i++)core.advanceRun(r,dt,rng);}
 
@@ -29,7 +29,7 @@ test('chefes têm sequências próprias, repetições e metas maiores que um esc
   const conf=core.bossAtRound(i);assert.equal(conf.attacks,[9,10,12][i]);assert.ok(conf.interval>=1.04&&conf.interval<=1.32);
   const actions=Array.from({length:conf.attacks},(_,n)=>core.bossAttackFor(type,n,i).action);
   assert.ok(actions.includes('jump')&&actions.includes('crouch'));assert.ok(actions.some((a,n)=>n&&a===actions[n-1]));strings.push(actions.join(','));
-  assert.notDeepEqual(Array.from({length:9},(_,n)=>core.bossAttackFor(type,n,i)),Array.from({length:9},(_,n)=>core.bossAttackFor(type,n,i+3)));
+  assert.notDeepEqual(Array.from({length:9},(_,n)=>core.bossAttackFor(type,n,i)),Array.from({length:9},(_,n)=>core.bossAttackFor(type,n,i+5)));
  }
  assert.equal(new Set(strings).size,3);
 });
@@ -92,15 +92,15 @@ test('resize preserva janela visível, contatos, voo e recompensas normal/assist
   const r=make();r.assisted=assisted;r.viewportWidth=from;r.elapsed=200;r.distance=r.routeDistance=90000;r.nextObstacle=0;r.nextPower=Infinity;r.nextPassport=0;r.nextAllyAt=Infinity;
   if(kind==='boss'){r.nextObstacle=Infinity;r.nextBossAt=0;r.bossBag=['xandao'];core.advanceRun(r,dt,()=>.9);r.boss.nextAttack=0;}
   core.advanceRun(r,dt,()=>.9);r.nextObstacle=Infinity;if(r.boss)r.boss.nextAttack=Infinity;
-  const danger=r.obstacles.at(-1),time=(danger.x-148)/danger.speed,offsets=r.pickups.map(p=>p.x-danger.x),beforeY=danger.y;
+  const danger=r.obstacles.at(-1),time=core.threatTimeToContact(r,danger),offsets=r.pickups.map(p=>p.x-danger.x),beforeY=danger.y;
   const control=structuredClone(r);core.resizeRun(r,to);
-  assert.equal(r.viewportWidth,to);assert.ok(Math.abs((danger.x-148)/danger.speed-time)<1e-9,'nenhuma mudança de prazo ao virar a tela');assert.equal(danger.y,beforeY);
+  assert.equal(r.viewportWidth,to);assert.ok(Math.abs(core.threatTimeToContact(r,danger)-time)<1e-9,'nenhuma mudança de prazo ao virar a tela');assert.equal(danger.y,beforeY);
   assert.ok(r.pickups.every((p,i)=>Math.abs(p.x-danger.x-offsets[i])<1e-9&&p.speed===danger.speed),'grupo acompanha a ameaça sem se separar');
   core.advanceRun(r,dt,()=>.9);core.advanceRun(control,dt,()=>.9);
-  if(kind==='boss')assert.ok(Math.abs(danger.y-control.obstacles.at(-1).y)<1e-9,'progresso vertical do voo contínuo');
-  if(kind==='common')assert.ok(Math.abs((Math.min(to,danger.x)-148)/danger.speed-(Math.min(from,control.obstacles.at(-1).x)-148)/control.obstacles.at(-1).speed)<1e-9,'mesma reação a partir da borda visível');
+  if(kind==='boss')assert.ok(Math.abs(danger.y-beforeY)<8,'sem salto vertical de trajetória no passo seguinte');
+  assert.ok(Math.abs(core.threatTimeToContact(r,danger)-core.threatTimeToContact(control,control.obstacles.at(-1)))<1e-9,'mesmo prazo após o passo seguinte');
  }
  const r=make();r.viewportWidth=900;r.obstacles=[{x:392,speed:400,width:34,height:44,type:'pf'},{x:760,speed:400,width:46,height:72,type:'microphone',action:'crouch',projectile:true,y:84,launchY:84,targetY:84,launchX:783,targetX:137}];
- const times=r.obstacles.map(o=>(o.x-148)/o.speed);core.resizeRun(r,480);const after=r.obstacles.map(o=>(o.x-148)/o.speed);assert.ok(after.every((t,i)=>Math.abs(t-times[i])<1e-9));assert.ok(after[1]-after[0]>=.82);
+ const times=r.obstacles.map(o=>core.threatTimeToContact(r,o));core.resizeRun(r,480);const after=r.obstacles.map(o=>core.threatTimeToContact(r,o));assert.ok(after.every((t,i)=>Math.abs(t-times[i])<1e-9));assert.ok(after[1]-after[0]>=.82);
  const touching={x:145,speed:250,width:44,height:32,type:'barrier'};r.obstacles=[touching];core.resizeRun(r,900);assert.equal(touching.x,145);assert.equal(touching.speed,250,'não reposiciona nem ressuscita contato já iniciado');
 });

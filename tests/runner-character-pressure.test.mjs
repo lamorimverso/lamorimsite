@@ -70,6 +70,12 @@ test('voz de meme pertence ao personagem e referência do Zé Gotinha é atribu�
  assert.ok(!('soraya' in MEME_SCENES));
  assert.ok(!('xandao' in MEME_SCENES));
 });
+test('Lula inclui os recortes de passarinho e imitação, sem atribuí-los a Eduardo',()=>{
+ const ids=[],d=createVoiceDirector({random:()=>.999,play:id=>{ids.push(id);return true;}});
+ const r={status:'running',elapsed:1,boss:{type:'lula'},raid:null};d.event('boss',r);d.update(r,{safe:true});
+ r.elapsed=30;d.event('boss',r);d.update(r,{safe:true});assert.deepEqual(ids,['passarinho','defende-meu-pai']);
+ r.elapsed=60;r.boss={type:'eduardo'};d.event('boss',r);d.update(r,{safe:true});assert.equal(ids.length,2);
+});
 
 test('meme gravado toca, sem sintetizar voz ou acionar áudio após mute',()=>{
  const previous=globalThis.window,notes=[],tracks=[],spoken=[];

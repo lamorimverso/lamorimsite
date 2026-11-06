@@ -31,10 +31,10 @@ test('pista gera passaportes, escudos e aliado úteis sem armas do protagonista'
   r.pickups.forEach(p=>types.add(p.type));
   r.obstacles=r.obstacles.filter(o=>o.x>250);r.pickups=r.pickups.filter(p=>p.x>250);
  }
- assert.deepEqual([...types].sort(),['passport','shield','ze-gotinha']);
+ assert.deepEqual([...types].sort(),['ally','passport','shield','ze-gotinha']);
  assert.equal('shots' in r,false);assert.equal('bibleCharges' in r,false);
 });
-test('chefões repetem a ordem Haddad, Lula e Xandão em cada sequência',()=>{
+test('chefões repetem a ordem ampliada depois de cinco encontros distintos',()=>{
  const rng=seeded(7),r=running(),seen=[];
  for(let i=0;i<6;i++){
   r.nextBossAt=r.routeDistance;r.bossCooldown=0;core.advanceRun(r,1/120,rng);
@@ -42,7 +42,7 @@ test('chefões repetem a ordem Haddad, Lula e Xandão em cada sequência',()=>{
   r.boss.fired=r.boss.total;r.boss.remaining=0;r.obstacles=[];
   core.advanceRun(r,1/120,rng);assert.equal(r.boss,null);
  }
- assert.deepEqual(seen,['haddad','lula','xandao','haddad','lula','xandao']);
+ assert.deepEqual(seen,['haddad','lula','xandao','janones','pf','haddad']);
 });
 test('a distância e a rota crescem durante o chefão e o protagonista não atira',()=>{
  const r=running();triggerBoss(r);r.boss.nextAttack=100;const route=r.routeDistance,start=r.distance;

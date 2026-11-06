@@ -15,8 +15,8 @@ test('oito passos e todas as ações usam o mesmo herói sem trocar escala entre
  assert.deepEqual(spriteFrameFor('flavio',{hurt:true}),{sheet:'hero',index:11});
 });
 test('perseguidores alternam pernas em vez de repetir um único recorte',()=>{
- for(const [type,indices] of [['pf',[3,13]],['janones',[7,14]],['army',[11,15]]]){
-  assert.deepEqual([0,1,2].map(phase=>spriteFrameFor(type,{phase}).index),[...indices,indices[0]]);
+ for(const [type,indices] of [['pf',[12,13,14,15]],['janones',[8,9,10,11]],['army',[11,15]]]){
+  assert.deepEqual(Array.from({length:indices.length+1},(_,phase)=>spriteFrameFor(type,{phase}).index),[...indices,indices[0]]);
  }
 });
 test('chefões conservam proporções próprias em seus três quadros',()=>{

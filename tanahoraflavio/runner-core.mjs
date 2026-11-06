@@ -1,3 +1,4 @@
+import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=181506ec1b3c';
 // Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
 export const WORLD = Object.freeze({width:900,height:300,ground:246});
 export const PLAYER = Object.freeze({x:120,width:34,height:58});
@@ -28,11 +29,11 @@ export const PURSUERS = Object.freeze([
  {type:'barrier',name:'Barreira',short:'Barreira',width:44,height:32,color:'#c48845'},
  {type:'case',name:'Mala',short:'Mala',width:38,height:36,color:'#906490'}
 ].map((p,index)=>Object.freeze({...p,index})));
-export const BOSS_ROSTER = Object.freeze(['haddad','lula','xandao']);
+export const BOSS_ROSTER = Object.freeze(['haddad','lula','xandao','janones','pf']);
 const BOSS_GOALS = Object.freeze({
  haddad:{attacks:9,goalKind:'papers'},
  lula:{attacks:10,goalKind:'patterns'},
- xandao:{attacks:12,goalKind:'hammer-mandado'}
+ xandao:{attacks:12,goalKind:'hammer-mandado'},janones:{attacks:9,goalKind:'urgent'},pf:{attacks:8,goalKind:'blitz'}
 });
 export const PICKUPS = Object.freeze([
  Object.freeze({type:'passport',name:'Passaporte',value:10,purpose:'100 passaportes = +1 vida'}),
@@ -47,8 +48,8 @@ export const RAID_FACTS = Object.freeze([
  {title:'Arquivo · 2020',text:'Fabrício Queiroz e outros 15 investigados também foram denunciados pelo MP-RJ.',source:'MP-RJ · 04/11/2020',url:'https://www.mprj.mp.br/web/guest/visualizar?noticiaId=96203'}
 ].map(Object.freeze));
 const POOLS = [
- ['pf','barrier','janones'],['janones','barrier','pf'],
- ['pf','barrier','case'],['army','pf','case'],['pf','janones','army','case','barrier']
+ ['pf','barrier','janones','boulos'],['janones','army','barrier','pf'],
+ ['pf','barrier','case','dino'],['army','pf','case'],['pf','janones','army','dino','case','barrier']
 ];
 const random = rng => Math.max(0,Math.min(.999999999,Number(rng())||0));
 const foeFor = type => PURSUERS.find(p=>p.type===type);
@@ -60,6 +61,8 @@ const announce = (run,text) => {run.event=text;run.events++;};
 const assistance = run => run.assisted ? .82 : 1;
 // Primeiro contato horizontal usa o mesmo recuo de 3 px da colisão abaixo.
 const contactX = PLAYER.x+PLAYER.width-6;
+export const playerX = run => Number.isFinite(run.player.x)?run.player.x:PLAYER.x;
+const frontContact = run => playerX(run)+PLAYER.width-6;
 const REACTION_GAP = .82;
 // A retaguarda se aproxima pela esquerda; outras ameaças continuam pela direita.
 const rearContact = PLAYER.x+5;
@@ -67,6 +70,11 @@ const JUMP_BUFFER_SECONDS = .12;
 const JACARE_ENTRY_GRACE = .9;
 const JACARE_RESTORE_GRACE = .55;
 const JACARE_RESTORE_FLASH = .48;
+export function threatTimeToContact(run,o){
+ if(o.falling)return o.warningFor+o.fallFor*.7-o.age;
+ if(o.approach==='rear')return (o.waitFor||0)+(playerX(run)+5-(o.x+o.width-3))/-o.speed;
+ return (o.waitFor||0)+(o.x-frontContact(run))/o.speed;
+}
 
 export function difficultyAt(distance,elapsed=0) {
  const d=Number.isFinite(distance)?Math.max(0,distance):0,t=Number.isFinite(elapsed)?Math.max(0,elapsed):0;
@@ -80,14 +88,22 @@ export function difficultyAt(distance,elapsed=0) {
 }
 // Uma onda mais rápida nunca alcança a anterior e forma um par impossível.
 function threatSpeed(run,x,seconds,visibleX=x){
- const pending=run.obstacles.filter(o=>o.x>contactX&&o.speed>0)
-  .map(o=>(o.x-contactX)/o.speed);
+ if(run.aid?.kind==='telegraph')seconds+=.24;
+ const contactX=frontContact(run),rearContact=playerX(run)+5;
+ const pending=run.obstacles.filter(o=>!o.passed&&o.x>contactX&&o.speed>0)
+  .map(o=>threatTimeToContact(run,o));
  const rear=run.obstacles.filter(o=>o.approach==='rear'&&o.speed<0)
-  .map(o=>(rearContact-(o.x+o.width-3))/-o.speed)
+  .map(o=>threatTimeToContact(run,o))
   .filter(t=>t>0);
  const speed=Math.max(1,visibleX-contactX)/seconds*assistance(run);
- const nextContact=Math.max((x-contactX)/speed,...pending.concat(rear).map(t=>t+REACTION_GAP));
+ const drops=run.obstacles.filter(o=>o.falling).map(o=>o.warningFor+o.fallFor*.7-o.age).filter(t=>t>0);
+ const nextContact=Math.max((x-contactX)/speed,...pending.concat(rear,drops).map(t=>t+REACTION_GAP));
  return Math.max(1,x-contactX)/nextContact;
+}
+function threatMotion(run,x,seconds,visibleX=x){
+ const requested=threatSpeed(run,x,seconds,visibleX),speed=Math.max(180,requested);
+ // O tempo extra vira antecipação visível, sem alongar a travessia física.
+ return {speed,waitFor:Math.max(0,(x-frontContact(run))/requested-(x-frontContact(run))/speed)};
 }
 export function stageAt(seconds) {
  const s=Number.isFinite(seconds)?Math.max(0,seconds):0;
@@ -105,28 +121,36 @@ export function pursuitAt(seconds,rng=()=>.5) {
 }
 // Retaguarda usa a mesma janela de leitura, sem disputar o contato com um perigo frontal.
 function rearSpeed(run,x,width){
- const front=run.obstacles.filter(o=>o.x>contactX&&o.speed>0).map(o=>(o.x-contactX)/o.speed);
- const rear=run.obstacles.filter(o=>o.approach==='rear'&&o.speed<0).map(o=>(rearContact-(o.x+o.width-3))/-o.speed);
- const seconds=Math.max(run.assisted?1.22:1.06,...front.concat(rear).filter(t=>t>0).map(t=>t+REACTION_GAP));
+ const contactX=frontContact(run),rearContact=playerX(run)+5;
+ const front=run.obstacles.filter(o=>!o.passed&&o.x>contactX&&o.speed>0).map(o=>threatTimeToContact(run,o));
+ const rear=run.obstacles.filter(o=>o.approach==='rear'&&o.speed<0).map(o=>threatTimeToContact(run,o));
+ const drops=run.obstacles.filter(o=>o.falling).map(o=>threatTimeToContact(run,o));
+ const seconds=Math.max(run.assisted?1.22:1.06,...front.concat(rear,drops).filter(t=>t>0).map(t=>t+REACTION_GAP));
  return -(rearContact-(x+width-3))/seconds;
 }
 export function createRun({assisted=false}={}) {
  return {status:'ready',assisted:assisted===true,elapsed:0,distance:0,routeDistance:0,viewportWidth:WORLD.width,bonus:0,collected:0,passports:0,lives:1,
-  event:'',events:0,player:{y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareAge:0,restoreFlashFor:0,jumpBufferedUntil:0},obstacles:[],pickups:[],lastHit:null,
+  event:'',events:0,player:{x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareAge:0,restoreFlashFor:0,jumpBufferedUntil:0},obstacles:[],pickups:[],lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,shieldFor:0,graceFor:0,
   lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:null,bossCooldown:0,
-  raid:null,nextRaid:null,raids:0,lastFact:-1,cameo:null,overheadCount:0,lastOverheadActor:null,lastAction:null,actionStreak:0,attackStyles:[],nextAllyAt:14000,alliesMet:0};
+  raid:null,nextRaid:null,raids:0,lastFact:-1,cameo:null,overheadCount:0,lastOverheadActor:null,lastAction:null,actionStreak:0,attackStyles:[],nextAllyAt:14000,alliesMet:0,
+  nextSupportAt:18000,supportAvailable:true,ally:null,aid:null,allyVisits:{},lastAllyId:null,creditCooldown:0};
 }
 // Reenquadra ondas ainda à frente, preservando prazo de contato e trajetória.
 // Perigos cujo contato já começou ficam onde estão: nunca reaparecem no caminho.
 export function resizeRun(run,width){
+ const contactX=frontContact(run);
  const previous=visibleWidth(run);run.viewportWidth=Math.max(480,Math.min(900,Number(width)||WORLD.width));
  const ratio=(visibleWidth(run)-contactX)/(previous-contactX);if(ratio===1)return;
  const moved=new Map(),project=x=>contactX+(x-contactX)*ratio;
  for(const o of run.obstacles){
   if(!Number.isFinite(o.speed)||o.speed<=0||o.x<=contactX)continue;
-  const oldX=o.x;o.x=project(o.x);o.speed*=ratio;moved.set(o,{delta:o.x-oldX,speed:o.speed});
+  const oldX=o.x;o.x=project(o.x);o.speed*=ratio;
+  if(o.speed<180){
+   const distance=o.x-contactX;o.waitFor=(o.waitFor||0)+distance/o.speed-distance/180;o.speed=180;
+  }
+  moved.set(o,{delta:o.x-oldX,speed:o.speed,waitFor:o.waitFor||0});
   if(o.projectile){
    // Coordenadas centrais seguem o mesmo referencial da borda de contato.
    // Isso mantém exatamente a fração percorrida, sem salto vertical da arma.
@@ -137,10 +161,24 @@ export function resizeRun(run,width){
  }
  for(const p of run.pickups){
   const source=moved.get(p.anchor);if(!source)continue;
-  p.x+=source.delta;p.speed=source.speed;
+  p.x+=source.delta;p.speed=source.speed;p.waitFor=source.waitFor;
  }
 }
 export function startRun(run){if(run.status==='ready')run.status='running';}
+// O corredor é igual nas telas lógicas480–900: girar não teleporta o herói.
+export function moveRun(run,direction){
+ if(run.status!=='running')return false;
+ run.player.moveHeld=Number.isFinite(direction)?Math.sign(direction):0;return true;
+}
+// Alvo comprometido ao anunciar. O jogador pode fugir para ambos os lados.
+export function spawnFallingThreat(run,{bossAttack=false,owner='joice'}={}){
+ if(run.status!=='running'||run.obstacles.some(o=>o.falling))return null;
+ const x=playerX(run)+17-28;
+ const arrivals=run.obstacles.filter(o=>!o.passed).map(o=>threatTimeToContact(run,o)).filter(t=>Number.isFinite(t)&&t>0);
+ const warningFor=Math.max(1.2,...arrivals.map(t=>t+REACTION_GAP))+(run.aid?.kind==='sky'?.35:0);
+ const item={x,width:56,height:44,type:'falling-case',action:'move',approach:'vertical',falling:true,age:0,warningFor,fallFor:.4,y:310,speed:0,owner,bossAttack,counted:false};
+ run.obstacles.push(item);return item;
+}
 export function jumpRun(run){
  if(run.status!=='running')return false;
  // Antídoto exclusivamente cartunesco: o primeiro ↑ restaura o herói,
@@ -157,7 +195,7 @@ export function jumpRun(run){
  run.player.jumpBufferedUntil=0;run.player.crouching=false;run.player.velocity=610;return true;
 }
 export function clearRunInput(run){
- run.player.crouchHeld=false;run.player.crouching=false;run.player.jumpBufferedUntil=0;
+ run.player.moveHeld=0;run.player.crouchHeld=false;run.player.crouching=false;run.player.jumpBufferedUntil=0;
 }
 // A intenção permanece durante o salto, sem encolher a colisão no ar.
 // Soltar/cancelar limpa também uma intenção ainda aguardando o pouso.
@@ -172,9 +210,9 @@ export function togglePause(run){if(run.status==='running')run.status='paused';e
 // O placar agora é a quilometragem percorrida em metros; coletas não alteram metros.
 export function scoreFor(run){return Math.floor(run.distance);}
 export function bossAtRound(round,type) {
- const safe=Math.max(0,Math.floor(Number.isFinite(round)?round:0)),level=Math.floor(safe/3)+1;
- const foe=foeFor(type||BOSS_ROSTER[safe%3]),goal=BOSS_GOALS[foe.type],attacks=goal.attacks+2*Math.min(2,level-1);
- const noun=foe.type==='haddad'?'papéis':foe.type==='lula'?'gestos em L':'martelos e mandados';
+ const safe=Math.max(0,Math.floor(Number.isFinite(round)?round:0)),level=Math.floor(safe/BOSS_ROSTER.length)+1;
+ const foe=foeFor(type||BOSS_ROSTER[safe%BOSS_ROSTER.length]),goal=BOSS_GOALS[foe.type],attacks=goal.attacks+2*Math.min(2,level-1);
+ const noun=({haddad:'papéis',lula:'gestos em L',xandao:'martelos e mandados',janones:'mensagens em três blocos',pf:'bloqueios da blitz'})[foe.type];
  return {foe,level,supreme:foe.type==='lula',round:safe+1,goalKind:goal.goalKind,attacks,
   objective:'Desvie de '+attacks+' '+noun+'.',
   interval:Math.max(1.04,1.32-.08*BOSS_ROSTER.indexOf(foe.type)-.04*(level-1))};
@@ -183,10 +221,11 @@ export function bossAtRound(round,type) {
 export function bossAttackFor(type,fired,round=0) {
  const patterns={haddad:['crouch','jump','jump','crouch','crouch','jump','crouch','jump','jump'],
   lula:['jump','crouch','jump','jump','crouch','crouch','jump','crouch','jump','crouch'],
-  xandao:['jump','jump','crouch','jump','crouch','crouch','jump','crouch','jump','crouch','crouch','jump']};
- const sequence=patterns[type]||patterns.haddad,index=Math.max(0,Math.floor(Number(fired)||0))+2*Math.floor(Math.max(0,round)/3);
+  xandao:['jump','jump','crouch','jump','crouch','crouch','jump','crouch','jump','crouch','crouch','jump'],
+  janones:['jump','crouch','jump','crouch','jump','crouch','jump','jump','crouch'],pf:['jump','crouch','move','jump','crouch','move','jump','crouch']};
+ const sequence=patterns[type]||patterns.haddad,index=Math.max(0,Math.floor(Number(fired)||0))+2*Math.floor(Math.max(0,round)/BOSS_ROSTER.length);
  const action=sequence[index%sequence.length];
- return {type:type==='xandao'?(action==='jump'?'hammer':'mandado'):type==='lula'?'lhand':'receipts',action};
+ return {type:type==='xandao'?(action==='jump'?'hammer':'mandado'):type==='lula'?'lhand':type==='janones'?'message':type==='pf'?(action==='move'?'falling-case':action==='crouch'?'microphone':'barrier'):'receipts',action};
 }
 // Primeiro marco após21km; cada vitória reserva mais7km de corrida.
 // Um marco alcançado fica pendente enquanto houver evento ou cooldown.
@@ -206,12 +245,13 @@ function beginBoss(run){
  announce(run,'CHEFÃO '+conf.foe.name+'! '+conf.objective);
 }
 function chooseBossPattern(boss,rng,pressure){
+ if(boss.type==='pf'&&boss.fired%3===2)return {type:'falling-case',action:'move',approach:'vertical'};
  // A abertura ensina o tipo de ameaça; depois o próprio chefe improvisa.
  if(boss.fired<3)return {...bossAttackFor(boss.type,boss.fired,boss.round-1),approach:'diagonal'};
  let action=random(rng)<(.48+.06*pressure)?'crouch':'jump';
  if(action===boss.lastAction&&boss.actionStreak>=2)action=action==='jump'?'crouch':'jump';
  const type=boss.type==='xandao'?(action==='jump'?'hammer':'mandado'):
-  boss.type==='lula'?'lhand':(action==='jump'&&random(rng)<.48?'stamp':'receipts');
+  boss.type==='lula'?'lhand':boss.type==='janones'?'message':boss.type==='pf'?(action==='crouch'?'microphone':'barrier'):(action==='jump'&&random(rng)<.48?'stamp':'receipts');
  const approach=action==='jump'&&random(rng)<.48?'drop':action==='crouch'&&random(rng)<.45?'sweep':'diagonal';
  return {type,action,approach};
 }
@@ -223,29 +263,34 @@ function advanceBoss(run,dt,rng,balance){
  // Cada chefão ataca com armas específicas; Flávio não dispara.
  const pattern=boss.plannedFor===boss.fired?boss.plannedAttack:bossAttackFor(boss.type,boss.fired,boss.round-1);
  const attackType=pattern.type;
+ let attack;
+ if(pattern.action==='move'){
+  attack=spawnFallingThreat(run,{bossAttack:true,owner:boss.type});if(!attack){boss.nextAttack=.1;return;}
+ }else{
  const [width,baseHeight]=({hammer:[46,44],mandado:[42,44],
-  lhand:[46,46],receipts:[44,40],stamp:[44,36]})[attackType];
+  lhand:[46,46],receipts:[44,40],stamp:[44,36],message:[44,36],microphone:[46,40],barrier:[44,32]})[attackType];
  const height=pattern.action==='crouch'?84:baseHeight;
  const x=visibleWidth(run)-104;
  const entry=pattern.approach||'diagonal';
  const fromY=entry==='drop'?155:pattern.action==='jump'?77:90;
  const toY=pattern.action==='jump'?(entry==='drop'?22:PLAYER.height/2):90;
- const attack={x,width,height,type:attackType,action:pattern.action,owner:boss.type,bossAttack:true,counted:false,
-  approach:entry,speed:threatSpeed(run,x,balance.bossApproach),
-  projectile:true,launchX:x+width/2,targetX:PLAYER.x+PLAYER.width/2,
+ attack={x,width,height,type:attackType,action:pattern.action,owner:boss.type,bossAttack:true,counted:false,
+  approach:entry,...threatMotion(run,x,balance.bossApproach),
+  projectile:true,launchX:x+width/2,targetX:playerX(run)+PLAYER.width/2,
   launchY:fromY,targetY:toY,y:fromY};
  run.obstacles.push(attack);
+ }
  boss.attackFlashFor=.26;boss.fired++;
  boss.actionStreak=pattern.action===boss.lastAction?(boss.actionStreak||0)+1:1;
  boss.lastAction=pattern.action;
  boss.plannedFor=boss.fired;
  boss.plannedAttack=chooseBossPattern(boss,rng,balance.pressure);
- boss.nextAttack+=boss.interval+random(rng)*.22;
+ boss.nextAttack+=boss.interval+random(rng)*.22+(boss.type==='janones'&&boss.fired%Math.ceil(boss.total/3)===0?.55:0);
  return attack;
 }
 function resolveBossDodges(run){
  if(!run.boss)return;
- for(const o of run.obstacles)if(o.bossAttack&&!o.counted&&o.x+o.width<PLAYER.x){o.counted=true;run.boss.remaining--;}
+ for(const o of run.obstacles)if(o.bossAttack&&!o.counted&&(o.falling?o.age>=o.warningFor+o.fallFor:o.x+o.width<playerX(run))){o.counted=true;run.boss.remaining--;}
  const boss=run.boss;if(boss.fired<boss.total||boss.remaining>0)return;
  run.lastBoss=boss.type;run.boss=null;run.bossesDefeated++;run.bossCooldown=4;
  run.nextBossAt=Math.max(nextBossDistance(run.bossesDefeated),run.routeDistance+7000);run.nextObstacle=Math.max(1.8,run.nextObstacle);
@@ -265,7 +310,7 @@ function advanceRaid(run,dt,rng){
  if(run.nextRaid<=0){
   const choices=RAID_FACTS.map((_,i)=>i).filter(i=>i!==run.lastFact);
   const factIndex=choices[Math.floor(random(rng)*choices.length)];run.lastFact=factIndex;
-  run.raid={phase:'warning',remaining:1.2,factIndex,id:++run.raids};
+  run.raid={phase:'warning',remaining:1.2,factIndex,id:++run.raids,waves:0};
   announce(run,'Joice apareceu. Atenção: vem aí uma perseguição especial da PF.');
  }
 }
@@ -278,11 +323,13 @@ function rewardForObstacle(run,obstacle,balance,rng){
  else return;
  run.spawnedPickups++;const center=obstacle.x+obstacle.width/2;
  for(let i=0;i<count;i++)run.pickups.push({x:center+(i-(count-1)/2)*35,
-  y:obstacle.action==='crouch'?18:100,type:item.type,value:item.value,speed:obstacle.speed,anchor:obstacle});
+  y:obstacle.action==='crouch'?18:100,type:item.type,value:item.value,speed:obstacle.speed,waitFor:obstacle.waitFor||0,anchor:obstacle});
 }
 export function advanceRun(run,seconds,rng=Math.random){
  if(run.status!=='running'||!Number.isFinite(seconds)||seconds<=0)return;
  const dt=Math.min(seconds,.05);run.elapsed+=dt;
+ run.player.x=Math.max(70,Math.min(280,playerX(run)+(run.player.moveHeld||0)*230*dt));
+ advanceAllies(run,dt);
  if(run.player.isJacare)run.player.jacareAge+=dt;
  run.player.restoreFlashFor=Math.max(0,run.player.restoreFlashFor-dt);
  if(run.nextBossAt===null)run.nextBossAt=nextBossDistance(0);
@@ -301,16 +348,28 @@ export function advanceRun(run,seconds,rng=Math.random){
  }
  run.shieldFor=Math.max(0,run.shieldFor-dt);run.graceFor=Math.max(0,run.graceFor-dt);
  for(const obstacle of run.obstacles){
-  obstacle.x-=Number.isFinite(obstacle.speed)?obstacle.speed*dt:travel;
+  if(obstacle.falling){
+   obstacle.age+=dt;
+   const progress=Math.max(0,Math.min(1,(obstacle.age-obstacle.warningFor)/obstacle.fallFor));
+   obstacle.y=310-342*progress;
+   continue;
+  }
+  const activeDelta=Math.max(0,dt-(obstacle.waitFor||0));obstacle.waitFor=Math.max(0,(obstacle.waitFor||0)-dt);
+  obstacle.x-=Number.isFinite(obstacle.speed)?obstacle.speed*activeDelta:travel;
   if(obstacle.projectile){
    const span=Math.max(1,obstacle.launchX-obstacle.targetX);
    const progress=Math.max(0,Math.min(1,(obstacle.launchX-(obstacle.x+obstacle.width/2))/span));
    obstacle.y=obstacle.launchY+(obstacle.targetY-obstacle.launchY)*progress;
   }
+  const left=playerX(run)+(run.player.isJacare?-15:5),right=playerX(run)+(run.player.isJacare?PLAYER.width+17:PLAYER.width-3);
+  if(obstacle.speed>0&&obstacle.x+obstacle.width-3<=left||obstacle.speed<0&&obstacle.x+3>=right)obstacle.passed=true;
  }
- for(const pickup of run.pickups)pickup.x-=Number.isFinite(pickup.speed)?pickup.speed*dt:travel;
+ for(const pickup of run.pickups){
+  const activeDelta=Math.max(0,dt-(pickup.waitFor||0));pickup.waitFor=Math.max(0,(pickup.waitFor||0)-dt);
+  pickup.x-=Number.isFinite(pickup.speed)?pickup.speed*activeDelta:travel;
+ }
  resolveBossDodges(run);
- run.obstacles=run.obstacles.filter(o=>o.approach==='rear'?o.x<PLAYER.x+PLAYER.width+80:o.x+o.width>-20);
+ run.obstacles=run.obstacles.filter(o=>o.falling?o.age<o.warningFor+o.fallFor+.25:o.approach==='rear'?o.x<playerX(run)+PLAYER.width+80:o.x+o.width>-20);
  run.pickups=run.pickups.filter(p=>p.x>-30);
  // Uma Joice já vencida tem prioridade sobre o próximo marco de chefe.
  advanceRaid(run,dt,rng);
@@ -332,17 +391,23 @@ export function advanceRun(run,seconds,rng=Math.random){
    const x=visibleWidth(run)+40,approach=raidActive?Math.max(.85,balance.obstacleApproach-.15):balance.obstacleApproach;
    // A partir da segunda etapa, baixos podem rolar, cair de cima ou avançar pela retaguarda.
    // Cada estilo compete por um único intervalo: jamais surgem dois contatos simultâneos.
-   if(action==='crouch'){
+   if(raidActive&&(run.raid.waves||0)%5===3&&run.raid.remaining>3){
+    anchor=spawnFallingThreat(run);
+    if(anchor&&anchor.warningFor+anchor.fallFor>run.raid.remaining-.2){run.obstacles=run.obstacles.filter(o=>o!==anchor);anchor=null;}
+   }
+   if(anchor){/* A queda já entrou no mundo com um aviso comprometido. */}
+   else if(action==='crouch'){
     const performers=['dilma','simone','soraya'];
     const available=performers.filter(actor=>actor!==run.lastOverheadActor);
     const type=raidActive?'joice':available[Math.floor(random(rng)*available.length)];
     if(!raidActive){run.lastOverheadActor=type;run.overheadCount++;}
     const attackType={dilma:'wind',simone:'paper-gate',soraya:'microphone',joice:'microphone'}[type];
     anchor={x,width:46,height:72,type:attackType,action,sourceActor:type,projectile:true,
-     launchX:x+23,targetX:PLAYER.x+17,launchY:84,targetY:84,y:84,speed:threatSpeed(run,x,approach,visibleWidth(run))};
+     launchX:x+23,targetX:playerX(run)+17,launchY:84,targetY:84,y:84,...threatMotion(run,x,approach,visibleWidth(run))};
     if(!raidActive)run.cameo={type,remaining:1.4};
    }else{
-    const foe=raidActive?foeFor('pf'):pursuitAt(routeClock(run),rng);
+    const selected=raidActive?foeFor('pf'):pursuitAt(routeClock(run),rng);
+    const foe=run.supportAvailable===false&&['boulos','dino'].includes(selected.type)?foeFor('pf'):selected;
     const roll=random(rng);
     const activeStyles=run.elapsed>=12&&!raidActive;
     const rear=activeStyles&&balance.pressure>.24&&roll<.18;
@@ -357,16 +422,17 @@ export function advanceRun(run,seconds,rng=Math.random){
       approach:'rear',speed:rearSpeed(run,start,width)};
     }else if(falling){
      anchor={x,width:36,height:36,type:'falling-case',action:'jump',approach:'drop',
-      speed:threatSpeed(run,x,approach,visibleWidth(run)),projectile:true,
-      launchX:x+18,targetX:PLAYER.x+17,launchY:160,targetY:24,y:160};
+      ...threatMotion(run,x,approach,visibleWidth(run)),projectile:true,
+      launchX:x+18,targetX:playerX(run)+17,launchY:160,targetY:24,y:160};
     }else{
      const type=rolling?'rolling-case':popcorn?'popcorn':foe.type;
      anchor={x,width:rolling?40:popcorn?40:foe.width,
       height:rolling?30:popcorn?35:foe.height,type,action,
-      approach:rolling?'rolling':'front',speed:threatSpeed(run,x,approach,visibleWidth(run))};
+      approach:rolling?'rolling':'front',...threatMotion(run,x,approach,visibleWidth(run))};
     }
    }
-   run.obstacles.push(anchor);run.spawnedObstacles++;
+   if(!anchor.falling)run.obstacles.push(anchor);run.spawnedObstacles++;
+   if(raidActive)run.raid.waves=(run.raid.waves||0)+1;
    run.attackStyles.push(anchor.approach||'overhead');
    if(run.attackStyles.length>16)run.attackStyles.shift();
    const gap=raidActive ? .98-.08*balance.pressure:run.raid?.phase==='recovery'?
@@ -380,15 +446,21 @@ export function advanceRun(run,seconds,rng=Math.random){
   run.pickups.push({type:'ze-gotinha',x:visibleWidth(run)+40,y:20,speed:balance.speed*assistance(run),value:0});
   run.nextAllyAt+=35000;run.alliesMet++;
  }
+ if(run.supportAvailable!==false&&!run.boss&&!run.raid&&run.routeDistance>=run.nextSupportAt&&!run.pickups.some(p=>p.type==='ally')){
+  const ally=allyForStage(stageAt(routeClock(run)).index,run.allyVisits,rng);
+  run.pickups.push({type:'ally',allyId:ally.id,x:visibleWidth(run)+40,y:20,speed:balance.speed*assistance(run),value:0});
+  run.nextSupportAt=run.routeDistance+14000;
+ }
  run.nextPickup-=dt;run.nextPassport-=dt;run.nextPower-=dt;
- if(anchor?.approach!=='rear')rewardForObstacle(run,anchor,balance,rng);
- const left=PLAYER.x+5,right=PLAYER.x+PLAYER.width-3,bottom=run.player.y+3,
+ if(anchor?.approach!=='rear'&&!anchor?.falling)rewardForObstacle(run,anchor,balance,rng);
+ const left=playerX(run)+5,right=playerX(run)+PLAYER.width-3,bottom=run.player.y+3,
   top=run.player.y+(run.player.crouching||run.player.isJacare?25:PLAYER.height-5);
  // Coleta antes do impacto: o escudo ou o centésimo passaporte já valem neste frame.
  run.pickups=run.pickups.filter(p=>{
   const hit=right>p.x-12&&left<p.x+12&&top>p.y-12&&bottom<p.y+12;
   if(hit){
    run.collected++;run.lastPickup=p.type;
+   if(p.type==='ally')collectAlly(run,p.allyId);
    if(p.type==='ze-gotinha'){
     run.obstacles=run.obstacles.filter(o=>o.bossAttack);
     run.nextObstacle=Math.max(2.5,run.nextObstacle);
@@ -403,11 +475,11 @@ export function advanceRun(run,seconds,rng=Math.random){
  });
  // A largura visual do jacaré é de aproximadamente 70 px (120-15 a 154+17).
  // O humano mantém as margens antigas para preservar o restante da física.
- const collisionLeft=run.player.isJacare?PLAYER.x-15:left;
- const collisionRight=run.player.isJacare?PLAYER.x+PLAYER.width+17:right;
- const hit=run.shieldFor<=0&&run.graceFor<=0&&run.obstacles.find(o=>
+ const collisionLeft=run.player.isJacare?playerX(run)-15:left;
+ const collisionRight=run.player.isJacare?playerX(run)+PLAYER.width+17:right;
+ const hit=run.shieldFor<=0&&run.graceFor<=0&&run.obstacles.find(o=>!o.passed&&!o.counted&&(!o.falling||o.age>=o.warningFor)&&
   collisionRight>o.x+3&&collisionLeft<o.x+o.width-3&&(
-   o.projectile?(bottom<o.y+o.height/2&&top>o.y-o.height/2):(bottom<o.height&&top>0)
+   o.projectile||o.falling?(bottom<o.y+o.height/2&&top>o.y-o.height/2):(bottom<o.height&&top>0)
   ));
  if(hit){
   run.lastHit={type:hit.type,action:hit.action||(hit.projectile&&(hit.targetY??hit.y)>50?'crouch':'jump')};

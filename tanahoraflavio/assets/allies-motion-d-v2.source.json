@@ -1,0 +1,572 @@
+{
+  "schema": 1,
+  "tool": "built-in image_gen",
+  "useCase": "precise-object-edit",
+  "generatedAt": "2026-11-06",
+  "sourceGeneratedPath": "/workspace/scratch/11d2fc137a81/generated_images/exec-165fbd5d-4a58-45a7-bb9c-2cd61d6b8269.png",
+  "prompt": "Use case: precise-object-edit.\nAsset type: transparent production 4-column × 4-row sprite atlas.\nInput image1 is the EDIT TARGET.\nCHANGE ONLY THE FOUR ALLIGATOR SPRITES IN THE FOURTH / BOTTOM ROW, y=75% through100% of this square image.\nPRESERVE EXACTLY all pixels and content in the first THREE rows: Donald Trump, Javier Milei and the yellow/green fictional supporter, all twelve figures, their existing exact faces, clothing, four poses, positions, scales, style and transparency. Do not redraw, retouch, recolor, resize or move any character in rows1,2,3.\nReplace ONLY each bottom-row upright alligator with a LOW, LONG, QUADRUPED cartoony green alligator (jacaré), always running LEFT along the ground on FOUR short reptile legs. Natural alligator horizontal body: LONG snout at left, low torso parallel to ground, long tapering curved tail at right, four visible short articulated reptile legs and green clawed feet. Overall full-body silhouette ratio width/height between2.3 and2.8. Keep it LOW like a crocodile, not a human, not standing upright, no two-legged humanoid posture, no shoes or human legs. As a visual gag retain a small navy suit jacket on its horizontal back and a short blue necktie at its throat over a small white collar; do not turn its anatomy into a person.\nMake FOUR DIFFERENT successive quadruped RUN poses across columns1,2,3,4: first diagonal pair extending forward/back, passing pose with near legs tucked, opposite diagonal pair extending with lead legs reversed, opposite passing pose. All four legs should remain individually readable where practical, including the far-side legs with darker green shading. Feet stay near a common ground baseline in all four cells. Tail held low and curving, no detached parts. Friendly expressive cartoon face and clean premium cel shading matching current atlas.\nFit each of these four new low alligator sprites fully INSIDE its own bottom-row column cell, centered horizontally, with at least8% cell-width margin at both left/right ends and broad transparent space above it. Leave the ground baseline around93% canvas height. Body height around8%–9% of total canvas height and total snout-to-tail width around20% of canvas width, so it is roughly2.5times wider than tall. Full snout, feet and tail inside canvas. Do not add a floor, shadow, scene, prop, weapon, syringe or medicine.\nKeep canvas dimensions and existing TRUE TRANSPARENT alpha background. No text, no labels, no watermark. Strictly edit the bottom row only; first three rows remain exactly unchanged.",
+  "references": [
+    {
+      "path": "/workspace/scratch/11d2fc137a81/game-dossier-pack/tanahoraflavio/assets/allies-motion-d-v1.png",
+      "role": "drawing style reference",
+      "sha256": "563e48050b9077988d026884ee5873fd94ebf1f13976fa4966762e51dc28d12e"
+    }
+  ],
+  "pngPath": "/workspace/scratch/11d2fc137a81/game-dossier-pack/tanahoraflavio/assets/allies-motion-d-v2.png",
+  "webpPath": "/workspace/scratch/11d2fc137a81/game-dossier-pack/tanahoraflavio/assets/allies-motion-d-v2.webp",
+  "pngSha256": "4ec4e2324adedbf7334c145b9151c886f3a09586f511dd66de4bfaaaca556920",
+  "webpSha256": "6fdc94b2c7db2104c284c25cfe14c2de25228a80e6aa3b2e01b4af5dbf4d110f",
+  "width": 1254,
+  "height": 1254,
+  "grid": {
+    "rows": 4,
+    "columns": 4
+  },
+  "rows": [
+    "trump",
+    "milei",
+    "bolsominion",
+    "jacare"
+  ],
+  "actorNames": [
+    "Donald Trump",
+    "Javier Milei",
+    "Apoiador genérico fictício",
+    "Jacaré cartunesco"
+  ],
+  "columns": [
+    "extended stride",
+    "raised-knee passing",
+    "opposite extended stride",
+    "heel-folded passing"
+  ],
+  "orientation": "left",
+  "frames": [
+    {
+      "row": 0,
+      "column": 0,
+      "actor": "trump",
+      "x": 68,
+      "y": 60,
+      "width": 231,
+      "height": 262,
+      "center": [
+        185,
+        217
+      ],
+      "groundY": 318,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 0,
+      "column": 1,
+      "actor": "trump",
+      "x": 384,
+      "y": 60,
+      "width": 201,
+      "height": 265,
+      "center": [
+        496,
+        220
+      ],
+      "groundY": 321,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 0,
+      "column": 2,
+      "actor": "trump",
+      "x": 680,
+      "y": 60,
+      "width": 230,
+      "height": 263,
+      "center": [
+        791,
+        218
+      ],
+      "groundY": 319,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 0,
+      "column": 3,
+      "actor": "trump",
+      "x": 991,
+      "y": 61,
+      "width": 203,
+      "height": 263,
+      "center": [
+        1102,
+        219
+      ],
+      "groundY": 320,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 1,
+      "column": 0,
+      "actor": "milei",
+      "x": 68,
+      "y": 361,
+      "width": 233,
+      "height": 269,
+      "center": [
+        179,
+        523
+      ],
+      "groundY": 626,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 1,
+      "column": 1,
+      "actor": "milei",
+      "x": 381,
+      "y": 364,
+      "width": 198,
+      "height": 268,
+      "center": [
+        487,
+        526
+      ],
+      "groundY": 628,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 1,
+      "column": 2,
+      "actor": "milei",
+      "x": 683,
+      "y": 364,
+      "width": 235,
+      "height": 266,
+      "center": [
+        791,
+        524
+      ],
+      "groundY": 626,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 1,
+      "column": 3,
+      "actor": "milei",
+      "x": 994,
+      "y": 364,
+      "width": 202,
+      "height": 267,
+      "center": [
+        1099,
+        526
+      ],
+      "groundY": 627,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 2,
+      "column": 0,
+      "actor": "bolsominion",
+      "x": 65,
+      "y": 662,
+      "width": 242,
+      "height": 256,
+      "center": [
+        179,
+        815
+      ],
+      "groundY": 914,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 2,
+      "column": 1,
+      "actor": "bolsominion",
+      "x": 382,
+      "y": 661,
+      "width": 203,
+      "height": 260,
+      "center": [
+        495,
+        817
+      ],
+      "groundY": 917,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 2,
+      "column": 2,
+      "actor": "bolsominion",
+      "x": 680,
+      "y": 662,
+      "width": 239,
+      "height": 257,
+      "center": [
+        792,
+        815
+      ],
+      "groundY": 915,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 2,
+      "column": 3,
+      "actor": "bolsominion",
+      "x": 1004,
+      "y": 663,
+      "width": 197,
+      "height": 258,
+      "center": [
+        1110,
+        818
+      ],
+      "groundY": 917,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 3,
+      "column": 0,
+      "actor": "jacare",
+      "x": 26,
+      "y": 1060,
+      "width": 287,
+      "height": 120,
+      "center": [
+        180,
+        1132
+      ],
+      "groundY": 1176,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 3,
+      "column": 1,
+      "actor": "jacare",
+      "x": 331,
+      "y": 1060,
+      "width": 283,
+      "height": 117,
+      "center": [
+        487,
+        1130
+      ],
+      "groundY": 1173,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 3,
+      "column": 2,
+      "actor": "jacare",
+      "x": 639,
+      "y": 1063,
+      "width": 288,
+      "height": 115,
+      "center": [
+        796,
+        1132
+      ],
+      "groundY": 1174,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 3,
+      "column": 3,
+      "actor": "jacare",
+      "x": 948,
+      "y": 1061,
+      "width": 281,
+      "height": 116,
+      "center": [
+        1101,
+        1130
+      ],
+      "groundY": 1173,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  ],
+  "analysis": {
+    "alphaMin": 0,
+    "alphaMax": 255,
+    "transparentPixels": 946500,
+    "nonzeroPixels": 626016,
+    "largeAlphaComponentCount": 16,
+    "components": [
+      {
+        "label": 1,
+        "area": 35396,
+        "bbox": [
+          72,
+          64,
+          295,
+          318
+        ]
+      },
+      {
+        "label": 3,
+        "area": 33907,
+        "bbox": [
+          684,
+          64,
+          906,
+          319
+        ]
+      },
+      {
+        "label": 2,
+        "area": 31736,
+        "bbox": [
+          388,
+          64,
+          581,
+          321
+        ]
+      },
+      {
+        "label": 4,
+        "area": 30657,
+        "bbox": [
+          995,
+          65,
+          1190,
+          320
+        ]
+      },
+      {
+        "label": 82,
+        "area": 37459,
+        "bbox": [
+          72,
+          365,
+          297,
+          626
+        ]
+      },
+      {
+        "label": 92,
+        "area": 36010,
+        "bbox": [
+          687,
+          368,
+          914,
+          626
+        ]
+      },
+      {
+        "label": 94,
+        "area": 32291,
+        "bbox": [
+          998,
+          368,
+          1192,
+          627
+        ]
+      },
+      {
+        "label": 90,
+        "area": 33058,
+        "bbox": [
+          385,
+          368,
+          575,
+          628
+        ]
+      },
+      {
+        "label": 142,
+        "area": 32547,
+        "bbox": [
+          69,
+          666,
+          303,
+          914
+        ]
+      },
+      {
+        "label": 143,
+        "area": 31729,
+        "bbox": [
+          684,
+          666,
+          915,
+          915
+        ]
+      },
+      {
+        "label": 141,
+        "area": 28735,
+        "bbox": [
+          386,
+          665,
+          581,
+          917
+        ]
+      },
+      {
+        "label": 144,
+        "area": 27849,
+        "bbox": [
+          1008,
+          667,
+          1197,
+          917
+        ]
+      },
+      {
+        "label": 234,
+        "area": 17682,
+        "bbox": [
+          335,
+          1064,
+          610,
+          1173
+        ]
+      },
+      {
+        "label": 235,
+        "area": 17614,
+        "bbox": [
+          952,
+          1065,
+          1225,
+          1173
+        ]
+      },
+      {
+        "label": 233,
+        "area": 18528,
+        "bbox": [
+          30,
+          1064,
+          309,
+          1176
+        ]
+      },
+      {
+        "label": 236,
+        "area": 18168,
+        "bbox": [
+          643,
+          1067,
+          923,
+          1174
+        ]
+      }
+    ],
+    "warning": null,
+    "cropPaddingPx": 4,
+    "allFramePaddingVerified": true,
+    "neighborContamination": [],
+    "maxAlphaOutsideCrops": 2,
+    "webpAlphaExact": true,
+    "webpVisibleRgbExact": true,
+    "pngBytes": 1478348,
+    "webpBytes": 998964,
+    "verifiedAt": "2026-11-06",
+    "topThreeRowsPixelIdentical": false,
+    "topThreeRowsMeanAbsoluteChannelDifference": 3.9729612049950798,
+    "jacareWidthHeightRatios": [
+      2.491,
+      2.523,
+      2.617,
+      2.528
+    ],
+    "integrationNote": "For byte-exact preservation of the first three actor rows, consume their frames from allies-motion-d-v1. Consume only jacare row 3 from allies-motion-d-v2. The imagegen edit preserves identities and poses visually but changes upper-row pixels."
+  },
+  "processing": "Raw image_gen PNG copied byte-for-byte; alpha and PNG pixels unmodified. WebP encoded losslessly. Crops are metadata only, 4px padding around 8-connected alpha>2 main components area>=1000. center=[atlasX,atlasY] is estimated torso pivot from alpha-weighted band 56%-66% of figure height. groundY is exclusive foreground bottom.",
+  "revisionOf": {
+    "pngPath": "/workspace/scratch/11d2fc137a81/game-dossier-pack/tanahoraflavio/assets/allies-motion-d-v1.png",
+    "pngSha256": "563e48050b9077988d026884ee5873fd94ebf1f13976fa4966762e51dc28d12e",
+    "scope": "Replace bottom row with low quadruped alligator; preserve top three actors visually."
+  },
+  "history": [
+    {
+      "kind": "initial-generation",
+      "path": "/workspace/scratch/11d2fc137a81/generated_images/exec-625b62fa-9d4c-45ef-a802-aed0a35ac7f2.png",
+      "pngSha256": "563e48050b9077988d026884ee5873fd94ebf1f13976fa4966762e51dc28d12e"
+    },
+    {
+      "kind": "quadruped-bottom-row-edit",
+      "path": "/workspace/scratch/11d2fc137a81/generated_images/exec-165fbd5d-4a58-45a7-bb9c-2cd61d6b8269.png",
+      "pngSha256": "4ec4e2324adedbf7334c145b9151c886f3a09586f511dd66de4bfaaaca556920"
+    }
+  ]
+}

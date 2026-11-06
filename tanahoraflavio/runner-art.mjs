@@ -1,4 +1,4 @@
-import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=2d33118db0c5";
+import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=4ff31d443151";
 // Personagens em atlas WebP; itens e perigos continuam vetoriais em Canvas.
 const INK='#292337',CREAM='#fff6e5';
 function oval(c,x,y,rx,ry,fill,stroke=INK,w=1.8){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=w;c.stroke();}}
@@ -7,7 +7,7 @@ function path(c,points,fill,stroke=INK){c.beginPath();points.forEach(([x,y],i)=>
 function line(c,points,color=INK,width=2){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.strokeStyle=color;c.lineWidth=width;c.lineCap='round';c.lineJoin='round';c.stroke();}
 function text(c,value,x,y,size=7,color=CREAM){c.fillStyle=color;c.font='900 '+size+'px system-ui';c.textAlign='center';c.fillText(value,x,y);}
 
-export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=2d33118db0c5";
+export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT,CORE_SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=4ff31d443151";
 export function drawItem(c,{type,x,y,scale=1}){
  c.save();c.translate(x,y);c.scale(scale,scale);
  if(type==='shield'){
@@ -28,6 +28,7 @@ export function drawItem(c,{type,x,y,scale=1}){
 // Jacaré vetorial animado; o volume fica dentro da hitbox do motor.
 // 'age' controla a metamorfose, sem transformar isso em um segundo salto.
 export function drawJacare(c,{x,y,phase=0,age=1,reducedMotion=false}={}){
+ if(drawActor(c,{type:'jacare',x,y,phase,scale:1}))return;
  c.save();c.translate(x,y);
  const motion=reducedMotion?0:Math.sin(phase*.95);
  const morph=reducedMotion?1:Math.min(1,.82+Math.max(0,age)/.30*.18);
@@ -79,6 +80,23 @@ export function enemyMotionFor(type,phase=0,x=0){
  const stride=phase*.8+(Math.abs(x)%67)/67*Math.PI*2;
  return {bob:-Math.abs(Math.sin(stride))*2.4,lean:Math.sin(stride)*.034};
 }
+export function fallingThreatGeometry(item,ground=246){
+ return {centerX:item.x+item.width/2,bodyY:ground-item.y,width:item.width,height:item.height,
+  showBody:item.age>=item.warningFor,progress:Math.min(1,Math.max(0,item.age/item.warningFor)),ground};
+}
+export function drawFallingThreat(c,item,ground=246){
+ const g=fallingThreatGeometry(item,ground);c.save();
+ box(c,item.x+3,ground+3,item.width-6,5,'#a73e50',2,null);
+ line(c,[[item.x+3,ground+11],[item.x+3+(item.width-6)*g.progress,ground+11]],'#da9a63',2);
+ if(!g.showBody){
+  text(c,'↔',g.centerX,ground-80,23,'#8a3348');text(c,'SAIA DO ALVO',g.centerX,ground-64,8,'#6a3145');
+ }else{
+  box(c,item.x,g.bodyY-item.height/2,item.width,item.height,'#8d557c',5,'#342a46');
+  box(c,g.centerX-7,g.bodyY-item.height/2-6,14,6,'#e7c68d',2,'#342a46');
+  for(const x of [item.x+11,item.x+item.width-11])line(c,[[x,g.bodyY-14],[x,g.bodyY+14]],'#ead5c7',3);
+ }
+ c.restore();
+}
 export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
  const x=item.x+item.width/2;c.save();c.translate(x,ground);
  if(item.action==='crouch'){
@@ -89,7 +107,11 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
   c.translate(0,-(h-40)/2);
  }
 
- if(item.type==='falling-case'){
+ if(item.type==='message'){
+  box(c,-21,-34,42,33,'#fff5e6',4,'#a23d50');line(c,[[-16,-27],[0,-15],[16,-27]],'#b44758',2);
+  text(c,'URGENTE',0,-4,7,'#8d314a');
+ }
+ else if(item.type==='falling-case'){
   // Mala em queda oblíqua, com silhueta de impacto claramente distinguível.
   c.save();if(!reducedMotion)c.rotate(Math.sin(phase*.23)*.16);
   box(c,-15,-33,30,30,'#9c5b83',5);box(c,-7,-39,14,7,'#e5ba88',2);

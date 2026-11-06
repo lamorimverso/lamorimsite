@@ -126,3 +126,18 @@ test('atlas com dimensões incompatíveis é rejeitado e pode ser tentado de nov
  await retry;
  assert.equal(sprites.drawSpriteActor(drawingContext()),true);
 });
+
+test('corrida base carrega antes dos apoios e falha opcional não descarta os personagens prontos',async t=>{
+ const {sprites,images,load}=await browserEvents(t);
+ const core=sprites.loadSprites(()=>{},{coreOnly:true});
+ assert.equal(images.length,4,'somente quatro folhas essenciais bloqueiam a largada');
+ for(const image of images)load(image);await core;
+ assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'pf'}),true,'PF usa seu próprio desenho original enquanto a expansão carrega');
+ const extras=sprites.loadSprites(),error=extras.then(()=>null,e=>e);
+ assert.equal(images.length,9,'as cinco folhas novas não baixam novamente as quatro prontas');
+ images[4].onerror();assert.ok(await error);
+ assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'flavio'}),true);
+ assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'pf'}),true);
+ const retry=sprites.loadSprites();for(const image of images.slice(9))load(image);await retry;
+ assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'boulos'}),true);
+});

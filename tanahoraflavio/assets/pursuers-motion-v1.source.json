@@ -1,0 +1,556 @@
+{
+  "schema": 1,
+  "tool": "built-in image_gen",
+  "useCase": "illustration-story",
+  "generatedAt": "2026-11-06",
+  "sourceGeneratedPath": "/workspace/scratch/11d2fc137a81/generated_images/exec-c829d5e7-a761-43f6-a76c-edb0554bbaf2.png",
+  "prompt": "Use case: illustration-story.\nAsset type: transparent production sprite atlas for a polished 2D side-scrolling Brazilian political satire game.\nInput images: two DRAWING STYLE REFERENCES ONLY. Match their premium editorial chibi caricature style: large recognizable expressive heads, compact bodies, clean dark ink contours, sophisticated colorful cel shading, coherent anatomy and crisp silhouettes at small scale. Create NEW actors, not recolored copies of the input.\nPrimary request: exactly FOUR ROWS and FOUR COLUMNS, 16 isolated whole figures. Each ROW has ONE consistent character in four successive LEFT-FACING running poses. No text.\nLAYOUT IS CRITICAL: square atlas, preferably 2048×2048. Strict equally spaced invisible 4×4 grid. Each entire figure occupies ONLY the central 64% of its cell height and no more than the central 68% of cell width. Leave at least 16% clear transparent margin on ALL FOUR sides INSIDE EVERY cell. Place row centers at y=12.5%,37.5%,62.5%,87.5% and column centers at x=12.5%,37.5%,62.5%,87.5%. These are small sprites with WIDE GAPS. Full heads, hair, hands, tails and feet stay inside each cell. No part of any character can enter an adjacent cell. The bottom row also needs a generous empty margin below all shoes.\nANIMATION: every figure faces and runs LEFT with a slight three-quarter side view, as in the references. Same character size, head height, costume and hip pivot throughout each row. Four distinct running anatomy silhouettes: column1 extended stride, lead leg reaching left and other leg extended behind; column2 passing pose, knee lifting forward and other foot beneath hip; column3 opposite extended stride with lead leg and arm swing REVERSED; column4 opposite passing with rear heel folded up and front foot reaching down. Both legs, knees and shoes readable, arms pumping alternately, hands empty. Exactly two arms and two legs per character. Same ground baseline for all four poses in each row.\nBackdrop: REAL TRANSPARENT ALPHA, no color background, no scene, no floor, no shadows, no visible grid. Feet run along the ground, no flying.\nText: NONE. No captions, names, letters, numbers, logos, slogans, watermarks, flags, speech balloons or attributed statements. No handheld objects, weapons, firearms, medicines, syringes, effects, motion streaks or debris.\nThese are humorous fictional game caricatures of adult public figures, not factual claims about relationships. Distinct face and hair for every actor. Keep the line weight, shading and body proportions coherent with both reference atlases.\n\nAdditional reference: input image3 is an IDENTITY/COSTUME REFERENCE for André Janones (curly dark hair, short beard, navy suit, red tie) and the fictional PF officer (navy cap, sunglasses, navy uniform, black vest). Use its character identity details but create FOUR genuinely different run poses per row. Do not reuse its two repeated near-identical poses or any handheld phone.\nROW1: Guilherme Boulos, middle-aged Brazilian man with thick short dark hair and a close full dark beard, broad rounded recognizable expressive face, stocky adult build. Brown casual blazer over plain red shirt, charcoal trousers, dark running shoes, empty hands.\nROW2: Flávio Dino, older middle-aged Brazilian man, very broad round face, short neatly combed dark-gray hair, rectangular eyeglasses, clean-shaven face, stocky adult build. Dark navy suit, white shirt, red tie and dark shoes. No judge props.\nROW3: André Janones, adult Brazilian man, short tightly curled dark-brown hair, neatly trimmed full dark beard, expressive oval face and dark eyebrows, navy suit, white shirt, red tie and black shoes. Keep the reference identity consistent across all four poses. BOTH HANDS EMPTY; no phone.\nROW4: fictional Brazilian federal police officer, adult man with light tan skin, dark navy cap, black sunglasses, short dark hair, navy shirt and navy trousers, black tactical vest, black gloves and black boots. Only in this row, the small simple YELLOW LETTERS \"PF\" are allowed on the cap and chest as the uniform marking; no other text or logos. Both hands empty, NO weapons, no holster, no batons, no handcuffs.\nEmphasize four different run cycle limb silhouettes for every row, stable same-size bodies and generous blank margins. The sole allowed lettering is PF on row4 uniform. No scene, no additional characters, no props, real transparent background.",
+  "references": [
+    {
+      "path": "/workspace/scratch/11d2fc137a81/game-dossier-pack/tanahoraflavio/assets/cameos-motion-v1.png",
+      "role": "drawing style reference",
+      "sha256": "216ebe4995a257c7e8ad61e2785d0991148ee2b2f9eb4f7c2740de4f1e40b86f"
+    },
+    {
+      "path": "/workspace/scratch/11d2fc137a81/game-dossier-pack/tanahoraflavio/assets/chase-motion-v1.png",
+      "role": "drawing style reference",
+      "sha256": "da455747181517bab2c93e6bede67974894bfeaa164215f1425782ecff8fcd47"
+    },
+    {
+      "path": "/workspace/scratch/11d2fc137a81/game-dossier-pack/tanahoraflavio/assets/characters-motion-v2.png",
+      "role": "drawing style reference",
+      "sha256": "755785d30aa94beda139ef50b3272f6a726b2ca261e0dfded0703a39b8aabc45"
+    }
+  ],
+  "pngPath": "/workspace/scratch/11d2fc137a81/game-dossier-pack/tanahoraflavio/assets/pursuers-motion-v1.png",
+  "webpPath": "/workspace/scratch/11d2fc137a81/game-dossier-pack/tanahoraflavio/assets/pursuers-motion-v1.webp",
+  "pngSha256": "5bfafa184eb9066daad52e6c5d2947f69054843d68eb164a0e0b3931423c35e1",
+  "webpSha256": "9fab17854ef92645e2f55c1e77308376489ed5bf608ad7bf172014cd67ebcae6",
+  "width": 1254,
+  "height": 1254,
+  "grid": {
+    "rows": 4,
+    "columns": 4
+  },
+  "rows": [
+    "boulos",
+    "dino",
+    "janones",
+    "pf"
+  ],
+  "actorNames": [
+    "Guilherme Boulos",
+    "Flávio Dino",
+    "André Janones",
+    "Policial federal fictício"
+  ],
+  "columns": [
+    "extended stride",
+    "raised-knee passing",
+    "opposite extended stride",
+    "heel-folded passing"
+  ],
+  "orientation": "left",
+  "frames": [
+    {
+      "row": 0,
+      "column": 0,
+      "actor": "boulos",
+      "x": 61,
+      "y": 67,
+      "width": 235,
+      "height": 250,
+      "center": [
+        173,
+        217
+      ],
+      "groundY": 313,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 0,
+      "column": 1,
+      "actor": "boulos",
+      "x": 384,
+      "y": 63,
+      "width": 197,
+      "height": 261,
+      "center": [
+        493,
+        220
+      ],
+      "groundY": 320,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 0,
+      "column": 2,
+      "actor": "boulos",
+      "x": 682,
+      "y": 68,
+      "width": 235,
+      "height": 249,
+      "center": [
+        789,
+        217
+      ],
+      "groundY": 313,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 0,
+      "column": 3,
+      "actor": "boulos",
+      "x": 1010,
+      "y": 67,
+      "width": 188,
+      "height": 258,
+      "center": [
+        1107,
+        222
+      ],
+      "groundY": 321,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 1,
+      "column": 0,
+      "actor": "dino",
+      "x": 59,
+      "y": 367,
+      "width": 248,
+      "height": 257,
+      "center": [
+        186,
+        521
+      ],
+      "groundY": 620,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 1,
+      "column": 1,
+      "actor": "dino",
+      "x": 386,
+      "y": 366,
+      "width": 212,
+      "height": 265,
+      "center": [
+        499,
+        525
+      ],
+      "groundY": 627,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 1,
+      "column": 2,
+      "actor": "dino",
+      "x": 674,
+      "y": 370,
+      "width": 245,
+      "height": 256,
+      "center": [
+        805,
+        524
+      ],
+      "groundY": 622,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 1,
+      "column": 3,
+      "actor": "dino",
+      "x": 1009,
+      "y": 368,
+      "width": 206,
+      "height": 263,
+      "center": [
+        1109,
+        526
+      ],
+      "groundY": 627,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 2,
+      "column": 0,
+      "actor": "janones",
+      "x": 60,
+      "y": 666,
+      "width": 248,
+      "height": 264,
+      "center": [
+        176,
+        824
+      ],
+      "groundY": 926,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 2,
+      "column": 1,
+      "actor": "janones",
+      "x": 384,
+      "y": 664,
+      "width": 199,
+      "height": 265,
+      "center": [
+        494,
+        823
+      ],
+      "groundY": 925,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 2,
+      "column": 2,
+      "actor": "janones",
+      "x": 682,
+      "y": 668,
+      "width": 236,
+      "height": 258,
+      "center": [
+        798,
+        823
+      ],
+      "groundY": 922,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 2,
+      "column": 3,
+      "actor": "janones",
+      "x": 1012,
+      "y": 669,
+      "width": 196,
+      "height": 264,
+      "center": [
+        1105,
+        827
+      ],
+      "groundY": 929,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 3,
+      "column": 0,
+      "actor": "pf",
+      "x": 55,
+      "y": 963,
+      "width": 244,
+      "height": 251,
+      "center": [
+        178,
+        1113
+      ],
+      "groundY": 1210,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 3,
+      "column": 1,
+      "actor": "pf",
+      "x": 384,
+      "y": 960,
+      "width": 213,
+      "height": 263,
+      "center": [
+        503,
+        1118
+      ],
+      "groundY": 1219,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 3,
+      "column": 2,
+      "actor": "pf",
+      "x": 679,
+      "y": 964,
+      "width": 239,
+      "height": 253,
+      "center": [
+        801,
+        1115
+      ],
+      "groundY": 1213,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    },
+    {
+      "row": 3,
+      "column": 3,
+      "actor": "pf",
+      "x": 998,
+      "y": 963,
+      "width": 211,
+      "height": 261,
+      "center": [
+        1112,
+        1119
+      ],
+      "groundY": 1220,
+      "padding": [
+        4,
+        4,
+        4,
+        4
+      ]
+    }
+  ],
+  "analysis": {
+    "alphaMin": 0,
+    "alphaMax": 255,
+    "transparentPixels": 1017109,
+    "nonzeroPixels": 555407,
+    "largeAlphaComponentCount": 16,
+    "components": [
+      {
+        "label": 2,
+        "area": 31467,
+        "bbox": [
+          65,
+          71,
+          292,
+          313
+        ]
+      },
+      {
+        "label": 4,
+        "area": 30547,
+        "bbox": [
+          686,
+          72,
+          913,
+          313
+        ]
+      },
+      {
+        "label": 1,
+        "area": 28400,
+        "bbox": [
+          388,
+          67,
+          577,
+          320
+        ]
+      },
+      {
+        "label": 3,
+        "area": 27089,
+        "bbox": [
+          1014,
+          71,
+          1194,
+          321
+        ]
+      },
+      {
+        "label": 94,
+        "area": 35853,
+        "bbox": [
+          63,
+          371,
+          303,
+          620
+        ]
+      },
+      {
+        "label": 99,
+        "area": 34831,
+        "bbox": [
+          678,
+          374,
+          915,
+          622
+        ]
+      },
+      {
+        "label": 93,
+        "area": 32379,
+        "bbox": [
+          390,
+          370,
+          594,
+          627
+        ]
+      },
+      {
+        "label": 95,
+        "area": 31727,
+        "bbox": [
+          1013,
+          372,
+          1211,
+          627
+        ]
+      },
+      {
+        "label": 156,
+        "area": 29038,
+        "bbox": [
+          388,
+          668,
+          579,
+          925
+        ]
+      },
+      {
+        "label": 161,
+        "area": 32135,
+        "bbox": [
+          686,
+          672,
+          914,
+          922
+        ]
+      },
+      {
+        "label": 157,
+        "area": 32689,
+        "bbox": [
+          64,
+          670,
+          304,
+          926
+        ]
+      },
+      {
+        "label": 162,
+        "area": 28493,
+        "bbox": [
+          1016,
+          673,
+          1204,
+          929
+        ]
+      },
+      {
+        "label": 286,
+        "area": 33148,
+        "bbox": [
+          59,
+          967,
+          295,
+          1210
+        ]
+      },
+      {
+        "label": 290,
+        "area": 31916,
+        "bbox": [
+          683,
+          968,
+          914,
+          1213
+        ]
+      },
+      {
+        "label": 281,
+        "area": 29188,
+        "bbox": [
+          388,
+          964,
+          593,
+          1219
+        ]
+      },
+      {
+        "label": 289,
+        "area": 29088,
+        "bbox": [
+          1002,
+          967,
+          1205,
+          1220
+        ]
+      }
+    ],
+    "warning": null,
+    "cropPaddingPx": 4,
+    "allFramePaddingVerified": true,
+    "neighborContamination": [],
+    "maxAlphaOutsideCrops": 1,
+    "webpAlphaExact": true,
+    "webpVisibleRgbExact": true,
+    "pngBytes": 1370283,
+    "webpBytes": 937930,
+    "verifiedAt": "2026-11-06"
+  },
+  "processing": "Raw image_gen PNG copied byte-for-byte; alpha and PNG pixels unmodified. WebP encoded losslessly. Crops are metadata only, 4px padding around 8-connected alpha>2 main components area>=1000. center=[atlasX,atlasY] is estimated torso pivot from alpha-weighted band 56%-66% of figure height. groundY is exclusive foreground bottom."
+}
