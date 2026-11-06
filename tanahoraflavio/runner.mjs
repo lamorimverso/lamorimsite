@@ -7,7 +7,7 @@ import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-sc
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
 
 import {allyById} from './runner-allies.mjs?v=181506ec1b3c';
-import {createPressGate} from './runner-input.mjs?v=a944e3673de7';
+import {createPressGate,createHeldSources} from './runner-input.mjs?v=87b7f4136ef7';
 
 function initRunner() {
   const $ = id => document.getElementById(id);
@@ -55,7 +55,7 @@ function initRunner() {
   $("game-assist").checked=preferences.assisted;
   let run=createRun({assisted:preferences.assisted}),frameId=0;
   run.supportAvailable=false;
-  const trackPointers=new Map(),moveKeys=new Set(),jumpKeys=createPressGate();
+  const trackPointers=new Map(),moveKeys=new Set(),jumpKeys=createPressGate(),crouchSources=createHeldSources();
   const recoverySteps=[...document.querySelectorAll('#game-jacare-progress .game-recovery-step')];
   const frameClock=createFrameClock(performance.now());
   let spritesReady=false,spritesFailed=false,loadedSprites=0,loadingSprites=false,landingUntil=0;
@@ -201,7 +201,7 @@ function initRunner() {
     cancelAnimationFrame(frameId);frameId=0;
     resetFrameClock(frameClock,performance.now());
     if(document.hidden||!windowFocused||!inView||run.status!=="running"){
-      audio.stop();lastRaidKey="";clearRunInput(run);trackPointers.clear();moveKeys.clear();jumpKeys.clear();
+      audio.stop();lastRaidKey="";clearControls();
     }
     schedule();
   }
@@ -269,7 +269,7 @@ function initRunner() {
     if(!spritesReady){if(spritesFailed)prepareSprites();return;}
     cancelAnimationFrame(frameId);frameId=0;resumeFromGesture();
     audio.stop();audio.prime();voices.reset();lastRaidKey="";
-    trackPointers.clear();moveKeys.clear();jumpKeys.clear();
+    clearControls();
     run=createRun({assisted:preferences.assisted});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);landingUntil=0;
     if(!supportReady)prepareSupport();
     $("game-settings").open=false;
@@ -290,6 +290,9 @@ function initRunner() {
     if(crouchRun(run,active)){draw();}
     else if(!active)draw();
   }
+  function clearControls(){
+    trackPointers.clear();moveKeys.clear();jumpKeys.clear();crouchSources.clear();clearRunInput(run);
+  }
   function updateMovement(){
     const right=moveKeys.has("ArrowRight")||moveKeys.has("KeyD"),left=moveKeys.has("ArrowLeft")||moveKeys.has("KeyA");
     const pointer=[...trackPointers.values()].filter(p=>p.action==="move").at(-1);
@@ -302,7 +305,7 @@ function initRunner() {
     $("game-sound").setAttribute("aria-pressed",String(enabled));lastRaidKey="";updateUI();
   });
   function savePreferences(){try{localStorage.setItem(preferencesKey,JSON.stringify(preferences));}catch{/* A sessão atual permanece funcional. */}}
-  $("game-crouch-mode").addEventListener("change",()=>{crouch(false);preferences.crouchMode=$("game-crouch-mode").value;savePreferences();});
+  $("game-crouch-mode").addEventListener("change",()=>{crouchSources.clear();crouch(false);preferences.crouchMode=$("game-crouch-mode").value;savePreferences();});
   $("game-effects").addEventListener("change",()=>{preferences.effects=$("game-effects").value;savePreferences();updateUI();draw();});
   $("game-assist").addEventListener("change",()=>{preferences.assisted=$("game-assist").checked;savePreferences();});
   let expanded=false;
@@ -337,7 +340,12 @@ function initRunner() {
     event.preventDefault();
     if(Math.abs(dx)>Math.abs(dy)){pointer.action="move";pointer.direction=Math.sign(dx);updateMovement();return;}
     if(dy<0){pointer.action="jump";jump();}
-    else{pointer.action="crouch";crouch(preferences.crouchMode==="toggle"?!run.player.crouchHeld:true);}
+    else{
+      pointer.action="crouch";
+      if(preferences.crouchMode==="toggle")crouchSources.toggle("touch-toggle");
+      else crouchSources.set("touch:"+event.pointerId,true);
+      crouch(crouchSources.active);
+    }
   },{passive:false});
   function releaseTrackPointer(event){
     const pointer=trackPointers.get(event.pointerId);if(!pointer)return;
@@ -345,11 +353,11 @@ function initRunner() {
     trackPointers.delete(event.pointerId);
     if(pointer.action==="move")updateMovement();
     if(pointer.action==="pending"&&event.type==="pointerup")jump();
-    if(pointer.action==="crouch"&&preferences.crouchMode==="hold"&&![...trackPointers.values()].some(p=>p.action==="crouch"))crouch(false);
+    if(pointer.action==="crouch"&&preferences.crouchMode==="hold"){crouchSources.set("touch:"+event.pointerId,false);crouch(crouchSources.active);}
   }
   canvas.addEventListener("pointerup",releaseTrackPointer);
   canvas.addEventListener("lostpointercapture",releaseTrackPointer);
-  canvas.addEventListener("pointercancel",()=>{trackPointers.clear();moveKeys.clear();jumpKeys.clear();clearRunInput(run);crouch(false);});
+  canvas.addEventListener("pointercancel",()=>{clearControls();crouch(false);});
   canvas.addEventListener("click",event=>{
     // Alguns navegadores enviam click de toque com detail0; o pointer já o tratou.
     const physical=!!event.pointerType||performance.now()-lastPointerAt<500;
@@ -364,13 +372,16 @@ function initRunner() {
       if(jumpKeys.press(event.code,{repeat:event.repeat}))jump();
     } else if(["ArrowDown","KeyS"].includes(event.code)) {
       event.preventDefault();
-      crouch(true);
+      crouchSources.set("key:"+event.code,true);crouch(crouchSources.active);
     }
   });
-  section.addEventListener("keyup",event=>{
+  document.addEventListener("keyup",event=>{
     if(["Space","ArrowUp"].includes(event.code))jumpKeys.release(event.code);
-    if(["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code)){event.preventDefault();moveKeys.delete(event.code);updateMovement();}
-    if(["ArrowDown","KeyS"].includes(event.code)){event.preventDefault();crouch(false);}
+    if(["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code)&&moveKeys.has(event.code)){event.preventDefault();moveKeys.delete(event.code);updateMovement();}
+    if(["ArrowDown","KeyS"].includes(event.code)){crouchSources.set("key:"+event.code,false);crouch(crouchSources.active);}
+  });
+  section.addEventListener("focusout",event=>{
+    if(!section.contains(event.relatedTarget)){clearControls();draw();}
   });
   document.addEventListener("visibilitychange",()=>{if(document.hidden)crouch(false);syncActivity();});
   window.addEventListener("blur", () => { crouch(false);windowFocused=false; syncActivity(); });

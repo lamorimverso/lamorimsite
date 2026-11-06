@@ -10,3 +10,14 @@ export function createPressGate(){
   clear(){held.clear();}
  };
 }
+
+// Releasing one control must not release a different finger or keyboard key.
+export function createHeldSources(){
+ const held=new Set();
+ return {
+  get active(){return held.size>0;},
+  set(source,active){if(active)held.add(source);else held.delete(source);},
+  toggle(source){if(held.has(source))held.delete(source);else held.add(source);},
+  clear(){held.clear();}
+ };
+}

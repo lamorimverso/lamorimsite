@@ -98,13 +98,14 @@ for(const viewport of [{width:390,height:844},{width:1440,height:900}])test(`tec
  try{
   await begin(page);
   await page.evaluate(()=>{const r=__testRun;for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextPower','nextPassport'])r[k]=Infinity;r.obstacles=[];});
-  await page.locator('#runner-canvas').focus();await page.keyboard.down('ArrowRight');
+  await page.locator('#runner-canvas').focus();const before=await page.evaluate(()=>__testRun.distance);await page.keyboard.down('ArrowRight');
   await page.waitForFunction(()=>__testRun.player.x===__testRun.viewportWidth-75,{},{timeout:6000});
   await page.keyboard.up('ArrowRight');
+  const advanced=await page.evaluate(()=>__testRun.distance);assert.ok(advanced>before);
   assert.ok(await page.evaluate(()=>__testRun.player.x>__testRun.viewportWidth*.8));
   await page.keyboard.down('ArrowLeft');await page.waitForFunction(()=>__testRun.player.x===26,{},{timeout:6000});
   await page.keyboard.up('ArrowLeft');
-  assert.ok(await page.evaluate(()=>__testRun.distance>800),'a corrida e os metros continuam durante o movimento');
+  assert.ok(await page.evaluate(previous=>__testRun.distance>previous,advanced),'a corrida e os metros continuam em cada sentido');
   assert.equal(await page.evaluate(()=>__testRun.status),'running');assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
@@ -410,10 +411,14 @@ test('HUD do chefão fica fora da pista e não desloca pista ou controles',async
      r.raid=event==='raid'?{phase:'warning',remaining:2,factIndex:0,id:1}:null;
      r.routeDistance=event==='transition'?6800:1000;
     },event);
-    await page.waitForFunction(id=>!document.getElementById(id).hidden,'game-'+event);
-    const card=await page.locator('#game-'+event).boundingBox();
+    if(event==='transition'){
+     await page.waitForFunction(()=>document.getElementById('game-transition-name').textContent==='Rio de Janeiro');
+     assert.equal(await page.locator('#game-transition').isVisible(),false,'a transição acontece no cenário, sem legenda');
+    }else{
+     await page.waitForFunction(()=>!document.getElementById('game-raid').hidden);
+     assert.equal(await page.locator('#game-raid').evaluate(e=>e.classList.contains('sr-only')),true);
+    }
     const track=await page.locator('#runner-canvas').boundingBox();
-    assert.ok(card.y>=track.y+track.height,`${event} também fica fora da pista`);
     assert.ok(Math.abs(beforeCanvas.y-track.y)<1,`${event} não desloca a pista`);
    }
    assert.deepEqual(errors,[]);
