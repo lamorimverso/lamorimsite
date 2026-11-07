@@ -21,19 +21,19 @@ test('velocidade e risco continuam crescendo depois da primeira volta',()=>{
 test('ameaças altas variam com sementes diferentes sem repetir ordem fixa',()=>{
  const routes=[];
  for(const seed of [7,91,8801]){
-  const run=running(),rng=seeded(seed),names=[];let spawned=0;
+  const run=running(),rng=seeded(seed),names=[],levels=[];let spawned=0;
   for(let frame=0;frame<120*95;frame++){
    core.advanceRun(run,1/120,rng);
    if(run.spawnedObstacles>spawned){
     spawned=run.spawnedObstacles;
     const obstacle=run.obstacles.at(-1);
-    if(obstacle.sourceActor)names.push(obstacle.sourceActor);
+    if(obstacle.sourceActor){names.push(obstacle.sourceActor);levels.push(core.difficultyAt(run.distance,run.elapsed).level);}
    }
    run.obstacles=run.obstacles.filter(o=>o.x>240);
   }
   assert.ok(names.length>=7);
   assert.ok(new Set(names).size>=3,'todos os coadjuvantes aparecem');
-  assert.ok(names.every((name,i)=>i===0||name!==names[i-1]));
+  assert.ok(names.every((name,i)=>i===0||levels[i]<2||name!==names[i-1]),'após liberar duas opções, evitar o mesmo ator em sequência');
   routes.push(names.slice(0,9).join('/'));
  }
  assert.ok(new Set(routes).size>1,'o elenco não segue um ciclo idêntico em todas as corridas');
