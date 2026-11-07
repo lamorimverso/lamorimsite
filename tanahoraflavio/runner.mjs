@@ -161,7 +161,11 @@ function initRunner() {
       (attackCueFor(bossCue())?.instruction||"Observe o próximo ataque."):
       run.status==="running"&&liveCue&&threatTimeToContact(run,liveAttack)<2?
       liveCue.instruction:"Faltam "+(100-run.passports%100)+" passaportes para +1 vida";
-    $("game-objective").hidden=run.status==="running"&&(!!run.boss||!!run.raid||!banner.hidden);
+    // Exibir apenas durante perigo próximo; o CSS anterior ocultava
+    // completamente este objetivo mesmo com instrução válida.
+    const dangerVisible=!!(liveCue&&threatTimeToContact(run,liveAttack)<2);
+    $("game-objective").hidden=run.status!=="running"||!!run.raid||!banner.hidden||
+      (!run.boss&&!dangerVisible);
     const raid=run.status==="running"?run.raid:null;
     $("game-raid").hidden=!raid;section.dataset.raid=raid?.phase||"none";
     if(raid){

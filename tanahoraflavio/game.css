@@ -112,7 +112,14 @@ body.finished .counter{display:none}
 .game-voice-note{margin:6px 0 0;min-height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;line-height:1.5;text-align:center;color:var(--muted)}
 .game-feedback{margin:0}
 .game-feedback:has(>.game-boss:not([hidden]),>.game-raid:not([hidden]),>.game-transition:not([hidden])){margin-top:8px}
-.game-objective{display:none}
+.game-objective{display:block;max-width:540px;box-sizing:border-box;margin:6px auto 0;
+ padding:5px 9px;text-align:center;font-size:11px;line-height:1.4;
+ color:#48314e;background:#fff9ec;border:1px solid #e9cca0;border-radius:8px;
+ overflow-wrap:anywhere}
+.game-objective[hidden]{display:none}
+@media (min-width:601px) and (max-height:500px){
+ .game-card.is-expanded .game-objective{font-size:10px;line-height:1.2;margin-top:2px;padding:2px 7px}
+}
 .game-record{display:none;font-size:11px;text-align:center;line-height:1.5;color:var(--muted);margin:10px 0 0}
 .game-card[data-run-state="over"] .game-record{display:block}
 .game-record strong{color:var(--ink)}
