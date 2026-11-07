@@ -151,11 +151,13 @@ export function legalPilot(seed,{width=900,assisted=false,limit=340,resize=false
   const eta=o=>core.threatTimeToContact(run,o);
   const drop=run.obstacles.find(o=>(o.falling||o.groundHazard)&&o.age<o.warningFor+(o.fallFor??o.activeFor));
   if(drop&&drop!==lastDrop){lastDrop=drop;const bounds=core.playerBounds(run);evade=run.player.x<(bounds.min+bounds.max)/2?1:-1;}
-  const clearDrop=drop&&(evade<0?run.player.x+31<drop.x-10:run.player.x+5>drop.x+drop.width+10);
+  // O jacaré é mais comprido que a forma humana: respeitar a hitbox real ao sair do alvo.
+  const lateralLeft=run.player.x+(run.player.isJacare?-15:5);
+  const lateralRight=run.player.x+(run.player.isJacare?core.PLAYER.width+17:core.PLAYER.width-3);
+  const clearDrop=drop&&(evade<0?lateralRight<drop.x-10:lateralLeft>drop.x+drop.width+10);
   // Concluir o salto atual antes de recuar evita prolongar o contato com a onda já em voo.
   // O aviso da queda reserva1,2s, mais que salto restante + deslocamento necessário.
   core.moveRun(run,drop&&!clearDrop&&run.player.y===0?evade:0);
-  if(run.player.isJacare)core.jumpRun(run);
   // Manter o desvio até o obstáculo sair por inteiro da hitbox.
   // Filtrar só por ETA interrompia o agachamento no meio de papéis altos.
   const threats=run.obstacles.filter(o=>{
