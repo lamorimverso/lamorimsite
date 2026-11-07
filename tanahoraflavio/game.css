@@ -242,3 +242,11 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
 .game-card[data-run-state="running"] .game-mode-chooser{display:none}
 .game-card[data-run-state="won"] .game-overlay{background:#f8fff8ee}
 .game-card[data-run-state="won"] .game-overlay strong{color:#315f48}
+
+/* Paisagem baixa: escolher modo não aumenta a altura nem desloca o placar. */
+@media(min-width:601px) and (max-height:500px){
+ .game-card.is-expanded .game-controls{grid-template-columns:minmax(0,1fr) minmax(0,1fr);max-width:100%;width:100%;gap:8px;flex-shrink:0}
+ .game-card.is-expanded .game-mode-chooser{grid-column:1;grid-row:1;align-self:stretch}
+ .game-card.is-expanded .game-mode-chooser label{box-sizing:border-box;min-height:44px;padding:6px 7px;font-size:11px}
+ .game-card.is-expanded .game-controls #game-start{grid-column:2;grid-row:1;min-height:44px}
+}
