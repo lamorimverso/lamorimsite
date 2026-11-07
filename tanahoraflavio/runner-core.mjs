@@ -5,7 +5,7 @@ export const WORLD = Object.freeze({width:900,height:300,ground:246});
 // Envelope de todas as poses no atlas a .95 de escala, incluindo o agachamento.
 // A mesma margem serve ao jacaré e evita deslocar o herói ao trocar de postura.
 export const PLAYER = Object.freeze({x:120,width:34,height:58,visualLeft:-26,visualRight:75});
-export const JACARE_RECOVERY_STEPS = 5;
+export const JACARE_DURATION_SECONDS = 10;
 export const SCENE_SECONDS = 20;
 export const SCENE_DISTANCE = 7000; // 7 km efetivos por cenário; 35 km por volta
 export const PASSPORTS_PER_LIFE = 100;
@@ -47,7 +47,7 @@ const BOSS_GOALS = Object.freeze({
 export const PICKUPS = Object.freeze([
  Object.freeze({type:'passport',name:'Passaporte',value:10,purpose:'100 passaportes = +1 vida'}),
  Object.freeze({type:'shield',name:'Escudo das Américas',value:0,purpose:'Proteção por 6 segundos'}),
- Object.freeze({type:'ze-gotinha',name:'Zé Gotinha',value:0,purpose:'Transforma Flávio em jacaré fictício até cinco comandos ↑; proteção inicial de 3 segundos'})
+ Object.freeze({type:'ze-gotinha',name:'Zé Gotinha',value:0,purpose:'Transforma Flávio em jacaré fictício por 10 segundos; proteção inicial de 3 segundos'})
 ]);
 // O protagonista não possui armas; chefões atacam e o jogador só desvia.
 // Texto de roteiro ficcional, sem atribuir gravações/falas autênticas à personagem.
@@ -148,7 +148,7 @@ function rearMotion(run,x,width){
 export function createRun({assisted=false,seed}={}) {
  return {status:'ready',assisted:assisted===true,elapsed:0,distance:0,routeDistance:0,viewportWidth:WORLD.width,bonus:0,collected:0,passports:0,lives:1,
   randomState:seed===undefined?null:Number(seed)>>>0,
-  event:'',events:0,player:{x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareAge:0,jacareProgress:0,nextJacareThreat:3,restoreFlashFor:0,jumpBufferedUntil:0},obstacles:[],pickups:[],lastHit:null,
+  event:'',events:0,player:{x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareAge:0,nextJacareThreat:3,restoreFlashFor:0,jumpBufferedUntil:0},obstacles:[],pickups:[],lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,shieldFor:0,graceFor:0,
   lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:null,bossCooldown:0,
@@ -206,10 +206,11 @@ export function moveRun(run,direction){
 // Alvo comprometido ao anunciar. O jogador pode fugir para ambos os lados.
 export function spawnFallingThreat(run,{bossAttack=false,owner='joice'}={}){
  if(run.status!=='running'||run.obstacles.some(o=>o.falling||o.groundHazard))return null;
- const x=playerX(run)+17-28;
+ const isAmpoule=owner==='pfizer',width=isAmpoule?42:56;
+ const x=Math.max(0,Math.min(visibleWidth(run)-width,playerX(run)+17-width/2));
  const arrivals=run.obstacles.filter(o=>!o.passed).map(o=>threatReservation(run,o)).filter(t=>Number.isFinite(t)&&t>0);
  const warningFor=Math.max(1.2,...arrivals.map(t=>t+REACTION_GAP))+(run.aid?.kind==='sky'?.35:0);
- const item={x,width:56,height:44,type:'falling-case',action:'move',approach:'vertical',falling:true,age:0,warningFor,fallFor:.4,y:310,speed:0,owner,bossAttack,counted:false};
+ const item={x,width,height:isAmpoule?48:44,type:isAmpoule?'pfizer-ampoule':'falling-case',action:'move',approach:'vertical',falling:true,age:0,warningFor,fallFor:isAmpoule?.72:.4,y:310,speed:0,owner,bossAttack,counted:false};
  run.obstacles.push(item);return item;
 }
 // O aviso fixa a posição antes da abertura; nunca há uma hitbox ativa no nascimento.
@@ -224,18 +225,9 @@ export function spawnManholeThreat(run,{rng=Math.random}={}){
 }
 export function jumpRun(run){
  if(run.status!=='running')return false;
- // Cada chamada representa um comando distinto, filtrado pela entrada da UI.
- // O quinto conclui o antídoto cartunesco sem conceder um salto gratuito.
- if(run.player.isJacare){
-  run.player.jacareProgress=Math.min(JACARE_RECOVERY_STEPS,(run.player.jacareProgress||0)+1);
-  if(run.player.jacareProgress<JACARE_RECOVERY_STEPS)return false;
-  run.player.isJacare=false;run.player.jacareAge=0;
-  run.player.restoreFlashFor=JACARE_RESTORE_FLASH;
-  run.graceFor=Math.max(run.graceFor,JACARE_RESTORE_GRACE);
-  run.player.jumpBufferedUntil=0;run.player.crouchHeld=false;run.player.crouching=false;
-  announce(run,'Antídoto fictício de videogame: voltou a Flávio! Próximo ↑ pula. Vacinas não transformam pessoas em jacarés; cloroquina não reverte vacinas.');
-  return false;
- }
+ // Durante a transformação a tecla de salto não interrompe a forma de jacaré.
+ // As ampolas exigem desvio lateral e a corrida permanece ativa.
+ if(run.player.isJacare)return false;
  if(run.player.y>0||run.player.velocity>0){run.player.jumpBufferedUntil=run.elapsed+JUMP_BUFFER_SECONDS;return false;}
  run.player.jumpBufferedUntil=0;run.player.crouching=false;run.player.velocity=610;return true;
 }
@@ -378,7 +370,16 @@ export function advanceRun(run,seconds,rng){
  const bounds=playerBounds(run);
  run.player.x=Math.max(bounds.min,Math.min(bounds.max,playerX(run)+(run.player.moveHeld||0)*230*dt));
  advanceAllies(run,dt);
- if(run.player.isJacare)run.player.jacareAge+=dt;
+ if(run.player.isJacare){
+  run.player.jacareAge=Math.min(JACARE_DURATION_SECONDS,run.player.jacareAge+dt);
+  if(run.player.jacareAge>=JACARE_DURATION_SECONDS-1e-8){
+   run.player.isJacare=false;
+   run.player.restoreFlashFor=JACARE_RESTORE_FLASH;
+   run.graceFor=Math.max(run.graceFor,JACARE_RESTORE_GRACE);
+   run.player.jumpBufferedUntil=0;run.player.crouchHeld=false;run.player.crouching=false;
+   announce(run,'A transformação fictícia terminou após 10 segundos. Flávio voltou à corrida normal.');
+  }
+ }
  run.player.restoreFlashFor=Math.max(0,run.player.restoreFlashFor-dt);
  if(run.nextBossAt===null)run.nextBossAt=nextBossDistance(0);
  if(run.nextRaid===null)run.nextRaid=18+random(rng)*12;
@@ -435,8 +436,8 @@ export function advanceRun(run,seconds,rng){
  if(run.player.isJacare){
   // Sem salto normal, o evento pede reposicionamento, não obstáculos saltáveis.
   run.player.nextJacareThreat-=dt;
-  if(run.player.jacareAge>=JACARE_ENTRY_GRACE&&run.player.nextJacareThreat<=0){
-   anchor=spawnFallingThreat(run,{owner:'ze-gotinha'});
+  if(run.player.jacareAge>=JACARE_ENTRY_GRACE&&run.player.jacareAge<=JACARE_DURATION_SECONDS-2.4&&run.player.nextJacareThreat<=0){
+   anchor=spawnFallingThreat(run,{owner:'pfizer'});
    run.player.nextJacareThreat=anchor?1.7+random(rng)*.7:.12;
   }
  }else if(run.boss)anchor=advanceBoss(run,dt,rng,balance);
@@ -530,9 +531,9 @@ export function advanceRun(run,seconds,rng){
     run.obstacles=run.obstacles.filter(o=>o.bossAttack);
     run.nextObstacle=Math.max(JACARE_ENTRY_GRACE,run.nextObstacle);
     run.graceFor=Math.max(run.graceFor,JACARE_ENTRY_GRACE);
-    run.player.isJacare=true;run.player.jacareAge=0;run.player.jacareProgress=0;run.player.nextJacareThreat=JACARE_ENTRY_GRACE;run.player.restoreFlashFor=0;
+    run.player.isJacare=true;run.player.jacareAge=0;run.player.nextJacareThreat=JACARE_ENTRY_GRACE;run.player.restoreFlashFor=0;
     run.player.crouching=false;run.player.crouchHeld=false;run.player.jumpBufferedUntil=0;
-    announce(run,'Zé Gotinha: transformação fictícia em jacaré! Cinco comandos ↑ restauram a forma humana. Vacinas não causam isso.');
+    announce(run,'Zé Gotinha: jacaré por 10 segundos! Continue correndo e desvie lateralmente das ampolas cenográficas da Pfizer. Vacinas não causam essa transformação.');
    }
    if(p.type==='shield'){run.shieldFor=6;announce(run,'Escudo das Américas! Proteção por 6 segundos.');}
    if(p.type==='passport'&&++run.passports%100===0){run.lives++;announce(run,'100 passaportes! Uma vida extra; total: '+run.lives+'.');}
