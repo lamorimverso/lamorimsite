@@ -153,8 +153,9 @@ function initRunner() {
     const liveAttack=run.obstacles.filter(o=>!o.passed&&!o.counted)
       .sort((a,b)=>threatTimeToContact(run,a)-threatTimeToContact(run,b))[0];
     const liveCue=attackCueFor(liveAttack);
+    const cameoAttack=run.cameo?run.obstacles.find(o=>o.sourceActor===run.cameo.type&&!o.passed):null;
     $("game-threat").textContent=run.raid?.phase==="active"?"PF em operação":
-      run.cameo?("Ataque · "+(liveCue?.label||run.cameo.type)):
+      run.cameo?("Ataque · "+(attackCueFor(cameoAttack)?.label||run.cameo.type)):
       "Inimigos sorteados · "+stage.short;
     $("game-objective").textContent=run.status==="running"&&run.boss?
       (attackCueFor(bossCue())?.instruction||"Observe o próximo ataque."):
