@@ -52,28 +52,23 @@ async function begin(page){
  await page.evaluate(()=>{if(globalThis.__testRun)__testRun.nextObstacle=1000;});
 }
 
-test('jacaré exige cinco comandos independentes e mantém progresso entre teclado e toque',async()=>{
+test('jacaré mantém dez segundos sem depender de teclado e permite esquiva lateral',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844},hasTouch:true,isMobile:true});
  try{
   await begin(page);
-  await page.evaluate(()=>{const r=__testRun;for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextPower','nextPassport'])r[k]=Infinity;r.obstacles=[];r.player.isJacare=true;r.player.jacareProgress=0;});
+  await page.evaluate(()=>{const r=__testRun;for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextPower','nextPassport'])r[k]=Infinity;r.obstacles=[];r.player.isJacare=true;r.player.jacareAge=0;r.shieldFor=Infinity;});
   const canvas=page.locator('#runner-canvas');await canvas.focus();
-  await page.keyboard.down('ArrowUp');
-  await page.waitForFunction(()=>__testRun.player.jacareProgress===1);
-  await canvas.dispatchEvent('keydown',{code:'ArrowUp',repeat:false,bubbles:true});
-  await canvas.dispatchEvent('keydown',{code:'ArrowUp',repeat:true,bubbles:true});
-  assert.equal(await page.evaluate(()=>__testRun.player.jacareProgress),1);
-  await page.keyboard.up('ArrowUp');await page.keyboard.press('ArrowUp');
-  for(let i=0;i<2;i++){
-   await canvas.dispatchEvent('pointerdown',{button:0,pointerId:80+i,pointerType:'touch',isPrimary:true,clientX:100,clientY:100});
-   await canvas.dispatchEvent('pointerup',{pointerId:80+i,pointerType:'touch',clientX:100,clientY:100});
-  }
-  assert.equal(await page.evaluate(()=>__testRun.player.isJacare),true);
-  await page.waitForFunction(()=>document.getElementById('game-jacare-progress').getAttribute('aria-valuenow')==='4');
-  assert.equal(await page.locator('#game-jacare-progress .is-complete').count(),4);
+  await page.waitForFunction(()=>document.getElementById('game-jacare-seconds').textContent==='10 s');
   await page.keyboard.press('ArrowUp');
-  assert.equal(await page.evaluate(()=>__testRun.player.isJacare),false);
-  assert.equal(await page.evaluate(()=>__testRun.player.velocity),0);
+  await canvas.dispatchEvent('pointerdown',{button:0,pointerId:80,pointerType:'touch',isPrimary:true,clientX:100,clientY:100});
+  await canvas.dispatchEvent('pointerup',{pointerId:80,pointerType:'touch',clientX:100,clientY:100});
+  assert.equal(await page.evaluate(()=>__testRun.player.isJacare),true);
+  const before=await page.evaluate(()=>__testRun.player.x);
+  await page.keyboard.down('ArrowRight');
+  await page.waitForFunction(x=>__testRun.player.x>x,before);
+  await page.keyboard.up('ArrowRight');
+  await page.evaluate(()=>{__testRun.player.jacareAge=9.9;});
+  await page.waitForFunction(()=>__testRun.player.isJacare===false);
   assert.equal(await page.locator('#game-jacare-progress').isVisible(),false);
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
@@ -110,18 +105,20 @@ for(const viewport of [{width:390,height:844},{width:1440,height:900}])test(`tec
  }finally{await context.close();}
 });
 
-test('mudar foco dentro da página limpa teclas sem perder o progresso do jacaré',async()=>{
+test('mudar foco limpa teclas sem interromper o cronômetro do jacaré',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:1440,height:900}});
  try{
-  await begin(page);await page.evaluate(()=>{const r=__testRun;r.nextObstacle=r.nextRaid=r.nextBossAt=Infinity;r.obstacles=[];r.player.isJacare=true;r.player.jacareProgress=0;});
+  await begin(page);await page.evaluate(()=>{const r=__testRun;r.nextObstacle=r.nextRaid=r.nextBossAt=Infinity;r.obstacles=[];r.player.isJacare=true;r.player.jacareAge=1;r.shieldFor=Infinity;});
   const c=page.locator('#runner-canvas');await c.focus();await page.keyboard.down('ArrowUp');await page.keyboard.down('ArrowRight');
   await page.evaluate(()=>document.getElementById('share').focus({preventScroll:true}));
   assert.equal(await page.evaluate(()=>__testRun.player.moveHeld),0);
   await page.keyboard.up('ArrowUp');await page.keyboard.up('ArrowRight');await c.focus();await page.keyboard.press('ArrowUp');
-  assert.equal(await page.evaluate(()=>__testRun.player.jacareProgress),2);
+  assert.equal(await page.evaluate(()=>__testRun.player.isJacare),true);
+  assert.ok(await page.evaluate(()=>__testRun.player.jacareAge)>=1);
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
+
 test('soltar uma fonte de agachamento preserva dedo ou outra tecla ainda pressionada',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844},hasTouch:true,isMobile:true});
  try{
