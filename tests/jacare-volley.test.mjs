@@ -13,7 +13,7 @@ function newJacare(width,x,age=3.1){
 function step(run,seconds){
  for(let i=0;i<Math.ceil(seconds/DT)&&run.status==='running';i++)core.advanceRun(run,DT,()=>.5);
 }
-test('jacaré lança duas ampolas simultâneas em celular e desktop, inclusive nas bordas',()=>{
+test('jacaré mostra duas ampolas dispersas em celular e desktop, com tempos distintos',()=>{
  for(const width of [480,612,900])for(const edge of ['min','center','max']){
   const sample=newJacare(width,120),bounds=core.playerBounds(sample);
   sample.player.x=edge==='center'?(bounds.min+bounds.max)/2:bounds[edge];
@@ -24,7 +24,7 @@ test('jacaré lança duas ampolas simultâneas em celular e desktop, inclusive n
   assert.ok(group.every(o=>o.age===0&&o.y===310&&o.warningFor>=1.2));
   assert.ok(group.every(o=>o.x>=0&&o.x+o.width<=width));
   assert.ok(Math.abs(group[0].x-group[1].x)>=150);
-  assert.equal(group[0].warningFor,group[1].warningFor);
+  assert.ok(group[1].warningFor-group[0].warningFor>=.34,'as ampolas caem em momentos diferentes');
   assert.deepEqual(core.spawnJacareVolley(sample,{rng:()=>.5}),[],'aguardar a primeira onda terminar');
  }
 });
@@ -36,6 +36,7 @@ test('perto do fim da transformação surgem três ampolas com corredores livres
  assert.ok(group.some(o=>o.x>group[0].x));
  const ordered=group.slice().sort((a,b)=>a.x-b.x);
  for(let i=1;i<ordered.length;i++)assert.ok(ordered[i].x-ordered[i-1].x>=150,'corredor de evasão');
+ assert.ok(group[1].warningFor>group[0].warningFor&&group[2].warningFor>group[1].warningFor,'ordem temporal escalonada');
  run.graceFor=0;
  core.moveRun(run,-1);
  step(run,.35);

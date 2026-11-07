@@ -133,6 +133,6 @@ Esta seção substitui as descrições anteriores onde houve expansão. [Matriz 
 ## Atualização de 07/11/2026
 
 - Zé Gotinha transforma Flávio em jacaré por dez segundos de simulação ativa. Corrida e controles laterais permanecem disponíveis, e ↑ não encerra a transformação.
-- Duas ampolas satíricas da Pfizer caem ao mesmo tempo, e a fase avançada pode ter três. Os alvos ficam separados por corredores de fuga; depois de dez segundos, a forma humana retorna automaticamente.
+- Duas ou três ampolas satíricas aparecem na mesma onda, mas caem em momentos distintos e em posições sorteadas pela pista, com separação de pelo menos 150 unidades. O aviso é antecipado; após dez segundos a forma humana retorna automaticamente.
 - Obstáculos altos perderam a placa retangular genérica: Dilma mantém vento, Simone lança planilhas, Soraya tem cruzes com paraquedas e Joice/PF mostram algemas.
 - Vacinas não transformam pessoas em jacarés. Essa parte do jogo é sátira.

@@ -213,21 +213,33 @@ export function spawnFallingThreat(run,{bossAttack=false,owner='joice'}={}){
  const item={x,width,height:isAmpoule?48:44,type:isAmpoule?'pfizer-ampoule':'falling-case',action:'move',approach:'vertical',falling:true,age:0,warningFor,fallFor:isAmpoule?.72:.4,y:310,speed:0,owner,bossAttack,counted:false};
  run.obstacles.push(item);return item;
 }
-// Uma saraivada cenográfica usa dois ou três alvos no mesmo instante.
-// Uma zona mira a posição atual e as demais ficam afastadas por 160px:
-// entre elas cabe a hitbox completa do jacaré e sobra corredor de esquiva.
-// Só o evento do jacaré usa múltiplas quedas; a Joice mantém sua regra original.
+// Cada ampola marca um ponto sorteado na pista. Aviso simultâneo,
+// impactos escalonados e distância mínima evitam perigos pareados.
+// A posição marcada permanece fixa; Joice e PF não usam esta regra.
 export function spawnJacareVolley(run,{rng=Math.random}={}){
  if(run.status!=='running'||!run.player.isJacare)return [];
  const target=spawnFallingThreat(run,{owner:'pfizer'});
  if(!target)return [];
- const maxX=visibleWidth(run)-target.width,spacing=160;
- const sides=[target.x-spacing,target.x+spacing].filter(x=>x>=0&&x<=maxX);
- if(sides.length===2&&random(rng)>=.5)sides.reverse();
- const extra=run.player.jacareAge>=5.3?2:1;
- const volley=[target];
- for(const x of sides.slice(0,extra)){
-  const ampoule={...target,x};
+ const maxX=visibleWidth(run)-target.width;
+ target.x=Math.max(0,Math.min(maxX,Math.round(target.x+(random(rng)-.5)*48)));
+ const volley=[target],extra=run.player.jacareAge>=5.3?2:1,minimumGap=150;
+ const valid=x=>x>=0&&x<=maxX&&volley.every(o=>Math.abs(o.x-x)>=minimumGap);
+ for(let i=0;i<extra;i++){
+  let x=null;
+  // Amostragem horizontal real, sem colunas predefinidas ou repetidas.
+  for(let attempt=0;attempt<12;attempt++){
+   const candidate=Math.round(random(rng)*maxX);
+   if(valid(candidate)){x=candidate;break;}
+  }
+  if(x===null){
+   // Fallback para bordas ou gerador determinístico constante.
+   const options=[0,maxX,Math.round(maxX/2),target.x-160,target.x+160,target.x-320,target.x+320];
+   const gap=candidate=>Math.min(...volley.map(o=>Math.abs(candidate-o.x)));
+   x=options.filter(valid).sort((a,b)=>gap(b)-gap(a))[0]??null;
+  }
+  if(x===null)break;
+  const delay=(i+1)*(.34+random(rng)*.08);
+  const ampoule={...target,x,warningFor:target.warningFor+delay};
   run.obstacles.push(ampoule);volley.push(ampoule);
  }
  return volley;
