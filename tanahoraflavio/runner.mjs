@@ -1,6 +1,6 @@
 import {createVoiceDirector} from './runner-voice-director.mjs?v=088899f48fd6';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=8392d182fd71";
-import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=810afbcb5c96";
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=76f86aeb9583";
+import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=fabc34409c37";
 import { createGameAudio } from "./runner-audio.mjs?v=c00d5098806e";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=fa9433a61a03";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=a4f0cd479138";
@@ -87,7 +87,7 @@ function initRunner() {
   }
   function dodgeHint(){
     const hit=run.lastHit;if(!hit)return "Observe os perigos e tente novamente.";
-    const names={stamp:'Carimbo TAXA',wind:"Vento","budget-sheets":"Planilhas","parachute-cross":"Cruz com paraquedas",handcuffs:"Algemas",microphone:"Microfone","paper-gate":"Papéis",popcorn:"Pipoca",hammer:"Martelo",mandado:"Mandado",receipts:"Papéis",lhand:"Mão em L"};
+    const names={stamp:'Carimbo TAXA',wind:"Vento",'meme-ghost':"Exército de Memes",'cloroquina-prop':"Cloroquina fictícia",'ivermectina-prop':"Ivermectina fictícia","budget-sheets":"Planilhas","parachute-cross":"Cruz com paraquedas",handcuffs:"Algemas",microphone:"Microfone","paper-gate":"Papéis",popcorn:"Pipoca",hammer:"Martelo",mandado:"Mandado",receipts:"Papéis",lhand:"Mão em L"};
     if(hit.action==="move")return hit.type==="pfizer-ampoule"?"Ampola cenográfica da Pfizer: desvie lateralmente para sair do alvo.":"Mala em queda: saia do alvo no chão com ←/→ ou deslize lateral.";
     if(hit.action==="crouch")return (names[hit.type]||"Ataque")+" no alto: abaixe para desviar.";
     return (names[hit.type]||"Perigo")+" baixo: sincronize o salto para desviar.";
@@ -102,7 +102,7 @@ function initRunner() {
       $("game-transition-name").textContent=transition.to.name;
       $("game-transition-progress").style.width=Math.round(transition.progress*100)+"%";
     }
-    if(run.status==="over"&&score>best){best=score;try{localStorage.setItem(recordKey,String(best));}catch{}}
+    if((run.status==="over"||run.status==="won")&&score>best){best=score;try{localStorage.setItem(recordKey,String(best));}catch{}}
     $("game-score").textContent=String(score).padStart(4,"0");
     $("game-lives").textContent=String(run.lives);
     $("game-passports").textContent=String(run.passports);
@@ -110,13 +110,13 @@ function initRunner() {
     $("game-passport-progress").style.width=run.passports%100+"%";
     const lap=Math.floor(run.routeDistance/(SCENE_DISTANCE*STAGES.length))+1;
     const sceneElapsed=run.routeDistance%SCENE_DISTANCE;
-    $("game-phase").textContent="Cenário "+(stage.index+1)+" de 5 · Volta "+lap;
+    $("game-phase").textContent="Cenário "+(stage.index+1)+" de 5 · "+(run.mode==="story"?"História "+Math.min(run.bossesDefeated,6)+"/6":"Volta "+lap);
     $("game-stage-name").textContent=stage.name;
     $("game-difficulty").textContent="Risco "+difficulty.level+"/10";
-    $("game-stage-time").textContent=run.status==="over"?"Fim da corrida":run.boss?run.boss.remaining+" ataques para escapar do chefão":run.raid?"Perseguição especial":campaignPhases[stage.index];
+    $("game-stage-time").textContent=run.status==="won"?"História concluída!":run.status==="over"?"Fim da corrida":run.boss?run.boss.remaining+" ataques para escapar do chefão":run.raid?"Perseguição especial":run.mode==="story"?"Chefões "+run.bossesDefeated+"/6":campaignPhases[stage.index];
     $("game-best").textContent=best.toLocaleString("pt-BR");
     $("game-time").textContent=pad(Math.floor(run.elapsed/60))+":"+pad(Math.floor(run.elapsed%60));
-    section.dataset.runState=run.status;
+    section.dataset.runState=run.status;section.dataset.runMode=run.mode;
     section.dataset.reducedMotion=String(prefersReducedMotion());
     if(lastPageMotion!==prefersReducedMotion()){
       lastPageMotion=prefersReducedMotion();
@@ -143,7 +143,7 @@ function initRunner() {
       $("game-boss-health").setAttribute("aria-label",b.objective||"Ataques superados");
       $("game-boss-progress").style.width=100*(b.total-b.remaining)/b.total+"%";
       const dodged=b.total-b.remaining;
-      const goal=dodged+"/"+b.total+" "+({papers:"papéis",patterns:"gestos em L",urgent:"mensagens",blitz:"bloqueios"}[b.goalKind]||"ataques");
+      const goal=dodged+"/"+b.total+" "+({papers:"papéis",patterns:"gestos em L",urgent:"mensagens",blitz:"bloqueios",phantoms:"projéteis satíricos"}[b.goalKind]||"ataques");
       $("game-boss-weapon").textContent=(bossCue().action==="move"?"↔ Saia do alvo":bossCue().action==="crouch"?"↓ Abaixe":"↑ Pule")+
         (bossCue().approach==="drop"?" · VEM DO ALTO!":"")+" · "+goal;
       $("game-boss").style.setProperty("--boss-accent",b.color);
@@ -166,7 +166,7 @@ function initRunner() {
       lastRaidKey="";
     }
     $("game-start").disabled=!spritesReady&&!spritesFailed;
-    $("game-start").textContent=!spritesReady?(spritesFailed?"Tentar carregar desenhos":"Carregando desenhos · "+loadedSprites+"/"+CORE_SPRITE_SHEET_COUNT):run.status==="ready"?"Começar corrida":run.status==="over"?"Tentar de novo":"Recomeçar corrida";
+    $("game-start").textContent=!spritesReady?(spritesFailed?"Tentar carregar desenhos":"Carregando desenhos · "+loadedSprites+"/"+CORE_SPRITE_SHEET_COUNT):run.status==="ready"?"Começar corrida":run.status==="won"?"Jogar novamente":run.status==="over"?"Tentar de novo":"Recomeçar corrida";
     $("game-loading-note").hidden=spritesReady;
     $("game-loading-note").classList.toggle("sr-only",!spritesFailed);
     $("game-support-status").hidden=!supportFailed;
@@ -175,6 +175,12 @@ function initRunner() {
     $("game-overlay").hidden=run.status==="running";
     $("game-captured").hidden=run.status!=="over";
     $("game-start-hint").hidden=run.status!=="ready";
+    if(run.status==="won"){
+      $("game-overlay-title").textContent="História concluída!";
+      $("game-overlay-copy").textContent="Você superou os seis chefões, inclusive Bossonari, e escapou do Exército de Memes. "+score.toLocaleString("pt-BR")+" m percorridos.";
+      $("game-overlay-badge").textContent="Vitória fictícia";
+      if(lastStatus!=="won")section.dispatchEvent(new Event("runner:won"));
+    }
     if(run.status==="over"){
       $("game-overlay-title").textContent="Foi pego pela Polícia Federal!";
       $("game-overlay-copy").textContent=dodgeHint()+" "+score.toLocaleString("pt-BR")+" m · "+run.passports+" passaportes.";
@@ -182,7 +188,7 @@ function initRunner() {
       if(lastStatus!=="over")section.dispatchEvent(new Event("runner:over"));
     }
     if(lastStatus!==run.status||lastStage!==stage.index||lastCollected!==run.collected||lastPower!==power||lastLives!==run.lives||lastEvents!==run.events){
-      let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="over"?"Foi pego pela Polícia Federal! "+dodgeHint()+" "+score+" metros percorridos. Toque em Tentar de novo.":stage.name+" · pule ou abaixe conforme o perigo.";
+      let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="won"?"História concluída: todos os seis chefões superados.":run.status==="over"?"Foi pego pela Polícia Federal! "+dodgeHint()+" "+score+" metros percorridos. Toque em Tentar de novo.":stage.name+" · pule ou abaixe conforme o perigo.";
       if(run.status==="running"){
         if(run.events>lastEvents)message=run.event;
         else if(lastCollected!==run.collected)message="Passaporte coletado. Faltam "+(100-run.passports%100)+" para uma vida.";
@@ -273,7 +279,7 @@ function initRunner() {
     cancelAnimationFrame(frameId);frameId=0;resumeFromGesture();
     audio.stop();audio.prime();voices.reset();lastRaidKey="";
     clearControls();
-    run=createRun({assisted:preferences.assisted});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);landingUntil=0;
+    run=createRun({assisted:preferences.assisted,mode:$("game-mode-story").checked?"story":"endless"});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);landingUntil=0;
     if(!supportReady)prepareSupport();
     $("game-settings").open=false;
     crouchPose=0;lastPoseFrame=performance.now();
@@ -418,11 +424,15 @@ function initRunner() {
   function bossFigure(){
     const b=run.boss;if(!b)return;
     const phase=run.elapsed*9;
-    // Balanço sutil e passos para o chefe não parecer congelado.
-    const bossX=virtualWidth-72,bossY=WORLD.ground-3;
+    // Chefões pairam e atacam de uma posição fixa, sem alternar passos.
+    const bossX=virtualWidth-80,bossY=WORLD.ground-12;
     const motion=enemyMotionFor(b.type,prefersReducedMotion()?0:phase,bossX);
-    ctx.save();ctx.translate(bossX,bossY+motion.bob);ctx.rotate(motion.lean);
-    drawActor(ctx,{type:b.type,x:0,y:0,scale:1.62,phase,preparing:b.nextAttack<.55&&b.fired<b.total,attacking:b.attackFlashFor>0,hurt:b.hitFlashFor>0});
+    ctx.save();ctx.translate(bossX,bossY+motion.bob);
+    if(b.type==="bossonari"){
+      drawBossOfBosses(ctx,{phase,preparing:b.nextAttack<.55&&b.fired<b.total,attacking:b.attackFlashFor>0,reducedMotion:prefersReducedMotion()});
+    }else{
+      drawActor(ctx,{type:b.type,x:0,y:0,scale:1.62,phase:0,preparing:b.nextAttack<.55&&b.fired<b.total,attacking:b.attackFlashFor>0,hurt:b.hitFlashFor>0});
+    }
     ctx.restore();
     if(b.nextAttack<.65&&b.fired<b.total&&!run.obstacles.some(o=>o.bossAttack&&!o.counted)){
       ctx.fillStyle="#843338";ctx.font="800 16px system-ui";ctx.textAlign="center";
@@ -483,7 +493,7 @@ function initRunner() {
   function joiceFigure(){
     const raid=run.raid;if(run.status!=="running"||!raid)return;
     if(raid.phase==='recovery')return;
-    drawActor(ctx,{type:"joice",x:virtualWidth-62,y:WORLD.ground-2,scale:1.08,phase:run.elapsed*10});
+    drawActor(ctx,{type:"joice",x:virtualWidth-62,y:WORLD.ground-14+(prefersReducedMotion()?0:Math.sin(run.elapsed*2)*2),scale:1.08,phase:0});
   }
   function drawSupport(){
     const aid=run.aid;if(!aid||run.status!=="running")return;
@@ -556,12 +566,14 @@ function initRunner() {
     ctx.setTransform(canvas.width/virtualWidth,0,0,canvas.height/WORLD.height,0,0);
     drawJourneyScenery(ctx,{routeDistance:run.routeDistance,distance:run.distance,width:virtualWidth,reducedMotion:prefersReducedMotion(),quiet:run.aid?.kind==="quiet"?Math.max(0,Math.min(1,(6-run.aid.remaining)/.35,run.aid.remaining/.35)):0});
     drawRaidAtmosphere(ctx,{strength:raidMoodFor(run.raid),width:virtualWidth,distance:run.distance,reducedMotion:prefersReducedMotion()});
+    if(run.boss?.type==="bossonari")drawPhantomCloud(ctx,{x:virtualWidth-220,y:WORLD.ground-35,phase:run.elapsed*5,hitFor:run.phantomCloud?.remaining||0,reducedMotion:prefersReducedMotion()});
     bossFigure();
     joiceFigure();
     drawSupport();
     if(run.cameo&&!run.boss&&!run.raid){
       const actor=run.cameo.type;
-      drawActor(ctx,{type:actor,x:virtualWidth-60,y:WORLD.ground-2,scale:1.05,phase:run.elapsed*10});
+      if(actor==="meme-army")drawMemeArmy(ctx,{x:virtualWidth-70,y:WORLD.ground-29,phase:run.elapsed*5,scale:1.36,reducedMotion:prefersReducedMotion()});
+      else drawActor(ctx,{type:actor,x:virtualWidth-60,y:WORLD.ground-14+(prefersReducedMotion()?0:Math.sin(run.elapsed*2)*2),scale:1.05,phase:0});
     }
     for(const item of run.pickups)pickup(item);
     for(const item of run.obstacles)obstacle(item);
