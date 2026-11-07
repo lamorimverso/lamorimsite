@@ -8,31 +8,33 @@ function isolated(){
  run.nextPower=run.nextPassport=run.nextPickup=Infinity;
  return run;
 }
-test('Zé Gotinha transforma em jacaré fictício, mantém respiro e restaura após cinco ↑',()=>{
- const r=isolated();
- assert.equal(r.player.isJacare,false);
- r.pickups=[{type:'ze-gotinha',x:136,y:20,speed:0}];
+test('jacaré dura dez segundos, ignora ↑ e volta automaticamente sem interromper corrida',()=>{
+ const r=isolated();r.pickups=[{type:'ze-gotinha',x:136,y:20,speed:0}];
  core.advanceRun(r,1/120,()=>.5);
  assert.equal(r.player.isJacare,true);
  assert.equal(r.lastPickup,'ze-gotinha');
- assert.ok(r.nextObstacle>=2.5-1/120);
- assert.equal(r.passports,0);
- for(let i=1;i<core.JACARE_RECOVERY_STEPS;i++){assert.equal(core.jumpRun(r),false);assert.equal(r.player.jacareProgress,i);assert.equal(r.player.isJacare,true);}
- assert.equal(core.jumpRun(r),false,'quinto comando conclui antídoto ficcional');
- assert.equal(r.player.isJacare,false,'o herói volta à forma normal');
- assert.equal(r.player.y,0,'o retorno não salta no mesmo comando');
+ assert.equal(core.JACARE_DURATION_SECONDS,10);
+ assert.ok(r.nextObstacle>=2.5);
+ r.shieldFor=Infinity;
+ for(let i=0;i<10;i++)assert.equal(core.jumpRun(r),false);
+ assert.equal(r.player.isJacare,true);
+ const start=r.distance;
+ for(let i=0;i<1199;i++)core.advanceRun(r,1/120,()=>.5);
+ assert.equal(r.player.isJacare,true,'antes do fim dos 10 segundos');
+ assert.ok(r.distance>start,'corrida avança durante a transformação');
+ core.advanceRun(r,1/120,()=>.5);
+ assert.equal(r.player.isJacare,false);
  assert.equal(r.player.velocity,0);
- assert.equal(core.jumpRun(r),true,'comando seguinte salta normalmente');
- assert.ok(r.player.velocity>0);
+ assert.equal(core.jumpRun(r),true,'salto volta a funcionar');
 });
-test('Jacaré não salta e não pode usar agachamento para burlar o estado',()=>{
+test('jacaré não salta nem se abaixa para encurtar transformação',()=>{
  const r=isolated();r.player.isJacare=true;
  assert.equal(core.crouchRun(r,true),false);
- assert.equal(r.player.crouching,false);
- for(let i=0;i<core.JACARE_RECOVERY_STEPS;i++)assert.equal(core.jumpRun(r),false,'recuperação não concede salto');
- assert.equal(r.player.isJacare,false);
+ for(let i=0;i<20;i++)assert.equal(core.jumpRun(r),false);
+ assert.equal(r.player.isJacare,true);
  assert.equal(r.player.crouchHeld,false);
 });
+
 test('A transformação não substitui proteção existente nem enfraquece vida extra',()=>{
  const r=isolated();r.shieldFor=5;r.lives=2;
  r.pickups=[{type:'ze-gotinha',x:136,y:20,speed:0}];
@@ -74,24 +76,20 @@ test('coleta cria margem segura de transformação e mantém escudo e vidas',()=
  assert.ok(r.player.jacareAge>0,'animação acompanha tempo lógico');
 });
 
-test('antídoto fictício consome cinco entradas e deixa breve recuperação sem salto automático',()=>{
- const r=isolated();r.player.isJacare=true;r.player.jacareAge=2;r.player.crouchHeld=true;
- assert.equal(core.crouchRun(r,true),false);
- assert.equal(r.player.crouchHeld,false,'não acumula agachamento oculto');
- for(let i=0;i<core.JACARE_RECOVERY_STEPS;i++)assert.equal(core.jumpRun(r),false);
+test('retorno por tempo preserva proteção e não oferece salto automático',()=>{
+ const r=isolated();r.player.isJacare=true;r.player.jacareAge=9.99;r.player.crouchHeld=true;r.shieldFor=Infinity;
+ core.advanceRun(r,.02,()=>.5);
  assert.equal(r.player.isJacare,false);
- assert.ok(r.graceFor>=.55);
+ assert.ok(r.graceFor>.49);
  assert.ok(r.player.restoreFlashFor>0);
  assert.equal(r.player.velocity,0);
- core.advanceRun(r,.1,()=>.5);
- assert.ok(r.player.restoreFlashFor>0);
- assert.equal(core.jumpRun(r),true,'comando seguinte realmente executa o salto');
+ assert.equal(core.jumpRun(r),true);
 });
-
-test('restaurar no ar não teletransporta o jacaré nem duplica o salto',()=>{
- const r=isolated();r.player.y=42;r.player.velocity=210;r.player.isJacare=true;
- for(let i=0;i<core.JACARE_RECOVERY_STEPS;i++)assert.equal(core.jumpRun(r),false);
- assert.equal(r.player.y,42);assert.equal(r.player.velocity,210);
- assert.equal(core.jumpRun(r),false,'comando aéreo só permite buffer sem novo impulso');
- assert.equal(r.player.velocity,210);
+test('retorno automático no ar não teletransporta o personagem',()=>{
+ const r=isolated();r.player.y=42;r.player.velocity=210;r.player.isJacare=true;r.player.jacareAge=9.99;r.shieldFor=Infinity;
+ core.advanceRun(r,.02,()=>.5);
+ assert.equal(r.player.isJacare,false);
+ assert.ok(r.player.y>42);
+ assert.ok(r.player.velocity>0);
+ assert.equal(core.jumpRun(r),false,'no ar, o próximo comando só arma buffer');
 });
