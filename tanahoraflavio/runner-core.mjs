@@ -317,12 +317,44 @@ export function crouchRun(run,active){
 export function togglePause(run){if(run.status==='running')run.status='paused';else if(run.status==='paused')run.status='running';}
 // O placar agora é a quilometragem percorrida em metros; coletas não alteram metros.
 export function scoreFor(run){return Math.floor(run.distance);}
+// Uma fonte única para os nomes das armas, a instrução de esquiva e o HUD.
+export const ATTACK_NAMES=Object.freeze({
+ wind:'Vendaval da Dilma',
+ 'budget-sheets':'Planilhas voadoras de Simone',
+ 'parachute-cross':'Cruzes de paraquedas de Soraya',
+ handcuffs:'Algemas da PF / Joice',
+ 'meme-ghost':'Exército de Memes do Lula',
+ receipts:'Recibos TAXA de Haddad','paper-gate':'Papéis TAXA de Haddad',
+ stamp:'Carimbo TAXA de Haddad',lhand:'Gestos em L de Lula',
+ hammer:'Martelo de Xandão',mandado:'Mandado de Xandão',
+ message:'Mensagens urgentes de Janones',barrier:'Barreira da PF',
+ 'falling-case':'Mala em queda','rolling-case':'Mala rolando',case:'Mala',
+ popcorn:'Pipoca','cloroquina-prop':'Cloroquina cenográfica de Bossonari',
+ 'ivermectina-prop':'Ivermectina cenográfica de Bossonari',
+ 'pfizer-ampoule':'Ampola cenográfica da Pfizer'
+});
+export function attackCueFor(attack){
+ if(!attack)return null;
+ const label=ATTACK_NAMES[attack.type]||'Perigo';
+ const action=attack.action==='move'?'move':attack.action==='crouch'?'crouch':'jump';
+ const verb=action==='move'?'Saia do alvo':action==='crouch'?'Abaixe':'Pule';
+ return {label,action,verb,short:(action==='move'?'↔ ':action==='crouch'?'↓ ':'↑ ')+verb+' · '+label,
+  instruction:verb+' para escapar de '+label+'.'};
+}
+
 export function bossAtRound(round,type) {
  const safe=Math.max(0,Math.floor(Number.isFinite(round)?round:0)),level=Math.floor(safe/BOSS_ROSTER.length)+1;
  const foe=foeFor(type||BOSS_ROSTER[safe%BOSS_ROSTER.length]),goal=BOSS_GOALS[foe.type],attacks=goal.attacks+(foe.type==='bossonari'?0:2*Math.min(2,level-1));
  const noun=({haddad:'papéis',lula:'gestos em L',xandao:'martelos e mandados',janones:'mensagens em três blocos',pf:'bloqueios da blitz',bossonari:'frascos satíricos e aparições fictícias'})[foe.type];
  return {foe,level,supreme:foe.type==='lula',round:safe+1,goalKind:goal.goalKind,attacks,
-  objective:'Desvie de '+attacks+' '+noun+'.',
+  objective:'Desvie de '+attacks+' '+noun+'. '+({
+    haddad:'Pule os papéis baixos e abaixe dos recibos altos.',
+    lula:'Observe os gestos em L: pule os baixos e abaixe dos altos.',
+    xandao:'Pule os martelos baixos e abaixe dos mandados altos.',
+    janones:'Mensagens urgentes: alterne salto e agachamento.',
+    pf:'Blitz: pule barreiras, abaixe das algemas e saia das malas marcadas.',
+    bossonari:'Pule ou abaixe dos frascos satíricos. Fantasmas são apenas efeitos visuais.'
+   }[foe.type]||'Leia o próximo aviso antes de reagir.'),
   interval:foe.type==='bossonari'?1.18:Math.max(1.04,1.32-.08*BOSS_ROSTER.indexOf(foe.type)-.04*(level-1))};
 }
 // Padrões próprios incluem repetições; o aviso sempre consulta esta mesma fonte.

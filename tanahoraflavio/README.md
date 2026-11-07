@@ -159,3 +159,11 @@ O risco continua aumentando gradualmente de **1 a 10** segundo tempo e distânci
 - **Risco 6:** Dino entra na seleção. Os riscos seguintes ampliam a pressão, a velocidade e a frequência sem despejar todo o elenco de uma vez.
 
 A primeira aparição de um inimigo desbloqueado tem prioridade frente à repetição de personagens antigos. Quando existirem alternativas, a seleção não repete o último ator. Os inimigos continuam sujeitos aos grupos temáticos de cada cenário; chefões e perseguições especiais mantêm suas regras próprias. O contador de rivais junto ao risco mostra quantos personagens estão disponíveis, sem contar malas/barreiras. Os limites de tempo de reação, avisos, acessibilidade e seleção História/Infinito não foram alterados.
+
+## Armas, objetivos e efeitos visuais — 07/11/2026
+
+- O vendaval da Dilma não é um PNG estático: cinco rajadas Bézier animadas, anéis de turbulência, folhas e partículas verdes, respeitando efeitos reduzidos.
+- Simone agita planilhas e solta folhas; Soraya balança o paraquedas e mostra partículas; Joice/PF têm brilhos metálicos e algemas móveis.
+- Haddad projeta recibos com folhas, carimbos e rastros; Lula lança gestos com pulsos de energia; Xandão anima martelos e mandados com faíscas; Janones tem ondas de notificação; Exército de Memes mostra partículas fantasmagóricas; Bossonari possui frascos satíricos com brilhos.
+- Cada ataque associa **nome próprio e comando de esquiva real** (pular, abaixar ou sair do alvo). O painel do chefão indica a arma e o progresso; os eventos comuns usam a instrução quando o perigo se aproxima.
+- A geometria dos ataques, hitboxes, áreas de queda, controles, velocidade e ordem dos chefões foram preservados. Efeitos são cosméticos e seguem a configuração de movimento reduzido.

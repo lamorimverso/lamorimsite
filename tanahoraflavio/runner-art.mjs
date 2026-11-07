@@ -173,6 +173,94 @@ export function drawFallingThreat(c,item,ground=246){
  }
  c.restore();
 }
+// Efeitos vetoriais temporizados pela simulação, não por PNG nem timer real.
+// Nenhum desenho altera hitboxes ou cria ataques extras no motor.
+export function drawWindVortex(c,{phase=0,reducedMotion=false}={}){
+ const t=reducedMotion?0:phase*.13;
+ c.save();
+ // Corpo em camadas: túnel de rajadas, curvas largas e núcleo turbulento.
+ for(let i=0;i<5;i++){
+  const y=-35+i*7,wiggle=reducedMotion?0:Math.sin(t+i*1.37)*3;
+  c.beginPath();
+  c.moveTo(-23,y+wiggle);
+  c.bezierCurveTo(-5,y-12+wiggle,13,y+10-wiggle,22,y-4);
+  c.bezierCurveTo(29,y-13,9,y-16,4,y-5);
+  c.strokeStyle=i%2===0?'#1d789a':'#6dd5de';
+  c.lineWidth=i%2===0?3.6:2.2;c.lineCap='round';c.stroke();
+ }
+ // Anéis giratórios e folhas expostas à corrente dão direção e profundidade.
+ for(let i=0;i<7;i++){
+  const angle=i*2.4+t*1.1;
+  const px=Math.cos(angle)*15,py=-21+Math.sin(angle)*15;
+  oval(c,px,py,i%3===0?2.4:1.5,i%3===0?1.8:1.3,i%2?'#c1f5d2':'#a4e6f2',null);
+ }
+ for(let i=0;i<3;i++){
+  const drift=reducedMotion?0:Math.sin(t*.87+i*2.1)*3;
+  c.save();c.translate(-16+i*15+drift,-32+i*13);
+  c.rotate(-.35+(reducedMotion?0:Math.sin(t+i)*.28));
+  path(c,[[-3,0],[1,-3],[5,0],[0,3]],i===1?'#f0e2b8':'#91b9ad',null);
+  c.restore();
+ }
+ c.restore();
+}
+const WEAPON_FX=Object.freeze({
+ 'budget-sheets':'#73b4c9','parachute-cross':'#eccd79',handcuffs:'#b1d6e9',
+ receipts:'#e8c26f','paper-gate':'#e8c26f',stamp:'#ffb269',message:'#ec7e9d',
+ hammer:'#a4afda',mandado:'#f4dca9',lhand:'#efc086','meme-ghost':'#e3b8dd',
+ 'cloroquina-prop':'#dab0ed','ivermectina-prop':'#9ee3f0',barrier:'#f3ca71',
+ popcorn:'#f7e6a4',case:'#cf9bd7','rolling-case':'#cf9bd7'
+});
+export function drawWeaponEffects(c,item,phase=0,reducedMotion=false){
+ const color=WEAPON_FX[item?.type];
+ if(!color)return;
+ const t=reducedMotion?0:phase*.17;
+ c.save();c.globalAlpha*=.76;
+ // Trilhas de velocidade são pequenas; a área real de colisão permanece fixa.
+ for(let i=0;i<3;i++){
+  const p=t+i*2.1,offset=reducedMotion?0:Math.sin(p)*3;
+  const left=-22-(i%2)*3,top=-29+i*11+offset;
+  line(c,[[left,top],[left-7-(i%2)*3,top+3]],color,i===1?1.7:2.1);
+ }
+ const type=item.type;
+ if(['budget-sheets','receipts','paper-gate','mandado'].includes(type)){
+  for(let i=0;i<4;i++){
+   const x=-17+i*11+(reducedMotion?0:Math.sin(t+i*1.5)*4);
+   const y=-40+i*8+(reducedMotion?0:Math.cos(t+i)*3);
+   path(c,[[x,y],[x+5,y-2],[x+4,y+3]],'#fff5df',color);
+  }
+ }else if(type==='parachute-cross'){
+  for(const x of [-18,0,18]){
+   const y=-38+(reducedMotion?0:Math.sin(t+x)*2);
+   oval(c,x,y,1.8,2.5,'#fce4a1',null);
+  }
+ }else if(type==='handcuffs'||type==='hammer'||type==='barrier'){
+  for(let i=0;i<3;i++){
+   const x=-14+i*14,y=-37+(i%2)*21+(reducedMotion?0:Math.sin(t*1.8+i)*2);
+   line(c,[[x-3,y],[x+3,y]],color,1.8);
+   line(c,[[x,y-3],[x,y+3]],'#ffffff',1.3);
+  }
+ }else if(type==='message'){
+  for(let i=0;i<2;i++){
+   c.beginPath();c.ellipse(0,-18,24+i*4,19+i*4,0,0,Math.PI*2);
+   c.strokeStyle=color;c.lineWidth=1.2;c.stroke();
+  }
+ }else if(type==='lhand'){
+  const pulse=reducedMotion?0:Math.sin(t*2)*2;
+  for(let i=0;i<2;i++){
+   c.beginPath();c.ellipse(0,-21,23+i*3+pulse,21+i*3+pulse,0,0,Math.PI*2);
+   c.strokeStyle=color;c.lineWidth=1.3;c.stroke();
+  }
+ }else if(type==='meme-ghost'||type==='cloroquina-prop'||type==='ivermectina-prop'){
+  for(let i=0;i<5;i++){
+   const a=t+i*1.32;
+   oval(c,Math.cos(a)*23,-22+Math.sin(a)*19,1.8,2.3,color,null);
+  }
+ }else if(type==='stamp'||type==='popcorn'){
+  for(let i=0;i<3;i++)oval(c,-12+i*12,-6+(reducedMotion?0:Math.sin(t+i)*3),2.5,2,color,null);
+ }
+ c.restore();
+}
+
 export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
  const x=item.x+item.width/2;c.save();c.translate(x,ground);
  if(item.action==='crouch'){
@@ -214,11 +302,12 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
  }
  else if(item.type==='barrier'){box(c,-22,-28,44,12,'#f1bd65');for(let i=-15;i<20;i+=14)line(c,[[i,-27],[i+7,-17]],'#543b42',4);line(c,[[-15,-16],[-17,0]],INK,4);line(c,[[15,-16],[17,0]],INK,4);}
  else if(item.type==='wind'){
-  for(let i=0;i<3;i++){c.beginPath();c.moveTo(-19,-32+i*12);c.bezierCurveTo(6,-40+i*12,20,-21+i*12,8,-19+i*12);c.strokeStyle='#236a8b';c.lineWidth=3;c.stroke();}
+  // Vendaval animado em várias camadas, não três curvas estáticas.
+  drawWindVortex(c,{phase,reducedMotion});
  }
  else if(item.type==='budget-sheets'){
   // Simone: planilhas de orçamento soltas.
-  c.save();c.rotate(-.08);
+  c.save();c.rotate(-.08+(reducedMotion?0:Math.sin(phase*.12)*.18));
   box(c,-20,-40,25,38,'#fff7df',2,'#476b7f');
   line(c,[[-15,-34],[-1,-34]],'#527c93',1.5);
   for(let i=0;i<3;i++)line(c,[[-15,-26+i*7],[-2,-26+i*7]],'#8cacae',1);
@@ -229,7 +318,7 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
  }
  else if(item.type==='parachute-cross'){
   // Soraya: cruz cenográfica suspensa por paraquedas.
-  c.save();
+  c.save();if(!reducedMotion)c.rotate(Math.sin(phase*.09)*.09);
   c.beginPath();c.moveTo(-23,-28);c.bezierCurveTo(-19,-49,19,-49,23,-28);
   c.quadraticCurveTo(11,-34,0,-28);c.quadraticCurveTo(-11,-34,-23,-28);
   c.closePath();c.fillStyle='#e6f0e8';c.fill();c.strokeStyle='#537c7e';c.lineWidth=2;c.stroke();
@@ -241,7 +330,7 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
  }
  else if(item.type==='handcuffs'){
   // Joice e PF: algemas soltas com corrente, sem moldura.
-  c.save();c.rotate(.12);
+  c.save();c.rotate(.12+(reducedMotion?0:Math.sin(phase*.15)*.18));
   oval(c,-11,-30,10,11,'#b8ccd7','#486278',2.5);
   oval(c,-11,-30,5.5,6.5,'#e9f4f9','#486278',1.4);
   line(c,[[-4,-23],[5,-17]],'#657d91',4);
@@ -264,20 +353,20 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
  }
  else if(item.type==='hammer'){
   // Martelo do chefão Xandão: cabo de madeira, cabeça metálica.
-  c.save();c.rotate(-.35);
+  c.save();c.rotate(-.35+(reducedMotion?0:Math.sin(phase*.15)*.16));
   box(c,-4,-38,9,37,'#9b654b',2);box(c,-23,-43,46,18,'#606575',4);
   box(c,-20,-41,40,6,'#a6acb8',2,null);c.restore();
  }
  else if(item.type==='mandado'){
   // Mandado de papel: legível como objeto arremessado, não uma pessoa.
-  c.save();c.rotate(.13);box(c,-17,-40,34,39,'#fffaf0',2,'#816c8c');
+  c.save();c.rotate(.13+(reducedMotion?0:Math.sin(phase*.14)*.14));box(c,-17,-40,34,39,'#fffaf0',2,'#816c8c');
   text(c,'MANDADO',0,-29,7,'#40384d');
   for(let i=0;i<3;i++)line(c,[[-11,-22+i*6],[11,-22+i*6]],'#80758b',1.5);
   line(c,[[-8,-6],[8,-6]],'#aa4966',2.6);c.restore();
  }
  else if(item.type==='lhand'){
   // Mão fazendo L (dedão aberto e indicador em pé); gesto satírico estilizado.
-  c.save();c.rotate(-.12);
+  c.save();c.rotate(-.12+(reducedMotion?0:Math.sin(phase*.12)*.10));
   c.beginPath();c.moveTo(-13,0);c.lineTo(-15,-17);c.lineTo(-10,-20);
   c.lineTo(-5,-17);c.lineTo(-5,-43);c.quadraticCurveTo(0,-49,5,-43);
   c.lineTo(5,-20);c.lineTo(20,-21);c.quadraticCurveTo(28,-19,23,-12);
@@ -291,5 +380,6 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
   // O inimigo paira sem ciclar os quadros de corrida do sprite.
   drawActor(c,{type:item.type,x:0,y:0,scale:item.height/66,phase:0});
  }
+ drawWeaponEffects(c,item,phase,reducedMotion);
  c.restore();
 }

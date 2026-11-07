@@ -1,6 +1,6 @@
 import {createVoiceDirector} from './runner-voice-director.mjs?v=088899f48fd6';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=75379a8a9acb";
-import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=fabc34409c37";
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=724cefc8ba5b";
+import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=abfc83da0fba";
 import { createGameAudio } from "./runner-audio.mjs?v=c00d5098806e";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=fa9433a61a03";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=a4f0cd479138";
@@ -144,13 +144,22 @@ function initRunner() {
       $("game-boss-health").setAttribute("aria-label",b.objective||"Ataques superados");
       $("game-boss-progress").style.width=100*(b.total-b.remaining)/b.total+"%";
       const dodged=b.total-b.remaining;
-      const goal=dodged+"/"+b.total+" "+({papers:"papéis",patterns:"gestos em L",urgent:"mensagens",blitz:"bloqueios",phantoms:"projéteis satíricos"}[b.goalKind]||"ataques");
-      $("game-boss-weapon").textContent=(bossCue().action==="move"?"↔ Saia do alvo":bossCue().action==="crouch"?"↓ Abaixe":"↑ Pule")+
+      const goal=dodged+"/"+b.total+" ataques superados";
+      const attack=attackCueFor(bossCue());
+      $("game-boss-weapon").textContent=(attack?.short||"Observe o ataque")+
         (bossCue().approach==="drop"?" · VEM DO ALTO!":"")+" · "+goal;
       $("game-boss").style.setProperty("--boss-accent",b.color);
     }
-    $("game-threat").textContent=run.raid?.phase==="active"?"PF em operação":"Inimigos sorteados · "+stage.short;
-    $("game-objective").textContent=run.status==="running"&&run.boss?(bossCue().action==="crouch"?"↓ Abaixe para passar sob o ataque alto.":"↑ Pule para superar o ataque baixo."):"Faltam "+(100-run.passports%100)+" passaportes para +1 vida";
+    const liveAttack=run.obstacles.filter(o=>!o.passed&&!o.counted)
+      .sort((a,b)=>threatTimeToContact(run,a)-threatTimeToContact(run,b))[0];
+    const liveCue=attackCueFor(liveAttack);
+    $("game-threat").textContent=run.raid?.phase==="active"?"PF em operação":
+      run.cameo?("Ataque · "+(liveCue?.label||run.cameo.type)):
+      "Inimigos sorteados · "+stage.short;
+    $("game-objective").textContent=run.status==="running"&&run.boss?
+      (attackCueFor(bossCue())?.instruction||"Observe o próximo ataque."):
+      run.status==="running"&&liveCue&&threatTimeToContact(run,liveAttack)<2?
+      liveCue.instruction:"Faltam "+(100-run.passports%100)+" passaportes para +1 vida";
     $("game-objective").hidden=run.status==="running"&&(!!run.boss||!!run.raid||!banner.hidden);
     const raid=run.status==="running"?run.raid:null;
     $("game-raid").hidden=!raid;section.dataset.raid=raid?.phase||"none";
