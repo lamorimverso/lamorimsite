@@ -1,5 +1,5 @@
 import {createVoiceDirector} from './runner-voice-director.mjs?v=088899f48fd6';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=76f86aeb9583";
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=75379a8a9acb";
 import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=fabc34409c37";
 import { createGameAudio } from "./runner-audio.mjs?v=c00d5098806e";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=fa9433a61a03";
@@ -112,7 +112,8 @@ function initRunner() {
     const sceneElapsed=run.routeDistance%SCENE_DISTANCE;
     $("game-phase").textContent="Cenário "+(stage.index+1)+" de 5 · "+(run.mode==="story"?"História "+Math.min(run.bossesDefeated,6)+"/6":"Volta "+lap);
     $("game-stage-name").textContent=stage.name;
-    $("game-difficulty").textContent="Risco "+difficulty.level+"/10";
+    const cast=characterProgressAt(run);
+    $("game-difficulty").textContent="Risco "+difficulty.level+"/10 · "+cast.available+"/"+cast.total+" rivais";
     $("game-stage-time").textContent=run.status==="won"?"História concluída!":run.status==="over"?"Fim da corrida":run.boss?run.boss.remaining+" ataques para escapar do chefão":run.raid?"Perseguição especial":run.mode==="story"?"Chefões "+run.bossesDefeated+"/6":campaignPhases[stage.index];
     $("game-best").textContent=best.toLocaleString("pt-BR");
     $("game-time").textContent=pad(Math.floor(run.elapsed/60))+":"+pad(Math.floor(run.elapsed%60));

@@ -65,6 +65,37 @@ const POOLS = [
  ['pf','barrier','janones','boulos'],['janones','army','barrier','pf'],
  ['pf','barrier','case','dino'],['army','pf','case'],['pf','janones','army','dino','case','barrier']
 ];
+// Desbloqueio por risco: cada ator entra em cena após o jogador aprender a
+// reagir aos anteriores. Chefões mantêm a ordem e os marcos da História.
+export const CHARACTER_UNLOCK_LEVEL=Object.freeze({
+ pf:1,barrier:1,dilma:1,
+ janones:2,simone:2,
+ army:3,case:3,soraya:3,
+ boulos:4,
+ 'meme-army':5,
+ dino:6
+});
+const GROUND_CAST=Object.freeze(['pf','barrier','janones','army','case','boulos','dino']);
+const OVERHEAD_CAST=Object.freeze(['dilma','simone','soraya','meme-army']);
+export function unlockedCharacters(level,role='all'){
+ const rank=Math.max(1,Math.min(10,Math.floor(Number(level)||1)));
+ return (role==='ground'?GROUND_CAST:role==='overhead'?OVERHEAD_CAST:[...GROUND_CAST,...OVERHEAD_CAST])
+  .filter(type=>CHARACTER_UNLOCK_LEVEL[type]<=rank);
+}
+export function characterProgressAt(run){
+ const level=difficultyAt(run.distance,run.elapsed).level;
+ const available=unlockedCharacters(level).filter(type=>type!=='barrier'&&type!=='case');
+ const all=unlockedCharacters(10).filter(type=>type!=='barrier'&&type!=='case');
+ return {level,available:available.length,total:all.length,characters:available};
+}
+// Um ator novo aparece antes da repetição do elenco antigo, sem deixar
+// dois ataques seguidos com o mesmo personagem quando há alternativas.
+function chooseProgressiveCharacter(options,rng,seen=[],last=null){
+ const fresh=options.filter(type=>!seen.includes(type));
+ const eligible=fresh.length?fresh:options.filter(type=>type!==last);
+ const choices=eligible.length?eligible:options;
+ return choices[Math.floor(random(rng)*choices.length)];
+}
 const random = rng => Math.max(0,Math.min(.999999999,Number(rng())||0));
 const nextSeed = seed => (Math.imul(seed,1664525)+1013904223)>>>0;
 export function createSeededRandom(seed=0){
@@ -137,8 +168,10 @@ export function stageTransitionAt(seconds) {
  const linear=Math.max(0,Math.min(1,(s-boundary+2)/4));
  return {from:STAGES[(index-1)%5],to:STAGES[index%5],progress:linear*linear*(3-2*linear),active:true};
 }
-export function pursuitAt(seconds,rng=()=>.5) {
- const pool=POOLS[stageAt(seconds).index];return foeFor(pool[Math.floor(random(rng)*pool.length)]);
+export function pursuitAt(seconds,rng=()=>.5,level=10,seen=[],last=null) {
+ const stagePool=POOLS[stageAt(seconds).index];
+ const pool=stagePool.filter(type=>CHARACTER_UNLOCK_LEVEL[type]<=level);
+ return foeFor(chooseProgressiveCharacter(pool.length?pool:['pf'],rng,seen,last));
 }
 // Retaguarda usa a mesma janela de leitura, sem disputar o contato com um perigo frontal.
 function rearMotion(run,x,width){
@@ -157,7 +190,9 @@ export function createRun({assisted=false,seed,mode='endless'}={}) {
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,shieldFor:0,graceFor:0,
   lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,phantomCloud:null,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:null,bossCooldown:0,
-  raid:null,nextRaid:null,raids:0,lastFact:-1,cameo:null,overheadCount:0,lastOverheadActor:null,lastAction:null,actionStreak:0,attackStyles:[],nextAllyAt:14000,alliesMet:0,
+  raid:null,nextRaid:null,raids:0,lastFact:-1,cameo:null,overheadCount:0,lastOverheadActor:null,
+  seenOverheadActors:[],seenGroundActors:[],lastGroundActor:null,
+  lastAction:null,actionStreak:0,attackStyles:[],nextAllyAt:14000,alliesMet:0,
   nextSupportAt:18000,supportAvailable:true,ally:null,aid:null,allyVisits:{},lastAllyId:null,creditCooldown:0};
 }
 // Reenquadra ondas ainda à frente, preservando prazo de contato e trajetória.
@@ -512,16 +547,18 @@ export function advanceRun(run,seconds,rng){
    if(!anchor&&!raidActive&&run.elapsed>=12&&random(rng)<.13+.09*balance.pressure)anchor=spawnManholeThreat(run,{rng});
    if(anchor){/* A zona local já entrou no mundo com um aviso comprometido. */}
    else if(action==='crouch'){
-    const performers=['dilma','simone','soraya','meme-army'];
-    const available=performers.filter(actor=>actor!==run.lastOverheadActor);
-    const type=raidActive?'joice':available[Math.floor(random(rng)*available.length)];
-    if(!raidActive){run.lastOverheadActor=type;run.overheadCount++;}
+    const performers=unlockedCharacters(balance.level,'overhead');
+    const type=raidActive?'joice':chooseProgressiveCharacter(performers,rng,run.seenOverheadActors,run.lastOverheadActor);
+    if(!raidActive){
+     if(!run.seenOverheadActors.includes(type))run.seenOverheadActors.push(type);
+     run.lastOverheadActor=type;run.overheadCount++;
+    }
     const attackType={dilma:'wind',simone:'budget-sheets',soraya:'parachute-cross','meme-army':'meme-ghost',joice:'handcuffs'}[type];
     anchor={x,width:46,height:72,type:attackType,action,sourceActor:type,projectile:true,
      launchX:x+23,targetX:playerX(run)+17,launchY:84,targetY:84,y:84,...threatMotion(run,x,approach,visibleWidth(run))};
     if(!raidActive)run.cameo={type,remaining:1.4};
    }else{
-    const selected=raidActive?foeFor('pf'):pursuitAt(routeClock(run),rng);
+    const selected=raidActive?foeFor('pf'):pursuitAt(routeClock(run),rng,balance.level,run.seenGroundActors,run.lastGroundActor);
     const foe=run.supportAvailable===false&&['boulos','dino'].includes(selected.type)?foeFor('pf'):selected;
     const roll=random(rng);
     const activeStyles=run.elapsed>=12&&!raidActive;
@@ -544,6 +581,10 @@ export function advanceRun(run,seconds,rng){
      anchor={x,width:rolling?40:popcorn?40:foe.width,
       height:rolling?30:popcorn?35:foe.height,type,action,
       approach:rolling?'rolling':'front',...threatMotion(run,x,approach,visibleWidth(run))};
+    }
+    if(!raidActive&&anchor.type===foe.type){
+     if(!run.seenGroundActors.includes(foe.type))run.seenGroundActors.push(foe.type);
+     run.lastGroundActor=foe.type;
     }
    }
    if(!anchor.falling&&!anchor.groundHazard)run.obstacles.push(anchor);run.spawnedObstacles++;

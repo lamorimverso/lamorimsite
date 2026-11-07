@@ -146,3 +146,16 @@ Esta seção substitui as descrições anteriores onde houve expansão. [Matriz 
 - **Escolha** entre Infinito e História com botões de opção acessíveis antes da largada ou depois do fim. O jogo conserva som opcional, modo de movimentos reduzidos, ritmo mais tranquilo, suporte a toque e teclado.
 
 Cloroquina e ivermectina aparecem como **objetos de ficção cômica**; não representam tratamento ou eficácia contra Covid-19 nem qualquer outra doença.
+
+## Progressão de elenco por dificuldade — 07/11/2026
+
+O risco continua aumentando gradualmente de **1 a 10** segundo tempo e distância. Agora o sorteio de inimigos também respeita a progressão de personagens:
+
+- **Risco 1:** Polícia Federal e obstáculos simples; Dilma introduz ataques altos.
+- **Risco 2:** entram Janones e Simone, ampliando as combinações.
+- **Risco 3:** surgem Exército, malas e Soraya.
+- **Risco 4:** Boulos entra na seleção.
+- **Risco 5:** Exército de Memes do Lula passa a aparecer nos ataques aéreos.
+- **Risco 6:** Dino entra na seleção. Os riscos seguintes ampliam a pressão, a velocidade e a frequência sem despejar todo o elenco de uma vez.
+
+A primeira aparição de um inimigo desbloqueado tem prioridade frente à repetição de personagens antigos. Quando existirem alternativas, a seleção não repete o último ator. Os inimigos continuam sujeitos aos grupos temáticos de cada cenário; chefões e perseguições especiais mantêm suas regras próprias. O contador de rivais junto ao risco mostra quantos personagens estão disponíveis, sem contar malas/barreiras. Os limites de tempo de reação, avisos, acessibilidade e seleção História/Infinito não foram alterados.
