@@ -39,17 +39,18 @@ test('resize preserva proporção lateral e prazos em ambos os sentidos, incluin
  }
 });
 
-test('jacaré requer cinco comandos válidos, conserva progresso e não salta ao restaurar',()=>{
- const r=isolated();transform(r);
- assert.equal(core.JACARE_RECOVERY_STEPS,5);assert.equal(r.player.jacareProgress,0);
+test('jacaré dura dez segundos lógicos e retorna automaticamente',()=>{
+ const r=isolated();transform(r);r.shieldFor=Infinity;
+ assert.equal(core.JACARE_DURATION_SECONDS,10);
  assert.ok(r.graceFor>=3&&r.nextObstacle>=3);
- for(let i=1;i<=5;i++){
-  assert.equal(core.jumpRun(r),false);assert.equal(r.player.jacareProgress,i);
-  assert.equal(r.player.isJacare,i<5);assert.equal(r.player.y,0);assert.equal(r.player.velocity,0);
-  if(i<5){core.clearRunInput(r);core.crouchRun(r,true);step(r,.1);assert.equal(r.player.jacareProgress,i);}
- }
- assert.ok(r.player.restoreFlashFor>0);assert.equal(core.jumpRun(r),true);
- step(r,.8);transform(r);assert.equal(r.player.jacareProgress,0);assert.equal(r.player.isJacare,true);
+ for(let i=0;i<8;i++)assert.equal(core.jumpRun(r),false);
+ step(r,9.9);
+ assert.equal(r.player.isJacare,true);
+ assert.ok(r.distance>100);
+ step(r,.2);
+ assert.equal(r.player.isJacare,false);
+ assert.ok(r.player.restoreFlashFor>=0);
+ assert.equal(core.jumpRun(r),true);
 });
 
 test('semente reproduz a aleatoriedade interna sem depender de Math.random',()=>{
@@ -73,13 +74,16 @@ test('bueiro compromete o alvo, avisa e permite saída com comandos em ambas as 
  }
 });
 
-test('cinco comandos do jacaré coexistem com perigos próprios após proteção inicial',()=>{
+test('ampolas da Pfizer aparecem e são evitadas com deslocamento lateral',()=>{
  const r=isolated();transform(r);step(r,3.1);
- const o=r.obstacles.find(o=>o.falling&&o.owner==='ze-gotinha');assert.ok(o);assert.ok(o.warningFor>=1.2);
- assert.equal(r.player.jacareProgress,0);assert.equal(r.player.isJacare,true);
- core.moveRun(r,-1);step(r,.5);
- for(let i=0;i<5;i++){core.jumpRun(r);step(r,.1);}
- assert.equal(r.player.isJacare,false);step(r,1.5);assert.equal(r.status,'running');
+ const o=r.obstacles.find(o=>o.falling&&o.owner==='pfizer');
+ assert.ok(o,'a ampola deve aparecer após o respiro inicial');
+ assert.equal(o.type,'pfizer-ampoule');
+ assert.ok(o.warningFor>=1.2);
+ core.moveRun(r,-1);step(r,1.9);
+ assert.equal(r.status,'running','deslocamento lateral evita a ampola');
+ const stationary=isolated();transform(stationary);step(stationary,5.2);
+ assert.equal(stationary.status,'over','ficar imóvel permite colisão após o aviso');
 });
 
 test('chefões respeitam o contato real quando Flávio ocupa a extremidade direita',()=>{
