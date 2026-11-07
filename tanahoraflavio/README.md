@@ -126,6 +126,12 @@ Esta seção substitui as descrições anteriores onde houve expansão. [Matriz 
 - Quedas verticais duranteJoice e blitzPF têm alvo comprometido, aviso≥1,2s e duas fugas quando a posição permite; na borda, retornar à arena. Ataques anteriores continuam variáveis.
 - Ordem agoraHaddad→Lula→Xandão→Janones→PF. Metas iniciais9/10/12/9/8, crescimento+2 por ciclo completo de5, limitado a+4. Janones tem3blocos de mensagens; PF combina bloqueios/quedas. Preservados22km/intervalo≥7km.
 - Quinze apoios fictícios têm função temporária. Vorcaro atrai passaportes3s/cooldown24s; Milei remove um obstáculo cenográfico naArgentina; Trump alonga avisos naFlórida/Casa Branca; os demais ajudam na leitura/rota/coleta, conforme matriz.
-- Jacaré tem4passadas quadrúpedes, forma baixa sem salto; primeiro↑/toque restaura, seguinte salta. Graças, respiro e economia permanecem. A ajuda contextualiza a sátira sem aconselhar uso de medicamento.
+- Jacaré tem4passadas quadrúpedes, forma baixa sem salto, dura10s, desvia lateralmente de ampolas cenográficas da Pfizer e volta automaticamente a Flávio. Graças, respiro e economia permanecem. A ajuda contextualiza a sátira sem aconselhar uso de medicamento.
 - Cinco atlas extras somam80poses. Largada espera somente4folhas originais; expansão carrega depois. Falha opcional não bloqueia a corrida nem cria um inimigo invisível. Retry fica na ajuda.
 - Retirado retrato extra abaixo da pista; estados usuais de carregamento ficam no botão/leitura assistiva. Alerta de perigo tem prioridade sobre voz/música. Vozes continuam reais/catalogadas, sem locução artificial. Candidato não revisado deTebet não foi integrado.
+
+## Atualização de 07/11/2026
+
+- Zé Gotinha transforma Flávio em jacaré por dez segundos de simulação ativa. Corrida e controles laterais permanecem disponíveis, e ↑ não encerra a transformação.
+- Ampolas satíricas da Pfizer caem do céu após aviso, com desvio lateral possível; após dez segundos a forma humana retorna automaticamente, com breve graça.
+- Vacinas não transformam pessoas em jacarés. Essa parte do jogo é sátira.
