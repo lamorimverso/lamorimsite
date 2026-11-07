@@ -142,22 +142,34 @@ test('objetos manuais sem speed mantêm velocidade do mundo',()=>{
 
 // This pilot only reads the visible hazards and presses the actual controls.
 // It never rewrites position, items, immunity, lives, deadlines, or obstacles.
+// Apenas obstáculos já sinalizados podem orientar a escolha do piloto.
+// Uma mesma chuva pode conter três impactos em tempos e pontos diferentes.
+function lateralDestination(run,zones){
+ const bounds=core.playerBounds(run),current=run.player.x;
+ const left=run.player.isJacare?-15:5,right=run.player.isJacare?core.PLAYER.width+17:core.PLAYER.width-3;
+ const safe=x=>zones.every(o=>x+right<=o.x-5||x+left>=o.x+o.width+5);
+ const clamp=x=>Math.max(bounds.min,Math.min(bounds.max,x));
+ const candidates=[current,bounds.min,bounds.max,...zones.flatMap(o=>[o.x-5-right,o.x+o.width+5-left])].map(clamp).filter(safe);
+ candidates.sort((x,y)=>Math.abs(x-current)-Math.abs(y-current));
+ return candidates[0]??null;
+}
 export function legalPilot(seed,{width=900,assisted=false,limit=340,resize=false}={}){
  const run=running({assisted}),rng=seeded(seed);run.viewportWidth=width;
- let jumps=0,crouches=0,peak=0,shieldFrames=0,widthChanges=0,lastDrop=null,evade=0;
+ let jumps=0,crouches=0,peak=0,shieldFrames=0,widthChanges=0;
  for(let i=0;i<120*limit&&run.status==='running'&&run.passports<100;i++){
   if(resize&&i>0&&i%(120*12)===0){const width=[480,900,612,900][(i/(120*12)-1)%4];if(width!==run.viewportWidth){core.resizeRun(run,width);widthChanges++;}}
   // O piloto considera o alerta de retaguarda antes de o inimigo entrar na tela.
   const eta=o=>core.threatTimeToContact(run,o);
-  const drop=run.obstacles.find(o=>(o.falling||o.groundHazard)&&o.age<o.warningFor+(o.fallFor??o.activeFor));
-  if(drop&&drop!==lastDrop){lastDrop=drop;const bounds=core.playerBounds(run);evade=run.player.x<(bounds.min+bounds.max)/2?1:-1;}
-  // O jacaré é mais comprido que a forma humana: respeitar a hitbox real ao sair do alvo.
-  const lateralLeft=run.player.x+(run.player.isJacare?-15:5);
-  const lateralRight=run.player.x+(run.player.isJacare?core.PLAYER.width+17:core.PLAYER.width-3);
-  const clearDrop=drop&&(evade<0?lateralRight<drop.x-10:lateralLeft>drop.x+drop.width+10);
-  // Concluir o salto atual antes de recuar evita prolongar o contato com a onda já em voo.
-  // O aviso da queda reserva1,2s, mais que salto restante + deslocamento necessário.
-  core.moveRun(run,drop&&!clearDrop&&run.player.y===0?evade:0);
+  const drops=run.obstacles.filter(o=>(o.falling||o.groundHazard)&&o.age<o.warningFor+(o.fallFor??o.activeFor));
+  // Considerar todos os alvos já visíveis: só a primeira ampola conduzia o
+  // piloto para cima da segunda, dando falso negativo à verificação de rota.
+  const destination=drops.length?lateralDestination(run,drops):null;
+  const direction=destination===null?0:Math.sign(destination-run.player.x);
+  const left=run.player.x+(run.player.isJacare?-15:5);
+  const right=run.player.x+(run.player.isJacare?core.PLAYER.width+17:core.PLAYER.width-3);
+  const clearDrops=drops.every(o=>right<=o.x-5||left>=o.x+o.width+5);
+  // Só tecla esquerda/direita, sem manipular física, hitbox ou vida.
+  core.moveRun(run,drops.length&&!clearDrops&&run.player.y===0?direction:0);
   // Manter o desvio até o obstáculo sair por inteiro da hitbox.
   // Filtrar só por ETA interrompia o agachamento no meio de papéis altos.
   const threats=run.obstacles.filter(o=>{
