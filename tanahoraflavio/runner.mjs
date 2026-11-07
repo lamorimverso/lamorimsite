@@ -87,7 +87,7 @@ function initRunner() {
   }
   function dodgeHint(){
     const hit=run.lastHit;if(!hit)return "Observe os perigos e tente novamente.";
-    const names={stamp:'Carimbo TAXA',wind:"Vento",microphone:"Microfone","paper-gate":"Papéis",popcorn:"Pipoca",hammer:"Martelo",mandado:"Mandado",receipts:"Papéis",lhand:"Mão em L"};
+    const names={stamp:'Carimbo TAXA',wind:"Vento","budget-sheets":"Planilhas","parachute-cross":"Cruz com paraquedas",handcuffs:"Algemas",microphone:"Microfone","paper-gate":"Papéis",popcorn:"Pipoca",hammer:"Martelo",mandado:"Mandado",receipts:"Papéis",lhand:"Mão em L"};
     if(hit.action==="move")return hit.type==="pfizer-ampoule"?"Ampola cenográfica da Pfizer: desvie lateralmente para sair do alvo.":"Mala em queda: saia do alvo no chão com ←/→ ou deslize lateral.";
     if(hit.action==="crouch")return (names[hit.type]||"Ataque")+" no alto: abaixe para desviar.";
     return (names[hit.type]||"Perigo")+" baixo: sincronize o salto para desviar.";

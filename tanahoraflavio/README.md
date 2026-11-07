@@ -106,10 +106,10 @@ O fim do mandato não transfere automaticamente todos os processos para outra in
 | Elemento | Ação ou recompensa |
 |---|---|
 | Dilma / vento | Abaixe da coluna de vento. |
-| Simone / papéis | Abaixe da parede de papéis. |
-| Soraya / microfones | Abaixe da coluna de microfones. |
+| Simone / planilhas | Abaixe ao passar pelas planilhas avulsas. |
+| Soraya / cruzes com paraquedas | Abaixe ao passar pelas cruzes suspensas. |
 | Popcorn | Pule o balde de pipoca baixo. |
-| Zé Gotinha | Recolha para limpar perigos comuns e ganhar2,5s de respiro; não elimina chefes. |
+| Zé Gotinha | Recolha para limpar perigos comuns e ganhar3s de respiro; não elimina chefes. |
 | Vozes de arquivo | Sinalizam largada, marcos, coleta, vitória e surpresa; sem alterar colisões. |
 
 Auditoria e comparação mensurável: [revisão de30/10](../docs/auditoria-gameplay-2026-10-30.md). Não se afirma equivalência comercial com jogos de referência, diversão comprovada ou compatibilidade em aparelhos físicos/Safari.
@@ -133,5 +133,6 @@ Esta seção substitui as descrições anteriores onde houve expansão. [Matriz 
 ## Atualização de 07/11/2026
 
 - Zé Gotinha transforma Flávio em jacaré por dez segundos de simulação ativa. Corrida e controles laterais permanecem disponíveis, e ↑ não encerra a transformação.
-- Ampolas satíricas da Pfizer caem do céu após aviso, com desvio lateral possível; após dez segundos a forma humana retorna automaticamente, com breve graça.
+- Duas ampolas satíricas da Pfizer caem ao mesmo tempo, e a fase avançada pode ter três. Os alvos ficam separados por corredores de fuga; depois de dez segundos, a forma humana retorna automaticamente.
+- Obstáculos altos perderam a placa retangular genérica: Dilma mantém vento, Simone lança planilhas, Soraya tem cruzes com paraquedas e Joice/PF mostram algemas.
 - Vacinas não transformam pessoas em jacarés. Essa parte do jogo é sátira.
