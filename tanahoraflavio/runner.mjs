@@ -1,7 +1,7 @@
 import {createVoiceDirector} from './runner-voice-director.mjs?v=088899f48fd6';
 import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=724cefc8ba5b";
 import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=abfc83da0fba";
-import { createGameAudio } from "./runner-audio.mjs?v=c00d5098806e";
+import { createGameAudio } from "./runner-audio.mjs?v=b63783dad9b7";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=fa9433a61a03";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=a4f0cd479138";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
@@ -228,6 +228,14 @@ function initRunner() {
     }
     schedule();
   }
+  function weaponEffect(item){
+    const type=item?.type;
+    if(type==='wind')return 'wind';
+    if(['budget-sheets','receipts','paper-gate','mandado','stamp','message'].includes(type))return 'papers';
+    if(['hammer','handcuffs','barrier','rolling-case','case'].includes(type))return 'metal';
+    if(['meme-ghost','lhand','parachute-cross','cloroquina-prop','ivermectina-prop'].includes(type))return 'magic';
+    return item?.falling?'drop':item?.action==='crouch'?'high':'low';
+  }
   function frame(now) {
     frameId=0;if(run.status!=="running")return;
     const timing=advanceFrameClock(frameClock,now),wasAirborne=run.player.y>0;
@@ -245,11 +253,11 @@ function initRunner() {
     else if(before.jacare&&!run.player.isJacare)audio.effect("restore");
     else if(before.boss&&!run.boss)audio.effect("victory");
     else if(!before.boss&&run.boss){audio.effect("boss");voices.event("boss",run);}
-    else if(run.boss&&run.boss.fired>before.attacks)audio.effect(run.obstacles.at(-1)?.falling?"drop":run.obstacles.at(-1)?.action==="crouch"?"high":"attack");
+    else if(run.boss&&run.boss.fired>before.attacks)audio.effect(weaponEffect(run.obstacles.at(-1)));
     else if(run.collected>before.collected)audio.effect(run.lastPickup==="ze-gotinha"?"transform":run.lastPickup==="ally"?"ally":"pickup");
     if(run.spawnedObstacles>before.spawned){
       const newest=run.obstacles.at(-1);
-      audio.effect(newest?.falling?"drop":newest?.action==="crouch"?"high":"low");
+      audio.effect(weaponEffect(newest));
       const actor=newest?.sourceActor||newest?.type;
       if(actor)voices.event("actor",run,actor);
     }

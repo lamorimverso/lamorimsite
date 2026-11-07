@@ -62,12 +62,16 @@ export function createGameAudio({onVoice=()=>{}}={}) {
    transform:[320,105,.36,'triangle',.105],
    restore:[260,690,.23,'sine',.08],
    high:[880,610,.13,'sine',.065],low:[150,100,.13,'triangle',.075],
+   wind:[240,720,.23,'sine',.078],
+   papers:[870,460,.13,'triangle',.068],
+   metal:[1050,330,.17,'square',.058],
+   magic:[480,940,.19,'sine',.072],
    drop:[660,220,.22,'square',.075],ally:[700,1100,.14,'sine',.065]
   };
   const spec=sounds[name];if(!spec||nodes.length>=12)return;
   try{
    const [start,end,length,wave,volume]=spec,t=context.currentTime;
-   if(['high','low','drop','attack','boss','hit'].includes(name)){
+   if(['high','low','drop','attack','boss','hit','wind','papers','metal','magic'].includes(name)){
     alertUntil=Math.max(alertUntil,t+length+.1);if(recording)recording.volume=.28;
    }
    const osc=context.createOscillator(),gain=context.createGain();
