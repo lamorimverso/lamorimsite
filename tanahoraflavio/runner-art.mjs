@@ -131,8 +131,7 @@ export function drawFallingThreat(c,item,ground=246){
 export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
  const x=item.x+item.width/2;c.save();c.translate(x,ground);
  if(item.action==='crouch'){
-  // Sem placa genérica: a silhueta temática ocupa a área de colisão.
-  // A altura continua equivalente à hitbox e permite desvio agachado.
+  // Sem painel retangular: o objeto ocupa a mesma altura de colisão.
   const h=item.height||72;
   c.scale(1,h/44);
  }
@@ -160,72 +159,30 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
   for(let i=0;i<3;i++){c.beginPath();c.moveTo(-19,-32+i*12);c.bezierCurveTo(6,-40+i*12,20,-21+i*12,8,-19+i*12);c.strokeStyle='#236a8b';c.lineWidth=3;c.stroke();}
  }
  else if(item.type==='budget-sheets'){
-  // Simone: planilhas de orçamento soltas, sem fundo retangular comum.
+  // Simone: planilhas de orçamento soltas.
   c.save();c.rotate(-.08);
   box(c,-20,-40,25,38,'#fff7df',2,'#476b7f');
   line(c,[[-15,-34],[-1,-34]],'#527c93',1.5);
   for(let i=0;i<3;i++)line(c,[[-15,-26+i*7],[-2,-26+i*7]],'#8cacae',1);
   box(c,1,-34,21,32,'#f7fbff',2,'#49748c');
-  text(c,'R
-  line(c,[[-9,-3],[8,-23]],'#444056',6);oval(c,10,-27,10,9,'#716a83','#2d283e',2);line(c,[[4,-30],[14,-24]],'#cbc4d5',2);
- }
- else if(item.type==='popcorn'){
-  path(c,[[-19,-25],[19,-25],[14,-1],[-14,-1]],'#e15262');for(let i=-9;i<=9;i+=9)line(c,[[i,-22],[i*.7,-4]],'#fff5db',4);
-  for(const [px,py] of [[-14,-28],[-6,-32],[3,-30],[12,-31],[17,-25]])oval(c,px,py,6,5,'#fff2bd','#a58049',1);
- }
- else if(item.type==='case'){box(c,-17,-31,34,28,'#906490');box(c,-6,-37,12,6,'#e1b985',2);line(c,[[-8,-28],[-8,-7]],'#d9b88a',2);line(c,[[8,-28],[8,-7]],'#d9b88a',2);oval(c,-10,0,3,3,INK);oval(c,10,0,3,3,INK);}
- else if(item.type==='stamp'){box(c,-21,-15,42,13,'#a53e54');box(c,-8,-31,16,16,'#81584a');line(c,[[-23,-1],[23,-1]],'#e1a05e',3);text(c,'TAXA',0,-5,8,'#fff7e3');}
- else if((item.type==='receipts'||item.type==='paper-gate')){
-  for(let i=0;i<3;i++){box(c,-18+i*10,-34+i*4,20,25,'#fff1cf',2);for(let j=0;j<3;j++)line(c,[[-14+i*10,-28+i*4+j*5],[-3+i*10,-28+i*4+j*5]],'#417884',1.5);}
-  if(item.owner==='haddad')text(c,'TAXA',2,-35,7,'#a33e52');
- }
- else if(item.type==='hammer'){
-  // Martelo do chefão Xandão: cabo de madeira, cabeça metálica.
-  c.save();c.rotate(-.35);
-  box(c,-4,-38,9,37,'#9b654b',2);box(c,-23,-43,46,18,'#606575',4);
-  box(c,-20,-41,40,6,'#a6acb8',2,null);c.restore();
- }
- else if(item.type==='mandado'){
-  // Mandado de papel: legível como objeto arremessado, não uma pessoa.
-  c.save();c.rotate(.13);box(c,-17,-40,34,39,'#fffaf0',2,'#816c8c');
-  text(c,'MANDADO',0,-29,7,'#40384d');
-  for(let i=0;i<3;i++)line(c,[[-11,-22+i*6],[11,-22+i*6]],'#80758b',1.5);
-  line(c,[[-8,-6],[8,-6]],'#aa4966',2.6);c.restore();
- }
- else if(item.type==='lhand'){
-  // Mão fazendo L (dedão aberto e indicador em pé); gesto satírico estilizado.
-  c.save();c.rotate(-.12);
-  c.beginPath();c.moveTo(-13,0);c.lineTo(-15,-17);c.lineTo(-10,-20);
-  c.lineTo(-5,-17);c.lineTo(-5,-43);c.quadraticCurveTo(0,-49,5,-43);
-  c.lineTo(5,-20);c.lineTo(20,-21);c.quadraticCurveTo(28,-19,23,-12);
-  c.lineTo(5,-9);c.lineTo(5,1);c.quadraticCurveTo(-5,7,-13,0);c.closePath();
-  c.fillStyle='#e6a97b';c.fill();c.strokeStyle=INK;c.lineWidth=2.5;c.stroke();
-  line(c,[[-9,-10],[-4,-8]],'#ae6e57',1.5);c.restore();
- }
- else {
-  const movement=enemyMotionFor(item.type,reducedMotion?0:phase,x);
-  c.translate(0,movement.bob);c.rotate(movement.lean);
-  drawActor(c,{type:item.type,x:0,y:0,scale:item.height/66,phase});
- }
- c.restore();
-}
-,11,-25,8,'#34546a');
+  text(c,'BRL',11,-25,7,'#34546a');
   for(let i=0;i<3;i++)box(c,4+i*5,-6-(i+1)*5,3,(i+1)*5,'#64a4ac',1,null);
   c.restore();
  }
  else if(item.type==='parachute-cross'){
-  // Soraya: cruz cenográfica sob paraquedas.
+  // Soraya: cruz cenográfica suspensa por paraquedas.
   c.save();
   c.beginPath();c.moveTo(-23,-28);c.bezierCurveTo(-19,-49,19,-49,23,-28);
   c.quadraticCurveTo(11,-34,0,-28);c.quadraticCurveTo(-11,-34,-23,-28);
   c.closePath();c.fillStyle='#e6f0e8';c.fill();c.strokeStyle='#537c7e';c.lineWidth=2;c.stroke();
-  line(c,[[-23,-28],[-9,-16]],'#63878b',1.4);line(c,[[23,-28],[9,-16]],'#63878b',1.4);
+  line(c,[[-23,-28],[-9,-16]],'#63878b',1.4);
+  line(c,[[23,-28],[9,-16]],'#63878b',1.4);
   line(c,[[0,-28],[0,-19]],'#63878b',1.4);
   path(c,[[-4,-19],[4,-19],[4,-13],[10,-13],[10,-7],[4,-7],[4,0],[-4,0],[-4,-7],[-10,-7],[-10,-13],[-4,-13]],'#e6ba66','#744e56');
   c.restore();
  }
  else if(item.type==='handcuffs'){
-  // Joice e PF: algemas ligadas por corrente, sem painel.
+  // Joice e PF: algemas soltas com corrente, sem moldura.
   c.save();c.rotate(.12);
   oval(c,-11,-30,10,11,'#b8ccd7','#486278',2.5);
   oval(c,-11,-30,5.5,6.5,'#e9f4f9','#486278',1.4);
