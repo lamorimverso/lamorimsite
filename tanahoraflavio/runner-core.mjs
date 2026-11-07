@@ -6,6 +6,8 @@ export const WORLD = Object.freeze({width:900,height:300,ground:246});
 // A mesma margem serve ao jacaré e evita deslocar o herói ao trocar de postura.
 export const PLAYER = Object.freeze({x:120,width:34,height:58,visualLeft:-26,visualRight:75});
 export const JACARE_DURATION_SECONDS = 10;
+export const GAME_MODES = Object.freeze(['endless','story']);
+export const STORY_BOSS_COUNT = 6;
 export const SCENE_SECONDS = 20;
 export const SCENE_DISTANCE = 7000; // 7 km efetivos por cenário; 35 km por volta
 export const PASSPORTS_PER_LIFE = 100;
@@ -27,6 +29,8 @@ export const PURSUERS = Object.freeze([
  {type:'pf',name:'Polícia Federal',short:'PF',width:34,height:44,color:'#284c70'},
  {type:'janones',name:'Janones',short:'Janones',width:36,height:46,color:'#346a9c'},
  {type:'army',name:'Exército',short:'Exército',width:40,height:47,color:'#64734c'},
+ {type:'meme-army',name:'Exército de memes do Lula',short:'Memes',width:46,height:44,color:'#b44d67'},
+ {type:'bossonari',name:'Bossonari · Chefão dos Chefões',short:'Bossonari',width:56,height:58,color:'#7a4f8d'},
  {type:'boulos',name:'Boulos',short:'Boulos',width:38,height:46,color:'#765488'},
  {type:'dino',name:'Flávio Dino',short:'Dino',width:40,height:48,color:'#8a6247'},
  {type:'xandao',name:'Xandão',short:'Xandão',width:40,height:49,color:'#493f62'},
@@ -42,7 +46,8 @@ export const BOSS_ROSTER = Object.freeze(['haddad','lula','xandao','janones','pf
 const BOSS_GOALS = Object.freeze({
  haddad:{attacks:9,goalKind:'papers'},
  lula:{attacks:10,goalKind:'patterns'},
- xandao:{attacks:12,goalKind:'hammer-mandado'},janones:{attacks:9,goalKind:'urgent'},pf:{attacks:8,goalKind:'blitz'}
+ xandao:{attacks:12,goalKind:'hammer-mandado'},janones:{attacks:9,goalKind:'urgent'},pf:{attacks:8,goalKind:'blitz'},
+ bossonari:{attacks:14,goalKind:'phantoms'}
 });
 export const PICKUPS = Object.freeze([
  Object.freeze({type:'passport',name:'Passaporte',value:10,purpose:'100 passaportes = +1 vida'}),
@@ -145,12 +150,12 @@ function rearMotion(run,x,width){
  const distance=rearContact-(x+width-3),requested=distance/seconds,speed=Math.max(180,requested);
  return {speed:-speed,waitFor:Math.max(0,seconds-distance/speed)};
 }
-export function createRun({assisted=false,seed}={}) {
- return {status:'ready',assisted:assisted===true,elapsed:0,distance:0,routeDistance:0,viewportWidth:WORLD.width,bonus:0,collected:0,passports:0,lives:1,
+export function createRun({assisted=false,seed,mode='endless'}={}) {
+ return {status:'ready',mode:mode==='story'?'story':'endless',assisted:assisted===true,elapsed:0,distance:0,routeDistance:0,viewportWidth:WORLD.width,bonus:0,collected:0,passports:0,lives:1,
   randomState:seed===undefined?null:Number(seed)>>>0,
   event:'',events:0,player:{x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareAge:0,nextJacareThreat:3,restoreFlashFor:0,jumpBufferedUntil:0},obstacles:[],pickups:[],lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,shieldFor:0,graceFor:0,
-  lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,
+  lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,phantomCloud:null,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:null,bossCooldown:0,
   raid:null,nextRaid:null,raids:0,lastFact:-1,cameo:null,overheadCount:0,lastOverheadActor:null,lastAction:null,actionStreak:0,attackStyles:[],nextAllyAt:14000,alliesMet:0,
   nextSupportAt:18000,supportAvailable:true,ally:null,aid:null,allyVisits:{},lastAllyId:null,creditCooldown:0};
@@ -279,28 +284,31 @@ export function togglePause(run){if(run.status==='running')run.status='paused';e
 export function scoreFor(run){return Math.floor(run.distance);}
 export function bossAtRound(round,type) {
  const safe=Math.max(0,Math.floor(Number.isFinite(round)?round:0)),level=Math.floor(safe/BOSS_ROSTER.length)+1;
- const foe=foeFor(type||BOSS_ROSTER[safe%BOSS_ROSTER.length]),goal=BOSS_GOALS[foe.type],attacks=goal.attacks+2*Math.min(2,level-1);
- const noun=({haddad:'papéis',lula:'gestos em L',xandao:'martelos e mandados',janones:'mensagens em três blocos',pf:'bloqueios da blitz'})[foe.type];
+ const foe=foeFor(type||BOSS_ROSTER[safe%BOSS_ROSTER.length]),goal=BOSS_GOALS[foe.type],attacks=goal.attacks+(foe.type==='bossonari'?0:2*Math.min(2,level-1));
+ const noun=({haddad:'papéis',lula:'gestos em L',xandao:'martelos e mandados',janones:'mensagens em três blocos',pf:'bloqueios da blitz',bossonari:'frascos satíricos e aparições fictícias'})[foe.type];
  return {foe,level,supreme:foe.type==='lula',round:safe+1,goalKind:goal.goalKind,attacks,
   objective:'Desvie de '+attacks+' '+noun+'.',
-  interval:Math.max(1.04,1.32-.08*BOSS_ROSTER.indexOf(foe.type)-.04*(level-1))};
+  interval:foe.type==='bossonari'?1.18:Math.max(1.04,1.32-.08*BOSS_ROSTER.indexOf(foe.type)-.04*(level-1))};
 }
 // Padrões próprios incluem repetições; o aviso sempre consulta esta mesma fonte.
 export function bossAttackFor(type,fired,round=0) {
  const patterns={haddad:['crouch','jump','jump','crouch','crouch','jump','crouch','jump','jump'],
   lula:['jump','crouch','jump','jump','crouch','crouch','jump','crouch','jump','crouch'],
   xandao:['jump','jump','crouch','jump','crouch','crouch','jump','crouch','jump','crouch','crouch','jump'],
-  janones:['jump','crouch','jump','crouch','jump','crouch','jump','jump','crouch'],pf:['jump','crouch','move','jump','crouch','move','jump','crouch']};
+  janones:['jump','crouch','jump','crouch','jump','crouch','jump','jump','crouch'],pf:['jump','crouch','move','jump','crouch','move','jump','crouch'],
+  bossonari:['jump','crouch','jump','crouch','jump','jump','crouch','jump','crouch','jump','crouch','jump','crouch','jump']};
  const sequence=patterns[type]||patterns.haddad,index=Math.max(0,Math.floor(Number(fired)||0))+2*Math.floor(Math.max(0,round)/BOSS_ROSTER.length);
  const action=sequence[index%sequence.length];
- return {type:type==='xandao'?(action==='jump'?'hammer':'mandado'):type==='lula'?'lhand':type==='janones'?'message':type==='pf'?(action==='move'?'falling-case':action==='crouch'?'handcuffs':'barrier'):'receipts',action};
+ return {type:type==='bossonari'?(index%2===0?'cloroquina-prop':'ivermectina-prop'):type==='xandao'?(action==='jump'?'hammer':'mandado'):type==='lula'?'lhand':type==='janones'?'message':type==='pf'?(action==='move'?'falling-case':action==='crouch'?'handcuffs':'barrier'):'receipts',action};
 }
 // Primeiro marco após21km; cada vitória reserva mais7km de corrida.
 // Um marco alcançado fica pendente enquanto houver evento ou cooldown.
 function nextBossDistance(count){return 22000+count*7000;}
 function takeBoss(run){
  // O bag explícito mantém a seleção determinística usada por integrações/testes.
- return run.bossBag.length?run.bossBag.pop():BOSS_ROSTER[run.bossesDefeated%BOSS_ROSTER.length];
+ if(run.bossBag.length)return run.bossBag.pop();
+ if(run.mode==='story'&&run.bossesDefeated===BOSS_ROSTER.length)return 'bossonari';
+ return BOSS_ROSTER[run.bossesDefeated%BOSS_ROSTER.length];
 }
 function beginBoss(run){
  const conf=bossAtRound(run.bossesDefeated,takeBoss(run));
@@ -310,12 +318,13 @@ function beginBoss(run){
   hitFlashFor:0,attackFlashFor:0,lastAction:null,actionStreak:0,
   plannedFor:0,plannedAttack:{...bossAttackFor(conf.foe.type,0,conf.round-1),approach:'diagonal'}};
  run.obstacles=[];run.nextObstacle=Math.max(1.8,run.nextObstacle);
- announce(run,'CHEFÃO '+conf.foe.name+'! '+conf.objective);
+ announce(run,(conf.foe.type==='bossonari'?'CHEFÃO DOS CHEFÕES ':'CHEFÃO ')+conf.foe.name+'! '+conf.objective);
 }
 function chooseBossPattern(boss,rng,pressure){
  if(boss.type==='pf'&&boss.fired%3===2)return {type:'falling-case',action:'move',approach:'vertical'};
  // A abertura ensina o tipo de ameaça; depois o próprio chefe improvisa.
  if(boss.fired<3)return {...bossAttackFor(boss.type,boss.fired,boss.round-1),approach:'diagonal'};
+ if(boss.type==='bossonari')return {type:random(rng)<.5?'cloroquina-prop':'ivermectina-prop',action:random(rng)<.5?'jump':'crouch',approach:random(rng)<.38?'drop':'diagonal'};
  let action=random(rng)<(.48+.06*pressure)?'crouch':'jump';
  if(action===boss.lastAction&&boss.actionStreak>=2)action=action==='jump'?'crouch':'jump';
  const type=boss.type==='xandao'?(action==='jump'?'hammer':'mandado'):
@@ -337,7 +346,7 @@ function advanceBoss(run,dt,rng,balance){
   attack=spawnFallingThreat(run,{bossAttack:true,owner:boss.type});if(!attack){boss.nextAttack=.1;return;}
  }else{
  const [width,baseHeight]=({hammer:[46,44],mandado:[42,44],
-  lhand:[46,46],receipts:[44,40],stamp:[44,36],message:[44,36],microphone:[46,40],handcuffs:[46,40],barrier:[44,32]})[attackType];
+  lhand:[46,46],receipts:[44,40],stamp:[44,36],message:[44,36],microphone:[46,40],handcuffs:[46,40],barrier:[44,32],'cloroquina-prop':[52,38],'ivermectina-prop':[52,38]})[attackType];
  const height=pattern.action==='crouch'?84:baseHeight;
  const x=Math.max(visibleWidth(run)-104,frontContact(run)+60);
  const entry=pattern.approach||'diagonal';
@@ -349,6 +358,7 @@ function advanceBoss(run,dt,rng,balance){
   launchY:fromY,targetY:toY,y:fromY};
  run.obstacles.push(attack);
  }
+ if(boss.type==='bossonari')run.phantomCloud={remaining:1.3,medicine:attackType,x:Math.max(180,Math.min(visibleWidth(run)-150,playerX(run)+260))};
  boss.attackFlashFor=.26;boss.fired++;
  boss.actionStreak=pattern.action===boss.lastAction?(boss.actionStreak||0)+1:1;
  boss.lastAction=pattern.action;
@@ -362,6 +372,11 @@ function resolveBossDodges(run){
  for(const o of run.obstacles)if(o.bossAttack&&!o.counted&&(o.falling?o.age>=o.warningFor+o.fallFor:o.x+o.width<playerX(run))){o.counted=true;run.boss.remaining--;}
  const boss=run.boss;if(boss.fired<boss.total||boss.remaining>0)return;
  run.lastBoss=boss.type;run.boss=null;run.bossesDefeated++;run.bossCooldown=4;
+ if(run.mode==='story'&&boss.type==='bossonari'){
+  run.status='won';run.nextBossAt=Infinity;run.obstacles=[];run.phantomCloud=null;
+  announce(run,'HISTÓRIA CONCLUÍDA! Você escapou do Chefão dos Chefões e atravessou os seis confrontos.');
+  return;
+ }
  run.nextBossAt=Math.max(nextBossDistance(run.bossesDefeated),run.routeDistance+7000);run.nextObstacle=Math.max(1.8,run.nextObstacle);
  announce(run,'Você escapou do chefão '+boss.name+'! '+(run.bossesDefeated%BOSS_ROSTER.length===0?'Cinco chefões superados nesta sequência.':'Continue fugindo.'));
 }
@@ -417,6 +432,7 @@ export function advanceRun(run,seconds,rng){
  const balance=difficultyAt(run.distance,run.elapsed),travel=balance.speed*assistance(run)*dt;run.distance+=travel;
  run.routeDistance+=travel;
  run.bossCooldown=Math.max(0,run.bossCooldown-dt);
+ if(run.phantomCloud){run.phantomCloud.remaining=Math.max(0,run.phantomCloud.remaining-dt);if(!run.phantomCloud.remaining)run.phantomCloud=null;}
  if(run.cameo){run.cameo.remaining-=dt;if(run.cameo.remaining<=0)run.cameo=null;}
  // A tolerância só absorve erro de ponto flutuante no limite exato de 120ms.
  if(run.player.jumpBufferedUntil<run.elapsed-1e-8)run.player.jumpBufferedUntil=0;
@@ -458,6 +474,7 @@ export function advanceRun(run,seconds,rng){
   pickup.x-=Number.isFinite(pickup.speed)?pickup.speed*activeDelta:travel;
  }
  resolveBossDodges(run);
+ if(run.status==='won')return;
  run.obstacles=run.obstacles.filter(o=>o.groundHazard?o.age<o.warningFor+o.activeFor:o.falling?o.age<o.warningFor+o.fallFor+.25:o.approach==='rear'?o.x<playerX(run)+PLAYER.width+80:o.x+o.width>-20);
  run.pickups=run.pickups.filter(p=>p.x>-30);
  // Uma Joice já vencida tem prioridade sobre o próximo marco de chefe.
@@ -495,11 +512,11 @@ export function advanceRun(run,seconds,rng){
    if(!anchor&&!raidActive&&run.elapsed>=12&&random(rng)<.13+.09*balance.pressure)anchor=spawnManholeThreat(run,{rng});
    if(anchor){/* A zona local já entrou no mundo com um aviso comprometido. */}
    else if(action==='crouch'){
-    const performers=['dilma','simone','soraya'];
+    const performers=['dilma','simone','soraya','meme-army'];
     const available=performers.filter(actor=>actor!==run.lastOverheadActor);
     const type=raidActive?'joice':available[Math.floor(random(rng)*available.length)];
     if(!raidActive){run.lastOverheadActor=type;run.overheadCount++;}
-    const attackType={dilma:'wind',simone:'budget-sheets',soraya:'parachute-cross',joice:'handcuffs'}[type];
+    const attackType={dilma:'wind',simone:'budget-sheets',soraya:'parachute-cross','meme-army':'meme-ghost',joice:'handcuffs'}[type];
     anchor={x,width:46,height:72,type:attackType,action,sourceActor:type,projectile:true,
      launchX:x+23,targetX:playerX(run)+17,launchY:84,targetY:84,y:84,...threatMotion(run,x,approach,visibleWidth(run))};
     if(!raidActive)run.cameo={type,remaining:1.4};
@@ -565,7 +582,7 @@ export function advanceRun(run,seconds,rng){
     run.graceFor=Math.max(run.graceFor,JACARE_ENTRY_GRACE);
     run.player.isJacare=true;run.player.jacareAge=0;run.player.nextJacareThreat=JACARE_ENTRY_GRACE;run.player.restoreFlashFor=0;
     run.player.crouching=false;run.player.crouchHeld=false;run.player.jumpBufferedUntil=0;
-    announce(run,'Zé Gotinha: jacaré por 10 segundos! Continue correndo e desvie lateralmente de várias ampolas cenográficas da Pfizer caindo juntas. Vacinas não causam essa transformação.');
+    announce(run,'Zé Gotinha: jacaré por 10 segundos! Continue correndo e desvie lateralmente de ampolas cenográficas da Pfizer espalhadas pela pista. Vacinas não causam essa transformação.');
    }
    if(p.type==='shield'){run.shieldFor=6;announce(run,'Escudo das Américas! Proteção por 6 segundos.');}
    if(p.type==='passport'&&++run.passports%100===0){run.lives++;announce(run,'100 passaportes! Uma vida extra; total: '+run.lives+'.');}
