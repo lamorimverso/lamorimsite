@@ -461,3 +461,32 @@ test('seletor oferece dois modos jogáveis, finaliza História e permite reinici
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
+
+test('os avisos das armas aparecem visualmente no celular, com nome e esquiva correta',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
+ try{
+  await begin(page);
+  await page.evaluate(()=>{
+   const r=__testRun;
+   r.nextObstacle=r.nextBossAt=r.nextRaid=r.nextSupportAt=Infinity;
+   r.obstacles=[{x:r.player.x+170,width:46,height:72,type:'wind',sourceActor:'dilma',
+    action:'crouch',projectile:true,y:84,launchX:r.player.x+193,targetX:r.player.x+17,
+    launchY:84,targetY:84,speed:150}];
+   r.cameo={type:'dilma',remaining:3};
+  });
+  await page.waitForFunction(()=>{
+   const e=document.getElementById('game-objective');
+   return !e.hidden&&/Abaixe/.test(e.textContent)&&/Vendaval da Dilma/.test(e.textContent);
+  },null,{timeout:3000});
+  assert.equal(await page.locator('#game-objective').isVisible(),true,'a mensagem era ocultada pelo CSS');
+  await page.evaluate(()=>{
+   const r=__testRun;r.obstacles=[];r.cameo=null;r.nextBossAt=0;r.bossBag=['xandao'];
+   r.shieldFor=Infinity;r.nextRaid=Infinity;
+  });
+  await page.waitForFunction(()=>document.getElementById('game').dataset.boss==='xandao',null,{timeout:3000});
+  await page.waitForFunction(()=>/Martelo de Xandão/.test(document.getElementById('game-boss-weapon').textContent),null,{timeout:3000});
+  assert.equal(await page.locator('#game-objective').isVisible(),true);
+  assert.match(await page.locator('#game-objective').textContent(),/Martelo de Xandão/);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
