@@ -150,7 +150,14 @@ export function legalPilot(seed,{width=900,assisted=false,limit=340,resize=false
   // O piloto considera o alerta de retaguarda antes de o inimigo entrar na tela.
   const eta=o=>core.threatTimeToContact(run,o);
   const drop=run.obstacles.find(o=>(o.falling||o.groundHazard)&&o.age<o.warningFor+(o.fallFor??o.activeFor));
-  if(drop&&drop!==lastDrop){lastDrop=drop;const bounds=core.playerBounds(run);evade=run.player.x<(bounds.min+bounds.max)/2?1:-1;}
+  if(drop&&drop!==lastDrop){
+   lastDrop=drop;
+   const {min,max}=core.playerBounds(run);
+   const left=drop.x-41,right=drop.x+drop.width+5;
+   // A posição anunciada pode ficar longe do jogador. Escolher a saída
+   // alcançável mais curta evita atravessar a própria área de impacto.
+   evade=left>=min&&(right>max||run.player.x-left<right-run.player.x)?-1:1;
+  }
   const clearDrop=drop&&(evade<0?run.player.x+31<drop.x-10:run.player.x+5>drop.x+drop.width+10);
   // Concluir o salto atual antes de recuar evita prolongar o contato com a onda já em voo.
   // O aviso da queda reserva1,2s, mais que salto restante + deslocamento necessário.

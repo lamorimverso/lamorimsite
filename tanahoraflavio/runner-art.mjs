@@ -108,12 +108,41 @@ export function drawManholeThreat(c,item,ground=246){
  }
  c.restore();
 }
+function drawParachuteCross(c,g){
+ c.translate(g.centerX,g.bodyY);
+ c.beginPath();c.moveTo(-27,-52);c.quadraticCurveTo(-22,-76,0,-76);c.quadraticCurveTo(22,-76,27,-52);
+ c.quadraticCurveTo(18,-58,9,-52);c.quadraticCurveTo(0,-58,-9,-52);c.quadraticCurveTo(-18,-58,-27,-52);c.closePath();
+ c.fillStyle='#e96b56';c.fill();c.strokeStyle=INK;c.lineWidth=2;c.stroke();
+ c.beginPath();c.moveTo(-9,-52);c.quadraticCurveTo(-7,-76,0,-76);c.quadraticCurveTo(7,-76,9,-52);
+ c.quadraticCurveTo(0,-58,-9,-52);c.fillStyle='#ffd878';c.fill();
+ line(c,[[-27,-52],[-4,-22],[27,-52]],'#6c5649',1.5);
+ line(c,[[-9,-52],[0,-22],[9,-52]],'#6c5649',1.5);
+ for(const [x,y,color] of [[-16,-39,'#62a9b4'],[-6,-30,'#f0b14e'],[9,-34,'#7cb675']]){
+  path(c,[[x,y],[x+8,y],[x+6,y+7],[x+2,y+5],[x,y+7]],color,null);
+ }
+ path(c,[[-6,-22],[6,-22],[6,-12],[24,-12],[24,-1],[6,-1],[6,22],[-6,22],[-6,-1],[-24,-1],[-24,-12],[-6,-12]],'#9b563b');
+ line(c,[[-2,-18],[-2,18]],'#d6925d',2);
+}
+function drawHandcuffs(c,g){
+ c.translate(g.centerX,g.bodyY);c.rotate(-.24);
+ for(const x of [-16,16]){
+  oval(c,x,0,11,16,'#dce8f0','#344d68',3);
+  oval(c,x,0,6.7,11,'#526a83','#b9d1dd',1.5);
+  line(c,[[x-7,-8],[x-5,-11],[x,-12]],'#fff',2);
+ }
+ line(c,[[-5,1],[0,5],[5,1]],'#33475d',4);
+ oval(c,0,5,3,3,'#c4d3dd','#344d68',1.5);
+}
 export function drawFallingThreat(c,item,ground=246){
  const g=fallingThreatGeometry(item,ground);c.save();
  box(c,item.x+3,ground+3,item.width-6,5,'#a73e50',2,null);
  line(c,[[item.x+3,ground+11],[item.x+3+(item.width-6)*g.progress,ground+11]],'#da9a63',2);
  if(!g.showBody){
   text(c,'↔',g.centerX,ground-64,23,'#8a3348');
+ }else if(item.type==='parachute-cross'){
+  drawParachuteCross(c,g);
+ }else if(item.type==='handcuffs'){
+  drawHandcuffs(c,g);
  }else{
   box(c,item.x,g.bodyY-item.height/2,item.width,item.height,'#8d557c',5,'#342a46');
   box(c,g.centerX-7,g.bodyY-item.height/2-6,14,6,'#e7c68d',2,'#342a46');
@@ -124,11 +153,9 @@ export function drawFallingThreat(c,item,ground=246){
 export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
  const x=item.x+item.width/2;c.save();c.translate(x,ground);
  if(item.action==='crouch'){
-  // A coluna inteira é o perigo alto: não existe colisão invisível acima do ícone.
-  const h=item.height||72,w=item.width||46;
-  box(c,-w/2,-h,w,h,item.type==='wind'?'#b6e0ec':'#f3d7be',7,'#80527d');
-  line(c,[[-w/2+5,-h+6],[w/2-5,-h+6]],'#fff4e7',2);
-  c.translate(0,-(h-40)/2);
+  // Escala a própria silhueta para comunicar a altura do perigo.
+  const paintedHeight={wind:39,'paper-gate':43,microphone:40,message:34,receipts:34,mandado:42,lhand:48}[item.type]||44;
+  c.scale((item.width||46)/46,(item.height||72)/paintedHeight);
  }
 
  if(item.type==='message'){
@@ -153,6 +180,11 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
  else if(item.type==='wind'){
   for(let i=0;i<3;i++){c.beginPath();c.moveTo(-19,-32+i*12);c.bezierCurveTo(6,-40+i*12,20,-21+i*12,8,-19+i*12);c.strokeStyle='#236a8b';c.lineWidth=3;c.stroke();}
  }
+ else if(item.type==='paper-gate'){
+  path(c,[[-22,-43],[22,-43],[21,-4],[12,-9],[0,-1],[-12,-9],[-21,-4]],'#f9d47e','#883c56');
+  line(c,[[-18,-39],[18,-39]],'#fff3b0',2);
+  text(c,'GOSTOSAS',0,-24,6.7,'#77334d');text(c,'DO LULA',0,-14,6.7,'#77334d');
+ }
  else if(item.type==='microphone'){
   line(c,[[-9,-3],[8,-23]],'#444056',6);oval(c,10,-27,10,9,'#716a83','#2d283e',2);line(c,[[4,-30],[14,-24]],'#cbc4d5',2);
  }
@@ -162,7 +194,7 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
  }
  else if(item.type==='case'){box(c,-17,-31,34,28,'#906490');box(c,-6,-37,12,6,'#e1b985',2);line(c,[[-8,-28],[-8,-7]],'#d9b88a',2);line(c,[[8,-28],[8,-7]],'#d9b88a',2);oval(c,-10,0,3,3,INK);oval(c,10,0,3,3,INK);}
  else if(item.type==='stamp'){box(c,-21,-15,42,13,'#a53e54');box(c,-8,-31,16,16,'#81584a');line(c,[[-23,-1],[23,-1]],'#e1a05e',3);text(c,'TAXA',0,-5,8,'#fff7e3');}
- else if((item.type==='receipts'||item.type==='paper-gate')){
+ else if(item.type==='receipts'){
   for(let i=0;i<3;i++){box(c,-18+i*10,-34+i*4,20,25,'#fff1cf',2);for(let j=0;j<3;j++)line(c,[[-14+i*10,-28+i*4+j*5],[-3+i*10,-28+i*4+j*5]],'#417884',1.5);}
   if(item.owner==='haddad')text(c,'TAXA',2,-35,7,'#a33e52');
  }

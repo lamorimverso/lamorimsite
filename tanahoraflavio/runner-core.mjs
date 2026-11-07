@@ -152,7 +152,7 @@ export function createRun({assisted=false,seed}={}) {
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,shieldFor:0,graceFor:0,
   lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:null,bossCooldown:0,
-  raid:null,nextRaid:null,raids:0,lastFact:-1,cameo:null,overheadCount:0,lastOverheadActor:null,lastAction:null,actionStreak:0,attackStyles:[],nextAllyAt:14000,alliesMet:0,
+  raid:null,nextRaid:null,raids:0,joiceCuffs:0,joiceVoicePending:false,lastFact:-1,cameo:null,overheadCount:0,lastOverheadActor:null,lastAction:null,actionStreak:0,attackStyles:[],nextAllyAt:14000,alliesMet:0,
   nextSupportAt:18000,supportAvailable:true,ally:null,aid:null,allyVisits:{},lastAllyId:null,creditCooldown:0};
 }
 // Reenquadra ondas ainda à frente, preservando prazo de contato e trajetória.
@@ -168,7 +168,10 @@ export function resizeRun(run,width){
  const moved=new Map(),project=x=>contactX+(x-oldFront)*ratio;
  for(const o of run.obstacles){
   const start=o.x;
-  if(o.falling||o.groundHazard||o.passed||!Number.isFinite(o.speed)||o.speed===0){o.x+=delta;}
+  if(o.falling||o.groundHazard||o.passed||!Number.isFinite(o.speed)||o.speed===0){
+   o.x+=delta;
+   if(o.type==='parachute-cross'||o.type==='handcuffs')o.x=Math.max(0,Math.min(visibleWidth(run)-o.width,o.x));
+  }
   else if(o.speed>0&&o.x>oldFront){
    o.x=project(o.x);o.speed*=ratio;
    if(o.speed<180){
@@ -204,12 +207,18 @@ export function moveRun(run,direction){
  run.player.moveHeld=Number.isFinite(direction)?Math.sign(direction):0;return true;
 }
 // Alvo comprometido ao anunciar. O jogador pode fugir para ambos os lados.
-export function spawnFallingThreat(run,{bossAttack=false,owner='joice'}={}){
+export function spawnFallingThreat(run,{bossAttack=false,owner='joice',positionRoll=.5,type=owner==='soraya'?'parachute-cross':'falling-case'}={}){
  if(run.status!=='running'||run.obstacles.some(o=>o.falling||o.groundHazard))return null;
- const x=playerX(run)+17-28;
+ const cross=type==='parachute-cross',cuffs=type==='handcuffs';
+ const width=cross?50:cuffs?58:56;
+ const center=playerX(run)+17-width/2;
+ let x=center;
+ if(cross)x=Math.max(0,Math.min(visibleWidth(run)-width,center+(positionRoll-.5)*168));
+ if(cuffs)x=(visibleWidth(run)-width)*positionRoll;
  const arrivals=run.obstacles.filter(o=>!o.passed).map(o=>threatReservation(run,o)).filter(t=>Number.isFinite(t)&&t>0);
  const warningFor=Math.max(1.2,...arrivals.map(t=>t+REACTION_GAP))+(run.aid?.kind==='sky'?.35:0);
- const item={x,width:56,height:44,type:'falling-case',action:'move',approach:'vertical',falling:true,age:0,warningFor,fallFor:.4,y:310,speed:0,owner,bossAttack,counted:false};
+ const item={x,width,height:44,type,action:'move',approach:'vertical',falling:true,age:0,warningFor,fallFor:(cross||cuffs)?.72:.4,y:310,speed:0,owner,bossAttack,counted:false};
+ if(cross)item.sourceActor='soraya';
  run.obstacles.push(item);return item;
 }
 // O aviso fixa a posição antes da abertura; nunca há uma hitbox ativa no nascimento.
@@ -348,7 +357,7 @@ function advanceRaid(run,dt,rng){
   if(raid.remaining<=1e-8){
    if(raid.phase==='warning'){raid.phase='active';raid.remaining=RAID_TIMING.activeFor;announce(run,'Toc, toc, toc… é a Polícia Federal! Pule a PF e abaixe dos microfones por dez segundos.');}
    else if(raid.phase==='active'){raid.phase='recovery';raid.recoveryFor=raid.recoveryFor||RAID_TIMING.recoveryFor;raid.remaining=raid.recoveryFor;announce(run,'A perseguição especial terminou. O ritmo normal está voltando.');}
-   else{run.raid=null;run.nextRaid=26+random(rng)*10;run.bossCooldown=Math.max(2.5,run.bossCooldown);}
+   else{run.raid=null;run.joiceCuffs=3;run.nextRaid=26+random(rng)*10;run.bossCooldown=Math.max(2.5,run.bossCooldown);}
   }return;
  }
  run.nextRaid-=dt;
@@ -459,17 +468,29 @@ export function advanceRun(run,seconds,rng){
     anchor=spawnFallingThreat(run);
     if(anchor&&anchor.warningFor+anchor.fallFor>run.raid.remaining-.2){run.obstacles=run.obstacles.filter(o=>o!==anchor);anchor=null;}
    }
+   if(!run.raid&&run.joiceCuffs>0&&!run.joiceVoicePending&&!run.obstacles.some(o=>o.falling||o.groundHazard)){
+    // Três setores, em ordem alternada. Cada queda reserva a faixa sozinha.
+    const lane=[0,2,1][3-run.joiceCuffs];
+    const positionRoll=(lane+.2+.6*random(rng))/3;
+    anchor=spawnFallingThreat(run,{type:'handcuffs',positionRoll});
+    if(anchor)run.joiceCuffs--;
+   }
    if(!anchor&&!raidActive&&run.elapsed>=12&&random(rng)<.13+.09*balance.pressure)anchor=spawnManholeThreat(run,{rng});
    if(anchor){/* A zona local já entrou no mundo com um aviso comprometido. */}
    else if(action==='crouch'){
-    const performers=['dilma','simone','soraya'];
-    const available=performers.filter(actor=>actor!==run.lastOverheadActor);
-    const type=raidActive?'joice':available[Math.floor(random(rng)*available.length)];
+    const impactReserved=run.obstacles.some(o=>o.falling||o.groundHazard);
+    const available=['dilma','simone','soraya'].filter(actor=>actor!==run.lastOverheadActor&&!(impactReserved&&actor==='soraya'));
+    const pick=raidActive?0:random(rng)*available.length;
+    const type=raidActive?'joice':available[Math.floor(pick)];
     if(!raidActive){run.lastOverheadActor=type;run.overheadCount++;}
-    const attackType={dilma:'wind',simone:'paper-gate',soraya:'microphone',joice:'microphone'}[type];
-    anchor={x,width:46,height:72,type:attackType,action,sourceActor:type,projectile:true,
-     launchX:x+23,targetX:playerX(run)+17,launchY:84,targetY:84,y:84,...threatMotion(run,x,approach,visibleWidth(run))};
-    if(!raidActive)run.cameo={type,remaining:1.4};
+    if(type==='soraya'){
+     anchor=spawnFallingThreat(run,{owner:type,positionRoll:pick%1});
+    }else{
+     const attackType={dilma:'wind',simone:'paper-gate',joice:'microphone'}[type];
+     anchor={x,width:46,height:72,type:attackType,action,sourceActor:type,projectile:true,
+      launchX:x+23,targetX:playerX(run)+17,launchY:84,targetY:84,y:84,...threatMotion(run,x,approach,visibleWidth(run))};
+    }
+    if(!raidActive)run.cameo={type,remaining:anchor.falling?anchor.warningFor+anchor.fallFor:1.4};
    }else{
     const selected=raidActive?foeFor('pf'):pursuitAt(routeClock(run),rng);
     const foe=run.supportAvailable===false&&['boulos','dino'].includes(selected.type)?foeFor('pf'):selected;

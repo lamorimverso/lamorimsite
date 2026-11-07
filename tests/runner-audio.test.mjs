@@ -137,8 +137,9 @@ test('fim natural permite Joice atrasada concluir e bloqueia outra voz até ende
  withBrowser(fixture,()=>{
   const audio=createGameAudio({onVoice:clip=>captions.push(clip)});audio.prime();audio.event('warning');
   const clip=fixture.tracks[0];clip.currentTime=9;audio.event('recovery');audio.event('end');
+  assert.equal(audio.joiceVoicePending,true);
   assert.equal(clip.paused,0);assert.equal(clip.currentTime,9);assert.equal(fixture.tracks.length,1);
-  assert.equal(audio.voice('haddad',{priority:2}),false);clip.onended();assert.equal(captions.at(-1),null);
+  assert.equal(audio.voice('haddad',{priority:2}),false);clip.onended();assert.equal(audio.joiceVoicePending,false);assert.equal(captions.at(-1),null);
   assert.equal(audio.voice('haddad',{priority:2}),true);audio.stop();
  });
 });

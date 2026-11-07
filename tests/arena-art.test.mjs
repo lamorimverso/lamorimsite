@@ -25,3 +25,28 @@ test('metamorfose faz transição entre formas e efeitos reduzidos preservam for
  assert.deepEqual(art.jacareBlendFor({isJacare:true,jacareAge:0},true),{human:0,jacare:1});
  assert.deepEqual(art.jacareBlendFor({isJacare:false,restoreFlashFor:.48},true),{human:1,jacare:0});
 });
+
+function paintCalls(){
+ const calls=[];
+ const context=new Proxy({}, {get:(target,key)=>target[key]??((...args)=>calls.push([key,...args]))});
+ return {context,calls};
+}
+
+test('rajada, adesivo e microfone têm silhuetas próprias sem caixa de fundo',()=>{
+ for(const type of ['wind','paper-gate','microphone']){
+  const {context,calls}=paintCalls();
+  art.drawThreat(context,{type,action:'crouch',x:100,width:46,height:72},246,0);
+  assert.ok(calls.some(([name])=>name==='stroke'||name==='fill'));
+  assert.ok(!calls.some(([name])=>name==='roundRect'),type);
+ }
+});
+
+test('cruz em queda desenha paraquedas e cordas no alvo avisado',()=>{
+ const {context,calls}=paintCalls();
+ const item={type:'parachute-cross',x:120,width:50,height:44,y:140,age:1.4,warningFor:1.2};
+ art.drawFallingThreat(context,item,246);
+ assert.ok(calls.some(([name])=>name==='translate'));
+ assert.ok(calls.some(([name])=>name==='quadraticCurveTo'));
+ assert.ok(calls.filter(([name])=>name==='lineTo').length>=12);
+ assert.ok(!calls.some(([name])=>name==='fillText'));
+});

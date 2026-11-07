@@ -1,7 +1,7 @@
 import {createVoiceDirector} from './runner-voice-director.mjs?v=088899f48fd6';
-import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=067d703c87d1";
-import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=212932eb579d";
-import { createGameAudio } from "./runner-audio.mjs?v=c00d5098806e";
+import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=3ca11a8218b1";
+import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=1805ec812818";
+import { createGameAudio } from "./runner-audio.mjs?v=5ded4b7c65f7";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=fa9433a61a03";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=a4f0cd479138";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
@@ -89,7 +89,10 @@ function initRunner() {
   function dodgeHint(){
     const hit=run.lastHit;if(!hit)return "Observe os perigos e tente novamente.";
     const names={stamp:'Carimbo TAXA',wind:"Vento",microphone:"Microfone","paper-gate":"Papéis",popcorn:"Pipoca",hammer:"Martelo",mandado:"Mandado",receipts:"Papéis",lhand:"Mão em L"};
-    if(hit.action==="move")return "Mala em queda: saia do alvo no chão com ←/→ ou deslize lateral.";
+    if(hit.action==="move"){
+      const prop={handcuffs:"Algemas",'parachute-cross':"Cruz de paraquedas",manhole:"Bueiro",'falling-case':"Mala em queda"}[hit.type]||"Perigo";
+      return prop+": saia do alvo no chão com ←/→ ou deslize lateral.";
+    }
     if(hit.action==="crouch")return (names[hit.type]||"Ataque")+" no alto: abaixe para desviar.";
     return (names[hit.type]||"Perigo")+" baixo: sincronize o salto para desviar.";
   }
@@ -213,6 +216,7 @@ function initRunner() {
     const timing=advanceFrameClock(frameClock,now),wasAirborne=run.player.y>0;
     const before={lives:run.lives,collected:run.collected,boss:run.boss?.type,
       passports:run.passports,spawned:run.spawnedObstacles,attacks:run.boss?.fired||0};
+    run.joiceVoicePending=audio.joiceVoicePending;
     let bufferedTakeoff=false;
     for(let i=0;i<timing.steps&&run.status==="running";i++){
       const pending=run.player.jumpBufferedUntil>0&&run.player.velocity<=0;

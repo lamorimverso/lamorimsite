@@ -18,11 +18,12 @@ test('corrida comum oferece altos e baixos e limita repetições para exigir lei
  assert.ok(actions.some(o=>o.action==='jump')&&actions.some(o=>o.action==='crouch'));assert.equal(actions[0].action,'jump');
  let streak=1;for(let i=1;i<actions.length;i++){streak=actions[i].action===actions[i-1].action?streak+1:1;if(actions[i].elapsed>=10)assert.ok(streak<=3);}
 });
-test('Dilma, Simone e Soraya geram ameaças altas com função e popcorn pede salto',()=>{
+test('cada aparição tem seu próprio ataque e a pipoca pede salto',()=>{
  const r=make(),seen=new Map(),rng=seeded(8801);let count=0;
  for(let i=0;i<100/dt;i++){core.advanceRun(r,dt,rng);if(r.spawnedObstacles>count){count=r.spawnedObstacles;const o=r.obstacles.at(-1);if(o.sourceActor)seen.set(o.sourceActor,o);if(o.type==='popcorn')seen.set('popcorn',o);}}
- for(const [actor,type] of [['dilma','wind'],['simone','paper-gate'],['soraya','microphone']]){assert.equal(seen.get(actor)?.type,type);assert.equal(seen.get(actor)?.action,'crouch');}
+ for(const [actor,type] of [['dilma','wind'],['simone','paper-gate']]){assert.equal(seen.get(actor)?.type,type);assert.equal(seen.get(actor)?.action,'crouch');}
  assert.equal(seen.get('popcorn')?.action,'jump');
+ const cross=seen.get('soraya');assert.equal(cross?.type,'parachute-cross');assert.equal(cross?.action,'move');assert.equal(cross?.falling,true);
 });
 test('chefes têm sequências próprias, repetições e metas maiores que um escudo',()=>{
  const strings=[];for(const [i,type] of ['haddad','lula','xandao'].entries()){
@@ -58,14 +59,14 @@ test('chefes não são vencidos só segurando abaixar com um escudo de seis segu
   assert.equal(r.status,'over',type+' exige voltar a ler e desviar depois da proteção');assert.equal(r.bossesDefeated,0);
  }
 });
-test('estratégia de só saltar perde para ameaça alta, e Joice volta em corrida longa',()=>{
+test('estratégia de só saltar perde para perigos que exigem outra ação, e Joice volta em corrida longa',()=>{
  for(const seed of [7,103,8801]){
   const r=make(),rng=seeded(seed);r.shieldFor=0;r.nextPower=Infinity;
   for(let i=0;i<60/dt&&r.status==='running';i++){
    const danger=r.obstacles.find(o=>o.x+o.width>125),until=danger?(danger.x-148)/danger.speed:Infinity;
    if(danger&&until<.26&&r.player.y===0)core.jumpRun(r);core.advanceRun(r,dt,rng);
   }
-  assert.equal(r.status,'over');assert.equal(r.lastHit.action,'crouch');
+  assert.equal(r.status,'over');assert.ok(['crouch','move'].includes(r.lastHit.action));
   const long=make();long.nextRaid=null;long.nextBossAt=null;simulate(long,600,seeded(seed));
   assert.ok(long.raids>=8,'perseguição especial não some depois dos primeiros chefes');assert.ok(long.bossesDefeated>=8);
  }
@@ -103,4 +104,50 @@ test('resize preserva janela visível, contatos, voo e recompensas normal/assist
  const r=make();r.viewportWidth=900;r.obstacles=[{x:392,speed:400,width:34,height:44,type:'pf'},{x:760,speed:400,width:46,height:72,type:'microphone',action:'crouch',projectile:true,y:84,launchY:84,targetY:84,launchX:783,targetX:137}];
  const times=r.obstacles.map(o=>core.threatTimeToContact(r,o));core.resizeRun(r,480);const after=r.obstacles.map(o=>core.threatTimeToContact(r,o));assert.ok(after.every((t,i)=>Math.abs(t-times[i])<1e-9));assert.ok(after[1]-after[0]>=.82);
  const touching={x:r.player.x+25,speed:250,width:44,height:32,type:'barrier'},offset=touching.x-r.player.x;r.obstacles=[touching];core.resizeRun(r,900);assert.ok(Math.abs(touching.x-r.player.x-offset)<1e-9);assert.equal(touching.speed,250,'contato iniciado conserva posição relativa e velocidade ao reenquadrar');
+});
+
+function sorayaRun(width,position,roll){
+ const r=make();r.shieldFor=0;r.elapsed=11;r.nextObstacle=0;r.nextAllyAt=Infinity;
+ core.resizeRun(r,width);r.player.x=position;r.lastOverheadActor='dilma';
+ const values=[.1,.5+.5*roll];core.advanceRun(r,dt,()=>values.shift()??.5);
+ return r;
+}
+test('cruz da Soraya avisa antes de cair, varia o alvo e permite esquivar mesmo na borda',()=>{
+ const targets=new Set();
+ for(const width of [480,900])for(const position of [26,240,width-75]){
+  for(const roll of [.1,.5,.9]){
+   const r=sorayaRun(width,position,roll),cross=r.obstacles[0];
+   assert.equal(r.cameo?.type,'soraya');assert.equal(cross?.type,'parachute-cross');
+   assert.ok(cross.x>=0&&cross.x+cross.width<=width);
+   assert.ok(cross.warningFor>=1.2);assert.equal(r.lives,1);
+   targets.add(cross.x-position);r.nextObstacle=Infinity;
+   core.moveRun(r,cross.x+cross.width/2<width/2?1:-1);
+   simulate(r,cross.warningFor+cross.fallFor+.25);
+   assert.equal(r.status,'running');assert.equal(r.lives,1);
+  }
+ }
+ assert.ok(targets.size>=3);
+ const r=sorayaRun(480,240,.5);r.nextObstacle=Infinity;
+ simulate(r,r.obstacles[0].warningFor+r.obstacles[0].fallFor);
+ assert.equal(r.lastHit?.type,'parachute-cross','ficar sob o alvo causa colisão');
+});
+
+test('PF lança três algemas em regiões distintas depois da fala, com aviso e sem sobreposição',()=>{
+ const r=make();r.nextAllyAt=Infinity;r.nextObstacle=0;
+ r.raid={phase:'recovery',remaining:.001,factIndex:0,id:1};r.joiceVoicePending=true;
+ core.advanceRun(r,dt,()=>.5);
+ assert.ok(r.obstacles.every(o=>o.type!=='handcuffs'),'a fala ainda está tocando');
+ r.joiceVoicePending=false;r.nextObstacle=0;
+ const zones=new Set(),waves=new Set();
+ for(let i=0;i<12/dt;i++){
+  core.advanceRun(r,dt,()=>.5);
+  const falling=r.obstacles.filter(o=>o.falling);
+  assert.ok(falling.length<=1);
+  const cuffs=falling.find(o=>o.type==='handcuffs');
+  if(cuffs&&!waves.has(cuffs)){
+   waves.add(cuffs);zones.add(Math.floor((cuffs.x+cuffs.width/2)/300));
+   assert.ok(cuffs.age<cuffs.warningFor);assert.equal(cuffs.action,'move');
+  }
+ }
+ assert.equal(waves.size,3);assert.deepEqual([...zones].sort(),[0,1,2]);
 });

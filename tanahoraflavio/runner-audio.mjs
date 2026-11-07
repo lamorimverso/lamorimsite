@@ -83,7 +83,7 @@ export function createGameAudio({onVoice=()=>{}}={}) {
  };
  // Não há sintetizador de voz: só trechos identificados e efeitos originais.
  // Ausência de clipe não é preenchida por uma voz inventada.
- return {get enabled(){return enabled;},prime,stop,effect,voice,
+ return {get enabled(){return enabled;},get joiceVoicePending(){return recordingName==='joice';},prime,stop,effect,voice,
   background(state={}){
    if(state.active===false){stop();return;}
    if(!enabled||!primed)return;
