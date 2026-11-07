@@ -275,3 +275,36 @@ for(const assisted of [false,true])test(`resize real900→480 preserva reação 
   const delta=await page.evaluate(()=>__journeyRun.__resizeWatch.hit-__journeyRun.__resizeWatch.visible);assert.ok(delta>=(assisted ? .95/.82 : .95)-.025,'não perde reação ao mudar de orientação: '+delta);assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
+
+test('labels do seletor são apenas Modo História e Modo Infinito',async()=>{
+ const {context,page,errors}=await open({width:390,height:844});
+ try{
+  const options=page.locator('#game-mode-chooser label');
+  assert.deepEqual((await options.allTextContents()).map(s=>s.trim()),['Modo Infinito','Modo História']);
+  assert.equal(await page.locator('#game-mode-infinite').isChecked(),true,'mantém o Infinito como padrão');
+  await page.locator('#game-mode-story').check();
+  await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+  assert.equal(await page.locator('#game').getAttribute('data-run-mode'),'story');
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+test('Flávio percorre os quadros de corrida durante a partida em ambos os modos',async()=>{
+ for(const mode of ['endless','story']){
+  const {context,page,errors}=await open({width:900,height:720},{instrument:true});
+  try{
+   if(mode==='story')await page.locator('#game-mode-story').check();
+   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+   await page.evaluate(()=>{
+    const r=globalThis.__journeyRun;
+    for(const key of ['nextObstacle','nextBossAt','nextRaid','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[key]=Infinity;
+    globalThis.__heroSteps=[];
+   });
+   await page.waitForFunction(()=>new Set((globalThis.__heroSteps||[]).filter(n=>n>=0&&n<8)).size>=6,null,{timeout:3000});
+   const state=await page.evaluate(()=>({frames:[...new Set(__heroSteps.filter(n=>n>=0&&n<8))],distance:__journeyRun.distance,status:__journeyRun.status,mode:__journeyRun.mode}));
+   assert.ok(state.frames.length>=6,'não pode deslizar sempre na mesma pose: '+mode);
+   assert.ok(state.distance>100&&state.status==='running','a corrida física continua');
+   assert.equal(state.mode,mode);
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ }
+});

@@ -442,13 +442,17 @@ function initRunner() {
   function character(){
     const airborne=run.player.y>0||run.player.velocity>0,reduced=prefersReducedMotion();
     const active=run.status==="running",decorative=active&&!reduced;
-    // A passada comunica a corrida; reduzir efeitos só retira poeira/balanço.
-    const phase=active?run.distance/24:0;
+    // O Flávio corre em oito quadros reais. A cadência depende do tempo da
+    // simulação (não de arredondamentos da quilometragem/câmera), mantendo
+    // passada visível mesmo nas velocidades mais tranquilas.
+    // Só o protagonista corre: os vilões continuam pairando e atacando.
+    const phase=active?run.elapsed*(run.assisted?9:11):0;
     const crouchTarget=run.player.crouching&&!airborne;
     const frameTime=performance.now();
     crouchPose=crouchAnimationStep(crouchPose,crouchTarget,(frameTime-lastPoseFrame)/1000,reduced);
     lastPoseFrame=frameTime;
-    const bounce=decorative&&!airborne?(1-crouchPose)*Math.abs(Math.sin(phase*Math.PI/4))*1.2:0;
+    const runningStride=active&&!airborne&&!crouchTarget&&!run.player.isJacare;
+    const bounce=decorative&&runningStride?Math.abs(Math.sin(phase*Math.PI/4))*2.6:0;
     if(decorative&&!airborne){
       circle(playerX(run)-8-run.distance%19,WORLD.ground-2,2.8,"#a6a7aa70");
       // Pequena poeira que acompanha o deslize, sem afetar a pista.
@@ -471,6 +475,13 @@ function initRunner() {
     }else if(active&&!airborne&&run.elapsed<landingUntil){
       const ease=(landingUntil-run.elapsed)/.12,pivot=playerX(run)+17;
       ctx.translate(pivot,feet);ctx.scale(1+.025*ease,1-.025*ease);ctx.translate(-pivot,-feet);
+    }else if(decorative&&runningStride){
+      // Inclinação pequena e alternada para que a corrida não pareça
+      // apenas o cenário rolando por trás de um personagem imóvel.
+      const pivot=playerX(run)+17;
+      ctx.translate(pivot,feet);
+      ctx.rotate(Math.sin(phase*Math.PI/4)*.022);
+      ctx.translate(-pivot,-feet);
     }
     const blend=jacareBlendFor(run.player,reduced);
     if(blend.jacare>0){
