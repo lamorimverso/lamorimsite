@@ -213,6 +213,25 @@ export function spawnFallingThreat(run,{bossAttack=false,owner='joice'}={}){
  const item={x,width,height:isAmpoule?48:44,type:isAmpoule?'pfizer-ampoule':'falling-case',action:'move',approach:'vertical',falling:true,age:0,warningFor,fallFor:isAmpoule?.72:.4,y:310,speed:0,owner,bossAttack,counted:false};
  run.obstacles.push(item);return item;
 }
+// Uma saraivada cenográfica usa dois ou três alvos no mesmo instante.
+// Uma zona mira a posição atual e as demais ficam afastadas por 160px:
+// entre elas cabe a hitbox completa do jacaré e sobra corredor de esquiva.
+// Só o evento do jacaré usa múltiplas quedas; a Joice mantém sua regra original.
+export function spawnJacareVolley(run,{rng=Math.random}={}){
+ if(run.status!=='running'||!run.player.isJacare)return [];
+ const target=spawnFallingThreat(run,{owner:'pfizer'});
+ if(!target)return [];
+ const maxX=visibleWidth(run)-target.width,spacing=160;
+ const sides=[target.x-spacing,target.x+spacing].filter(x=>x>=0&&x<=maxX);
+ if(sides.length===2&&random(rng)>=.5)sides.reverse();
+ const extra=run.player.jacareAge>=5.3?2:1;
+ const volley=[target];
+ for(const x of sides.slice(0,extra)){
+  const ampoule={...target,x};
+  run.obstacles.push(ampoule);volley.push(ampoule);
+ }
+ return volley;
+}
 // O aviso fixa a posição antes da abertura; nunca há uma hitbox ativa no nascimento.
 // Uma única zona local deixa espaço de fuga, inclusive no extremo da arena.
 export function spawnManholeThreat(run,{rng=Math.random}={}){
@@ -437,7 +456,8 @@ export function advanceRun(run,seconds,rng){
   // Sem salto normal, o evento pede reposicionamento, não obstáculos saltáveis.
   run.player.nextJacareThreat-=dt;
   if(run.player.jacareAge>=JACARE_ENTRY_GRACE&&run.player.jacareAge<=JACARE_DURATION_SECONDS-2.4&&run.player.nextJacareThreat<=0){
-   anchor=spawnFallingThreat(run,{owner:'pfizer'});
+   const volley=spawnJacareVolley(run,{rng});
+   anchor=volley[0]||null;
    run.player.nextJacareThreat=anchor?1.7+random(rng)*.7:.12;
   }
  }else if(run.boss)anchor=advanceBoss(run,dt,rng,balance);
@@ -533,7 +553,7 @@ export function advanceRun(run,seconds,rng){
     run.graceFor=Math.max(run.graceFor,JACARE_ENTRY_GRACE);
     run.player.isJacare=true;run.player.jacareAge=0;run.player.nextJacareThreat=JACARE_ENTRY_GRACE;run.player.restoreFlashFor=0;
     run.player.crouching=false;run.player.crouchHeld=false;run.player.jumpBufferedUntil=0;
-    announce(run,'Zé Gotinha: jacaré por 10 segundos! Continue correndo e desvie lateralmente das ampolas cenográficas da Pfizer. Vacinas não causam essa transformação.');
+    announce(run,'Zé Gotinha: jacaré por 10 segundos! Continue correndo e desvie lateralmente de várias ampolas cenográficas da Pfizer caindo juntas. Vacinas não causam essa transformação.');
    }
    if(p.type==='shield'){run.shieldFor=6;announce(run,'Escudo das Américas! Proteção por 6 segundos.');}
    if(p.type==='passport'&&++run.passports%100===0){run.lives++;announce(run,'100 passaportes! Uma vida extra; total: '+run.lives+'.');}
