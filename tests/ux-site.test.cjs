@@ -433,3 +433,31 @@ test('HTML antigo no cache se atualiza sem travar a inicialização',async()=>{
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
+
+test('seletor oferece dois modos jogáveis, finaliza História e permite reiniciar no Infinito',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
+ try{
+  assert.equal(await page.locator('#game-mode-infinite').isChecked(),true);
+  await page.locator('#game-mode-story').check();
+  await begin(page);
+  assert.equal(await page.evaluate(()=>__testRun.mode),'story');
+  assert.equal(await page.locator('#game-mode-chooser').isVisible(),false);
+  await page.evaluate(()=>{
+   const r=__testRun;
+   r.bossesDefeated=5;
+   r.nextRaid=r.nextObstacle=r.nextBossAt=Infinity;
+   r.shieldFor=Infinity;
+   r.boss={type:'bossonari',name:'Bossonari',color:'#7a4f8d',total:1,remaining:1,
+    fired:1,nextAttack:100,attackFlashFor:0,hitFlashFor:0,plannedFor:1,
+    plannedAttack:{type:'cloroquina-prop',action:'jump'},goalKind:'phantoms',objective:'Desvie do frasco'};
+   r.obstacles=[{x:-100,width:38,height:38,type:'cloroquina-prop',action:'jump',bossAttack:true,counted:false,speed:250,y:23}];
+  });
+  await page.waitForFunction(()=>document.getElementById('game-overlay-title').textContent==='História concluída!',null,{timeout:3000});
+  assert.equal(await page.evaluate(()=>__testRun.status),'won');
+  await page.locator('#game-mode-infinite').check();
+  await page.getByRole('button',{name:'Jogar novamente'}).click();
+  assert.equal(await page.evaluate(()=>__testRun.mode),'endless');
+  assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});

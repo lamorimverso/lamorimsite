@@ -136,3 +136,13 @@ Esta seção substitui as descrições anteriores onde houve expansão. [Matriz 
 - Duas ou três ampolas satíricas aparecem na mesma onda, mas caem em momentos distintos e em posições sorteadas pela pista, com separação de pelo menos 150 unidades. O aviso é antecipado; após dez segundos a forma humana retorna automaticamente.
 - Obstáculos altos perderam a placa retangular genérica: Dilma mantém vento, Simone lança planilhas, Soraya tem cruzes com paraquedas e Joice/PF mostram algemas.
 - Vacinas não transformam pessoas em jacarés. Essa parte do jogo é sátira.
+
+## Modos de jogo e antagonistas flutuantes — 07/11/2026
+
+- **Infinito** continua como modo padrão, preservando a corrida contínua, o ciclo original de cinco chefões, coleções, partidas e recordes.
+- **História** usa as mesmas cinco etapas e seus chefões; em seguida, um sexto encontro com o chefão fictício Bossonari lança 14 frascos cenográficos de cloroquina/ivermectina. Ao desviar de todos, aparece uma tela de vitória real e a corrida para.
+- **Exército de Memes do Lula** é um novo grupo de atacantes altos, desenhados vetorialmente com referências gerais à imagem de chapéu e pernas suspensas. Os inimigos pairam no cenário em vez de reproduzir passadas; isso não altera alcance ou velocidade física dos perigos.
+- **Fantasmas do comunismo** aparecem exclusivamente como elementos de sátira na arena final e reagem visualmente aos disparos. Não são perseguidos por mecânicas de cura, nem oferecem recomendações médicas.
+- **Escolha** entre Infinito e História com botões de opção acessíveis antes da largada ou depois do fim. O jogo conserva som opcional, modo de movimentos reduzidos, ritmo mais tranquilo, suporte a toque e teclado.
+
+Cloroquina e ivermectina aparecem como **objetos de ficção cômica**; não representam tratamento ou eficácia contra Covid-19 nem qualquer outra doença.
