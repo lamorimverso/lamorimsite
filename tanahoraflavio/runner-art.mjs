@@ -114,6 +114,13 @@ export function drawFallingThreat(c,item,ground=246){
  line(c,[[item.x+3,ground+11],[item.x+3+(item.width-6)*g.progress,ground+11]],'#da9a63',2);
  if(!g.showBody){
   text(c,'↔',g.centerX,ground-64,23,'#8a3348');
+ }else if(item.type==='pfizer-ampoule'){
+  // Ampola cenográfica: arte no mesmo alvo e na mesma altura de colisão.
+  box(c,g.centerX-13,g.bodyY-24,26,9,'#5b7a88',3,'#31566b');
+  box(c,g.centerX-17,g.bodyY-16,34,40,'#e3f7ff',8,'#397f9c');
+  box(c,g.centerX-17,g.bodyY-3,34,17,'#288db7',2,null);
+  text(c,'Pfizer',g.centerX,g.bodyY+8,9,'#ffffff');
+  line(c,[[g.centerX-9,g.bodyY-13],[g.centerX+9,g.bodyY-13]],'#90cadf',2);
  }else{
   box(c,item.x,g.bodyY-item.height/2,item.width,item.height,'#8d557c',5,'#342a46');
   box(c,g.centerX-7,g.bodyY-item.height/2-6,14,6,'#e7c68d',2,'#342a46');
