@@ -8,6 +8,51 @@ function line(c,points,color=INK,width=2){c.beginPath();points.forEach(([x,y],i)
 function text(c,value,x,y,size=7,color=CREAM){c.fillStyle=color;c.font='900 '+size+'px system-ui';c.textAlign='center';c.fillText(value,x,y);}
 
 export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT,CORE_SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=4ff31d443151";
+// Visual de sátira: antagonistas suspensos, sem passos de corrida.
+export function drawMemeArmy(c,{x=0,y=0,phase=0,scale=1,reducedMotion=false}={}){
+ c.save();c.translate(x,y);c.scale(scale,scale);
+ if(!reducedMotion)c.translate(0,Math.sin(phase*.65)*2);
+ // Silhueta vetorial original: chapéu e pernas flutuando.
+ line(c,[[-9,-18],[-22,-2],[-27,4]],'#7c466d',8);
+ line(c,[[6,-18],[17,-4],[23,5]],'#715273',8);
+ line(c,[[-22,0],[-28,4]],'#372b44',3);
+ line(c,[[19,4],[28,7]],'#372b44',3);
+ path(c,[[-21,-31],[-7,-39],[14,-37],[25,-26],[10,-18],[-11,-18]],'#b63b59','#603252');
+ oval(c,0,-25,11,13,'#e584a2','#603252',2);
+ oval(c,-4,-28,2,3,'#2e2139',null);oval(c,5,-28,2,3,'#2e2139',null);
+ path(c,[[-25,-39],[-14,-49],[13,-49],[27,-40],[15,-34],[-13,-34]],'#ac3757','#5c2845');
+ line(c,[[-22,-36],[-27,-31]],'#ecb7c5',2);
+ line(c,[[14,-39],[21,-36]],'#f5b8bc',2);
+ c.restore();
+}
+export function drawBossOfBosses(c,{x=0,y=0,phase=0,preparing=false,attacking=false,reducedMotion=false}={}){
+ c.save();c.translate(x,y);
+ if(!reducedMotion)c.translate(0,Math.sin(phase*.42)*2.2);
+ oval(c,0,-46,30,39,attacking?'#efd3f4aa':'#d8c4f05c',null);
+ path(c,[[-29,-10],[-20,-53],[-8,-67],[11,-67],[23,-49],[27,-10]],'#414267','#292337');
+ box(c,-5,-49,11,31,'#ece1e5',2,null);
+ path(c,[[-3,-42],[3,-42],[6,-15],[1,-6],[-4,-15]],'#d3565f',null);
+ oval(c,0,-73,18,21,'#e7b68e','#583c4b',2);
+ path(c,[[-18,-82],[-9,-96],[9,-96],[18,-84],[10,-87],[-10,-87]],'#302f43');
+ oval(c,-6,-74,2,2,'#302f43',null);oval(c,6,-74,2,2,'#302f43',null);
+ line(c,[[-29,-51],[-40,-30]],'#414267',10);line(c,[[29,-51],[40,-30]],'#414267',10);
+ if(preparing||attacking){oval(c,39,-29,8,7,'#cce1ff','#514369',2);text(c,'!',39,-27,12,'#713f5c');}
+ text(c,'BOSSONARI',0,-105,11,'#552e53');c.restore();
+}
+export function drawPhantomCloud(c,{x=0,y=0,phase=0,hitFor=0,reducedMotion=false}={}){
+ c.save();c.translate(x,y);
+ for(const dx of [-46,0,44]){
+  c.save();c.translate(dx,reducedMotion?0:Math.sin(phase*.43+dx)*3);
+  c.globalAlpha*=hitFor>0?.3+.5*Math.max(0,1-hitFor/1.3):.72;
+  c.fillStyle='#e3ddf4';c.strokeStyle='#756c9b';c.lineWidth=2;
+  c.beginPath();c.moveTo(-13,13);c.lineTo(-13,-14);
+  c.bezierCurveTo(-13,-32,13,-32,13,-14);c.lineTo(13,13);
+  c.lineTo(7,8);c.lineTo(2,13);c.lineTo(-4,8);c.closePath();c.fill();c.stroke();
+  oval(c,-5,-12,2,3,'#573e77',null);oval(c,5,-12,2,3,'#573e77',null);
+  c.restore();
+ }
+ c.restore();
+}
 export function drawItem(c,{type,x,y,scale=1}){
  c.save();c.translate(x,y);c.scale(scale,scale);
  if(type==='shield'){
@@ -136,7 +181,20 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
   c.scale(1,h/44);
  }
 
- if(item.type==='message'){
+ if(item.type==='meme-ghost'){
+  drawMemeArmy(c,{phase,reducedMotion,scale:.88});
+ }
+ else if(item.type==='cloroquina-prop'||item.type==='ivermectina-prop'){
+  // Frascos fictícios, jamais indicação de medicamento.
+  const isC=item.type==='cloroquina-prop';
+  c.save();c.rotate(isC?-.22:.18);
+  box(c,-19,-37,38,33,isC?'#f7e2a2':'#c5e5f0',6,'#6a5877');
+  box(c,-14,-42,28,7,isC?'#9c6ca7':'#5f88a1',3,'#6a5877');
+  box(c,-18,-22,36,12,isC?'#8b628f':'#417e9b',3,null);
+  text(c,isC?'CLOROQ.':'IVERM.',0,-13,8,'#ffffff');
+  c.restore();
+ }
+ else if(item.type==='message'){
   box(c,-21,-34,42,33,'#fff5e6',4,'#a23d50');line(c,[[-16,-27],[0,-15],[16,-27]],'#b44758',2);
   text(c,'URGENTE',0,-4,7,'#8d314a');
  }
@@ -230,7 +288,8 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
  else {
   const movement=enemyMotionFor(item.type,reducedMotion?0:phase,x);
   c.translate(0,movement.bob);c.rotate(movement.lean);
-  drawActor(c,{type:item.type,x:0,y:0,scale:item.height/66,phase});
+  // O inimigo paira sem ciclar os quadros de corrida do sprite.
+  drawActor(c,{type:item.type,x:0,y:0,scale:item.height/66,phase:0});
  }
  c.restore();
 }
