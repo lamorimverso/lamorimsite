@@ -21,8 +21,9 @@ test('corrida comum oferece altos e baixos e limita repetições para exigir lei
 test('Dilma, Simone e Soraya geram ameaças altas com função e popcorn pede salto',()=>{
  const r=make(),seen=new Map(),rng=seeded(8801);let count=0;
  for(let i=0;i<100/dt;i++){core.advanceRun(r,dt,rng);if(r.spawnedObstacles>count){count=r.spawnedObstacles;const o=r.obstacles.at(-1);if(o.sourceActor)seen.set(o.sourceActor,o);if(o.type==='popcorn')seen.set('popcorn',o);}}
- for(const [actor,type] of [['dilma','wind'],['simone','paper-gate'],['soraya','microphone']]){assert.equal(seen.get(actor)?.type,type);assert.equal(seen.get(actor)?.action,'crouch');}
+ for(const [actor,type] of [['dilma','wind'],['simone','budget-sheets'],['soraya','parachute-cross']]){assert.equal(seen.get(actor)?.type,type);assert.equal(seen.get(actor)?.action,'crouch');}
  assert.equal(seen.get('popcorn')?.action,'jump');
+ assert.equal(core.bossAttackFor('pf',1).type,'handcuffs','a PF usa algemas e não um microfone genérico');
 });
 test('chefes têm sequências próprias, repetições e metas maiores que um escudo',()=>{
  const strings=[];for(const [i,type] of ['haddad','lula','xandao'].entries()){
