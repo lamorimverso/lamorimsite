@@ -262,7 +262,7 @@ export function bossAttackFor(type,fired,round=0) {
   janones:['jump','crouch','jump','crouch','jump','crouch','jump','jump','crouch'],pf:['jump','crouch','move','jump','crouch','move','jump','crouch']};
  const sequence=patterns[type]||patterns.haddad,index=Math.max(0,Math.floor(Number(fired)||0))+2*Math.floor(Math.max(0,round)/BOSS_ROSTER.length);
  const action=sequence[index%sequence.length];
- return {type:type==='xandao'?(action==='jump'?'hammer':'mandado'):type==='lula'?'lhand':type==='janones'?'message':type==='pf'?(action==='move'?'falling-case':action==='crouch'?'microphone':'barrier'):'receipts',action};
+ return {type:type==='xandao'?(action==='jump'?'hammer':'mandado'):type==='lula'?'lhand':type==='janones'?'message':type==='pf'?(action==='move'?'falling-case':action==='crouch'?'handcuffs':'barrier'):'receipts',action};
 }
 // Primeiro marco após21km; cada vitória reserva mais7km de corrida.
 // Um marco alcançado fica pendente enquanto houver evento ou cooldown.
@@ -288,7 +288,7 @@ function chooseBossPattern(boss,rng,pressure){
  let action=random(rng)<(.48+.06*pressure)?'crouch':'jump';
  if(action===boss.lastAction&&boss.actionStreak>=2)action=action==='jump'?'crouch':'jump';
  const type=boss.type==='xandao'?(action==='jump'?'hammer':'mandado'):
-  boss.type==='lula'?'lhand':boss.type==='janones'?'message':boss.type==='pf'?(action==='crouch'?'microphone':'barrier'):(action==='jump'&&random(rng)<.48?'stamp':'receipts');
+  boss.type==='lula'?'lhand':boss.type==='janones'?'message':boss.type==='pf'?(action==='crouch'?'handcuffs':'barrier'):(action==='jump'&&random(rng)<.48?'stamp':'receipts');
  const approach=action==='jump'&&random(rng)<.48?'drop':action==='crouch'&&random(rng)<.45?'sweep':'diagonal';
  return {type,action,approach};
 }
@@ -306,7 +306,7 @@ function advanceBoss(run,dt,rng,balance){
   attack=spawnFallingThreat(run,{bossAttack:true,owner:boss.type});if(!attack){boss.nextAttack=.1;return;}
  }else{
  const [width,baseHeight]=({hammer:[46,44],mandado:[42,44],
-  lhand:[46,46],receipts:[44,40],stamp:[44,36],message:[44,36],microphone:[46,40],barrier:[44,32]})[attackType];
+  lhand:[46,46],receipts:[44,40],stamp:[44,36],message:[44,36],microphone:[46,40],handcuffs:[46,40],barrier:[44,32]})[attackType];
  const height=pattern.action==='crouch'?84:baseHeight;
  const x=Math.max(visibleWidth(run)-104,frontContact(run)+60);
  const entry=pattern.approach||'diagonal';
@@ -467,7 +467,7 @@ export function advanceRun(run,seconds,rng){
     const available=performers.filter(actor=>actor!==run.lastOverheadActor);
     const type=raidActive?'joice':available[Math.floor(random(rng)*available.length)];
     if(!raidActive){run.lastOverheadActor=type;run.overheadCount++;}
-    const attackType={dilma:'wind',simone:'paper-gate',soraya:'microphone',joice:'microphone'}[type];
+    const attackType={dilma:'wind',simone:'budget-sheets',soraya:'parachute-cross',joice:'handcuffs'}[type];
     anchor={x,width:46,height:72,type:attackType,action,sourceActor:type,projectile:true,
      launchX:x+23,targetX:playerX(run)+17,launchY:84,targetY:84,y:84,...threatMotion(run,x,approach,visibleWidth(run))};
     if(!raidActive)run.cameo={type,remaining:1.4};
