@@ -225,12 +225,10 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
 
 #game-support-retry{min-height:44px;margin:4px 0 0;padding:7px 12px;border:1px solid #c9c5d3;border-radius:7px;background:#fff;color:var(--dark);font-weight:600}
 
-/* Cinco comandos independentes, sem faixa narrativa sobre a corrida. */
+/* Temporizador discreto de dez segundos sem interromper o jogo. */
 .game-jacare-progress{position:absolute;z-index:4;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;padding:6px 9px;border:1px solid #7ea981;border-radius:16px;background:#f3fff5eb;color:#22573a;pointer-events:none}
 .game-jacare-progress[hidden]{display:none}
 .game-jacare-progress>span{font-size:16px;line-height:1;font-weight:800}
-.game-recovery-step{display:block;width:8px;height:8px;border:1px solid #75a783;border-radius:50%;background:#dbeade}
-.game-recovery-step.is-complete{background:#267448;border-color:#267448}
 .game-card[data-power="jacare"] .game-hud{display:none}
 .game-voice-note.sr-only{padding:0;border:0;margin:-1px;min-height:0;max-width:none}
 .game-raid.sr-only{width:1px;height:1px;padding:0;border:0;margin:-1px;min-height:0;overflow:hidden}
