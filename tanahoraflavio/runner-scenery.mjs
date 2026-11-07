@@ -268,7 +268,10 @@ export function drawJourneyScenery(c,options={}){
 export function raidMoodFor(raid){
  if(!raid)return 0;
  const smooth=value=>{const t=Math.max(0,Math.min(1,value));return t*t*(3-2*t);};
- return raid.phase==='warning'?smooth((1.2-raid.remaining)/.8):raid.phase==='active'?1:raid.phase==='recovery'?smooth(raid.remaining/2):0;
+ if(raid.phase==='warning')return smooth((1.2-raid.remaining)/.8);
+ if(raid.phase==='active')return 1;
+ if(raid.phase==='recovery')return smooth(raid.remaining/(raid.recoveryFor||2));
+ return 0;
 }
 export function drawRaidAtmosphere(ctx,{strength=0,width=900,distance=0,reducedMotion=false}={}){
  if(strength<=0)return;

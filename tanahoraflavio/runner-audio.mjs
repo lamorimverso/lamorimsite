@@ -1,13 +1,13 @@
 import {createGameSoundtrack} from './runner-soundtrack.mjs?v=eef47a2a323c';
-import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=e742e2b2daf2';
+import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=fa9433a61a03';
 // Efeitos locais e recorte de arquivo identificado; nenhuma imitação de voz.
 export function createGameAudio({onVoice=()=>{}}={}) {
- let enabled=true,context=null,nodes=[],primed=false,recording=null,raidVoice=false,raidPrepared=false,music=null,voicePriority=0,alertUntil=0;
+ let enabled=true,context=null,nodes=[],primed=false,recording=null,recordingName=null,raidVoice=false,raidPrepared=false,music=null,voicePriority=0,alertUntil=0;
  const preferenceKey='tanahoraflavio.runner.sound.v1';
  try{enabled=window.localStorage?.getItem(preferenceKey)!=='off';}catch{/* Armazenamento é opcional. */}
  const stopRecording=()=>{
   if(recording){try{recording.pause();recording.currentTime=0;}catch{/* A mídia pode já ter sido liberada. */}}
-  recording=null;voicePriority=0;onVoice(null);
+  recording=null;recordingName=null;voicePriority=0;onVoice(null);
  };
  const stop=()=>{
   raidVoice=false;raidPrepared=false;alertUntil=0;
@@ -29,8 +29,8 @@ export function createGameAudio({onVoice=()=>{}}={}) {
   stopRecording();
   try{
    const url=new URL(clip.file,import.meta.url);url.searchParams.set('v',clip.sha256.slice(0,12));
-   const player=new window.Audio(url.href);recording=player;voicePriority=priority;player.volume=(context?.currentTime||0)<alertUntil?.28:.68;player.loop=loop===true;player.preload='none';
-   onVoice(clip);player.onended=()=>{if(recording===player){recording=null;voicePriority=0;onVoice(null);}};
+   const player=new window.Audio(url.href);recording=player;recordingName=name;voicePriority=priority;player.volume=(context?.currentTime||0)<alertUntil?.28:.68;player.loop=loop===true;player.preload='none';
+   onVoice(clip);player.onended=()=>{if(recording===player){recording=null;recordingName=null;voicePriority=0;onVoice(null);}};
    const failed=()=>{if(recording===player){stopRecording();raidVoice=false;}};
    player.onerror=failed;player.play()?.catch?.(failed);
    return true;
@@ -96,6 +96,10 @@ export function createGameAudio({onVoice=()=>{}}={}) {
    if(!enabled)return;
    if(phase==='warning'){if(raidPrepared&&raidVoice)return;raidPrepared=true;stopRecording();raidVoice=voice('joice',{priority:3});if(!raidVoice)knocks();}
    else if(phase==='active'){if(!raidVoice){raidPrepared=true;raidVoice=voice('joice',{priority:3});if(!raidVoice)knocks();}}
+   // Recovery mantém a frase final. Fim natural também permite terminar uma
+   // reprodução que iniciou tarde; cancelamento/mute/foco/derrota chamam stop.
+   else if(phase==='recovery')return;
+   else if(phase==='end'){raidPrepared=false;raidVoice=false;if(recordingName!=='joice')stopRecording();}
    else {raidPrepared=false;raidVoice=false;stopRecording();}
   }};
 }

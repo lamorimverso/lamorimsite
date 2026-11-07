@@ -78,7 +78,7 @@ test('Joice avisa por 1,2 segundo e intensifica perseguição por dez',()=>{
  assert.equal(r.raid.phase,'warning');assert.equal(r.raid.remaining,1.2);r.shieldFor=50;
  step(r,1.22);assert.equal(r.raid.phase,'active');
  step(r,10.02);assert.equal(r.raid.phase,'recovery');
- step(r,2.02);assert.equal(r.raid,null);assert.ok(r.nextRaid>=24);
+ step(r,core.RAID_TIMING.recoveryFor+.02);assert.equal(r.raid,null);assert.ok(r.nextRaid>=24);
 });
 test('ondas da PF no evento preservam intervalo mínimo de reação',()=>{
  const a=running(),b=running();a.nextBossAt=b.nextBossAt=Infinity;a.nextRaid=b.nextRaid=Infinity;

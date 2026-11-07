@@ -12,7 +12,7 @@ test('URL versionada do recorte corresponde ao áudio incluído na publicação'
  for(const clip of Object.values(ARCHIVE_VOICES)){
   const bytes=await readFile(new URL('../tanahoraflavio/'+clip.file,import.meta.url));
   assert.equal(createHash('sha256').update(bytes).digest('hex'),clip.sha256,'mídia alterada exige versão nova');
-  assert.ok(clip.toSeconds>clip.fromSeconds&&clip.toSeconds-clip.fromSeconds<6,'mídia curta de até seis segundos (edições de memes identificadas no manifesto)');
+  assert.ok(clip.toSeconds>clip.fromSeconds&&clip.toSeconds-clip.fromSeconds<(clip.complete?14:6),'mídia permanece dentro da duração verificada e declarada no manifesto');
  }
 });
 test('recurso alterado invalida também o import e a entrada HTML, com geração estável',async()=>{
@@ -37,4 +37,11 @@ test('recurso alterado invalida também o import e a entrada HTML, com geração
   const stable=await readFile(join(root,'index.html'),'utf8');
   assert.equal(run().status,0);assert.equal(await readFile(join(root,'index.html'),'utf8'),stable);
  }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('release contém a sequência integral da Joice com duração e atribuição verificadas',()=>{
+ const clip=ARCHIVE_VOICES.joice;assert.equal(clip.complete,true);assert.equal(clip.file,'assets/audio/joice-toc-toc-v2.mp3');
+ assert.equal(clip.durationSeconds,12.695510);assert.equal(clip.fromSeconds,30.90);assert.equal(clip.toSeconds,43.55);
+ assert.equal(clip.sha256,'5d87b61d55fc3608945a303259a7eaf767c25224be6d25adff35ffff6b94f59c');
+ assert.match(clip.quote,/É a Polícia Federal/);assert.equal(clip.speaker,'Joice Hasselmann');
 });

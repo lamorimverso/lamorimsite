@@ -86,11 +86,13 @@ test('chegada da Joice toca o meme original uma vez e atravessa o aviso sem narr
  withBrowser(fixture,()=>{
   const audio=createGameAudio();audio.prime();audio.event('warning',{text:'Fato histórico.'});
   assert.equal(fixture.tracks.length,1,'chegada toca gravação, não só batidas sintéticas');
-  const clip=fixture.tracks[0];assert.match(clip.src,/joice-toc-toc-v1\.mp3\?v=[a-f0-9]{12}$/);
+  const clip=fixture.tracks[0];assert.match(clip.src,/joice-toc-toc-v2\.mp3\?v=[a-f0-9]{12}$/);
   clip.currentTime=1.2;audio.event('active',{text:'Fato histórico.'});
   assert.equal(clip.paused,0,'fase ativa não corta a fala que começou no aviso');assert.equal(fixture.tracks.length,1);
   assert.equal(fixture.emitted.length,0,'nenhuma imitação/narração mistura com a gravação');
-  audio.event('recovery',{text:''});assert.equal(clip.paused,1);assert.equal(clip.currentTime,0);
+  clip.currentTime=11.2;audio.event('recovery',{text:''});assert.equal(clip.paused,0,'a frase final termina durante a recuperação');assert.equal(clip.currentTime,11.2);
+  audio.event('end');assert.equal(clip.paused,0,'fim natural não corta uma mídia que iniciou tarde');
+  audio.event('cancelled');assert.equal(clip.paused,1);assert.equal(clip.currentTime,0);
  });
 });
 test('meme da Joice respeita gesto inicial, som desligado e cancelamento ao parar',()=>{
@@ -110,7 +112,7 @@ test('terminar a fala da Joice não repete o recorte na fase ativa nem no mesmo 
   const clip=fixture.tracks[0];assert.equal(clip.loop,false);
   clip.onended();audio.event('warning');audio.event('active');
   assert.equal(fixture.tracks.length,1,'um evento reproduz a fonte uma única vez');
-  audio.event('recovery');audio.event('warning');assert.equal(fixture.tracks.length,2,'um novo evento pode tocar novamente');
+  audio.event('recovery');audio.event('end');audio.event('warning');assert.equal(fixture.tracks.length,2,'um novo evento pode tocar novamente');
  });
 });
 test('estado inativo interrompe voz e notas mesmo sem chamada explícita a stop',()=>{
@@ -127,5 +129,16 @@ test('erro tardio da mídia libera a fala e não deixa o canal preso em priorida
   const audio=createGameAudio({onVoice:clip=>captions.push(clip)});audio.prime();audio.voice('joice',{priority:3});
   assert.equal(typeof fixture.tracks[0].onerror,'function');fixture.tracks[0].onerror();
   assert.equal(captions.at(-1),null);assert.equal(audio.voice('haddad',{priority:1}),true);
+ });
+});
+
+test('fim natural permite Joice atrasada concluir e bloqueia outra voz até ended',()=>{
+ const fixture=recordedAudio(),captions=[];
+ withBrowser(fixture,()=>{
+  const audio=createGameAudio({onVoice:clip=>captions.push(clip)});audio.prime();audio.event('warning');
+  const clip=fixture.tracks[0];clip.currentTime=9;audio.event('recovery');audio.event('end');
+  assert.equal(clip.paused,0);assert.equal(clip.currentTime,9);assert.equal(fixture.tracks.length,1);
+  assert.equal(audio.voice('haddad',{priority:2}),false);clip.onended();assert.equal(captions.at(-1),null);
+  assert.equal(audio.voice('haddad',{priority:2}),true);audio.stop();
  });
 });

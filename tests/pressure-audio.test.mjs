@@ -47,7 +47,7 @@ test('reprodução integra trilha após gesto e respeita prioridade, mute e para
  }finally{if(previous===undefined)delete globalThis.window;else globalThis.window=previous;}
 });
 
-test('trecho de Joice atravessa a raid uma vez e para na recuperação e no mute',()=>{
+test('trecho completo de Joice atravessa a recuperação e para no fim, no cancelamento e no mute',()=>{
  const previous=globalThis.window,ctx=soundContext(),tracks=[];
  globalThis.window={AudioContext:class{constructor(){return ctx;}},Audio:class{
   constructor(src){this.src=src;this.loop=false;this.paused=false;tracks.push(this);}
@@ -56,13 +56,15 @@ test('trecho de Joice atravessa a raid uma vez e para na recuperação e no mute
  }};
  try{
   const a=createGameAudio();a.prime();a.event('warning');
-  assert.equal(tracks.length,1);assert.equal(tracks[0].loop,false,'o recorte parcial não vira um loop apresentado como trecho completo');
+  assert.equal(tracks.length,1);assert.equal(tracks[0].loop,false,'a sequência integral toca uma vez');
   a.event('active');assert.equal(tracks.length,1,'fase ativa não empilha a mesma voz');
   assert.equal(tracks[0].paused,false);
   a.stop();assert.equal(tracks[0].paused,true,'perda de foco interrompe o trecho');
   a.event('active');assert.equal(tracks.length,2,'retomar a aba durante raid reinicia arquivo original');
   assert.equal(tracks[1].loop,false);
-  a.event('recovery');assert.equal(tracks[1].paused,true,'recuperação interrompe reprodução');
+  a.event('recovery');assert.equal(tracks[1].paused,false,'recuperação permite concluir a frase final');
+  a.event('end');assert.equal(tracks[1].paused,false,'fim natural permite concluir mídia atrasada');
+  a.event('cancelled');assert.equal(tracks[1].paused,true,'cancelamento interrompe imediatamente');
 
   a.event('warning');assert.equal(tracks.length,3);assert.equal(tracks[2].loop,false);
   a.toggle();assert.equal(tracks[2].paused,true,'mute interrompe a gravação imediatamente');

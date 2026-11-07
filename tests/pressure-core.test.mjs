@@ -37,7 +37,7 @@ test('Joice vencida espera chefe e tem dez segundos de ameaças mistas sem fome'
  const r=make();r.nextRaid=.1;r.boss={...core.bossAtRound(0),type:'haddad',name:'Haddad',fired:0,total:1000,remaining:1000,nextAttack:1e6};
  simulate(r,1);assert.ok(r.nextRaid<=0,'relógio continua durante chefe');r.boss=null;r.bossCooldown=0;r.routeDistance=1000;
  core.advanceRun(r,dt,()=>.5);assert.equal(r.raid?.phase,'warning');simulate(r,1.21);assert.equal(r.raid?.phase,'active');assert.ok(r.raid.remaining>9.9);
- const count=r.spawnedObstacles;simulate(r,9.7,seeded(7));assert.ok(r.spawnedObstacles-count>=8);simulate(r,2.5);assert.equal(r.raid,null);assert.ok(r.nextRaid>=24&&r.nextRaid<=36);
+ const count=r.spawnedObstacles;simulate(r,9.7,seeded(7));assert.ok(r.spawnedObstacles-count>=8);simulate(r,core.RAID_TIMING.recoveryFor+.5);assert.equal(r.raid,null);assert.ok(r.nextRaid>=24&&r.nextRaid<=36);
 });
 test('Zé Gotinha recolhido limpa perigos comuns e abre respiro sem vencer chefe',()=>{
  const r=make();r.shieldFor=0;r.obstacles=[{x:400,width:34,height:44,type:'pf',speed:200},{x:450,width:40,height:40,type:'hammer',bossAttack:true,projectile:true,y:60,speed:200}];

@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {drawJourneyScenery,journeySceneryGeometry} from '../tanahoraflavio/runner-scenery.mjs';
+import {drawJourneyScenery,journeySceneryGeometry,raidMoodFor} from '../tanahoraflavio/runner-scenery.mjs';
+
+test('a luz volta gradualmente em toda a duração da recuperação de Joice',()=>{
+ const recoveryFor=2.5;
+ assert.equal(raidMoodFor({phase:'recovery',remaining:recoveryFor,recoveryFor}),1);
+ assert.equal(raidMoodFor({phase:'recovery',remaining:recoveryFor/2,recoveryFor}),.5);
+ assert.equal(raidMoodFor({phase:'recovery',remaining:0,recoveryFor}),0);
+});
 
 // Record the renderer's Canvas boundary without depending on an installed browser.
 // Pixel continuity remains covered by journey-scenery.test.mjs in browser CI.

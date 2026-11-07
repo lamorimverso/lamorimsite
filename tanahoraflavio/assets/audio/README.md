@@ -2,13 +2,14 @@
 
 ## Joice — toc toc
 
-`joice-toc-toc-v1.mp3`: Joice Hasselmann, pronunciamento no plenário da Câmara dos Deputados, 22/06/2022. Fonte e crédito: Câmara dos Deputados / Arquivo Sonoro. Contexto: prisão do ex-ministro Milton Ribeiro; não se refere a Flávio nem ao jogo.
+`joice-toc-toc-v2.mp3`: Joice Hasselmann, pronunciamento no plenário da Câmara dos Deputados, 22/06/2022. Fonte e crédito: Câmara dos Deputados / Arquivo Sonoro. Contexto: prisão do ex-ministro Milton Ribeiro; não se refere a Flávio nem ao jogo.
 
 Fonte: https://www.camara.leg.br/evento-legislativo/65858 (Joice,12:41,5m38s). Notas oficiais: https://escriba.camara.leg.br/escriba-servicosweb/pdf/65858
-Áudio original da seleção oficial: https://imagem.camara.gov.br/internet/audio/mp3/TAudio_552474_20261029155823_N4J5A0TW-IFDV-INCI-4C0A-RR2KEWKMXGSH.mp3 (Arquivo Sonoro552474; seleção iniciada12:41:34).
-Termos: https://www.camara.leg.br/tv/termos-de-uso/ — atividades legislativas gravadas sob CC BY4.0: https://creativecommons.org/licenses/by/4.0/. Nenhuma imagem/vídeo foi recortada ou teve marca d’água retirada; foi usado o áudio disponibilizado pela própria Câmara.
+Áudio original: [Arquivo Sonoro 552474](https://imagem.camara.leg.br/internet/audio/Resultado.asp?txtCodigo=552474). Seleção de 12:41:34 a 12:47:21. SHA-256 da seleção `994323b1142235892de87cf2ebd1e5a469b7b50430c8b7a1b9b9a2faa3cda0e9`.
 
-Corte contínuo30,90–36,08s da seleção: cinco segundos do meme, sem rearranjo, síntese, mudança de velocidade/tom, música ou alegação de apoio. Conversão mono44,1kHz/96kbps, duração codificada5,224490s/63.052bytes. Alinhamento com ASR do original e notas oficiais; sem audição humana, sem alegar transcrição independente do arquivo final. SHA256 `662229f2765f9ee5f4ae496b90f2162a043a467620c848859791fede0f02b467`.
+A sequência vai das batidas até “É a Polícia Federal”. Corte contínuo de 30,90 a 43,55 s na seleção oficial, com conversão mono a 44,1 kHz e 96 kbps. O MP3 tem 12,695510 s e 152.704 bytes. O reconhecimento de fala local foi conferido no original e no arquivo final contra as notas oficiais, página 39. O trecho inicial do original e o recorte v1 tiveram correlação normalizada de 0,99993. SHA-256 do v2 `5d87b61d55fc3608945a303259a7eaf767c25224be6d25adff35ffff6b94f59c`.
+
+Crédito à Câmara dos Deputados / Arquivo Sonoro. [Termos da TV Câmara](https://www.camara.leg.br/tv/termos-de-uso/) e [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). O arquivo v1 fica disponível para versões anteriores do jogo.
 
 ## Haddad
 
@@ -168,15 +169,6 @@ Referência candidata para “Tan na Hora do Jair”: o canal oficial MADERADA B
 
 O sequenciador agora aceita múltiplos arranjos reais por uma sacola de sorteio sem repetição, inclusive evitando repetição na fronteira entre sacolas. Usa um único bus musical, limita a duração das notas à fronteira da faixa e suaviza o volume na transição. No jogo publicado só existe uma opção executável; portanto **a playlist real de três músicas ainda não está entregue**. Os três scores curtos usados no teste automatizado são fixtures de agendamento e não são assets do jogo. Pressão, alertas e falas alteram a mixagem sem reiniciar o motivo ou o relógio musical.
 
-### Joice: trecho integral ainda pendente
+### Reprodução de Joice
 
-`ffprobe` confirmou novamente no arquivo local `joice-toc-toc-v1.mp3`: **5,224490 segundos e 63.052 bytes**. O hash e os bytes do áudio foram preservados. O manifesto registra expressamente `complete:false` e a frase final pretendida. O recorte catalogado termina após “três batidinhas na porta”; ele não é a sequência integral pedida.
-
-Verificações primárias feitas nesta revisão:
-
-- As notas taquigráficas oficiais de 22/06/2022, página 39 (https://escriba.camara.leg.br/escriba-servicosweb/pdf/65858), identificam Joice e continuam o meme com a pergunta de quem está dentro, a resposta e a identificação da Polícia Federal. Isso confirma que o texto da sequência continua após a citação catalogada; não fornece os tempos acústicos do trecho.
-- O evento oficial (https://www.camara.leg.br/evento-legislativo/65858) identifica a intervenção de Joice às 12:41, duração de 5m38s. O arquivo sonoro 552474 está listado em https://imagem.camara.leg.br/internet/audio/Resultado.asp?txtCodigo=552474 .
-- Os termos da TV Câmara, novamente consultados em https://www.camara.leg.br/tv/termos-de-uso/, aplicam CC BY 4.0 ao conteúdo gravado de atividades legislativas; os créditos à Câmara e o contexto original são preservados. Isso não constitui autorização geral para quaisquer outros memes ou músicas.
-- Não foi possível baixar novamente o MP3 original catalogado: o endereço `.gov.br` retornou HTTP 500; a alternativa de mesmo caminho em `.leg.br` terminou em timeout do proxy. Não havia original integral disponível localmente. Portanto **não foram confirmados a duração acústica final, um novo ponto de corte, nem a presença da frase final em um arquivo de release**. Não houve audição humana nesta sessão.
-
-A gravação parcial toca uma vez por evento. Sua conclusão natural não inicia novo player nem repete o arquivo ao entrar na fase ativa; fim/cancelamento do evento, mute, inatividade, foco e derrota param a gravação. Falha tardia da mídia libera o canal e a prioridade. Não há timer interno que corte a voz no meio da fase ativa. Quando uma fonte integral verificável estiver disponível, será necessário medir a duração, conferir o final real, criar novo arquivo/hash e garantir que a janela do evento seja suficiente; não se estendeu o evento com base em uma duração inventada. Nenhuma voz sintética foi usada.
+O clipe toca uma vez por evento e continua durante a recuperação até a frase terminar. A janela da recuperação reserva um segundo para o carregamento. Se o clipe começar mais tarde, o fim natural do evento deixa a gravação concluir. Cancelamento, som desligado, inatividade, perda de foco e derrota interrompem a fala.

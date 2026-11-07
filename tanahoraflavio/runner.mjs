@@ -1,9 +1,9 @@
 import {createVoiceDirector} from './runner-voice-director.mjs?v=088899f48fd6';
-import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=d02047b75eb2";
+import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=067d703c87d1";
 import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=212932eb579d";
-import { createGameAudio } from "./runner-audio.mjs?v=c56c940ee35a";
-import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=e742e2b2daf2";
-import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=345593356f4f";
+import { createGameAudio } from "./runner-audio.mjs?v=c00d5098806e";
+import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=fa9433a61a03";
+import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=a4f0cd479138";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
 
 import {allyById} from './runner-allies.mjs?v=181506ec1b3c';
@@ -162,7 +162,10 @@ function initRunner() {
       $("game-raid-source").href=ARCHIVE_VOICES.joice.source;
       const raidKey=raid.id+":"+raid.phase;
       if(raidKey!==lastRaidKey){audio.event(raid.phase,fact);lastRaidKey=raidKey;}
-    }else if(lastRaidKey){audio.event("end");lastRaidKey="";}
+    }else if(lastRaidKey){
+      audio.event(lastRaidKey.endsWith(":recovery")?"end":"cancelled");
+      lastRaidKey="";
+    }
     $("game-start").disabled=!spritesReady&&!spritesFailed;
     $("game-start").textContent=!spritesReady?(spritesFailed?"Tentar carregar desenhos":"Carregando desenhos · "+loadedSprites+"/"+CORE_SPRITE_SHEET_COUNT):run.status==="ready"?"Começar corrida":run.status==="over"?"Tentar de novo":"Recomeçar corrida";
     $("game-loading-note").hidden=spritesReady;

@@ -21,6 +21,6 @@ test('Joice toca uma vez por evento e retoma uma única fonte após stop ou mute
   assert.equal(f.tracks.length,1);assert.equal(f.tracks[0].loop,false);a.stop();assert.equal(f.tracks[0].paused,true);
   a.event('active',{});assert.equal(f.tracks.length,2);assert.equal(f.tracks[1].loop,false);
   a.toggle();assert.equal(f.tracks[1].paused,true);a.event('active',{});assert.equal(f.tracks.length,2);
-  a.toggle();a.event('active',{});assert.equal(f.tracks.length,3);a.event('recovery',{});assert.equal(f.tracks[2].paused,true);a.stop();
+  a.toggle();a.event('active',{});assert.equal(f.tracks.length,3);a.event('recovery',{});assert.notEqual(f.tracks[2].paused,true);a.event('cancelled');assert.equal(f.tracks[2].paused,true);a.stop();
  });
 });

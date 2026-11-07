@@ -1,4 +1,5 @@
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=181506ec1b3c';
+import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=fa9433a61a03';
 // Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
 export const WORLD = Object.freeze({width:900,height:300,ground:246});
 // Envelope de todas as poses no atlas a .95 de escala, incluindo o agachamento.
@@ -10,6 +11,11 @@ export const SCENE_DISTANCE = 7000; // 7 km efetivos por cenário; 35 km por vol
 export const PASSPORTS_PER_LIFE = 100;
 export const STARTING_LIVES = 1;
 export const RECOVERY_AFTER_EXTRA = 1.2;
+const RAID_WARNING_FOR=1.2,RAID_ACTIVE_FOR=10,RAID_AUDIO_MARGIN_FOR=1;
+// A fala começa no aviso. O retorno reserva seu fim e uma margem de carga,
+// sem alongar os dez segundos de perigos ativos.
+export const RAID_TIMING=Object.freeze({warningFor:RAID_WARNING_FOR,activeFor:RAID_ACTIVE_FOR,audioMarginFor:RAID_AUDIO_MARGIN_FOR,
+ recoveryFor:Math.max(2,(Number(ARCHIVE_VOICES.joice.durationSeconds)||0)+RAID_AUDIO_MARGIN_FOR-RAID_WARNING_FOR-RAID_ACTIVE_FOR)});
 export const STAGES = Object.freeze([
  {id:'brasilia',name:'Brasília',short:'Brasília',sky:'#e5f2ff',ink:'#456b85',accent:'#52889c',ground:'#cbdcc1'},
  {id:'rio',name:'Rio de Janeiro',short:'Rio',sky:'#dff7fa',ink:'#287b82',accent:'#238e85',ground:'#e4d7a9'},
@@ -340,8 +346,8 @@ function advanceRaid(run,dt,rng){
  if(run.raid){
   const raid=run.raid;raid.remaining=Math.max(0,raid.remaining-dt);
   if(raid.remaining<=1e-8){
-   if(raid.phase==='warning'){raid.phase='active';raid.remaining=10;announce(run,'Toc, toc, toc… é a Polícia Federal! Pule a PF e abaixe dos microfones por dez segundos.');}
-   else if(raid.phase==='active'){raid.phase='recovery';raid.remaining=2;announce(run,'A perseguição especial terminou. O ritmo normal está voltando.');}
+   if(raid.phase==='warning'){raid.phase='active';raid.remaining=RAID_TIMING.activeFor;announce(run,'Toc, toc, toc… é a Polícia Federal! Pule a PF e abaixe dos microfones por dez segundos.');}
+   else if(raid.phase==='active'){raid.phase='recovery';raid.recoveryFor=raid.recoveryFor||RAID_TIMING.recoveryFor;raid.remaining=raid.recoveryFor;announce(run,'A perseguição especial terminou. O ritmo normal está voltando.');}
    else{run.raid=null;run.nextRaid=26+random(rng)*10;run.bossCooldown=Math.max(2.5,run.bossCooldown);}
   }return;
  }
@@ -350,7 +356,7 @@ function advanceRaid(run,dt,rng){
  if(run.nextRaid<=0){
   const choices=RAID_FACTS.map((_,i)=>i).filter(i=>i!==run.lastFact);
   const factIndex=choices[Math.floor(random(rng)*choices.length)];run.lastFact=factIndex;
-  run.raid={phase:'warning',remaining:1.2,factIndex,id:++run.raids,waves:0};
+  run.raid={phase:'warning',remaining:RAID_TIMING.warningFor,recoveryFor:RAID_TIMING.recoveryFor,factIndex,id:++run.raids,waves:0};
   announce(run,'Joice apareceu. Atenção: vem aí uma perseguição especial da PF.');
  }
 }
@@ -495,7 +501,7 @@ export function advanceRun(run,seconds,rng){
    run.attackStyles.push(anchor.approach||'overhead');
    if(run.attackStyles.length>16)run.attackStyles.shift();
    const gap=raidActive ? .98-.08*balance.pressure:run.raid?.phase==='recovery'?
-    (.98-.08*balance.pressure)+(balance.obstacleGap-.98+.08*balance.pressure)*(1-run.raid.remaining/2):balance.obstacleGap;
+    (.98-.08*balance.pressure)+(balance.obstacleGap-.98+.08*balance.pressure)*Math.max(0,Math.min(1,1-run.raid.remaining/(run.raid.recoveryFor||RAID_TIMING.recoveryFor))):balance.obstacleGap;
    // Microvariação de intervalo aumenta a incerteza sem criar colisões inevitáveis.
    // A aproximação de cada perigo ainda passa pelo limitador de 0,82 s.
    run.nextObstacle+=gap+(raidActive?random(rng)*.04:random(rng)*(.16+.06*(1-balance.pressure)));
