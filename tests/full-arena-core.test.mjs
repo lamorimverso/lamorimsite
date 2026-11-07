@@ -118,9 +118,12 @@ test('projétil aguardando disparo usa a posição real ao começar o voo',()=>{
 test('jacaré termina o minigame antes de iniciar outro encontro pendente',()=>{
  for(const kind of ['boss','raid']){
   const r=isolated();transform(r);r.routeDistance=23000;if(kind==='boss')r.nextBossAt=0;else r.nextRaid=0;
+  r.shieldFor=Infinity;
   step(r,.2);assert.equal(r.boss,null);assert.equal(r.raid,null);
-  for(let i=0;i<5;i++)core.jumpRun(r);step(r,.1);
-  assert.ok(kind==='boss'?r.boss:r.raid,'encontro vencido no relógio continua pendente após restaurar');
+  step(r,9.7);assert.equal(r.player.isJacare,true,'encontro espera terminar os dez segundos');
+  step(r,.2);
+  assert.equal(r.player.isJacare,false,'restauração automática');
+  assert.ok(kind==='boss'?r.boss:r.raid,'encontro pendente inicia após o relógio do jacaré');
  }
 });
 
