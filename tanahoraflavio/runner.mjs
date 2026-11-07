@@ -1,6 +1,6 @@
 import {createVoiceDirector} from './runner-voice-director.mjs?v=088899f48fd6';
-import { WORLD, PLAYER, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=067d703c87d1";
-import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=212932eb579d";
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=jacare10-20261107";
+import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=jacare10-20261107";
 import { createGameAudio } from "./runner-audio.mjs?v=c00d5098806e";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=fa9433a61a03";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=a4f0cd479138";
@@ -56,7 +56,6 @@ function initRunner() {
   let run=createRun({assisted:preferences.assisted}),frameId=0;
   run.supportAvailable=false;
   const trackPointers=new Map(),moveKeys=new Set(),jumpKeys=createPressGate(),crouchSources=createHeldSources();
-  const recoverySteps=[...document.querySelectorAll('#game-jacare-progress .game-recovery-step')];
   const frameClock=createFrameClock(performance.now());
   let spritesReady=false,spritesFailed=false,loadedSprites=0,loadingSprites=false,landingUntil=0;
   let supportReady=false,supportLoading=false,supportFailed=false;
@@ -89,7 +88,7 @@ function initRunner() {
   function dodgeHint(){
     const hit=run.lastHit;if(!hit)return "Observe os perigos e tente novamente.";
     const names={stamp:'Carimbo TAXA',wind:"Vento",microphone:"Microfone","paper-gate":"Papéis",popcorn:"Pipoca",hammer:"Martelo",mandado:"Mandado",receipts:"Papéis",lhand:"Mão em L"};
-    if(hit.action==="move")return "Mala em queda: saia do alvo no chão com ←/→ ou deslize lateral.";
+    if(hit.action==="move")return hit.type==="pfizer-ampoule"?"Ampola cenográfica da Pfizer: desvie lateralmente para sair do alvo.":"Mala em queda: saia do alvo no chão com ←/→ ou deslize lateral.";
     if(hit.action==="crouch")return (names[hit.type]||"Ataque")+" no alto: abaixe para desviar.";
     return (names[hit.type]||"Perigo")+" baixo: sincronize o salto para desviar.";
   }
@@ -126,13 +125,13 @@ function initRunner() {
     section.dataset.art=spritesReady?"loaded":spritesFailed?"error":"loading";
     const power=run.shieldFor>0?"shield":run.graceFor>0?"recovery":"none";
     section.dataset.power=run.player.isJacare?"jacare":power;section.dataset.ammo="none";
-    $("game-power").textContent=run.player.isJacare?"↑ "+(run.player.jacareProgress||0)+"/5":power==="shield"?"Escudo das Américas · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo";
-    const recovery=$("game-jacare-progress"),progress=run.player.jacareProgress||0;
+    const remainingJacareSeconds=Math.max(0,Math.ceil(JACARE_DURATION_SECONDS-run.player.jacareAge));
+    $("game-power").textContent=run.player.isJacare?"Jacaré · "+remainingJacareSeconds+" s":power==="shield"?"Escudo das Américas · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo";
+    const recovery=$("game-jacare-progress");
     if(recovery){
       recovery.hidden=run.status!=="running"||!run.player.isJacare;
-      recovery.setAttribute("aria-valuenow",String(progress));
-      recovery.setAttribute("aria-valuetext",progress+" de 5 comandos para recuperar a forma humana");
-      recoverySteps.forEach((step,i)=>step.classList.toggle("is-complete",i<progress));
+      $("game-jacare-seconds").textContent=remainingJacareSeconds+" s";
+      recovery.setAttribute("aria-label","Jacaré: "+remainingJacareSeconds+" segundos restantes; desvie lateralmente das ampolas");
     }
     $("game-ammo").parentElement.hidden=true;
     $("game-boss").hidden=run.status!=="running"||!run.boss;section.dataset.boss=run.boss?.type||"none";
@@ -212,7 +211,7 @@ function initRunner() {
     frameId=0;if(run.status!=="running")return;
     const timing=advanceFrameClock(frameClock,now),wasAirborne=run.player.y>0;
     const before={lives:run.lives,collected:run.collected,boss:run.boss?.type,
-      passports:run.passports,spawned:run.spawnedObstacles,attacks:run.boss?.fired||0};
+      passports:run.passports,spawned:run.spawnedObstacles,attacks:run.boss?.fired||0,jacare:run.player.isJacare};
     let bufferedTakeoff=false;
     for(let i=0;i<timing.steps&&run.status==="running";i++){
       const pending=run.player.jumpBufferedUntil>0&&run.player.velocity<=0;
@@ -222,6 +221,7 @@ function initRunner() {
     if(wasAirborne&&run.player.y===0)landingUntil=run.elapsed+.12;
     updateUI();
     if(run.lives<before.lives)audio.effect("hit");
+    else if(before.jacare&&!run.player.isJacare)audio.effect("restore");
     else if(before.boss&&!run.boss)audio.effect("victory");
     else if(!before.boss&&run.boss){audio.effect("boss");voices.event("boss",run);}
     else if(run.boss&&run.boss.fired>before.attacks)audio.effect(run.obstacles.at(-1)?.falling?"drop":run.obstacles.at(-1)?.action==="crouch"?"high":"attack");
@@ -284,10 +284,7 @@ function initRunner() {
   function jump(){
     resumeFromGesture();
     if(["ready","over"].includes(run.status))begin();
-    const wasJacare=run.player.isJacare;
     if(jumpRun(run)){audio.effect("jump");draw();}
-    else if(wasJacare&&!run.player.isJacare){audio.effect("restore");updateUI();draw();}
-    else if(wasJacare){updateUI();draw();}
   }
   function crouch(active){
     if(crouchRun(run,active)){draw();}
