@@ -317,14 +317,57 @@ const ENEMY_WEAPONS=Object.freeze({
 export function enemyWeaponFor(type){return ENEMY_WEAPONS[type]||null;}
 export function drawEnemyActor(c,{type,x=0,y=0,scale=1,phase=0,preparing=false,attacking=false,hurt=false,reducedMotion=false,weapon=null}={}){
  c.save();c.translate(x,y);
- const bob=reducedMotion?0:Math.sin(phase*.25)*2;
+ const bob=reducedMotion||attacking?0:Math.sin(phase*.25)*1.5;
  c.translate(0,bob);
  if(type==='meme-army')drawMemeArmy(c,{phase,reducedMotion,scale});
  else drawActor(c,{type,x:0,y:0,scale,phase:0,preparing,attacking,hurt});
- const prop=weapon||enemyWeaponFor(type);
- // O ícone acompanha o ator, sem ocupar a pista como obstáculo invisível.
- if(prop){c.save();c.translate(-29*scale,-37*scale);c.scale(scale*.76,scale*.76);
-  drawThreat(c,{type:prop,x:-20,width:40,height:38,action:'jump'},0,phase,{reducedMotion});c.restore();}
+ // Nenhum objeto de ataque é desenhado no corpo. A preparação é uma pose,
+ // e o disparo existe somente na lista de projéteis do motor.
+ if(preparing||attacking){
+  c.save();c.translate(-24*scale,-48*scale);
+  const radius=attacking?10:5+Math.abs(Math.sin(reducedMotion?0:phase*.3))*3;
+  oval(c,0,0,radius,radius,attacking?'#fff5d0':'#f6d38b','#8b503f',1.5);
+  if(attacking)for(let i=0;i<5;i++){const a=i*Math.PI*2/5;line(c,[[Math.cos(a)*11,Math.sin(a)*11],[Math.cos(a)*17,Math.sin(a)*17]],'#d68a48',2);}
+  c.restore();
+ }
+ c.restore();
+}
+// Camada de voo independente: rastro atrás do ataque, orientação e
+// escala ancoradas na posição física. Sem cópia do objeto no inimigo.
+export function drawProjectile(c,item,ground,phase,{reducedMotion=false}={}){
+ const x=item.x+item.width/2,y=ground-item.y;
+ const style=item.flightStyle||'glide',color=WEAPON_FX[item.type]||'#70c7df';
+ c.save();
+ // Espera reservada pelo motor é antecipação, não um projétil parado.
+ if(item.waitFor>0&&!item.launched){
+  c.globalAlpha*=.75;
+  oval(c,x,y,7,7,'#fff6dc',color,2);
+  for(let i=0;i<3;i++)line(c,[[x+10+i*5,y-5],[x+13+i*5,y+5]],color,1.5);
+  c.restore();return;
+ }
+ const travel=Math.max(0,(item.launchX??x)-x);
+ const trail=Math.min(travel,style==='wind'?70:style==='paper'?46:style==='metal'?34:style==='ghost'?54:42);
+ if(trail>2){
+  c.globalAlpha*=.72;
+  for(let i=0;i<3;i++){
+   const dy=(i-1)*item.height*.22,w=i===1?3:1.7;
+   c.beginPath();c.moveTo(x+item.width*.22,y+dy);
+   c.quadraticCurveTo(x+trail*.55,y+dy+(reducedMotion?0:Math.sin(phase*.24+i)*4),x+trail,y+dy*.5);
+   c.strokeStyle=color;c.lineWidth=w;c.stroke();
+  }
+  if(style==='wind'||style==='paper'||style==='ghost')for(let i=0;i<4;i++){
+   const q=(i+1)/5,yy=y+Math.sin(i*2.1+(reducedMotion?0:phase*.18))*item.height*.28;
+   oval(c,x+trail*q,yy,2.5*(1-q)+1,1.5,color,null);
+  }
+  c.globalAlpha/=.72;
+ }
+ // Pequenos movimentos de rotação só no corpo do objeto; o centro da
+ // ameaça permanece sincronizado à colisão. O modo reduzido é estável.
+ c.translate(x,y);
+ const tilt=reducedMotion?0:style==='metal'?Math.sin(phase*.3)*.14:
+  style==='paper'?Math.sin(phase*.22)*.12:style==='fall'?Math.sin(phase*.11)*.09:0;
+ c.rotate(tilt);c.translate(-x,-y);
+ drawThreat(c,item,y+item.height/2,phase,{reducedMotion});
  c.restore();
 }
 export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
@@ -376,6 +419,7 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
  else if(item.type==='budget-sheets'){
   // Simone: planilhas de orçamento soltas.
   c.save();c.rotate(-.08+(reducedMotion?0:Math.sin(phase*.12)*.18));
+  c.save();c.translate(3,-4);c.rotate(.20+(reducedMotion?0:Math.sin(phase*.17)*.09));box(c,-18,-32,29,30,'#d8eced',2,'#587c8b');c.restore();
   box(c,-20,-40,25,38,'#fff7df',2,'#476b7f');
   line(c,[[-15,-34],[-1,-34]],'#527c93',1.5);
   for(let i=0;i<3;i++)line(c,[[-15,-26+i*7],[-2,-26+i*7]],'#8cacae',1);
@@ -443,7 +487,7 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
   c.lineTo(18,-19);c.quadraticCurveTo(25,-19,25,-12);
   c.quadraticCurveTo(24,-6,16,-7);c.lineTo(8,-7);
   c.lineTo(8,-1);c.quadraticCurveTo(-3,5,-16,-2);c.closePath();
-  c.fillStyle='#efb382';c.fill();c.strokeStyle='#63372e';c.lineWidth=2.4;c.stroke();
+  c.fillStyle='#efb382';c.fill();c.strokeStyle='#fff1bb';c.lineWidth=5;c.stroke();c.strokeStyle='#63372e';c.lineWidth=2.4;c.stroke();
   path(c,[[-14,-15],[-7,-11],[-5,-2],[-15,-3]],'#c98760',null);
   line(c,[[-3,-39],[-3,-23]],'#ffe1b6',2.5);
   line(c,[[10,-15],[20,-15]],'#ffe1b6',2.2);
@@ -455,14 +499,8 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
   const movement=enemyMotionFor(item.type,reducedMotion?0:phase,x);
   c.translate(0,movement.bob);c.rotate(movement.lean);
   // O inimigo paira sem ciclar os quadros de corrida do sprite.
-  // O corpo e o acessório ficam juntos: a arma não é uma segunda colisão.
+  // Perseguidores também ficam livres de miniaturas de projéteis.
   drawActor(c,{type:item.type,x:0,y:0,scale:item.height/94,phase:0});
-  const prop=enemyWeaponFor(item.type);
-  if(prop){
-   c.save();c.translate(item.width*.12,-item.height*.12);c.scale(.32,.32);
-   drawThreat(c,{type:prop,x:-20,width:40,height:38,action:'jump',owner:item.type},0,phase,{reducedMotion});
-   c.restore();
-  }
  }
  drawWeaponEffects(c,item,phase,reducedMotion);
  c.restore();

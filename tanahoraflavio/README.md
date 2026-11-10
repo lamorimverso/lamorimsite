@@ -175,3 +175,7 @@ A primeira aparição de um inimigo desbloqueado tem prioridade frente à repeti
 - O Fantasma do Comunismo tem desenho próprio, chapéu vermelho, emblema dourado e pernas suspensas. É a figura dominante do sexto confronto, com Bossonari como lançador auxiliar. A chave interna bossonari e os 14 ataques permanecem para preservar a história e a urna. A arte é interpretação vetorial, não reprodução exata da imagem original.
 
 A referência visual original foi revisitada: o fantasma é uma silhueta surreal de chapéu vermelho de três pontas, emblema dourado, pernas diagonais e sapatos de salto, sem rosto de fantasma genérico. O sexto confronto alterna os frascos de Bossonari e investidas aéreas do próprio fantasma, com 14 ataques e o mesmo final da urna. Foram adicionados adereços secundários de cenário em perspectiva, sem colisão.
+
+## Combate: projéteis independentes — 10/11/2026
+
+O sprite de cada inimigo não desenha mais uma cópia de sua arma. Chefões e coadjuvantes têm origem de lançamento separada, antecipação mínima de 180 ms e efeitos de preparação; cada ataque é desenhado exclusivamente a partir da entidade física. Curvas de voo variam por família e convergem à altura anunciada antes do contato. Rastros, rotação discreta e partículas seguem o projétil; cenário e personagens mantêm suas próprias posições. O modo de efeitos reduzidos permanece disponível.

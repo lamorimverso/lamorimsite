@@ -1,6 +1,6 @@
 import {createVoiceDirector} from './runner-voice-director.mjs?v=088899f48fd6';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=817235b5b191";
-import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=ba36a38aabec";
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=761adcbcdd63";
+import { drawActor, drawItem, drawThreat, drawProjectile, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=e3ae6a9ab3d8";
 import { createGameAudio } from "./runner-audio.mjs?v=b63783dad9b7";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=fa9433a61a03";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=8970d7d6092a";
@@ -486,16 +486,19 @@ function initRunner() {
     const b=run.boss;if(!b)return;
     const phase=run.elapsed*9;
     // Chefões pairam e atacam de uma posição fixa, sem alternar passos.
-    const bossX=virtualWidth-80,bossY=WORLD.ground-12;
-    const motion=enemyMotionFor(b.type,prefersReducedMotion()?0:phase,bossX);
+    const bossX=virtualWidth-68,bossY=WORLD.ground-32;
+    const motion=enemyMotionFor(b.type,prefersReducedMotion()||b.attackFlashFor>0?0:phase,bossX);
+    const pending=run.obstacles.find(o=>o.bossAttack&&o.waitFor>0&&!o.launched);
+    const preparing=!!pending||(b.nextAttack<.55&&b.fired<b.total);
+    const attacking=b.attackFlashFor>0&&!pending;
     ctx.save();ctx.translate(bossX,bossY+motion.bob);
     if(b.type==="bossonari"){
-      drawComunismoGhostBoss(ctx,{x:-21,y:-7,phase,preparing:b.nextAttack<.55&&b.fired<b.total&&bossCue().type==="meme-ghost",attacking:b.attackFlashFor>0&&b.lastAction==="crouch",reducedMotion:prefersReducedMotion()});
+      drawComunismoGhostBoss(ctx,{x:-18,y:-7,phase,scale:.88,preparing:preparing&&(pending?.type||b.plannedAttack?.type)==="meme-ghost",attacking:attacking&&b.lastWeapon==="meme-ghost",reducedMotion:prefersReducedMotion()});
       // Bossonari permanece como o lançador de frascos da batalha.
-      ctx.save();ctx.translate(-118,0);ctx.scale(.62,.62);
-      drawBossOfBosses(ctx,{phase,preparing:b.nextAttack<.55&&b.fired<b.total,attacking:b.attackFlashFor>0,reducedMotion:prefersReducedMotion()});ctx.restore();
+      ctx.save();ctx.translate(38,-76);ctx.scale(.48,.48);
+      drawBossOfBosses(ctx,{phase,preparing:preparing&&(pending?.type||b.plannedAttack?.type)!=="meme-ghost",attacking:attacking&&b.lastWeapon!=="meme-ghost",reducedMotion:prefersReducedMotion()});ctx.restore();
     }else{
-      drawEnemyActor(ctx,{type:b.type,x:0,y:0,scale:1.42,phase,preparing:b.nextAttack<.55&&b.fired<b.total,attacking:b.attackFlashFor>0,hurt:b.hitFlashFor>0,weapon:bossCue().type,reducedMotion:prefersReducedMotion()});
+      drawEnemyActor(ctx,{type:b.type,x:0,y:0,scale:1.42,phase,preparing,attacking,hurt:b.hitFlashFor>0,reducedMotion:prefersReducedMotion()});
     }
     ctx.restore();
     if(b.nextAttack<.65&&b.fired<b.total&&!run.obstacles.some(o=>o.bossAttack&&!o.counted)){
@@ -617,10 +620,7 @@ function initRunner() {
       ctx.fillText("→ !",12,WORLD.ground-96);ctx.restore();
     }
     if(item.projectile){
-      // O rastro confirma visualmente que o ataque parte do chefão rumo ao jogador.
-      const y=WORLD.ground-item.y;
-      line([[item.x+item.width*.78,y-2],[item.x+item.width+22,y-7]],"#bd526e",3);
-      drawThreat(ctx,item,y+item.height/2,run.elapsed*10,{reducedMotion:prefersReducedMotion()});
+      drawProjectile(ctx,item,WORLD.ground,run.elapsed*10,{reducedMotion:prefersReducedMotion()});
     }else drawThreat(ctx,item,WORLD.ground,run.elapsed*10,{reducedMotion:prefersReducedMotion()});
   }
   function pickup(item){
@@ -646,9 +646,10 @@ function initRunner() {
     joiceFigure();
     drawSupport();
     if(run.cameo&&!run.boss&&!run.raid){
-      const actor=run.cameo.type;
-      if(actor==="meme-army")drawMemeArmy(ctx,{x:virtualWidth-70,y:WORLD.ground-29,phase:run.elapsed*5,scale:1.36,reducedMotion:prefersReducedMotion()});
-      else drawEnemyActor(ctx,{type:actor,x:virtualWidth-60,y:WORLD.ground-14,scale:1.12,phase:run.elapsed*10,reducedMotion:prefersReducedMotion()});
+      const actor=run.cameo.type,shot=run.obstacles.find(o=>o.sourceActor===actor&&!o.passed);
+      const preparing=!!shot&&shot.waitFor>0&&!shot.launched;
+      const attacking=!!shot&&shot.launched&&(shot.launchX-shot.x-shot.width/2)<40;
+      drawEnemyActor(ctx,{type:actor,x:virtualWidth-58,y:WORLD.ground-40,scale:actor==="meme-army"?1.36:1.12,phase:run.elapsed*10,preparing,attacking,reducedMotion:prefersReducedMotion()});
     }
     for(const item of run.pickups)pickup(item);
     for(const item of run.obstacles)obstacle(item);
