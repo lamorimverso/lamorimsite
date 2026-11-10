@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import {drawThreat} from '../tanahoraflavio/runner-art.mjs';
 
 function fakeCanvas(){
- const calls={rectangles:[],scales:[],labels:[],lines:0};
- const ctx={save(){},restore(){},translate(){},rotate(){},beginPath(){},ellipse(){},
-  fill(){},stroke(){},closePath(){},moveTo(){},lineTo(){calls.lines++;},bezierCurveTo(){},
-  quadraticCurveTo(){},fillText(value){calls.labels.push(value);},
+ const calls={rectangles:[],scales:[],labels:[],lines:0,geometry:[]};
+ const ctx={save(){},restore(){},translate(){},rotate(){},beginPath(){},ellipse(...v){calls.geometry.push(['ellipse',...v]);},
+  fill(){},stroke(){},closePath(){},moveTo(...v){calls.geometry.push(['move',...v]);},lineTo(...v){calls.lines++;calls.geometry.push(['line',...v]);},bezierCurveTo(...v){calls.geometry.push(['bezier',...v]);},
+  quadraticCurveTo(...v){calls.geometry.push(['quadratic',...v]);},fillText(value){calls.labels.push(value);},
   roundRect(x,y,width,height){calls.rectangles.push({x,y,width,height});},
   scale(x,y){calls.scales.push({x,y});}};
  return {ctx,calls};
@@ -24,7 +24,7 @@ test('coadjuvantes têm objetos visualmente distintos, sem fundo genérico',()=>
  for(const type of ['wind','budget-sheets','parachute-cross','handcuffs']){
   const {ctx,calls}=fakeCanvas();
   drawThreat(ctx,{x:200,width:46,height:72,type,action:'crouch'},246,0,{reducedMotion:true});
-  appearances.push([calls.rectangles.length,calls.lines,calls.labels.join('/')].join('|'));
+  appearances.push(JSON.stringify({rectangles:calls.rectangles,geometry:calls.geometry,labels:calls.labels}));
  }
  assert.equal(new Set(appearances).size,4,'objeto diferente para cada personagem');
 });
