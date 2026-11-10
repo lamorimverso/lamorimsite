@@ -157,25 +157,6 @@ function threatMotion(run,x,seconds,visibleX=x){
  // O tempo extra vira antecipação visível, sem alongar a travessia física.
  return {speed,waitFor:Math.max(0,(x-frontContact(run))/requested-(x-frontContact(run))/speed)};
 }
-// A origem física pertence ao projétil, nunca ao sprite do personagem.
-// Mantém distância mínima do jogador mesmo junto à borda direita.
-export function projectileOrigin(run,width=46){
- const x=Math.max(visibleWidth(run)-202-width/2,frontContact(run)+60);
- return x;
-}
-function launchedMotion(run,x,seconds){
- const motion=threatMotion(run,x,seconds);
- return {...motion,waitFor:Math.max(.18,motion.waitFor)};
-}
-// Curvas distintas na primeira parte do voo, convergindo à altura de
-// esquiva antes do contato. A própria posição física é renderizada.
-export function projectileHeightAt(item,progress){
- const p=Math.max(0,Math.min(1,progress)),base=item.launchY+(item.targetY-item.launchY)*p;
- if(!item.flightStyle)return base;
- const envelope=p<.6?Math.sin(Math.PI*p/.6):0;
- const variation={wind:9,paper:12,metal:19,glide:6,fall:14,ghost:10}[item.flightStyle]||0;
- return base+variation*envelope;
-}
 export function projectileStyle(type){
  return ({wind:'wind','budget-sheets':'paper',receipts:'paper','paper-gate':'paper',mandado:'paper',
  hammer:'metal',handcuffs:'metal',barrier:'metal',stamp:'metal','parachute-cross':'fall',
@@ -466,12 +447,12 @@ function advanceBoss(run,dt,rng,balance){
  const [width,baseHeight]=({hammer:[46,44],mandado:[42,44],
   lhand:[60,46],receipts:[44,40],stamp:[44,36],message:[44,36],microphone:[46,40],handcuffs:[46,40],barrier:[44,32],'cloroquina-prop':[52,38],'ivermectina-prop':[52,38],'meme-ghost':[52,44]})[attackType];
  const height=pattern.action==='crouch'?84:baseHeight;
- const x=projectileOrigin(run,width);
+ const x=Math.max(visibleWidth(run)-104,frontContact(run)+60);
  const entry=pattern.approach||'diagonal';
  const fromY=entry==='drop'?155:pattern.action==='jump'?77:90;
  const toY=pattern.action==='jump'?(entry==='drop'?22:PLAYER.height/2):90;
  attack={x,width,height,type:attackType,action:pattern.action,owner:boss.type,bossAttack:true,counted:false,
-  approach:entry,flightStyle:projectileStyle(attackType),...launchedMotion(run,x,balance.bossApproach),
+  approach:entry,flightStyle:projectileStyle(attackType),...threatMotion(run,x,balance.bossApproach),
   projectile:true,launchX:x+width/2,targetX:playerX(run)+PLAYER.width/2,
   launchY:fromY,targetY:toY,y:fromY};
  run.obstacles.push(attack);
@@ -575,6 +556,7 @@ export function advanceRun(run,seconds,rng){
   // evita arcos altos involuntários após uma esquiva lateral obrigatória.
   if(obstacle.projectile&&activeDelta>0){
    if(!obstacle.launched&&waiting>0)obstacle.targetX=playerX(run)+PLAYER.width/2;
+   if(!obstacle.launched&&obstacle.bossAttack&&run.boss){run.boss.attackFlashFor=.26;run.boss.lastWeapon=obstacle.type;}
    obstacle.launched=true;
   }
   obstacle.waitFor=Math.max(0,waiting-dt);
@@ -583,7 +565,7 @@ export function advanceRun(run,seconds,rng){
    const landingX=obstacle.targetX+PLAYER.width/2-6+obstacle.width/2;
    const span=Math.max(1,obstacle.launchX-landingX);
    const progress=Math.max(0,Math.min(1,(obstacle.launchX-(obstacle.x+obstacle.width/2))/span));
-   obstacle.y=projectileHeightAt(obstacle,progress);
+   obstacle.y=obstacle.launchY+(obstacle.targetY-obstacle.launchY)*progress;
   }
   const left=playerX(run)+(run.player.isJacare?-15:5),right=playerX(run)+(run.player.isJacare?PLAYER.width+17:PLAYER.width-3);
   if(obstacle.speed>0&&obstacle.x+obstacle.width-3<=left||obstacle.speed<0&&obstacle.x+3>=right)obstacle.passed=true;
@@ -638,11 +620,9 @@ export function advanceRun(run,seconds,rng){
      run.lastOverheadActor=type;run.overheadCount++;
     }
     const attackType={dilma:'wind',simone:'budget-sheets',soraya:'parachute-cross','meme-army':'meme-ghost',joice:'handcuffs'}[type];
-    const origin=projectileOrigin(run,46),launchY=type==='soraya'?118:84;
-    anchor={x:origin,width:46,height:72,type:attackType,action,sourceActor:type,projectile:true,
-     flightStyle:projectileStyle(attackType),launchX:origin+23,targetX:playerX(run)+17,
-     launchY,targetY:84,y:launchY,...launchedMotion(run,origin,approach)};
-    if(!raidActive)run.cameo={type,remaining:Math.max(1.4,anchor.waitFor+.5)};
+    anchor={x,width:46,height:72,type:attackType,action,sourceActor:type,projectile:true,
+     flightStyle:projectileStyle(attackType),launchX:x+23,targetX:playerX(run)+17,launchY:84,targetY:84,y:84,...threatMotion(run,x,approach,visibleWidth(run))};
+    if(!raidActive)run.cameo={type,remaining:1.4};
    }else{
     const selected=raidActive?foeFor('pf'):pursuitAt(routeClock(run),rng,balance.level,run.seenGroundActors,run.lastGroundActor);
     const foe=run.supportAvailable===false&&['boulos','dino'].includes(selected.type)?foeFor('pf'):selected;
@@ -661,7 +641,7 @@ export function advanceRun(run,seconds,rng){
     }else if(falling){
      anchor={x,width:36,height:36,type:'falling-case',action:'jump',approach:'drop',
       ...threatMotion(run,x,approach,visibleWidth(run)),projectile:true,
-      launchX:x+18,targetX:playerX(run)+17,launchY:160,targetY:24,y:160};
+      flightStyle:'fall',launchX:x+18,targetX:playerX(run)+17,launchY:160,targetY:24,y:160};
     }else{
      const type=rolling?'rolling-case':popcorn?'popcorn':foe.type;
      anchor={x,width:rolling?40:popcorn?40:foe.width,

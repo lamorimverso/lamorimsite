@@ -334,6 +334,12 @@ export function drawEnemyActor(c,{type,x=0,y=0,scale=1,phase=0,preparing=false,a
 }
 // Camada de voo independente: rastro atrás do ataque, orientação e
 // escala ancoradas na posição física. Sem cópia do objeto no inimigo.
+// Posição do emissor acima da pista. O desenho nunca contém a arma
+// perigosa; o motor mantém sua origem e seu tempo de contato originais.
+export function enemyEmitterPose(width,ground,type,drop=false){
+ if(type==='bossonari')return {x:width-160,y:ground-126,scale:.68};
+ return {x:width-(drop?155:62),y:ground-149,scale:.92};
+}
 export function drawProjectile(c,item,ground,phase,{reducedMotion=false}={}){
  const x=item.x+item.width/2,y=ground-item.y;
  const style=item.flightStyle||'glide',color=WEAPON_FX[item.type]||'#70c7df';

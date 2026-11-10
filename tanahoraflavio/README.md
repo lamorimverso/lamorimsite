@@ -178,4 +178,4 @@ A referência visual original foi revisitada: o fantasma é uma silhueta surreal
 
 ## Combate: projéteis independentes — 10/11/2026
 
-O sprite de cada inimigo não desenha mais uma cópia de sua arma. Chefões e coadjuvantes têm origem de lançamento separada, antecipação mínima de 180 ms e efeitos de preparação; cada ataque é desenhado exclusivamente a partir da entidade física. Curvas de voo variam por família e convergem à altura anunciada antes do contato. Rastros, rotação discreta e partículas seguem o projétil; cenário e personagens mantêm suas próprias posições. O modo de efeitos reduzidos permanece disponível.
+O sprite de cada inimigo não desenha mais uma cópia de sua arma. Chefões e coadjuvantes ficam em uma camada elevada, com antecipação existente e efeitos de preparação; cada ataque é desenhado exclusivamente a partir da entidade física. A origem física, velocidades, janelas de esquiva e colisões da versão estável foram preservadas após a primeira tentativa detectar regressões. Rastros, rotação discreta e partículas variam por família; o modo de efeitos reduzidos permanece disponível.
