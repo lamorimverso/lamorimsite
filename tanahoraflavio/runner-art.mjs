@@ -455,7 +455,14 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
   const movement=enemyMotionFor(item.type,reducedMotion?0:phase,x);
   c.translate(0,movement.bob);c.rotate(movement.lean);
   // O inimigo paira sem ciclar os quadros de corrida do sprite.
+  // O corpo e o acessório ficam juntos: a arma não é uma segunda colisão.
   drawActor(c,{type:item.type,x:0,y:0,scale:item.height/94,phase:0});
+  const prop=enemyWeaponFor(item.type);
+  if(prop){
+   c.save();c.translate(item.width*.12,-item.height*.12);c.scale(.32,.32);
+   drawThreat(c,{type:prop,x:-20,width:40,height:38,action:'jump',owner:item.type},0,phase,{reducedMotion});
+   c.restore();
+  }
  }
  drawWeaponEffects(c,item,phase,reducedMotion);
  c.restore();

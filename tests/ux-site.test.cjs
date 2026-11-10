@@ -516,3 +516,32 @@ test('urna 22 mostra prisão e recomeça História automaticamente',async()=>{
   assert.equal(await page.locator('#game-ballot').isVisible(),false);assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
+
+test('chefão final redesenhado aparece com investida do fantasma em celular e desktop',async()=>{
+ for(const viewport of [{width:390,height:844},{width:900,height:720}]){
+  const {context,page,errors}=await open({instrument:true,viewport,init:()=>{
+   const labels=[];globalThis.__drawnBossLabels=labels;
+   const orig=CanvasRenderingContext2D.prototype.fillText;
+   CanvasRenderingContext2D.prototype.fillText=function(value,...args){
+    if(String(value).includes('FANTASMA DO COMUNISMO'))labels.push(String(value));
+    return orig.call(this,value,...args);
+   };
+  }});
+  try{
+   await page.locator('#game-mode-story').check();await begin(page);
+   await page.evaluate(()=>{
+    const r=__testRun;r.bossesDefeated=5;r.distance=r.routeDistance=57000;r.nextRaid=r.nextObstacle=Infinity;
+    r.nextBossAt=0;r.shieldFor=Infinity;
+   });
+   await page.waitForFunction(()=>document.getElementById('game').dataset.boss==='bossonari');
+   await page.waitForFunction(()=>globalThis.__drawnBossLabels.length>0);
+   await page.evaluate(()=>{
+    const r=__testRun;r.boss.fired=3;r.boss.plannedFor=3;
+    r.boss.plannedAttack={type:'meme-ghost',action:'crouch',approach:'sweep'};
+    r.boss.nextAttack=0;
+   });
+   await page.waitForFunction(()=>__testRun.obstacles.some(o=>o.type==='meme-ghost'&&o.bossAttack));
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ }
+});
