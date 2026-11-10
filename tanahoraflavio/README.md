@@ -167,3 +167,9 @@ A primeira aparição de um inimigo desbloqueado tem prioridade frente à repeti
 - Haddad projeta recibos com folhas, carimbos e rastros; Lula lança gestos com pulsos de energia; Xandão anima martelos e mandados com faíscas; Janones tem ondas de notificação; Exército de Memes mostra partículas fantasmagóricas; Bossonari possui frascos satíricos com brilhos.
 - Cada ataque associa **nome próprio e comando de esquiva real** (pular, abaixar ou sair do alvo). O painel do chefão indica a arma e o progresso; os eventos comuns usam a instrução quando o perigo se aproxima.
 - A geometria dos ataques, hitboxes, áreas de queda, controles, velocidade e ordem dos chefões foram preservados. Efeitos são cosméticos e seguem a configuração de movimento reduzido.
+
+## Revisão de arte e legibilidade — 10/11/2026
+
+- Referências: Riot Games, [Clarity in League](https://www.leagueoflegends.com/en-us/news/dev/clarity-in-league/); Valve, [Illustrative Rendering in Team Fortress 2](https://steamcdn-a.akamaihd.net/apps/valve/2007/NPAR07_IllustrativeRenderingInTeamFortress2.pdf); Game Developer, [Enemy Attacks and Telegraphing](https://www.gamedeveloper.com/design/enemy-attacks-and-telegraphing).
+- O elenco conserva os retratos originais; chefões e coadjuvantes exibem armas características, sem passos de corrida. Ataques mantêm silhuetas distintas e detalhes de volume, contraste e material. O gesto em L agora tem 60 unidades de largura física (antes 46), com contorno e palma legíveis.
+- O Fantasma do Comunismo tem desenho próprio, chapéu vermelho, emblema dourado e pernas suspensas. É a figura dominante do sexto confronto, com Bossonari como lançador auxiliar. A chave interna bossonari e os 14 ataques permanecem para preservar a história e a urna. A arte é interpretação vetorial, não reprodução exata da imagem original.

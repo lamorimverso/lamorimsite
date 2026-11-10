@@ -9,20 +9,46 @@ function text(c,value,x,y,size=7,color=CREAM){c.fillStyle=color;c.font='900 '+si
 
 export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT,CORE_SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=4ff31d443151";
 // Visual de sátira: antagonistas suspensos, sem passos de corrida.
+// Silhueta original do meme: chapéu vermelho, emblema dourado e pernas longas.
 export function drawMemeArmy(c,{x=0,y=0,phase=0,scale=1,reducedMotion=false}={}){
  c.save();c.translate(x,y);c.scale(scale,scale);
- if(!reducedMotion)c.translate(0,Math.sin(phase*.65)*2);
- // Silhueta vetorial original: chapéu e pernas flutuando.
- line(c,[[-9,-18],[-22,-2],[-27,4]],'#7c466d',8);
- line(c,[[6,-18],[17,-4],[23,5]],'#715273',8);
- line(c,[[-22,0],[-28,4]],'#372b44',3);
- line(c,[[19,4],[28,7]],'#372b44',3);
- path(c,[[-21,-31],[-7,-39],[14,-37],[25,-26],[10,-18],[-11,-18]],'#b63b59','#603252');
- oval(c,0,-25,11,13,'#e584a2','#603252',2);
- oval(c,-4,-28,2,3,'#2e2139',null);oval(c,5,-28,2,3,'#2e2139',null);
- path(c,[[-25,-39],[-14,-49],[13,-49],[27,-40],[15,-34],[-13,-34]],'#ac3757','#5c2845');
- line(c,[[-22,-36],[-27,-31]],'#ecb7c5',2);
- line(c,[[14,-39],[21,-36]],'#f5b8bc',2);
+ const t=reducedMotion?0:Math.sin(phase*.35);
+ c.translate(0,t*1.5);
+ // Pernas e sapatos suspensos; sem ciclo de corrida.
+ line(c,[[-9,-17],[-17,-8],[-23,0]],'#33263d',7);
+ line(c,[[8,-17],[17,-9],[24,-2]],'#33263d',7);
+ line(c,[[-9,-17],[-17,-8],[-23,0]],'#bb9abd',3.8);
+ line(c,[[8,-17],[17,-9],[24,-2]],'#bb9abd',3.8);
+ oval(c,-24,0,6,3,'#3e304b');oval(c,25,-2,6,3,'#3e304b');
+ c.beginPath();c.moveTo(-18,-32);c.bezierCurveTo(-24,-22,-15,-14,-8,-17);
+ c.bezierCurveTo(-5,-9,3,-15,7,-15);c.bezierCurveTo(20,-12,24,-23,17,-33);
+ c.closePath();c.fillStyle='#ebd7ee';c.fill();c.strokeStyle='#56334f';c.lineWidth=2;c.stroke();
+ oval(c,-6,-26,3,4,'#34213c',null);oval(c,6,-26,3,4,'#34213c',null);
+ line(c,[[-4,-20],[4,-20]],'#7f466c',1.5);
+ // Chapéu em volume, com aba ampla e emblema desenhado em amarelo.
+ path(c,[[-22,-36],[-17,-47],[15,-48],[22,-35],[13,-31],[-14,-31]],'#c92b40','#671a31');
+ path(c,[[-17,-46],[15,-47],[20,-41],[-19,-40]],'#f05b61',null);
+ oval(c,0,-34,27,5,'#a51e37','#641a31',2);
+ line(c,[[-8,-43],[6,-35]],'#ffe072',2.6);line(c,[[-9,-45],[-4,-47],[1,-44]],'#ffe072',3);
+ c.beginPath();c.ellipse(3,-41,7,6,0,-1.6,1.8);c.strokeStyle='#ffe072';c.lineWidth=2.2;c.stroke();
+ c.restore();
+}
+export function drawComunismoGhostBoss(c,{x=0,y=0,phase=0,reducedMotion=false,preparing=false,attacking=false,scale=1}={}){
+ c.save();c.translate(x,y);c.scale(scale,scale);
+ const t=reducedMotion?0:Math.sin(phase*.28);
+ c.translate(0,t*3);
+ // Aura não colidível, grande silhueta, contraste e brilho de contorno.
+ for(let i=0;i<3;i++)oval(c,0,-66,41+i*9,61+i*5,'rgba(131,65,154,.08)',null);
+ for(let i=0;i<5;i++){
+  const yy=-15-i*14,xx=(i%2?-1:1)*(35+i*3);
+  oval(c,xx+t*3,yy,4+i,3,'#dcb5e3',null);
+ }
+ c.save();c.translate(0,-7);c.scale(2.65,2.65);
+ drawMemeArmy(c,{phase,reducedMotion});c.restore();
+ if(preparing||attacking){
+  for(let i=0;i<2;i++){c.beginPath();c.ellipse(0,-70,54+i*8,67+i*6,0,0,Math.PI*2);c.strokeStyle=attacking?'#a12449':'#d9a442';c.lineWidth=2;c.stroke();}
+ }
+ text(c,'FANTASMA DO COMUNISMO',0,-151,10,'#542341');
  c.restore();
 }
 export function drawBossOfBosses(c,{x=0,y=0,phase=0,preparing=false,attacking=false,reducedMotion=false}={}){
@@ -261,6 +287,26 @@ export function drawWeaponEffects(c,item,phase=0,reducedMotion=false){
  c.restore();
 }
 
+// Cada personagem preserva seu retrato original, com acessório de ataque
+// reconhecível na silhueta. Acessórios de chefões são puramente cenográficos.
+const ENEMY_WEAPONS=Object.freeze({
+ pf:'handcuffs',janones:'message',army:'barrier',boulos:'rolling-case',dino:'mandado',
+ xandao:'hammer',haddad:'receipts',lula:'lhand',dilma:'wind',simone:'budget-sheets',
+ soraya:'parachute-cross',joice:'handcuffs','meme-army':'meme-ghost',bossonari:'ivermectina-prop'
+});
+export function enemyWeaponFor(type){return ENEMY_WEAPONS[type]||null;}
+export function drawEnemyActor(c,{type,x=0,y=0,scale=1,phase=0,preparing=false,attacking=false,hurt=false,reducedMotion=false,weapon=null}={}){
+ c.save();c.translate(x,y);
+ const bob=reducedMotion?0:Math.sin(phase*.25)*2;
+ c.translate(0,bob);
+ if(type==='meme-army')drawMemeArmy(c,{phase,reducedMotion,scale});
+ else drawActor(c,{type,x:0,y:0,scale,phase:0,preparing,attacking,hurt});
+ const prop=weapon||enemyWeaponFor(type);
+ // O ícone acompanha o ator, sem ocupar a pista como obstáculo invisível.
+ if(prop){c.save();c.translate(-29*scale,-37*scale);c.scale(scale*.76,scale*.76);
+  drawThreat(c,{type:prop,x:-20,width:40,height:38,action:'jump'},0,phase,{reducedMotion});c.restore();}
+ c.restore();
+}
 export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
  const x=item.x+item.width/2;c.save();c.translate(x,ground);
  if(item.action==='crouch'){
@@ -270,7 +316,7 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
  }
 
  if(item.type==='meme-ghost'){
-  drawMemeArmy(c,{phase,reducedMotion,scale:.88});
+  drawMemeArmy(c,{phase,reducedMotion,scale:.83});
  }
  else if(item.type==='cloroquina-prop'||item.type==='ivermectina-prop'){
   // Frascos fictícios, jamais indicação de medicamento.
@@ -279,12 +325,14 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
   box(c,-19,-37,38,33,isC?'#f7e2a2':'#c5e5f0',6,'#6a5877');
   box(c,-14,-42,28,7,isC?'#9c6ca7':'#5f88a1',3,'#6a5877');
   box(c,-18,-22,36,12,isC?'#8b628f':'#417e9b',3,null);
-  text(c,isC?'CLOROQ.':'IVERM.',0,-13,8,'#ffffff');
+  text(c,isC?'CLOROQ.':'IVERM.',0,-13,8,'#ffffff');line(c,[[-13,-34],[-13,-25]],'#ffffff',3);line(c,[[12,-8],[12,-5]],'#8f82a2',2);
   c.restore();
  }
  else if(item.type==='message'){
-  box(c,-21,-34,42,33,'#fff5e6',4,'#a23d50');line(c,[[-16,-27],[0,-15],[16,-27]],'#b44758',2);
-  text(c,'URGENTE',0,-4,7,'#8d314a');
+  box(c,-22,-37,44,34,'#fff5e6',4,'#873249');
+  path(c,[[-21,-34],[0,-16],[21,-34]],'#e7bac0','#873249');
+  line(c,[[-20,-4],[-5,-18]],'#c78591',1.8);line(c,[[20,-4],[5,-18]],'#c78591',1.8);
+  box(c,-17,-12,34,10,'#a83750',2,null);text(c,'URGENTE',0,-5,7,'#fff8ef');
  }
  else if(item.type==='falling-case'){
   // Mala em queda oblíqua, com silhueta de impacto claramente distinguível.
@@ -297,7 +345,7 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
   // Obstáculo de solo com movimento de rotação, não uma simples imagem estática.
   c.save();if(!reducedMotion)c.rotate(Math.sin(phase*.65)*.11);
   box(c,-18,-29,36,26,'#7f5e96',5);
-  for(const wheel of [-11,11])oval(c,wheel,-2,4,4,'#2c2b3c','#f2cf86',1);
+  box(c,-6,-35,12,7,'#d3b480',2);for(const wheel of [-11,11])oval(c,wheel,-2,4,4,'#2c2b3c','#f2cf86',1);line(c,[[-10,-24],[-10,-6]],'#c9aedc',2);line(c,[[10,-24],[10,-6]],'#c9aedc',2);
   line(c,[[-14,-23],[14,-23]],'#cfacdc',2);c.restore();
  }
  else if(item.type==='barrier'){box(c,-22,-28,44,12,'#f1bd65');for(let i=-15;i<20;i+=14)line(c,[[i,-27],[i+7,-17]],'#543b42',4);line(c,[[-15,-16],[-17,0]],INK,4);line(c,[[15,-16],[17,0]],INK,4);}
@@ -312,7 +360,7 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
   line(c,[[-15,-34],[-1,-34]],'#527c93',1.5);
   for(let i=0;i<3;i++)line(c,[[-15,-26+i*7],[-2,-26+i*7]],'#8cacae',1);
   box(c,1,-34,21,32,'#f7fbff',2,'#49748c');
-  text(c,'BRL',11,-25,7,'#34546a');
+  text(c,'BRL',11,-25,7,'#34546a');line(c,[[4,-19],[19,-19]],'#8bb2b9',1);line(c,[[4,-15],[19,-15]],'#8bb2b9',1);
   for(let i=0;i<3;i++)box(c,4+i*5,-6-(i+1)*5,3,(i+1)*5,'#64a4ac',1,null);
   c.restore();
  }
@@ -324,7 +372,7 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
   c.closePath();c.fillStyle='#e6f0e8';c.fill();c.strokeStyle='#537c7e';c.lineWidth=2;c.stroke();
   line(c,[[-23,-28],[-9,-16]],'#63878b',1.4);
   line(c,[[23,-28],[9,-16]],'#63878b',1.4);
-  line(c,[[0,-28],[0,-19]],'#63878b',1.4);
+  line(c,[[0,-28],[0,-19]],'#63878b',1.4);line(c,[[-13,-39],[-7,-30]],'#a2c1bf',2);line(c,[[12,-39],[6,-30]],'#a2c1bf',2);
   path(c,[[-4,-19],[4,-19],[4,-13],[10,-13],[10,-7],[4,-7],[4,0],[-4,0],[-4,-7],[-10,-7],[-10,-13],[-4,-13]],'#e6ba66','#744e56');
   c.restore();
  }
@@ -333,7 +381,7 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
   c.save();c.rotate(.12+(reducedMotion?0:Math.sin(phase*.15)*.18));
   oval(c,-11,-30,10,11,'#b8ccd7','#486278',2.5);
   oval(c,-11,-30,5.5,6.5,'#e9f4f9','#486278',1.4);
-  line(c,[[-4,-23],[5,-17]],'#657d91',4);
+  oval(c,-1,-22,4,3,'#8aa6ba','#486278',1.3);oval(c,4,-19,4,3,'#c5dbe7','#486278',1.3);
   oval(c,11,-10,10,11,'#b8ccd7','#486278',2.5);
   oval(c,11,-10,5.5,6.5,'#e9f4f9','#486278',1.4);
   c.restore();
@@ -349,36 +397,45 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
  else if(item.type==='stamp'){box(c,-21,-15,42,13,'#a53e54');box(c,-8,-31,16,16,'#81584a');line(c,[[-23,-1],[23,-1]],'#e1a05e',3);text(c,'TAXA',0,-5,8,'#fff7e3');}
  else if((item.type==='receipts'||item.type==='paper-gate')){
   for(let i=0;i<3;i++){box(c,-18+i*10,-34+i*4,20,25,'#fff1cf',2);for(let j=0;j<3;j++)line(c,[[-14+i*10,-28+i*4+j*5],[-3+i*10,-28+i*4+j*5]],'#417884',1.5);}
-  if(item.owner==='haddad')text(c,'TAXA',2,-35,7,'#a33e52');
+  if(item.owner==='haddad'){box(c,-15,-13,30,10,'#a33e52',2,null);text(c,'TAXA',0,-6,8,'#fff8df');}
  }
  else if(item.type==='hammer'){
   // Martelo do chefão Xandão: cabo de madeira, cabeça metálica.
   c.save();c.rotate(-.35+(reducedMotion?0:Math.sin(phase*.15)*.16));
   box(c,-4,-38,9,37,'#9b654b',2);box(c,-23,-43,46,18,'#606575',4);
-  box(c,-20,-41,40,6,'#a6acb8',2,null);c.restore();
+  box(c,-20,-41,40,6,'#c6ced9',2,null);line(c,[[-19,-27],[19,-27]],'#343b50',2.5);line(c,[[-1,-24],[-1,-4]],'#d19b72',2);c.restore();
  }
  else if(item.type==='mandado'){
   // Mandado de papel: legível como objeto arremessado, não uma pessoa.
   c.save();c.rotate(.13+(reducedMotion?0:Math.sin(phase*.14)*.14));box(c,-17,-40,34,39,'#fffaf0',2,'#816c8c');
   text(c,'MANDADO',0,-29,7,'#40384d');
   for(let i=0;i<3;i++)line(c,[[-11,-22+i*6],[11,-22+i*6]],'#80758b',1.5);
-  line(c,[[-8,-6],[8,-6]],'#aa4966',2.6);c.restore();
+  oval(c,9,-8,5,5,'#b74557','#7d293f',1.2);line(c,[[-11,-8],[-1,-8]],'#aa4966',2.6);c.restore();
  }
  else if(item.type==='lhand'){
-  // Mão fazendo L (dedão aberto e indicador em pé); gesto satírico estilizado.
-  c.save();c.rotate(-.12+(reducedMotion?0:Math.sin(phase*.12)*.10));
-  c.beginPath();c.moveTo(-13,0);c.lineTo(-15,-17);c.lineTo(-10,-20);
-  c.lineTo(-5,-17);c.lineTo(-5,-43);c.quadraticCurveTo(0,-49,5,-43);
-  c.lineTo(5,-20);c.lineTo(20,-21);c.quadraticCurveTo(28,-19,23,-12);
-  c.lineTo(5,-9);c.lineTo(5,1);c.quadraticCurveTo(-5,7,-13,0);c.closePath();
-  c.fillStyle='#e6a97b';c.fill();c.strokeStyle=INK;c.lineWidth=2.5;c.stroke();
-  line(c,[[-9,-10],[-4,-8]],'#ae6e57',1.5);c.restore();
+  // Indicador e polegar em L inequívoco, com volume, contorno e palma.
+  // O tamanho acompanha a largura física, sem esticar o golpe para fora da pista.
+  c.save();c.scale((item.width||46)/46,1);
+  c.beginPath();c.moveTo(-16,-2);c.lineTo(-20,-16);
+  c.quadraticCurveTo(-20,-22,-12,-22);c.lineTo(-7,-18);
+  c.lineTo(-7,-39);c.quadraticCurveTo(-7,-46,0,-46);
+  c.quadraticCurveTo(7,-46,7,-39);c.lineTo(7,-19);
+  c.lineTo(18,-19);c.quadraticCurveTo(25,-19,25,-12);
+  c.quadraticCurveTo(24,-6,16,-7);c.lineTo(8,-7);
+  c.lineTo(8,-1);c.quadraticCurveTo(-3,5,-16,-2);c.closePath();
+  c.fillStyle='#efb382';c.fill();c.strokeStyle='#63372e';c.lineWidth=2.4;c.stroke();
+  path(c,[[-14,-15],[-7,-11],[-5,-2],[-15,-3]],'#c98760',null);
+  line(c,[[-3,-39],[-3,-23]],'#ffe1b6',2.5);
+  line(c,[[10,-15],[20,-15]],'#ffe1b6',2.2);
+  line(c,[[-13,-13],[-6,-10]],'#97583e',1.7);
+  line(c,[[-12,-7],[-5,-5]],'#97583e',1.7);
+  c.restore();
  }
  else {
   const movement=enemyMotionFor(item.type,reducedMotion?0:phase,x);
   c.translate(0,movement.bob);c.rotate(movement.lean);
   // O inimigo paira sem ciclar os quadros de corrida do sprite.
-  drawActor(c,{type:item.type,x:0,y:0,scale:item.height/66,phase:0});
+  drawActor(c,{type:item.type,x:0,y:0,scale:item.height/94,phase:0});
  }
  drawWeaponEffects(c,item,phase,reducedMotion);
  c.restore();

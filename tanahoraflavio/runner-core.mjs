@@ -30,7 +30,7 @@ export const PURSUERS = Object.freeze([
  {type:'janones',name:'Janones',short:'Janones',width:36,height:46,color:'#346a9c'},
  {type:'army',name:'Exército',short:'Exército',width:40,height:47,color:'#64734c'},
  {type:'meme-army',name:'Exército de memes do Lula',short:'Memes',width:46,height:44,color:'#b44d67'},
- {type:'bossonari',name:'Bossonari · Chefão dos Chefões',short:'Bossonari',width:56,height:58,color:'#7a4f8d'},
+ {type:'bossonari',name:'Fantasma do Comunismo · Chefão final',short:'Bossonari',width:56,height:58,color:'#7a4f8d'},
  {type:'boulos',name:'Boulos',short:'Boulos',width:38,height:46,color:'#765488'},
  {type:'dino',name:'Flávio Dino',short:'Dino',width:40,height:48,color:'#8a6247'},
  {type:'xandao',name:'Xandão',short:'Xandão',width:40,height:49,color:'#493f62'},
@@ -373,7 +373,7 @@ export function bossAtRound(round,type) {
     xandao:'Pule os martelos baixos e abaixe dos mandados altos.',
     janones:'Mensagens urgentes: alterne salto e agachamento.',
     pf:'Blitz: pule barreiras, abaixe das algemas e saia das malas marcadas.',
-    bossonari:'Pule ou abaixe dos frascos satíricos. Fantasmas são apenas efeitos visuais.'
+    bossonari:'Pule ou abaixe dos frascos satíricos de Bossonari para superar o Fantasma do Comunismo.'
    }[foe.type]||'Leia o próximo aviso antes de reagir.'),
   interval:foe.type==='bossonari'?1.18:Math.max(1.04,1.32-.08*BOSS_ROSTER.indexOf(foe.type)-.04*(level-1))};
 }
@@ -433,7 +433,7 @@ function advanceBoss(run,dt,rng,balance){
   attack=spawnFallingThreat(run,{bossAttack:true,owner:boss.type});if(!attack){boss.nextAttack=.1;return;}
  }else{
  const [width,baseHeight]=({hammer:[46,44],mandado:[42,44],
-  lhand:[46,46],receipts:[44,40],stamp:[44,36],message:[44,36],microphone:[46,40],handcuffs:[46,40],barrier:[44,32],'cloroquina-prop':[52,38],'ivermectina-prop':[52,38]})[attackType];
+  lhand:[60,46],receipts:[44,40],stamp:[44,36],message:[44,36],microphone:[46,40],handcuffs:[46,40],barrier:[44,32],'cloroquina-prop':[52,38],'ivermectina-prop':[52,38]})[attackType];
  const height=pattern.action==='crouch'?84:baseHeight;
  const x=Math.max(visibleWidth(run)-104,frontContact(run)+60);
  const entry=pattern.approach||'diagonal';

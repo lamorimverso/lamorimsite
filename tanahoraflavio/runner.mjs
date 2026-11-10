@@ -1,6 +1,6 @@
 import {createVoiceDirector} from './runner-voice-director.mjs?v=088899f48fd6';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=647f93ada713";
-import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=abfc83da0fba";
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=c1faf2b3b81d";
+import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=6977acb80bfe";
 import { createGameAudio } from "./runner-audio.mjs?v=b63783dad9b7";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=fa9433a61a03";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=a4f0cd479138";
@@ -490,9 +490,12 @@ function initRunner() {
     const motion=enemyMotionFor(b.type,prefersReducedMotion()?0:phase,bossX);
     ctx.save();ctx.translate(bossX,bossY+motion.bob);
     if(b.type==="bossonari"){
-      drawBossOfBosses(ctx,{phase,preparing:b.nextAttack<.55&&b.fired<b.total,attacking:b.attackFlashFor>0,reducedMotion:prefersReducedMotion()});
+      drawComunismoGhostBoss(ctx,{x:-21,y:-7,phase,preparing:b.nextAttack<.55&&b.fired<b.total,attacking:b.attackFlashFor>0,reducedMotion:prefersReducedMotion()});
+      // Bossonari permanece como o lançador de frascos da batalha.
+      ctx.save();ctx.translate(-118,0);ctx.scale(.62,.62);
+      drawBossOfBosses(ctx,{phase,preparing:b.nextAttack<.55&&b.fired<b.total,attacking:b.attackFlashFor>0,reducedMotion:prefersReducedMotion()});ctx.restore();
     }else{
-      drawActor(ctx,{type:b.type,x:0,y:0,scale:1.62,phase:0,preparing:b.nextAttack<.55&&b.fired<b.total,attacking:b.attackFlashFor>0,hurt:b.hitFlashFor>0});
+      drawEnemyActor(ctx,{type:b.type,x:0,y:0,scale:1.42,phase,preparing:b.nextAttack<.55&&b.fired<b.total,attacking:b.attackFlashFor>0,hurt:b.hitFlashFor>0,weapon:bossCue().type,reducedMotion:prefersReducedMotion()});
     }
     ctx.restore();
     if(b.nextAttack<.65&&b.fired<b.total&&!run.obstacles.some(o=>o.bossAttack&&!o.counted)){
@@ -565,7 +568,7 @@ function initRunner() {
   function joiceFigure(){
     const raid=run.raid;if(run.status!=="running"||!raid)return;
     if(raid.phase==='recovery')return;
-    drawActor(ctx,{type:"joice",x:virtualWidth-62,y:WORLD.ground-14+(prefersReducedMotion()?0:Math.sin(run.elapsed*2)*2),scale:1.08,phase:0});
+    drawEnemyActor(ctx,{type:"joice",x:virtualWidth-62,y:WORLD.ground-14,scale:1.12,phase:run.elapsed*10,reducedMotion:prefersReducedMotion()});
   }
   function drawSupport(){
     const aid=run.aid;if(!aid||run.status!=="running")return;
@@ -638,14 +641,14 @@ function initRunner() {
     ctx.setTransform(canvas.width/virtualWidth,0,0,canvas.height/WORLD.height,0,0);
     drawJourneyScenery(ctx,{routeDistance:run.routeDistance,distance:run.distance,width:virtualWidth,reducedMotion:prefersReducedMotion(),quiet:run.aid?.kind==="quiet"?Math.max(0,Math.min(1,(6-run.aid.remaining)/.35,run.aid.remaining/.35)):0});
     drawRaidAtmosphere(ctx,{strength:raidMoodFor(run.raid),width:virtualWidth,distance:run.distance,reducedMotion:prefersReducedMotion()});
-    if(run.boss?.type==="bossonari")drawPhantomCloud(ctx,{x:virtualWidth-220,y:WORLD.ground-35,phase:run.elapsed*5,hitFor:run.phantomCloud?.remaining||0,reducedMotion:prefersReducedMotion()});
+    // O Fantasma do Comunismo é a figura principal do confronto final, não decoração.
     bossFigure();
     joiceFigure();
     drawSupport();
     if(run.cameo&&!run.boss&&!run.raid){
       const actor=run.cameo.type;
       if(actor==="meme-army")drawMemeArmy(ctx,{x:virtualWidth-70,y:WORLD.ground-29,phase:run.elapsed*5,scale:1.36,reducedMotion:prefersReducedMotion()});
-      else drawActor(ctx,{type:actor,x:virtualWidth-60,y:WORLD.ground-14+(prefersReducedMotion()?0:Math.sin(run.elapsed*2)*2),scale:1.05,phase:0});
+      else drawEnemyActor(ctx,{type:actor,x:virtualWidth-60,y:WORLD.ground-14,scale:1.12,phase:run.elapsed*10,reducedMotion:prefersReducedMotion()});
     }
     for(const item of run.pickups)pickup(item);
     for(const item of run.obstacles)obstacle(item);
