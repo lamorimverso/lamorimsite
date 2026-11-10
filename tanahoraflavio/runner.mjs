@@ -1,9 +1,9 @@
 import {createVoiceDirector} from './runner-voice-director.mjs?v=088899f48fd6';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=c1faf2b3b81d";
-import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=6977acb80bfe";
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=55bd5a47c591";
+import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=76a279cda607";
 import { createGameAudio } from "./runner-audio.mjs?v=b63783dad9b7";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=fa9433a61a03";
-import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=a4f0cd479138";
+import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=8970d7d6092a";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
 
 import {allyById} from './runner-allies.mjs?v=181506ec1b3c';
@@ -490,7 +490,7 @@ function initRunner() {
     const motion=enemyMotionFor(b.type,prefersReducedMotion()?0:phase,bossX);
     ctx.save();ctx.translate(bossX,bossY+motion.bob);
     if(b.type==="bossonari"){
-      drawComunismoGhostBoss(ctx,{x:-21,y:-7,phase,preparing:b.nextAttack<.55&&b.fired<b.total,attacking:b.attackFlashFor>0,reducedMotion:prefersReducedMotion()});
+      drawComunismoGhostBoss(ctx,{x:-21,y:-7,phase,preparing:b.nextAttack<.55&&b.fired<b.total&&bossCue().type==="meme-ghost",attacking:b.attackFlashFor>0&&b.lastAction==="crouch",reducedMotion:prefersReducedMotion()});
       // Bossonari permanece como o lançador de frascos da batalha.
       ctx.save();ctx.translate(-118,0);ctx.scale(.62,.62);
       drawBossOfBosses(ctx,{phase,preparing:b.nextAttack<.55&&b.fired<b.total,attacking:b.attackFlashFor>0,reducedMotion:prefersReducedMotion()});ctx.restore();

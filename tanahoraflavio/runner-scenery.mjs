@@ -222,6 +222,25 @@ function drawAmbientDetails(c,geometry,{distance=0,reducedMotion=false}={}){
   }else if(seg.stageId==='florida'){
    c.save();c.translate(x,222);c.scale(.42,.42);palm(c,0,0,p);c.restore();
   }
+  // Adereços de fundo detalhados, baixos e sem área de colisão: cada local
+  // ganha mobiliário próprio, mantendo o plano de ação livre e contrastado.
+  c.globalAlpha*=.7;
+  const bx=x-39;
+  if(seg.stageId==='rio'){
+   rect(c,bx-9,216,18,15,p.stone,p.ink,2);
+   line(c,[[bx-7,220],[bx+7,220]],p.ink,1.6);
+   line(c,[[bx-6,227],[bx+6,227]],p.near,1.5);
+  }else if(seg.stageId==='florida'){
+   rect(c,bx-10,219,20,10,p.stone,p.ink,2);
+   line(c,[[bx-8,229],[bx-8,234]],p.ink,2);
+   line(c,[[bx+8,229],[bx+8,234]],p.ink,2);
+   line(c,[[bx-8,222],[bx+8,222]],p.near,1.5);
+  }else{
+   line(c,[[bx,234],[bx,204]],p.ink,2);
+   oval(c,bx,202,5,3,p.stone);
+   line(c,[[bx-5,204],[bx+5,204]],p.ink,1.5);
+   rect(c,bx-4,229,8,5,p.near,p.ink,1);
+  }
   c.restore();
  }
 }

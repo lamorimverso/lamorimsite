@@ -373,7 +373,7 @@ export function bossAtRound(round,type) {
     xandao:'Pule os martelos baixos e abaixe dos mandados altos.',
     janones:'Mensagens urgentes: alterne salto e agachamento.',
     pf:'Blitz: pule barreiras, abaixe das algemas e saia das malas marcadas.',
-    bossonari:'Pule ou abaixe dos frascos satíricos de Bossonari para superar o Fantasma do Comunismo.'
+    bossonari:'Pule ou abaixe dos frascos satíricos de Bossonari e abaixe das investidas do Fantasma do Comunismo.'
    }[foe.type]||'Leia o próximo aviso antes de reagir.'),
   interval:foe.type==='bossonari'?1.18:Math.max(1.04,1.32-.08*BOSS_ROSTER.indexOf(foe.type)-.04*(level-1))};
 }
@@ -411,7 +411,12 @@ function chooseBossPattern(boss,rng,pressure){
  if(boss.type==='pf'&&boss.fired%3===2)return {type:'falling-case',action:'move',approach:'vertical'};
  // A abertura ensina o tipo de ameaça; depois o próprio chefe improvisa.
  if(boss.fired<3)return {...bossAttackFor(boss.type,boss.fired,boss.round-1),approach:'diagonal'};
- if(boss.type==='bossonari')return {type:random(rng)<.5?'cloroquina-prop':'ivermectina-prop',action:random(rng)<.5?'jump':'crouch',approach:random(rng)<.38?'drop':'diagonal'};
+ if(boss.type==='bossonari'){
+  // O fantasma é participante ativo: depois de aprender os frascos,
+  // alterna investidas aéreas próprias e os disparos do aliado Bossonari.
+  if(boss.fired%3===0)return {type:'meme-ghost',action:'crouch',approach:'sweep'};
+  return {type:random(rng)<.5?'cloroquina-prop':'ivermectina-prop',action:random(rng)<.5?'jump':'crouch',approach:random(rng)<.38?'drop':'diagonal'};
+ }
  let action=random(rng)<(.48+.06*pressure)?'crouch':'jump';
  if(action===boss.lastAction&&boss.actionStreak>=2)action=action==='jump'?'crouch':'jump';
  const type=boss.type==='xandao'?(action==='jump'?'hammer':'mandado'):
@@ -433,7 +438,7 @@ function advanceBoss(run,dt,rng,balance){
   attack=spawnFallingThreat(run,{bossAttack:true,owner:boss.type});if(!attack){boss.nextAttack=.1;return;}
  }else{
  const [width,baseHeight]=({hammer:[46,44],mandado:[42,44],
-  lhand:[60,46],receipts:[44,40],stamp:[44,36],message:[44,36],microphone:[46,40],handcuffs:[46,40],barrier:[44,32],'cloroquina-prop':[52,38],'ivermectina-prop':[52,38]})[attackType];
+  lhand:[60,46],receipts:[44,40],stamp:[44,36],message:[44,36],microphone:[46,40],handcuffs:[46,40],barrier:[44,32],'cloroquina-prop':[52,38],'ivermectina-prop':[52,38],'meme-ghost':[52,44]})[attackType];
  const height=pattern.action==='crouch'?84:baseHeight;
  const x=Math.max(visibleWidth(run)-104,frontContact(run)+60);
  const entry=pattern.approach||'diagonal';

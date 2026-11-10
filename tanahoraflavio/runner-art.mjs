@@ -12,25 +12,45 @@ export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET
 // Silhueta original do meme: chapéu vermelho, emblema dourado e pernas longas.
 export function drawMemeArmy(c,{x=0,y=0,phase=0,scale=1,reducedMotion=false}={}){
  c.save();c.translate(x,y);c.scale(scale,scale);
- const t=reducedMotion?0:Math.sin(phase*.35);
- c.translate(0,t*1.5);
- // Pernas e sapatos suspensos; sem ciclo de corrida.
- line(c,[[-9,-17],[-17,-8],[-23,0]],'#33263d',7);
- line(c,[[8,-17],[17,-9],[24,-2]],'#33263d',7);
- line(c,[[-9,-17],[-17,-8],[-23,0]],'#bb9abd',3.8);
- line(c,[[8,-17],[17,-9],[24,-2]],'#bb9abd',3.8);
- oval(c,-24,0,6,3,'#3e304b');oval(c,25,-2,6,3,'#3e304b');
- c.beginPath();c.moveTo(-18,-32);c.bezierCurveTo(-24,-22,-15,-14,-8,-17);
- c.bezierCurveTo(-5,-9,3,-15,7,-15);c.bezierCurveTo(20,-12,24,-23,17,-33);
- c.closePath();c.fillStyle='#ebd7ee';c.fill();c.strokeStyle='#56334f';c.lineWidth=2;c.stroke();
- oval(c,-6,-26,3,4,'#34213c',null);oval(c,6,-26,3,4,'#34213c',null);
- line(c,[[-4,-20],[4,-20]],'#7f466c',1.5);
- // Chapéu em volume, com aba ampla e emblema desenhado em amarelo.
- path(c,[[-22,-36],[-17,-47],[15,-48],[22,-35],[13,-31],[-14,-31]],'#c92b40','#671a31');
- path(c,[[-17,-46],[15,-47],[20,-41],[-19,-40]],'#f05b61',null);
- oval(c,0,-34,27,5,'#a51e37','#641a31',2);
- line(c,[[-8,-43],[6,-35]],'#ffe072',2.6);line(c,[[-9,-45],[-4,-47],[1,-44]],'#ffe072',3);
- c.beginPath();c.ellipse(3,-41,7,6,0,-1.6,1.8);c.strokeStyle='#ffe072';c.lineWidth=2.2;c.stroke();
+ c.translate(0,reducedMotion?0:Math.sin(phase*.35)*1.5);
+ // A referência tem chapéu de três pontas e pernas, não cabeça nem lençol.
+ // Forma de trás, mais fria e fina: joelho flexionado, salto atrás.
+ const silhouette=(fill,stroke,draw)=>{c.beginPath();draw();c.closePath();c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=1.2;c.stroke();}};
+ silhouette('#8d779d','#614b7c',()=>{
+  c.moveTo(4,-32);c.bezierCurveTo(14,-33,19,-26,13,-21);
+  c.bezierCurveTo(8,-18,9,-15,15,-12);c.bezierCurveTo(21,-9,23,-8,24,-3);
+  c.lineTo(23,-1);c.lineTo(20,-4);c.bezierCurveTo(18,-8,12,-8,9,-12);
+  c.bezierCurveTo(0,-17,0,-21,2,-26);});
+ line(c,[[13,-11],[19,-7],[22,-3]],'#b4adc6',1.4);
+ // Perna dianteira em diagonal: volume arredondado, contraste e brilho.
+ silhouette('#733c60','#382239',()=>{
+  c.moveTo(-2,-34);c.bezierCurveTo(10,-36,15,-28,9,-22);
+  c.bezierCurveTo(2,-17,-6,-16,-9,-11);c.bezierCurveTo(-13,-7,-19,-4,-22,0);
+  c.lineTo(-28,0);c.bezierCurveTo(-26,-6,-24,-11,-19,-15);
+  c.bezierCurveTo(-12,-21,-8,-23,-5,-28);c.closePath();});
+ silhouette('#bd6686',null,()=>{
+  c.moveTo(-1,-31);c.bezierCurveTo(7,-33,11,-29,6,-24);
+  c.bezierCurveTo(-2,-18,-9,-16,-13,-11);c.lineTo(-22,-3);c.lineTo(-25,-4);
+  c.bezierCurveTo(-17,-14,-12,-20,-7,-23);c.bezierCurveTo(-3,-27,-3,-29,-1,-31);});
+ line(c,[[-20,-9],[-24,-4]],'#ed9caa',1.8);
+ // Sapato de salto da figura original, sem correr.
+ silhouette('#2a293d','#1c1b2b',()=>{c.moveTo(-28,-4);c.lineTo(-23,-2);c.lineTo(-18,-4);c.lineTo(-20,1);c.lineTo(-25,4);c.lineTo(-34,4);c.lineTo(-32,1);c.closePath();});
+ line(c,[[-19,-3],[-21,4]],'#292033',1.4);line(c,[[-28,-3],[-21,-1]],'#dab4bc',1.5);
+ // Faixa escura de união entre chapéu e pernas.
+ silhouette('#25283a',null,()=>{c.moveTo(-5,-39);c.lineTo(7,-39);c.bezierCurveTo(12,-34,9,-30,2,-29);c.lineTo(-3,-33);});
+ // Chapéu vermelho tridimensional, com pontas levantadas à esquerda/direita.
+ silhouette('#8c233b','#56203c',()=>{
+  c.moveTo(-26,-40);c.bezierCurveTo(-29,-47,-20,-43,-15,-42);
+  c.bezierCurveTo(-10,-41,-9,-51,-3,-53);
+  c.bezierCurveTo(6,-54,14,-44,19,-43);
+  c.bezierCurveTo(25,-42,23,-51,28,-49);
+  c.bezierCurveTo(39,-38,22,-34,8,-36);
+  c.bezierCurveTo(-4,-34,-19,-34,-26,-40);});
+ silhouette('#b63f4d',null,()=>{c.moveTo(-25,-43);c.bezierCurveTo(-13,-39,-10,-43,-6,-50);c.bezierCurveTo(3,-55,12,-43,19,-41);c.bezierCurveTo(7,-43,-7,-39,-13,-38);c.closePath();});
+ oval(c,-5,-48,1.8,2.3,'#302337',null);oval(c,1,-47,1.6,2.1,'#302337',null);oval(c,-2,-44,1.5,1.9,'#302337',null);
+ // Emblema dourado de foice e martelo.
+ line(c,[[-5,-41],[5,-35]],'#f8de63',1.7);line(c,[[-6,-43],[-2,-44],[1,-41]],'#f8de63',2.2);
+ c.beginPath();c.ellipse(3,-41,5,4,0,-1.6,1.8);c.strokeStyle='#f8de63';c.lineWidth=1.6;c.stroke();
  c.restore();
 }
 export function drawComunismoGhostBoss(c,{x=0,y=0,phase=0,reducedMotion=false,preparing=false,attacking=false,scale=1}={}){
@@ -316,7 +336,7 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
  }
 
  if(item.type==='meme-ghost'){
-  drawMemeArmy(c,{phase,reducedMotion,scale:.83});
+  drawMemeArmy(c,{phase,reducedMotion,scale:.78});
  }
  else if(item.type==='cloroquina-prop'||item.type==='ivermectina-prop'){
   // Frascos fictícios, jamais indicação de medicamento.
