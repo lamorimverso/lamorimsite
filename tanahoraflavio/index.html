@@ -25,9 +25,9 @@
   <link rel="canonical" href="https://lamorimverso.github.io/lamorimsite/tanahoraflavio/">
   <title>Tá na hora, Flávio! · Contagem e minigame</title>
 
-  <link rel="stylesheet" href="game.css?v=02d28b76dee1">
+  <link rel="stylesheet" href="game.css?v=8fd7d73ae559">
   <script defer src="page-layout.js?v=d515141f39cb"></script>
-  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=5e14767c8cd6"></script>
+  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=df802b8ca8d5"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -116,6 +116,30 @@
         </div>
           <div class="game-overlay" id="game-overlay"><span class="game-overlay-badge" id="game-overlay-badge">Corrida fictícia</span><img class="game-captured" id="game-captured" src="assets/flavio-captured-v1.webp?v=35a44e31f10f" width="1334" height="1179" alt="Caricatura de Flávio com as mãos algemadas" fetchpriority="low" hidden><strong id="game-overlay-title">Pronto para correr?</strong><p id="game-overlay-copy">Pule ou abaixe para desviar.</p><p class="game-start-hint" id="game-start-hint">Toque: pular · ↓: abaixar · ↔: mover</p></div>
         </div>
+        <section class="game-ballot" id="game-ballot" hidden tabindex="-1" aria-label="Urna fictícia da campanha">
+          <div class="game-ballot-screen">
+            <span class="game-ballot-kicker">ETAPA FINAL · SIMULAÇÃO FICTÍCIA</span>
+            <h3>Urna da História</h3>
+            <p>Digite o código para decidir o destino do personagem.</p>
+            <div id="game-ballot-number" class="game-ballot-number" aria-live="polite">__</div>
+            <p id="game-ballot-message" role="status">Digite dois números e confirme.</p>
+            <small>Somente um desafio do jogo. Não é uma urna oficial nem registra votos reais.</small>
+          </div>
+          <div class="game-ballot-pad" aria-label="Teclado da urna">
+            <button type="button" data-urna-digit="1">1</button>
+            <button type="button" data-urna-digit="2">2</button>
+            <button type="button" data-urna-digit="3">3</button>
+            <button type="button" data-urna-digit="4">4</button>
+            <button type="button" data-urna-digit="5">5</button>
+            <button type="button" data-urna-digit="6">6</button>
+            <button type="button" data-urna-digit="7">7</button>
+            <button type="button" data-urna-digit="8">8</button>
+            <button type="button" data-urna-digit="9">9</button>
+            <button type="button" data-urna-digit="0" class="game-ballot-zero">0</button>
+            <button type="button" id="game-urna-clear">Corrige</button>
+            <button type="button" id="game-urna-confirm" disabled>Confirma</button>
+          </div>
+        </section>
         <div class="game-controls">
           <fieldset class="game-mode-chooser" id="game-mode-chooser" aria-label="Modo de jogo">
             <legend class="sr-only">Escolha o modo de jogo</legend>

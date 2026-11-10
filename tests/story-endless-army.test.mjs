@@ -36,8 +36,12 @@ test('História conclui somente depois de desviar do sexto chefão',()=>{
   if(r.boss)seen.add(r.boss.type);
  }
  assert.deepEqual([...seen],['bossonari']);
- assert.equal(r.status,'won');
+ assert.equal(r.status,'ballot');
  assert.equal(r.bossesDefeated,6);
+ assert.equal(core.ballotDigit(r,'1'),true);
+ assert.equal(core.ballotDigit(r,'3'),true);
+ assert.equal(core.ballotConfirm(r),'won');
+ assert.equal(r.status,'won');
  assert.equal(r.lastBoss,'bossonari');
  assert.equal(r.nextBossAt,Infinity);
  assert.ok(r.event.includes('HISTÓRIA CONCLUÍDA'));
@@ -85,4 +89,18 @@ test('arte vetorial nova desenha fantasmas, chapéu flutuante e projéteis sem a
  assert.ok(ctx.calls.some(c=>c==='BOSSONARI'));
  assert.ok(ctx.calls.some(c=>c==='CLOROQ.'));
  assert.ok(ctx.calls.some(c=>c==='IVERM.'));
+});
+
+test('urna aceita apenas códigos da ficção e impede confirmar duas vezes',()=>{
+ const r=isolated('story');r.status='ballot';
+ assert.equal(core.ballotDigit(r,'x'),false);
+ core.ballotDigit(r,'9');core.ballotDigit(r,'9');
+ assert.equal(core.ballotDigit(r,'1'),false);
+ assert.equal(core.ballotConfirm(r),'invalid');
+ assert.equal(r.status,'ballot');core.ballotClear(r);
+ core.ballotDigit(r,'2');core.ballotDigit(r,'2');
+ assert.equal(core.ballotConfirm(r),'prison');
+ assert.equal(r.status,'prison');assert.equal(core.ballotConfirm(r),false);
+ const e=isolated();assert.equal(core.ballotDigit(e,'1'),false);
+ assert.equal(core.ballotConfirm(e),false);
 });

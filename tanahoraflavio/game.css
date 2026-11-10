@@ -257,3 +257,25 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
  .game-card.is-expanded .game-mode-chooser label{box-sizing:border-box;min-height:44px;padding:6px 7px;font-size:11px}
  .game-card.is-expanded .game-controls #game-start{grid-column:2;grid-row:1;min-height:44px}
 }
+
+/* Urna cenográfica: etapa separada da corrida, com teclado acessível. */
+.game-ballot[hidden]{display:none}
+.game-ballot{display:grid;grid-template-columns:1.15fr 1fr;gap:12px;max-width:560px;width:100%;box-sizing:border-box;margin:10px auto;padding:14px;background:#eeeae2;border:1px solid #b8b2a6;border-radius:14px;box-shadow:0 4px 0 #b8b2a6}
+.game-ballot-screen{background:#f4f7ec;border:2px solid #9ca993;border-radius:6px;padding:12px;min-width:0;color:#293b32}
+.game-ballot-kicker{font-size:10px;font-weight:800;letter-spacing:.07em}
+.game-ballot-screen h3{font-size:18px;margin:8px 0 4px}
+.game-ballot-screen p{font-size:12px;line-height:1.4;margin:6px 0}
+.game-ballot-screen small{display:block;font-size:10px;line-height:1.4;color:#536158}
+.game-ballot-number{font:700 32px/1.4 monospace;letter-spacing:8px;text-align:center;background:#fff;border:1px solid #8b9b82;border-radius:4px;margin:12px 0;padding:4px}
+.game-ballot-pad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;align-content:center}
+.game-ballot-pad button{min-height:44px;min-width:0;border:1px solid #252525;border-radius:5px;background:#303035;color:#fff;font-size:16px;font-weight:800;box-shadow:0 2px 0 #111;cursor:pointer}
+.game-ballot-pad .game-ballot-zero{grid-column:2}
+#game-urna-clear,#game-urna-confirm{font-size:12px;grid-column:auto;min-height:44px}
+#game-urna-clear{background:#efb03f;color:#292018;border-color:#9d6d1d;grid-column:1}
+#game-urna-confirm{background:#399556;color:white;border-color:#236b3d;grid-column:2/4}
+#game-urna-confirm:disabled{opacity:.5;cursor:default}
+.game-card:is([data-run-state="ballot"],[data-run-state="prison"]) .game-controls{display:none}
+.game-card[data-run-state="ballot"] .game-viewport{display:none}
+.game-card[data-run-state="prison"] .game-overlay{background:#fff;pointer-events:none}
+.game-card[data-run-state="prison"] #runner-canvas{min-height:270px}
+@media(max-width:480px){.game-ballot{grid-template-columns:1fr;max-width:360px;padding:10px;gap:9px}.game-ballot-pad{grid-template-columns:repeat(3,minmax(0,1fr))}.game-ballot-screen{padding:9px}.game-ballot-number{margin:6px 0;font-size:28px}}

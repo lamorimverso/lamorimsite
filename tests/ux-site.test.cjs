@@ -452,6 +452,10 @@ test('seletor oferece dois modos jogáveis, finaliza História e permite reinici
     plannedAttack:{type:'cloroquina-prop',action:'jump'},goalKind:'phantoms',objective:'Desvie do frasco'};
    r.obstacles=[{x:-100,width:38,height:38,type:'cloroquina-prop',action:'jump',bossAttack:true,counted:false,speed:250,y:23}];
   });
+  await page.locator('#game-ballot').waitFor({state:'visible'});
+  await page.locator('[data-urna-digit="1"]').click();
+  await page.locator('[data-urna-digit="3"]').click();
+  await page.locator('#game-urna-confirm').click();
   await page.waitForFunction(()=>document.getElementById('game-overlay-title').textContent==='História concluída!',null,{timeout:3000});
   assert.equal(await page.evaluate(()=>__testRun.status),'won');
   await page.locator('#game-mode-infinite').check();
@@ -488,5 +492,27 @@ test('os avisos das armas aparecem visualmente no celular, com nome e esquiva co
   assert.equal(await page.locator('#game-objective').isVisible(),true);
   assert.match(await page.locator('#game-objective').textContent(),/Martelo de Xandão/);
   assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('urna 22 mostra prisão e recomeça História automaticamente',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
+ try{
+  await page.locator('#game-mode-story').check();await begin(page);
+  await page.evaluate(()=>{
+   const r=__testRun;r.bossesDefeated=5;r.nextRaid=r.nextObstacle=r.nextBossAt=Infinity;r.shieldFor=Infinity;
+   r.boss={type:'bossonari',name:'Bossonari',color:'#7a4f8d',total:1,remaining:1,fired:1,nextAttack:100,attackFlashFor:0,hitFlashFor:0,plannedFor:1,plannedAttack:{type:'cloroquina-prop',action:'jump'},goalKind:'phantoms',objective:'Desvie'};
+   r.obstacles=[{x:-100,width:38,height:38,type:'cloroquina-prop',action:'jump',bossAttack:true,counted:false,speed:250,y:23}];
+  });
+  await page.locator('#game-ballot').waitFor({state:'visible'});
+  await page.keyboard.press('9');await page.keyboard.press('9');await page.keyboard.press('Enter');
+  assert.match(await page.locator('#game-ballot-message').textContent(),/inválido/);
+  await page.locator('#game-urna-clear').click();
+  await page.locator('[data-urna-digit="2"]').click();await page.locator('[data-urna-digit="2"]').click();
+  await page.locator('#game-urna-confirm').click();
+  assert.equal(await page.locator('#game').getAttribute('data-run-state'),'prison');
+  assert.equal(await page.locator('#game-overlay-title').textContent(),'Flávio foi preso!');
+  await page.waitForFunction(()=>__testRun.status==='running'&&__testRun.mode==='story'&&__testRun.bossesDefeated===0,null,{timeout:6000});
+  assert.equal(await page.locator('#game-ballot').isVisible(),false);assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });

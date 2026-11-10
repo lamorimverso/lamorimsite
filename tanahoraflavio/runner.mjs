@@ -1,5 +1,5 @@
 import {createVoiceDirector} from './runner-voice-director.mjs?v=088899f48fd6';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=724cefc8ba5b";
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=647f93ada713";
 import { drawActor, drawItem, drawThreat, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=abfc83da0fba";
 import { createGameAudio } from "./runner-audio.mjs?v=b63783dad9b7";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=fa9433a61a03";
@@ -114,7 +114,7 @@ function initRunner() {
     $("game-stage-name").textContent=stage.name;
     const cast=characterProgressAt(run);
     $("game-difficulty").textContent="Risco "+difficulty.level+"/10 · "+cast.available+"/"+cast.total+" rivais";
-    $("game-stage-time").textContent=run.status==="won"?"História concluída!":run.status==="over"?"Fim da corrida":run.boss?run.boss.remaining+" ataques para escapar do chefão":run.raid?"Perseguição especial":run.mode==="story"?"Chefões "+run.bossesDefeated+"/6":campaignPhases[stage.index];
+    $("game-stage-time").textContent=run.status==="ballot"?"Etapa final · Urna":run.status==="prison"?"Prisão fictícia":run.status==="won"?"História concluída!":run.status==="over"?"Fim da corrida":run.boss?run.boss.remaining+" ataques para escapar do chefão":run.raid?"Perseguição especial":run.mode==="story"?"Chefões "+run.bossesDefeated+"/6":campaignPhases[stage.index];
     $("game-best").textContent=best.toLocaleString("pt-BR");
     $("game-time").textContent=pad(Math.floor(run.elapsed/60))+":"+pad(Math.floor(run.elapsed%60));
     section.dataset.runState=run.status;section.dataset.runMode=run.mode;
@@ -187,12 +187,25 @@ function initRunner() {
     $("game-support-status").hidden=!supportFailed;
     $("game-support-retry").disabled=supportLoading;
     $("game-loading-note").textContent=spritesFailed?"Os desenhos não carregaram. Toque no botão para tentar novamente.":"Preparando os personagens…";
-    $("game-overlay").hidden=run.status==="running";
-    $("game-captured").hidden=run.status!=="over";
+    const ballotOpen=run.status==="ballot",prison=run.status==="prison";
+    $("game-ballot").hidden=!ballotOpen;
+    $("game-ballot-number").textContent=run.ballot.digits.padEnd(2,"_");
+    $("game-ballot-message").textContent=run.ballot.message||"Digite dois números e confirme.";
+    $("game-urna-confirm").disabled=run.ballot.digits.length!==2;
+    $("game-overlay").hidden=run.status==="running"||ballotOpen;
+    $("game-captured").hidden=run.status!=="over"&&!prison;
+    if(ballotOpen&&lastStatus!=="ballot"){
+      clearControls();$("game-ballot").focus({preventScroll:true});
+    }
+    if(prison){
+      $("game-overlay-title").textContent="Flávio foi preso!";
+      $("game-overlay-copy").textContent="Código 22 confirmado. A campanha recomeça em instantes.";
+      $("game-overlay-badge").textContent="Final fictício";
+    }
     $("game-start-hint").hidden=run.status!=="ready";
     if(run.status==="won"){
       $("game-overlay-title").textContent="História concluída!";
-      $("game-overlay-copy").textContent="Você superou os seis chefões, inclusive Bossonari, e escapou do Exército de Memes. "+score.toLocaleString("pt-BR")+" m percorridos.";
+      $("game-overlay-copy").textContent="Código 13 confirmado! Você concluiu a etapa final da campanha. "+score.toLocaleString("pt-BR")+" m percorridos.";
       $("game-overlay-badge").textContent="Vitória fictícia";
       if(lastStatus!=="won")section.dispatchEvent(new Event("runner:won"));
     }
@@ -203,7 +216,7 @@ function initRunner() {
       if(lastStatus!=="over")section.dispatchEvent(new Event("runner:over"));
     }
     if(lastStatus!==run.status||lastStage!==stage.index||lastCollected!==run.collected||lastPower!==power||lastLives!==run.lives||lastEvents!==run.events){
-      let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="won"?"História concluída: todos os seis chefões superados.":run.status==="over"?"Foi pego pela Polícia Federal! "+dodgeHint()+" "+score+" metros percorridos. Toque em Tentar de novo.":stage.name+" · pule ou abaixe conforme o perigo.";
+      let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="ballot"?"Etapa final: digite dois números na urna fictícia.":run.status==="prison"?"Flávio foi preso. A campanha vai recomeçar.":run.status==="won"?"História concluída: todos os seis chefões superados.":run.status==="over"?"Foi pego pela Polícia Federal! "+dodgeHint()+" "+score+" metros percorridos. Toque em Tentar de novo.":stage.name+" · pule ou abaixe conforme o perigo.";
       if(run.status==="running"){
         if(run.events>lastEvents)message=run.event;
         else if(lastCollected!==run.collected)message="Passaporte coletado. Faltam "+(100-run.passports%100)+" para uma vida.";
@@ -328,6 +341,25 @@ function initRunner() {
     moveRun(run,Number(right)-Number(left)||(pointer?.direction||0));
   }
   $("game-start").addEventListener("click",begin);
+  function confirmBallot(){
+    const outcome=ballotConfirm(run);
+    if(!outcome)return;
+    updateUI();draw();
+    if(outcome==="won")audio.effect("victory");
+    if(outcome==="prison"){
+      audio.effect("hit");
+      const imprisoned=run;
+      window.setTimeout(()=>{
+        if(run!==imprisoned||run.status!=="prison")return;
+        $("game-mode-story").checked=true;begin();
+      },2400);
+    }
+  }
+  $("game-ballot").querySelectorAll("[data-urna-digit]").forEach(button=>button.addEventListener("click",()=>{
+    if(ballotDigit(run,button.dataset.urnaDigit)){audio.effect("pickup");updateUI();}
+  }));
+  $("game-urna-clear").addEventListener("click",()=>{ballotClear(run);updateUI();});
+  $("game-urna-confirm").addEventListener("click",confirmBallot);
   $("game-sound").addEventListener("click",()=>{
     const enabled=audio.toggle();$("game-sound-label").textContent=enabled?"Som ligado":"Som desligado";
     $("game-sound").title=$("game-sound-label").textContent;
@@ -393,6 +425,12 @@ function initRunner() {
     if(!("PointerEvent" in window)||event.detail===0&&!physical)jump();
   });
   section.addEventListener("keydown", event => {
+    if(run.status==="ballot"&&!event.ctrlKey&&!event.metaKey&&!event.altKey){
+      if(/^[0-9]$/.test(event.key)){event.preventDefault();if(!event.repeat)ballotDigit(run,event.key);updateUI();}
+      else if(event.key==="Backspace"||event.key==="Delete"){event.preventDefault();ballotClear(run);updateUI();}
+      else if(event.key==="Enter"&&!event.target.closest("button")){event.preventDefault();if(run.ballot.digits.length===2&&!event.repeat)confirmBallot();}
+      return;
+    }
     if (event.target.closest("button,a,input,select,textarea,summary") || event.ctrlKey || event.metaKey || event.altKey) return;
     if(["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code)){
       event.preventDefault();moveKeys.add(event.code);resumeFromGesture();updateMovement();

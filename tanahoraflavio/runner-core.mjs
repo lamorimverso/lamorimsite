@@ -186,6 +186,7 @@ function rearMotion(run,x,width){
 export function createRun({assisted=false,seed,mode='endless'}={}) {
  return {status:'ready',mode:mode==='story'?'story':'endless',assisted:assisted===true,elapsed:0,distance:0,routeDistance:0,viewportWidth:WORLD.width,bonus:0,collected:0,passports:0,lives:1,
   randomState:seed===undefined?null:Number(seed)>>>0,
+  ballot:{digits:'',message:''},
   event:'',events:0,player:{x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareAge:0,nextJacareThreat:3,restoreFlashFor:0,jumpBufferedUntil:0},obstacles:[],pickups:[],lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,shieldFor:0,graceFor:0,
   lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,phantomCloud:null,
@@ -238,6 +239,25 @@ export function resizeRun(run,width){
  }
 }
 export function startRun(run){if(run.status==='ready')run.status='running';}
+// Urna exclusivamente fictícia, sem integração eleitoral, coleta ou transmissão de votos.
+export function ballotDigit(run,digit){
+ if(run.status!=='ballot'||!/^[0-9]$/.test(String(digit))||run.ballot.digits.length>=2)return false;
+ run.ballot.digits+=String(digit);run.ballot.message='';return true;
+}
+export function ballotClear(run){
+ if(run.status!=='ballot')return false;
+ run.ballot.digits='';run.ballot.message='';return true;
+}
+export function ballotConfirm(run){
+ if(run.mode!=='story'||run.status!=='ballot')return false;
+ if(run.ballot.digits==='13'){
+  run.status='won';announce(run,'HISTÓRIA CONCLUÍDA! Código 13 confirmado. Você venceu a etapa final.');return 'won';
+ }
+ if(run.ballot.digits==='22'){
+  run.status='prison';announce(run,'Código 22 confirmado. Flávio foi preso! A campanha recomeça.');return 'prison';
+ }
+ run.ballot.message='Código inválido. Corrija e tente novamente.';return 'invalid';
+}
 // Movimento independente do avanço automático e limitado apenas pelo sprite.
 export function moveRun(run,direction){
  if(run.status!=='running')return false;
@@ -440,8 +460,9 @@ function resolveBossDodges(run){
  const boss=run.boss;if(boss.fired<boss.total||boss.remaining>0)return;
  run.lastBoss=boss.type;run.boss=null;run.bossesDefeated++;run.bossCooldown=4;
  if(run.mode==='story'&&boss.type==='bossonari'){
-  run.status='won';run.nextBossAt=Infinity;run.obstacles=[];run.phantomCloud=null;
-  announce(run,'HISTÓRIA CONCLUÍDA! Você escapou do Chefão dos Chefões e atravessou os seis confrontos.');
+  run.status='ballot';run.nextBossAt=Infinity;run.obstacles=[];run.pickups=[];run.phantomCloud=null;
+  run.ballot={digits:'',message:''};clearRunInput(run);
+  announce(run,'ETAPA FINAL: confirme o código na urna fictícia.');
   return;
  }
  run.nextBossAt=Math.max(nextBossDistance(run.bossesDefeated),run.routeDistance+7000);run.nextObstacle=Math.max(1.8,run.nextObstacle);
@@ -541,7 +562,7 @@ export function advanceRun(run,seconds,rng){
   pickup.x-=Number.isFinite(pickup.speed)?pickup.speed*activeDelta:travel;
  }
  resolveBossDodges(run);
- if(run.status==='won')return;
+ if(run.status!=='running')return;
  run.obstacles=run.obstacles.filter(o=>o.groundHazard?o.age<o.warningFor+o.activeFor:o.falling?o.age<o.warningFor+o.fallFor+.25:o.approach==='rear'?o.x<playerX(run)+PLAYER.width+80:o.x+o.width>-20);
  run.pickups=run.pickups.filter(p=>p.x>-30);
  // Uma Joice já vencida tem prioridade sobre o próximo marco de chefe.
