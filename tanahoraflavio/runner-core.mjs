@@ -458,7 +458,10 @@ function advanceBoss(run,dt,rng,balance){
  run.obstacles.push(attack);
  }
  if(boss.type==='bossonari')run.phantomCloud={remaining:1.3,medicine:attackType,x:Math.max(180,Math.min(visibleWidth(run)-150,playerX(run)+260))};
- boss.attackFlashFor=.26;boss.lastWeapon=attackType;boss.fired++;
+ // Projéteis com espera ainda estão em preparação. O loop de movimento
+ // aciona a pose de disparo quando a espera termina, junto do corpo físico.
+ if(!attack.projectile||!(attack.waitFor>0)){boss.attackFlashFor=.26;boss.lastWeapon=attackType;}
+ boss.fired++;
  boss.actionStreak=pattern.action===boss.lastAction?(boss.actionStreak||0)+1:1;
  boss.lastAction=pattern.action;
  boss.plannedFor=boss.fired;
@@ -699,7 +702,7 @@ export function advanceRun(run,seconds,rng){
  // O humano mantém as margens antigas para preservar o restante da física.
  const collisionLeft=run.player.isJacare?playerX(run)-15:left;
  const collisionRight=run.player.isJacare?playerX(run)+PLAYER.width+17:right;
- const hit=run.shieldFor<=0&&run.graceFor<=0&&run.obstacles.find(o=>!o.passed&&!o.counted&&(!(o.falling||o.groundHazard)||o.age>=o.warningFor)&&
+ const hit=run.shieldFor<=0&&run.graceFor<=0&&run.obstacles.find(o=>!o.passed&&!o.counted&&(!o.projectile||o.launched||!(o.waitFor>0))&&(!(o.falling||o.groundHazard)||o.age>=o.warningFor)&&
   collisionRight>o.x+3&&collisionLeft<o.x+o.width-3&&(
    o.projectile||o.falling?(bottom<o.y+o.height/2&&top>o.y-o.height/2):(bottom<o.height&&top>0)
   ));
