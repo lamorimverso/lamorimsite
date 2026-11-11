@@ -1,4 +1,4 @@
-import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=7f111bd8189a";
+import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=9a9d2bd998a8";
 // Personagens em atlas WebP; itens e perigos continuam vetoriais em Canvas.
 const INK='#292337',CREAM='#fff6e5';
 function oval(c,x,y,rx,ry,fill,stroke=INK,w=1.8){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=w;c.stroke();}}
@@ -7,7 +7,7 @@ function path(c,points,fill,stroke=INK){c.beginPath();points.forEach(([x,y],i)=>
 function line(c,points,color=INK,width=2){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.strokeStyle=color;c.lineWidth=width;c.lineCap='round';c.lineJoin='round';c.stroke();}
 function text(c,value,x,y,size=7,color=CREAM){c.fillStyle=color;c.font='900 '+size+'px system-ui';c.textAlign='center';c.fillText(value,x,y);}
 
-export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT,CORE_SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=7f111bd8189a";
+export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT,CORE_SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=9a9d2bd998a8";
 // Figuras vetoriais articuladas preservam a silhueta original do meme.
 // Silhueta original do meme: chapéu vermelho, emblema dourado e pernas longas.
 export function drawMemeArmy(c,{x=0,y=0,phase=0,scale=1,reducedMotion=false,standing=false}={}){
@@ -145,9 +145,9 @@ export function jacareBlendFor(player,reducedMotion=false){
  if(reducedMotion)jacare=player.isJacare?1:0;
  return {human:1-jacare,jacare};
 }
-export function drawJacare(c,{x,y,phase=0,age=1,reducedMotion=false}={}){
- if(drawActor(c,{type:'jacare',x,y,phase,scale:1}))return;
- c.save();c.translate(x,y);
+export function drawJacare(c,{x,y,phase=0,age=1,reducedMotion=false,facing=1}={}){
+ if(drawActor(c,{type:'jacare',x,y,phase,scale:1,facing}))return;
+ c.save();c.translate(x,y);if(facing<0)c.scale(-1,1);
  const motion=reducedMotion?0:Math.sin(phase*.95);
  const morph=reducedMotion?1:Math.min(1,.82+Math.max(0,age)/.30*.18);
  c.translate(0,-Math.abs(motion)*1.15);
@@ -533,7 +533,7 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
   c.translate(0,movement.bob);c.rotate(movement.lean);
   // Perseguidores de solo usam as poses de corrida do atlas. O emissor
   // suspenso continua independente e não transporta o projétil no corpo.
-  drawActor(c,{type:item.type,x:0,y:0,scale:item.height/94,phase});
+  drawActor(c,{type:item.type,x:0,y:0,scale:item.height/94,phase,facing:item.approach==='rear'?1:-1});
  }
  drawWeaponEffects(c,item,phase,reducedMotion);
  c.restore();

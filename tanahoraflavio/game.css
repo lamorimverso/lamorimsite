@@ -286,3 +286,8 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
 .game-card[data-run-state="running"]:not([data-boss="none"]) .game-hud{display:flex;top:8px;left:8px;bottom:auto;right:auto;max-width:calc(100% - 16px);animation:none}
 
 .game-attack:disabled{opacity:.55;cursor:default;box-shadow:none}
+
+.game-extra{margin:8px 0;font-size:12px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.game-extra>summary{cursor:pointer;min-height:44px;padding:12px;font-weight:600;color:var(--muted)}
+.game-extra .game-settings-content{margin:0;border:0}
+body.game-expanded .game-extra{display:none}

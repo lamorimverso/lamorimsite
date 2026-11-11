@@ -70,7 +70,7 @@ export function portraitCropFor(frame){
  // Preservar toda a largura, recortando somente a parte inferior para retrato.
  return {x:frame.x,y:frame.y,width:frame.width,height:frame.height*.76};
 }
-export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,airborne=false,falling=false,landing=false,attacking=false,preparing=false,hurt=false,alpha=1}={}){
+export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,airborne=false,falling=false,landing=false,attacking=false,preparing=false,hurt=false,alpha=1,facing}={}){
  let selected=spriteFrameFor(type,{phase,airborne,falling,landing,attacking,preparing,hurt});
  if(!selected)return false;
  let sheet=sheets.get(selected.sheet);
@@ -84,7 +84,8 @@ export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,a
  if(!factor)return false;
  // A pose horizontal conserva proporções; cabe abaixo do ataque alto sem esmagar o rosto.
  if(type==='flavio'&&selected.index===10)factor=Math.min(factor,48*scale/frame.height);
- const dx=x+(frame.x-frame.center)*factor;
+ let dx=x+(frame.x-frame.center)*factor;
+ if(type==='jacare')dx=2*x-dx-frame.width*factor;
  let baseline=frame.groundY??frame.y+frame.height;
  if(type==='flavio'&&airborne){
   const offsets=sheet.frames.slice(0,8).map(f=>(f.groundY??f.y+f.height)-(f.anchorY??f.y+f.height));
@@ -93,9 +94,9 @@ export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,a
  }
  const dy=y+(frame.y-baseline)*factor;
  context.save();context.globalAlpha*=alpha;context.imageSmoothingEnabled=true;
- // Os novos quadrúpedes vieram olhando à esquerda; só essa forma vira para a fuga.
- if(type==='jacare'){context.translate(x,0);context.scale(-1,1);context.translate(-x,0);}
- // Preservar a orientação original também no salto, agachamento e impacto.
+ // Virar dentro do próprio retângulo conserva tamanho, apoio e limites.
+ const target=facing===1||facing===-1?facing:type==='flavio'||type==='jacare'?1:-1;
+ if(target!==(spriteFacesRight(type)?1:-1)){context.translate(2*dx+frame.width*factor,0);context.scale(-1,1);}
  if(hurt&&type!=='flavio'){context.shadowColor='#ffd56b';context.shadowBlur=9;}
  context.drawImage(sheet.image,frame.x,frame.y,frame.width,frame.height,dx,dy,frame.width*factor,frame.height*factor);
  context.restore();return true;
