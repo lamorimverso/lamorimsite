@@ -195,10 +195,10 @@ test('Joice surge na pista e o fundo realmente se desloca durante a corrida',asy
  try{
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
   await page.evaluate(()=>{const r=__journeyRun;r.nextObstacle=r.nextBossAt=r.nextRaid=Infinity;});
-  const before=await page.evaluate(()=>__sceneGeometry.layers[0].segments.find(s=>s.segmentIndex===0).x);
+  const before=await page.evaluate(()=>{const s=__sceneGeometry.layers[0].segments[2];return {index:s.segmentIndex,x:s.x};});
   await page.waitForTimeout(450);
-  const after=await page.evaluate(()=>__sceneGeometry.layers[0].segments.find(s=>s.segmentIndex===0).x);
-  assert.ok(after<before-10,'arquitetura avança da direita para a esquerda, não só a faixa da estrada');
+  const after=await page.evaluate(index=>__sceneGeometry.layers[0].segments.find(s=>s.segmentIndex===index).x,before.index);
+  assert.ok(after<before.x-10,'arquitetura avança da direita para a esquerda, não só a faixa da estrada');
   await page.evaluate(()=>{__journeyRun.nextRaid=0;});
   await page.waitForFunction(()=>document.getElementById('game').dataset.raid==='warning');
   assert.ok(await page.evaluate(()=>!!globalThis.__joiceDrawn),'personagem aparece dentro do Canvas, além do retratinho no painel');
