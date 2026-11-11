@@ -92,7 +92,7 @@ body.finished .counter{display:none}
 .game-card[data-run-state="ready"] .game-overlay{inset:auto 10px 8px;padding:5px 9px;border-radius:8px;background:#ffffffd9}
 .game-card[data-run-state="ready"] .game-overlay strong,.game-card[data-run-state="ready"] #game-overlay-copy{display:none}
 .game-card[data-run-state="ready"] .game-start-hint{font-size:11px;font-weight:500;color:var(--dark)}
-.game-hud{display:none;position:absolute;bottom:8px;right:8px;z-index:2;pointer-events:none;max-width:90%;padding:5px 8px;background:#fffffff2;border:1px solid #d9d0eb;border-radius:7px}
+.game-hud{display:none;position:absolute;top:8px;left:8px;z-index:2;pointer-events:none;max-width:90%;padding:5px 8px;background:#fffffff2;border:1px solid #d9d0eb;border-radius:7px}
 .game-card:is([data-power="shield"],[data-power="recovery"]) .game-hud{display:flex}
 .game-hud .pursuit-chip,.game-hud .ammo-chip{display:none}
 .game-hud strong{font-size:11px;line-height:1.4;color:var(--dark)}

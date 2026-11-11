@@ -732,6 +732,8 @@ test('WASD anima recuo, retorno, salto e perseguidores de solo sem prancha',asyn
   await page.waitForFunction(()=>new Set(__actorMotion.filter(x=>x.type==='pf').map(x=>x.frame)).size>=2);
   assert.ok(await page.evaluate(()=>__actorMotion.filter(x=>x.type==='pf').every(x=>x.facing===-1)));
   assert.equal(await page.evaluate(()=>__testRun.status),'running');
+  const power=await page.locator('.game-hud').boundingBox(),fire=await page.locator('#game-attack').boundingBox();
+  assert.ok(power.x+power.width<=fire.x||fire.x+fire.width<=power.x||power.y+power.height<=fire.y||fire.y+fire.height<=power.y,'aviso de escudo não cobre o disparo');
   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});await page.locator('#game').screenshot({path:path.resolve(__dirname,'../ux-captures/running-ground-900.png')});
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
