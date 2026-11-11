@@ -8,21 +8,25 @@ function line(c,points,color=INK,width=2){c.beginPath();points.forEach(([x,y],i)
 function text(c,value,x,y,size=7,color=CREAM){c.fillStyle=color;c.font='900 '+size+'px system-ui';c.textAlign='center';c.fillText(value,x,y);}
 
 export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT,CORE_SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=4ff31d443151";
-// Visual de sátira: antagonistas suspensos, sem passos de corrida.
+// Figuras vetoriais articuladas preservam a silhueta original do meme.
 // Silhueta original do meme: chapéu vermelho, emblema dourado e pernas longas.
 export function drawMemeArmy(c,{x=0,y=0,phase=0,scale=1,reducedMotion=false}={}){
  c.save();c.translate(x,y);c.scale(scale,scale);
  c.translate(0,reducedMotion?0:Math.sin(phase*.35)*1.5);
+ const stride=reducedMotion?0:Math.sin(phase*.65)*.22;
  // A referência tem chapéu de três pontas e pernas, não cabeça nem lençol.
  // Forma de trás, mais fria e fina: joelho flexionado, salto atrás.
  const silhouette=(fill,stroke,draw)=>{c.beginPath();draw();c.closePath();c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=1.2;c.stroke();}};
+ c.save();c.translate(4,-32);c.rotate(-stride*.8);c.translate(-4,32);
  silhouette('#8d779d','#614b7c',()=>{
   c.moveTo(4,-32);c.bezierCurveTo(14,-33,19,-26,13,-21);
   c.bezierCurveTo(8,-18,9,-15,15,-12);c.bezierCurveTo(21,-9,23,-8,24,-3);
   c.lineTo(23,-1);c.lineTo(20,-4);c.bezierCurveTo(18,-8,12,-8,9,-12);
   c.bezierCurveTo(0,-17,0,-21,2,-26);});
  line(c,[[13,-11],[19,-7],[22,-3]],'#b4adc6',1.4);
+ c.restore();
  // Perna dianteira em diagonal: volume arredondado, contraste e brilho.
+ c.save();c.translate(-2,-34);c.rotate(stride);c.translate(2,34);
  silhouette('#733c60','#382239',()=>{
   c.moveTo(-2,-34);c.bezierCurveTo(10,-36,15,-28,9,-22);
   c.bezierCurveTo(2,-17,-6,-16,-9,-11);c.bezierCurveTo(-13,-7,-19,-4,-22,0);
@@ -36,6 +40,7 @@ export function drawMemeArmy(c,{x=0,y=0,phase=0,scale=1,reducedMotion=false}={})
  // Sapato de salto da figura original, sem correr.
  silhouette('#2a293d','#1c1b2b',()=>{c.moveTo(-28,-4);c.lineTo(-23,-2);c.lineTo(-18,-4);c.lineTo(-20,1);c.lineTo(-25,4);c.lineTo(-34,4);c.lineTo(-32,1);c.closePath();});
  line(c,[[-19,-3],[-21,4]],'#292033',1.4);line(c,[[-28,-3],[-21,-1]],'#dab4bc',1.5);
+ c.restore();
  // Faixa escura de união entre chapéu e pernas.
  silhouette('#25283a',null,()=>{c.moveTo(-5,-39);c.lineTo(7,-39);c.bezierCurveTo(12,-34,9,-30,2,-29);c.lineTo(-3,-33);});
  // Chapéu vermelho tridimensional, com pontas levantadas à esquerda/direita.
@@ -78,11 +83,25 @@ export function drawBossOfBosses(c,{x=0,y=0,phase=0,preparing=false,attacking=fa
  path(c,[[-29,-10],[-20,-53],[-8,-67],[11,-67],[23,-49],[27,-10]],'#414267','#292337');
  box(c,-5,-49,11,31,'#ece1e5',2,null);
  path(c,[[-3,-42],[3,-42],[6,-15],[1,-6],[-4,-15]],'#d3565f',null);
+ // Cabeça e braços possuem pivôs próprios: o corpo não é uma imagem
+ // inteira que apenas sobe e desce. Ataques têm alcance e retorno visual.
+ const breath=reducedMotion?0:Math.sin(phase*.32);
+ const swing=reducedMotion?0:Math.sin(phase*.48)*.18;
+ c.save();c.translate(0,-73);c.rotate(breath*.055);c.translate(0,73);
  oval(c,0,-73,18,21,'#e7b68e','#583c4b',2);
  path(c,[[-18,-82],[-9,-96],[9,-96],[18,-84],[10,-87],[-10,-87]],'#302f43');
  oval(c,-6,-74,2,2,'#302f43',null);oval(c,6,-74,2,2,'#302f43',null);
- line(c,[[-29,-51],[-40,-30]],'#414267',10);line(c,[[29,-51],[40,-30]],'#414267',10);
- if(preparing||attacking){oval(c,39,-29,8,7,'#cce1ff','#514369',2);text(c,'!',39,-27,12,'#713f5c');}
+ c.restore();
+ for(const side of [-1,1]){
+  c.save();c.translate(side*29,-51);
+  c.rotate(side*(attacking?-.5:preparing?.3:0)+side*swing);
+  line(c,[[0,0],[side*8,10],[side*11,21]],'#414267',10);
+  oval(c,side*11,21,5,5,'#e7b68e','#583c4b',1.4);
+  if(side===1&&(preparing||attacking)){
+   oval(c,11,21,8,7,'#cce1ff','#514369',2);text(c,'!',11,23,12,'#713f5c');
+  }
+  c.restore();
+ }
  text(c,'BOSSONARI',0,-105,11,'#552e53');c.restore();
 }
 export function drawPhantomCloud(c,{x=0,y=0,phase=0,hitFor=0,reducedMotion=false}={}){
@@ -320,7 +339,9 @@ export function drawEnemyActor(c,{type,x=0,y=0,scale=1,phase=0,preparing=false,a
  const bob=reducedMotion||attacking?0:Math.sin(phase*.25)*1.5;
  c.translate(0,bob);
  if(type==='meme-army')drawMemeArmy(c,{phase,reducedMotion,scale});
- else drawActor(c,{type,x:0,y:0,scale,phase:0,preparing,attacking,hurt});
+ // A animação essencial do elenco avança inclusive com efeitos reduzidos,
+ // assim como a corrida de Flávio. Só o balanço decorativo é removido.
+ else drawActor(c,{type,x:0,y:0,scale,phase,preparing,attacking,hurt});
  // Nenhum objeto de ataque é desenhado no corpo. A preparação é uma pose,
  // e o disparo existe somente na lista de projéteis do motor.
  if(preparing||attacking){
@@ -509,7 +530,7 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
   c.translate(0,movement.bob);c.rotate(movement.lean);
   // Perseguidores de solo usam as poses de corrida do atlas. O emissor
   // suspenso continua independente e não transporta o projétil no corpo.
-  drawActor(c,{type:item.type,x:0,y:0,scale:item.height/94,phase:reducedMotion?0:phase});
+  drawActor(c,{type:item.type,x:0,y:0,scale:item.height/94,phase});
  }
  drawWeaponEffects(c,item,phase,reducedMotion);
  c.restore();
