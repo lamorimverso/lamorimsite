@@ -268,7 +268,7 @@ test('placar no modo paisagem fica inteiro acima da pista durante derrota',async
 for(const assisted of [false,true])test(`resize real900→480 preserva reação mínima com assistência${assisted}`,async()=>{
  const {context,page,errors}=await open({width:1440,height:1000},{instrument:true});
  try{
-  if(assisted){await page.locator('#game-settings summary').click();await page.locator('#game-assist').check();}
+  if(assisted){await page.locator('#game-options-panel summary').click();await page.locator('#game-assist').check();}
   await page.locator('#game-expand').click();await page.locator('#game-start').click();await page.waitForFunction(()=>__journeyRun.viewportWidth===900);
   await page.evaluate(async()=>{const r=__journeyRun;Object.assign(r,{elapsed:200,distance:90000,routeDistance:90000,nextObstacle:0,nextBossAt:Infinity,nextRaid:Infinity,nextAllyAt:Infinity,nextPower:Infinity,nextPassport:Infinity,shieldFor:0,graceFor:0,boss:null,raid:null,obstacles:[],pickups:[],__resizeWatch:{}});const {advanceRun}=await import('./runner-core.mjs');advanceRun(r,1/120,()=>.9);r.nextObstacle=Infinity;});
   await page.setViewportSize({width:390,height:844});await page.waitForFunction(()=>__journeyRun.viewportWidth===480);await page.waitForFunction(()=>__journeyRun.status==='over');

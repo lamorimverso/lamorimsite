@@ -92,7 +92,7 @@ body.finished .counter{display:none}
 .game-card[data-run-state="ready"] .game-overlay{inset:auto 10px 8px;padding:5px 9px;border-radius:8px;background:#ffffffd9}
 .game-card[data-run-state="ready"] .game-overlay strong,.game-card[data-run-state="ready"] #game-overlay-copy{display:none}
 .game-card[data-run-state="ready"] .game-start-hint{font-size:11px;font-weight:500;color:var(--dark)}
-.game-hud{display:none;position:absolute;bottom:8px;right:8px;z-index:2;pointer-events:none;max-width:90%;padding:5px 8px;background:#fffffff2;border:1px solid #d9d0eb;border-radius:7px}
+.game-hud{display:none;position:absolute;top:8px;left:8px;z-index:2;pointer-events:none;max-width:90%;padding:5px 8px;background:#fffffff2;border:1px solid #d9d0eb;border-radius:7px}
 .game-card:is([data-power="shield"],[data-power="recovery"]) .game-hud{display:flex}
 .game-hud .pursuit-chip,.game-hud .ammo-chip{display:none}
 .game-hud strong{font-size:11px;line-height:1.4;color:var(--dark)}
@@ -286,3 +286,8 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
 .game-card[data-run-state="running"]:not([data-boss="none"]) .game-hud{display:flex;top:8px;left:8px;bottom:auto;right:auto;max-width:calc(100% - 16px);animation:none}
 
 .game-attack:disabled{opacity:.55;cursor:default;box-shadow:none}
+
+.game-extra{margin:8px 0;font-size:12px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.game-extra>summary{cursor:pointer;min-height:44px;padding:12px;font-weight:600;color:var(--muted)}
+.game-extra .game-settings-content{margin:0;border:0}
+body.game-expanded .game-extra{display:none}

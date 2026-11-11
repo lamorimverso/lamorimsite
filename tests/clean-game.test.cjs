@@ -54,6 +54,7 @@ test('ajuda compacta abre por teclado e não bloqueia começar a corrida',async(
   const r=await summary.boundingBox();assert.ok(r.width>=40&&r.width<=48&&r.height>=40,'ajuda é um controle compacto e tocável');
   await summary.focus();await summary.press('Enter');
   assert.equal(await page.locator('#game-instructions').isVisible(),true);
+  await page.locator('#game-options-panel summary').click();
   await page.locator('#game-effects').selectOption('reduce');
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
   assert.equal(await page.locator('#game-settings').evaluate(e=>e.open),false);

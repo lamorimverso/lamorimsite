@@ -1,5 +1,5 @@
-import {drawSpriteHead} from './runner-sprites.mjs?v=7f111bd8189a';
-import {drawMemeArmy} from './runner-art.mjs?v=713e272cb0f6';
+import {drawSpriteHead} from './runner-sprites.mjs?v=9a9d2bd998a8';
+import {drawMemeArmy} from './runner-art.mjs?v=b09571a4072b';
 
 // Standing bosses: original atlas heads, original articulated Canvas bodies.
 // Coordinates are logical game pixels; y always remains the top of the deck.

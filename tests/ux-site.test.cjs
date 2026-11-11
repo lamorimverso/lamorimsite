@@ -19,7 +19,7 @@ before(async()=>{
  browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{})});
 });
 after(async()=>{await browser?.close();await new Promise(resolve=>server?.close(resolve));});
-async function open({instrument=false,instrumentAudio=false,init,blockEntry=false,blockSupports=false,legacyFirst=false,...options}={}){
+async function open({instrument=false,instrumentAudio=false,instrumentSprites=false,init,blockEntry=false,blockSupports=false,legacyFirst=false,...options}={}){
  const context=await browser.newContext(options);
  await context.route(/^https:\/\//,route=>route.abort());
  if(blockSupports)await context.route(url=>/\/assets\/(?:allies-motion-|pursuers-motion-)/.test(url.pathname),route=>route.abort());
@@ -27,6 +27,10 @@ async function open({instrument=false,instrumentAudio=false,init,blockEntry=fals
  if(instrument){
   const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-core.mjs'),'utf8');
   await context.route('**/runner-core.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+'\nconst originalCreateRun=createRun;createRun=(...args)=>{const run=originalCreateRun(...args);globalThis.__testRun=run;return run;};'}));
+ }
+ if(instrumentSprites){
+  const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-sprites.mjs'),'utf8');
+  await context.route('**/runner-sprites.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+"\nconst drawOriginal=drawSpriteActor;drawSpriteActor=(c,args)=>{const rows=(globalThis.__actorMotion??=[]);rows.push({type:args.type,facing:args.facing,frame:spriteFrameFor(args.type,args)?.index});if(rows.length>1000)rows.shift();return drawOriginal(c,args);};"}));
  }
  if(instrumentAudio){
   const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-audio.mjs'),'utf8');
@@ -146,7 +150,7 @@ test('falha de apoios mantém largada funcional e oferece nova tentativa dentro 
  try{
   await begin(page);await page.waitForFunction(()=>__testRun.elapsed>.1);assert.equal(await page.evaluate(()=>__testRun.status),'running');
   assert.equal(await page.evaluate(()=>__testRun.supportAvailable),false);
-  await page.locator('#game-settings summary').click();assert.equal(await page.getByRole('button',{name:'Carregar apoios',exact:true}).isVisible(),true);
+  await page.locator('#game-options-panel summary').click();assert.equal(await page.getByRole('button',{name:'Carregar apoios',exact:true}).isVisible(),true);
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
@@ -211,6 +215,7 @@ test('alternância de agachamento funciona por toque e preferências sobrevivem 
  try{
   await page.locator('#game-settings summary').click();
   await page.locator('#game-crouch-mode').selectOption('toggle');
+  await page.locator('#game-options-panel summary').click();
   await page.locator('#game-assist').check();
   await page.locator('#game-effects').selectOption('reduce');
   await page.locator('#game-sound').click();
@@ -379,6 +384,7 @@ test('ajustes e início continuam funcionando com armazenamento bloqueado',async
  const {context,page,errors}=await open({instrument:true,init:()=>Object.defineProperty(window,'localStorage',{get(){throw new DOMException('blocked','SecurityError');}})});
  try{
   await page.locator('#game-settings summary').click();
+  await page.locator('#game-options-panel summary').click();
   await page.locator('#game-assist').check();await page.locator('#game-sound').click();
   await begin(page);await page.locator('#runner-canvas').click();
   assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
@@ -426,7 +432,7 @@ test('HUD do chefão fica fora da pista e não desloca pista ou controles',async
 test('HTML antigo no cache se atualiza sem travar a inicialização',async()=>{
  const {context,page,errors}=await open({legacyFirst:true});
  try{
-  await page.waitForURL(url=>url.searchParams.get('ui')==='20261111-controls', {timeout:4000});
+  await page.waitForURL(url=>url.searchParams.get('ui')==='20261111-run-controls', {timeout:4000});
   await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
   assert.equal(await page.locator('#game-settings').count(),1);
   assert.match(await page.locator('#days').textContent(),/^\d+$/);
@@ -685,6 +691,50 @@ test('disparo fica visível, respeita a tecla configurada, cancela troca mantida
   assert.equal(await page.locator('#game-crouch-mode').inputValue(),'toggle');
   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
   await page.locator('#game-settings').screenshot({path:path.resolve(__dirname,'../ux-captures/fire-controls-390.png')});
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('engrenagem contém só comandos, com opções e créditos separados',async()=>{
+ const {context,page,errors}=await open({viewport:{width:390,height:844}});
+ try{
+  await page.locator('#game-settings summary').click();
+  assert.deepEqual(await page.locator('#game-settings select').evaluateAll(rows=>rows.map(e=>e.id)),['game-crouch-mode','game-fire-key']);
+  assert.equal(await page.locator('#game-settings a').count(),0);
+  assert.match(await page.locator('#game-instructions').textContent(),/W.*Espaço.*A\/D.*S/);
+  const box=await page.locator('#game-settings').boundingBox();assert.ok(box.height<420,'painel de comandos compacto');
+  assert.equal(await page.locator('#game-options-panel').evaluate(e=>e.open),false);
+  assert.equal(await page.locator('#game-help').evaluate(e=>e.open),false);
+  await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
+  await page.locator('#game-settings').screenshot({path:path.resolve(__dirname,'../ux-captures/compact-controls-390.png')});
+  await page.locator('#game-help summary').click();assert.ok(await page.locator('#game-help a').count()>2,'fontes e créditos preservados');
+  assert.equal(await page.locator('#game-help p').first().isVisible(),true,'a ajuda preservada não herda o estilo oculto antigo');
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('WASD anima recuo, retorno, salto e perseguidores de solo sem prancha',async()=>{
+ const {context,page,errors}=await open({instrument:true,instrumentSprites:true,viewport:{width:900,height:720}});
+ try{
+  await begin(page);await page.evaluate(()=>{const r=__testRun;for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;r.obstacles=[{type:'pf',x:460,width:34,height:44,action:'jump',speed:0}];r.shieldFor=Infinity;globalThis.__actorMotion=[];});
+  const canvas=page.locator('#runner-canvas');await canvas.focus();
+  const before=await page.evaluate(()=>__testRun.player.x);await page.keyboard.down('a');
+  await page.waitForFunction(x=>__testRun.player.x<x-20,before);
+  assert.equal(await page.evaluate(()=>__actorMotion.filter(x=>x.type==='flavio').at(-1).facing),-1);
+  await page.keyboard.up('a');await page.waitForFunction(()=>__actorMotion.filter(x=>x.type==='flavio').at(-1).facing===1);
+  await page.keyboard.down('w');await page.waitForFunction(()=>__testRun.player.y>10);
+  await page.waitForFunction(()=>__testRun.player.y===0);await page.keyboard.down('w');
+  assert.equal(await page.evaluate(()=>__testRun.player.y),0,'segurar W não gera salto repetido');
+  await page.keyboard.up('w');await page.keyboard.press('w');await page.waitForFunction(()=>__testRun.player.y>10);
+  await page.waitForFunction(()=>__testRun.player.y===0);
+  await page.keyboard.down('s');await page.waitForFunction(()=>__testRun.player.crouching);await page.keyboard.up('s');await page.waitForFunction(()=>!__testRun.player.crouching);
+  const left=await page.evaluate(()=>__testRun.player.x);await page.keyboard.down('d');await page.waitForFunction(x=>__testRun.player.x>x+20,left);await page.keyboard.up('d');
+  await page.waitForFunction(()=>new Set(__actorMotion.filter(x=>x.type==='pf').map(x=>x.frame)).size>=2);
+  assert.ok(await page.evaluate(()=>__actorMotion.filter(x=>x.type==='pf').every(x=>x.facing===-1)));
+  assert.equal(await page.evaluate(()=>__testRun.status),'running');
+  const power=await page.locator('.game-hud').boundingBox(),fire=await page.locator('#game-attack').boundingBox();
+  assert.ok(power.x+power.width<=fire.x||fire.x+fire.width<=power.x||power.y+power.height<=fire.y||fire.y+fire.height<=power.y,'aviso de escudo não cobre o disparo');
+  await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});await page.locator('#game').screenshot({path:path.resolve(__dirname,'../ux-captures/running-ground-900.png')});
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
