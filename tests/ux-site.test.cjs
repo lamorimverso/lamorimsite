@@ -91,7 +91,7 @@ test('corrida conserva avisos funcionais sem legendas de música, ação ou tran
 for(const viewport of [{width:390,height:844},{width:1440,height:900}])test(`teclado atravessa toda a largura útil da pista em ${viewport.width}px`,async()=>{
  const {context,page,errors}=await open({instrument:true,viewport});
  try{
-  await begin(page);
+  await page.locator('#game-mode-infinite').check();await begin(page);
   await page.evaluate(()=>{const r=__testRun;for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextPower','nextPassport'])r[k]=Infinity;r.obstacles=[];});
   await page.locator('#runner-canvas').focus();const before=await page.evaluate(()=>__testRun.distance);await page.keyboard.down('ArrowRight');
   await page.waitForFunction(()=>__testRun.player.x===__testRun.viewportWidth-75,{},{timeout:6000});
@@ -309,7 +309,7 @@ test('salto executado no pouso produz um único efeito de salto',async()=>{
 test('progresso distingue a rota dos metros e chefão mostra a ação correta',async()=>{
  const {context,page,errors}=await open({instrument:true});
  try{
-  await begin(page);
+  await page.locator('#game-mode-infinite').check();await begin(page);
   await page.evaluate(()=>{const r=__testRun;r.routeDistance=3500;r.distance=8500;r.nextBossAt=0;r.bossBag=['lula'];r.nextRaid=1000;});
   await page.waitForFunction(()=>document.getElementById('game').dataset.boss==='lula');
   assert.equal(await page.locator('.game-stage-header').isVisible(),true);
@@ -391,7 +391,7 @@ test('HUD do chefão fica fora da pista e não desloca pista ou controles',async
   const {context,page,errors}=await open({instrument:true,viewport});
   try{
    if(viewport.width===844)await page.locator('#game-expand').click();
-   await begin(page);
+   await page.locator('#game-mode-infinite').check();await begin(page);
    const beforeCanvas=await page.locator('#runner-canvas').boundingBox(),beforeControls=await page.locator('#runner-canvas').boundingBox();
    await page.evaluate(()=>{__testRun.nextBossAt=0;__testRun.bossBag=['lula'];__testRun.nextRaid=1000;});
    await page.waitForFunction(()=>document.getElementById('game').dataset.boss==='lula');
@@ -469,7 +469,7 @@ test('seletor oferece dois modos jogáveis, finaliza História e permite reinici
 test('os avisos das armas aparecem visualmente no celular, com nome e esquiva correta',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
  try{
-  await begin(page);
+  await page.locator('#game-mode-infinite').check();await begin(page);
   await page.evaluate(()=>{
    const r=__testRun;
    r.nextObstacle=r.nextBossAt=r.nextRaid=r.nextSupportAt=Infinity;
@@ -644,7 +644,7 @@ test('quadros de preparação e lançamento mudam no Canvas real nas quatro clas
     }
     result.push(hashes);
    }
-   document.body.replaceChildren(sheet);document.body.style.margin='0';return result;
+   document.body.prepend(sheet);for(const node of document.body.children)if(node!==sheet)node.style.display='none';document.body.style.margin='0';return result;
   });
   for(const row of evidence){assert.notEqual(row[0],row[1],'preparação muda no tempo');assert.notEqual(row[2],row[3],'lançamento muda no tempo');}
   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
