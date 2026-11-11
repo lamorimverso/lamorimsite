@@ -96,14 +96,14 @@ test('anúncios da História usam a identidade e o objetivo real dos vinte encon
 test('bossFigure desenha o corpo na mesma posição atingida pelo tiro nos dois modos',()=>{
  const source=readFileSync(new URL('../tanahoraflavio/runner.mjs',import.meta.url),'utf8');
  const start=source.indexOf('  function bossFigure(){'),end=source.indexOf('  function character(){',start);
- const make=Function('env','const {run,ctx,virtualWidth,WORLD,bossArenaPose,enemyEmitterPose,enemyMotionFor,prefersReducedMotion,drawHoverEnemy,bossCue}=env;'+source.slice(start,end)+';return bossFigure;');
- for(const mode of ['story','endless']){
+ const make=Function('env','const {run,ctx,virtualWidth,WORLD,bossArenaPose,bossPresentationFor,enemyEmitterPose,enemyMotionFor,prefersReducedMotion,drawHoverEnemy,bossCue}=env;'+source.slice(start,end)+';return bossFigure;');
+ for(const mode of ['story','endless'])for(const reduced of [true,false]){
   const r=core.createRun({mode});core.startRun(r);r.nextBossAt=0;r.nextRaid=Infinity;r.shieldFor=Infinity;
   core.advanceRun(r,dt,()=>.5);for(let i=0;i<160;i++)core.advanceRun(r,dt,()=>.5);
   const state={x:0,y:0},stack=[];let drawn;
   const ctx={save(){stack.push({...state});},restore(){Object.assign(state,stack.pop());},translate(x,y){state.x+=x;state.y+=y;},fillText(){}};
-  const draw=make({run:r,ctx,virtualWidth:900,WORLD:core.WORLD,bossArenaPose:core.bossArenaPose,
-   enemyEmitterPose:art.enemyEmitterPose,enemyMotionFor:art.enemyMotionFor,prefersReducedMotion:()=>true,
+  const draw=make({run:r,ctx,virtualWidth:900,WORLD:core.WORLD,bossArenaPose:core.bossArenaPose,bossPresentationFor:bosses.bossPresentationFor,
+   enemyEmitterPose:art.enemyEmitterPose,enemyMotionFor:art.enemyMotionFor,prefersReducedMotion:()=>reduced,
    drawHoverEnemy(c,args){drawn={x:state.x+args.x,y:state.y+args.y};},bossCue:()=>({action:'jump'})});
   draw();assert.equal(core.attackRun(r),true);
   const shot=r.heroShots.at(-1),heightAtBody=shot.y+(drawn.x-shot.x)*shot.vy/shot.vx;

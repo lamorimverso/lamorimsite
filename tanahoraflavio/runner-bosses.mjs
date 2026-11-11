@@ -36,16 +36,40 @@ export function nextStoryBossDistance(index){
 export function arenaPatternFor(boss,fired=0){
  const types=boss.attackTypes||attacks[boss.type]||attacks.haddad;
  const phase=boss.hp<=boss.maxHp/2?2:1;
- const action=(fired+(boss.slot||0))%3===0?'crouch':'jump';
+ // Cada classe ensina uma leitura própria antes de combinar respostas.
+ const sequences={sentinel:['jump','jump','crouch'],gunner:['jump','jump','jump','crouch','crouch','crouch'],
+  caster:['jump','crouch','jump','move','crouch','move'],sovereign:['jump','crouch','jump','move','jump','crouch','move','jump']};
+ const sequence=sequences[boss.classId]||sequences.sentinel;
+ const action=sequence[fired%sequence.length];
  const type=types[fired%types.length];
- if((boss.classId==='caster'||boss.classId==='sovereign')&&fired%4===3)return {type:'falling-case',action:'move',approach:'vertical'};
+ if(action==='move')return {type:'falling-case',action,approach:'vertical'};
  const entry=action==='jump'&&fired%3===1?'drop':action==='crouch'&&phase===2?'sweep':'diagonal';
  return {type,action,approach:entry};
+}
+export function storyApproachAt(distance,index){
+ const boss=storyBossAt(index);if(!boss)return null;
+ const remaining=nextStoryBossDistance(index)-distance;
+ return remaining>=0&&remaining<=1000?{boss,remaining,phase:remaining>400?'rehearsal':'safe'}:null;
+}
+// A munição pode ficar reservada após a fase de carga. O corpo deve continuar
+// preparando-a, e uma segunda reserva nunca pode esconder o disparo em curso.
+export function bossPresentationFor(boss,obstacles=[]){
+ const pending=obstacles.find(o=>o.bossAttack&&o.projectile&&o.waitFor>0&&!o.launched);
+ const endlessCue=!boss.combat&&boss.nextAttack<.55&&boss.fired<boss.total;
+ const attacking=boss.attackFlashFor>0,preparing=!attacking&&(boss.phase==='charge'||!!pending||endlessCue);
+ const recovering=!attacking&&!preparing&&boss.phase==='recover';
+ const progress=attacking?1-boss.attackFlashFor/.26:preparing?
+  boss.phase==='charge'?1-boss.phaseFor/boss.telegraph:pending?1-pending.waitFor/.82:1-boss.nextAttack/.55:
+  recovering?1-boss.phaseFor/boss.recover:0;
+ return {attacking,preparing,recovering,progress:Math.max(0,Math.min(1,progress||0)),
+  action:attacking||recovering?boss.lastReleasedAction||boss.lastAction||'jump':pending?.action||boss.plannedAttack?.action||'jump'};
 }
 export function bossArenaPose(boss,width=900){
  if(boss.reducedMotion)return {x:width-94,platformY:68};
  const age=Number(boss.age)||0;
- return {x:width-94+Math.sin(age*.85)*18,platformY:68+Math.sin(age*1.3)*8};
+ const amplitude=({sentinel:18,gunner:24,caster:29,sovereign:34})[boss.classId]||18;
+ const arrival=boss.phase==='intro'?Math.max(0,1-age/1.1)**3*150:0;
+ return {x:width-94+Math.sin(age*.85)*amplitude+arrival,platformY:68+Math.sin(age*1.3)*10};
 }
 export function stepBossPhase(boss,dt){
  boss.age=(boss.age||0)+dt;boss.phaseFor-=dt;
