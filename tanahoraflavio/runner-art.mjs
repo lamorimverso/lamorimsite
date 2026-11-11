@@ -351,19 +351,20 @@ export function drawProjectile(c,item,ground,phase,{reducedMotion=false}={}){
   for(let i=0;i<3;i++)line(c,[[x+10+i*5,y-5],[x+13+i*5,y+5]],color,1.5);
   c.restore();return;
  }
- const travel=Math.max(0,(item.launchX??x)-x);
+ const direction=item.speed<0?-1:1;
+ const travel=Math.max(0,((item.launchX??x)-x)*direction);
  const trail=Math.min(travel,style==='wind'?70:style==='paper'?46:style==='metal'?34:style==='ghost'?54:42);
  if(trail>2){
   c.globalAlpha*=.72;
   for(let i=0;i<3;i++){
    const dy=(i-1)*item.height*.22,w=i===1?3:1.7;
-   c.beginPath();c.moveTo(x+item.width*.22,y+dy);
-   c.quadraticCurveTo(x+trail*.55,y+dy+(reducedMotion?0:Math.sin(phase*.24+i)*4),x+trail,y+dy*.5);
+   c.beginPath();c.moveTo(x+direction*item.width*.22,y+dy);
+   c.quadraticCurveTo(x+direction*trail*.55,y+dy+(reducedMotion?0:Math.sin(phase*.24+i)*4),x+direction*trail,y+dy*.5);
    c.strokeStyle=color;c.lineWidth=w;c.stroke();
   }
   if(style==='wind'||style==='paper'||style==='ghost')for(let i=0;i<4;i++){
    const q=(i+1)/5,yy=y+Math.sin(i*2.1+(reducedMotion?0:phase*.18))*item.height*.28;
-   oval(c,x+trail*q,yy,2.5*(1-q)+1,1.5,color,null);
+   oval(c,x+direction*trail*q,yy,2.5*(1-q)+1,1.5,color,null);
   }
   c.globalAlpha/=.72;
  }
@@ -371,7 +372,9 @@ export function drawProjectile(c,item,ground,phase,{reducedMotion=false}={}){
  // ameaça permanece sincronizado à colisão. O modo reduzido é estável.
  c.translate(x,y);
  const tilt=reducedMotion?0:style==='metal'?Math.sin(phase*.3)*.14:
-  style==='paper'?Math.sin(phase*.22)*.12:style==='fall'?Math.sin(phase*.11)*.09:0;
+  style==='paper'?Math.sin(phase*.22)*.12:style==='fall'?Math.sin(phase*.11)*.09:
+  style==='wind'?Math.sin(phase*.25)*.12:style==='ghost'?Math.sin(phase*.16)*.10:
+  Math.sin(phase*.20)*.10;
  c.rotate(tilt);c.translate(-x,-y);
  drawThreat(c,item,y+item.height/2,phase,{reducedMotion});
  c.restore();
@@ -504,9 +507,9 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
  else {
   const movement=enemyMotionFor(item.type,reducedMotion?0:phase,x);
   c.translate(0,movement.bob);c.rotate(movement.lean);
-  // O inimigo paira sem ciclar os quadros de corrida do sprite.
-  // Perseguidores também ficam livres de miniaturas de projéteis.
-  drawActor(c,{type:item.type,x:0,y:0,scale:item.height/94,phase:0});
+  // Perseguidores de solo usam as poses de corrida do atlas. O emissor
+  // suspenso continua independente e não transporta o projétil no corpo.
+  drawActor(c,{type:item.type,x:0,y:0,scale:item.height/94,phase:reducedMotion?0:phase});
  }
  drawWeaponEffects(c,item,phase,reducedMotion);
  c.restore();
