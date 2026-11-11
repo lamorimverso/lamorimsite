@@ -44,6 +44,7 @@ A pesquisa completa, restrições de acesso e critérios estão em [documento de
 - 287 testes locais aprovados, incluindo renderização Canvas nativa. Versões de recursos e diff sem erros.
 - Piloto existente, usando somente comandos legais durante o combate: 40/40 vitórias nos 20 encontros em 480 e 900 px, sem escudo, imunidade ou vidas extras.
 - Revisão independente encontrou e permitiu reproduzir outros quatro casos: aviso perdido no Infinito, ensaio bloqueado por bueiro, pés do Fantasma fora do convés e ação errada na recuperação. Foram corrigidos com regressões; 300 sequências com sementes verificam o ensaio nas etapas avançadas.
+- Campanha completa automática com `node tools/check-story-campaign.mjs`: **20/20** percursos até a urna (dez sementes em duas larguras), usando comandos legais desde a largada, sem alterar HP, vidas, coletas, perigos ou relógios. O piloto considera o envelope maior do jacaré e as ampolas simultâneas. Não é playtest humano.
 - CI de navegador acrescenta início direto na História, quadros de movimento e capturas; resultado final é registrado no PR antes da integração.
 
 Não houve nesta rodada campanha inteira jogada manualmente, teste físico em celular/Safari nem pesquisa com jogadores. Estudos, testes automáticos e renderizações não autorizam afirmar ausência de qualquer bug, equivalência a Mega Man ou qualidade AAA.

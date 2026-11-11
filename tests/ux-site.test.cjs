@@ -536,8 +536,8 @@ test('chefão final redesenhado aparece com investida do fantasma em celular e d
    await page.waitForFunction(()=>document.getElementById('game').dataset.boss==='meme-army');
    assert.match(await page.locator('#game-boss-name').textContent(),/Fantasma do Comunismo/);
    await page.evaluate(()=>{
-    const r=__testRun;r.boss.fired=3;r.boss.plannedFor=3;
-    r.boss.plannedAttack={type:'meme-ghost',action:'crouch',approach:'sweep'};
+    const r=__testRun;r.boss.fired=4;r.boss.plannedFor=4;
+    r.boss.plannedAttack={type:'meme-ghost',action:'jump',approach:'drop'};
     r.boss.phase='attack';r.boss.phaseFor=Infinity;r.boss.volleyLeft=1;r.boss.nextAttack=0;
    });
    await page.waitForFunction(()=>__testRun.obstacles.some(o=>o.type==='meme-ghost'&&o.bossAttack));
