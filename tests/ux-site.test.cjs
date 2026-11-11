@@ -708,6 +708,7 @@ test('engrenagem contém só comandos, com opções e créditos separados',async
   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
   await page.locator('#game-settings').screenshot({path:path.resolve(__dirname,'../ux-captures/compact-controls-390.png')});
   await page.locator('#game-help summary').click();assert.ok(await page.locator('#game-help a').count()>2,'fontes e créditos preservados');
+  assert.equal(await page.locator('#game-help p').first().isVisible(),true,'a ajuda preservada não herda o estilo oculto antigo');
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
