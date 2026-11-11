@@ -1,5 +1,5 @@
 import {createVoiceDirector} from './runner-voice-director.mjs?v=088899f48fd6';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,bossArenaPose } from "./runner-core.mjs?v=1f4c6ea9d4f6";
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,bossArenaPose,heroMuzzleFor } from "./runner-core.mjs?v=d2ebd7de7ffb";
 import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=37009bd8b110';
 import { drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=42af91493a7e";
 import { createGameAudio } from "./runner-audio.mjs?v=b63783dad9b7";
@@ -163,7 +163,7 @@ function initRunner() {
       const goal=dodged+"/"+b.total+" ataques superados";
       const attack=attackCueFor(bossCue());
       $("game-boss-weapon").textContent=(attack?.short||"Observe o ataque")+
-        (bossCue().approach==="drop"?" · VEM DO ALTO!":"")+" · "+goal;
+        (bossCue().approach==="drop"?" · VEM DO ALTO!":"")+" · "+goal+(Number.isFinite(b.hp)?" · PV "+b.hp+"/"+b.maxHp:"");
       }
       $("game-boss").style.setProperty("--boss-accent",b.color);
     }
@@ -459,7 +459,8 @@ function initRunner() {
       else if(event.key==="Enter"&&!event.target.closest("button")){event.preventDefault();if(run.ballot.digits.length===2&&!event.repeat)confirmBallot();}
       return;
     }
-    if (event.target.closest("button,a,input,select,textarea,summary") || event.ctrlKey || event.metaKey || event.altKey) return;
+    const ownFireShortcut=['KeyJ','KeyZ'].includes(event.code)&&event.target.closest('#game-attack');
+    if (event.target.closest("button,a,input,select,textarea,summary")&&!ownFireShortcut || event.ctrlKey || event.metaKey || event.altKey) return;
     if(['KeyJ','KeyZ'].includes(event.code)){
       event.preventDefault();if(!event.repeat)fire('key:'+event.code,true);
     }else if(["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code)){
@@ -585,9 +586,9 @@ function initRunner() {
         falling:run.player.velocity<0,landing:crouchTarget,
         hurt:run.status==="over",alpha:blend.human*(run.graceFor>0&&run.shieldFor<=0?.55:1)});
       if(run.player.attackFor>0){
-        const sx=playerX(run)+PLAYER.width-2,sy=WORLD.ground-run.player.y-(crouchTarget?18:38);
-        ctx.strokeStyle='#f7d6a0';ctx.lineWidth=6;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(sx-12,sy+3);ctx.lineTo(sx,sy);ctx.stroke();
-        ctx.fillStyle='#fff7c8';ctx.beginPath();ctx.ellipse(sx+4,sy,7,5,0,0,Math.PI*2);ctx.fill();
+        const facing=run.player.shotFacing||1,muzzle=heroMuzzleFor(run,facing),sx=muzzle.x,sy=WORLD.ground-muzzle.y;
+        ctx.strokeStyle='#f7d6a0';ctx.lineWidth=6;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(sx-facing*12,sy+3);ctx.lineTo(sx,sy);ctx.stroke();
+        ctx.fillStyle='#fff7c8';ctx.beginPath();ctx.ellipse(sx+facing*4,sy,7,5,0,0,Math.PI*2);ctx.fill();
       }
       if(run.player.restoreFlashFor>0&&!prefersReducedMotion()){
         ctx.save();ctx.globalAlpha=Math.min(.55,run.player.restoreFlashFor/.48*.55);
