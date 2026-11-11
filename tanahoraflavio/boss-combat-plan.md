@@ -11,10 +11,10 @@
 - Sem dependências novas de runtime; não alterar outros sites/serviços.
 
 ## Tasks
-- [ ] 1. Arte: exportar drawSpriteHead(ctx,{type,x,y,size,phase}); implementar drawHoverEnemy(ctx,{type,x,y,scale,phase,preparing,attacking,hurt,reducedMotion,classId}), drawBossArena(ctx,{width,ground,phase,state,stageIndex,reducedMotion}) em runner-boss-art.mjs. x/y é centro horizontal e nível dos pés na plataforma, coordenadas Canvas. Corpo próprio em pé com joelhos/pés, cabeça original, braços independentes, motores. Fantasma usa silhueta já existente como sprite vetorial especial. Testes de poses/rig/cabeças e renderização.
-- [ ] 2. Catálogo: runner-bosses.mjs com storyBossAt(index), STORY_ENCOUNTERS=20, classes/dificuldades/padrões, nextStoryBossDistance(index). Testes de 20 encontros, 5 grupos, progressão, final.
-- [ ] 3. Combate: integrar hp, fases, boss arena pose, attackRun, setAttackRun, projéteis do herói, dano/fim e loops de ataques no runner-core.mjs. Testar primeiro, falhar, implementar, validar controles cancelados, resize e reação.
-- [ ] 4. UI: botão Disparar por toque/teclado, classe/graduação/vidas, fases, desenho das naves/corpos/tiros. Atualizar textos de História e testes para 20.
+- [x] 1. Arte: exportar drawSpriteHead(ctx,{type,x,y,size,phase}); implementar drawHoverEnemy(ctx,{type,x,y,scale,phase,preparing,attacking,hurt,reducedMotion,classId}), drawBossArena(ctx,{width,ground,phase,state,stageIndex,reducedMotion}) em runner-boss-art.mjs. x/y é centro horizontal e nível dos pés na plataforma, coordenadas Canvas. Corpo próprio em pé com joelhos/pés, cabeça original, braços independentes, motores. Fantasma usa silhueta já existente como sprite vetorial especial. Testes de poses/rig/cabeças e renderização.
+- [x] 2. Catálogo: runner-bosses.mjs com storyBossAt(index), STORY_ENCOUNTERS=20, classes/dificuldades/padrões, nextStoryBossDistance(index). Testes de 20 encontros, 5 grupos, progressão, final.
+- [x] 3. Combate: integrar hp, fases, boss arena pose, attackRun, setAttackRun, projéteis do herói, dano/fim e loops de ataques no runner-core.mjs. Testar primeiro, falhar, implementar, validar controles cancelados, resize e reação.
+- [x] 4. UI: botão Disparar por toque/teclado, classe/graduação/vidas, fases, desenho das naves/corpos/tiros. Atualizar textos de História e testes para 20.
 - [ ] 5. Revisão e publicação: suíte disponível, Canvas real, CI desktop/mobile, revisão de código, integração e comparação HTTP dos arquivos publicados.
 
 ## Review focus

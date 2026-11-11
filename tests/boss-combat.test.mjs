@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
 import * as bosses from '../tanahoraflavio/runner-bosses.mjs';
+import * as art from '../tanahoraflavio/runner-art.mjs';
+import {readFileSync} from 'node:fs';
 
 const dt=1/120;
 function scene(index=0){
@@ -80,4 +82,34 @@ test('artilheiro dispara rajadas e conjurador inclui queda com alvo marcado',()=
   if(index===2)assert.equal(drop,true,'classe conjuradora precisa exigir reposicionamento');
  }
  assert.ok(counts[1]>counts[0],'artilheiro deve ter rajadas distintas da sentinela');
+});
+test('anúncios da História usam a identidade e o objetivo real dos vinte encontros',()=>{
+ for(let index=0;index<20;index++){
+  const r=scene(index);
+  assert.ok(r.event.includes(r.boss.name),'identidade '+index+': '+r.event);
+  assert.ok(r.event.includes(r.boss.objective),'objetivo de combate '+index);
+  assert.equal(r.event.startsWith('CHEFÃO FINAL'),index===19,'somente o vigésimo é final');
+ }
+ const r=scene();r.boss.hp=0;core.advanceRun(r,dt,()=>.5);
+ assert.match(r.event,/1\/20/);
+});
+test('bossFigure desenha o corpo na mesma posição atingida pelo tiro nos dois modos',()=>{
+ const source=readFileSync(new URL('../tanahoraflavio/runner.mjs',import.meta.url),'utf8');
+ const start=source.indexOf('  function bossFigure(){'),end=source.indexOf('  function character(){',start);
+ const make=Function('env','const {run,ctx,virtualWidth,WORLD,bossArenaPose,enemyEmitterPose,enemyMotionFor,prefersReducedMotion,drawHoverEnemy,bossCue}=env;'+source.slice(start,end)+';return bossFigure;');
+ for(const mode of ['story','endless']){
+  const r=core.createRun({mode});core.startRun(r);r.nextBossAt=0;r.nextRaid=Infinity;r.shieldFor=Infinity;
+  core.advanceRun(r,dt,()=>.5);for(let i=0;i<160;i++)core.advanceRun(r,dt,()=>.5);
+  const state={x:0,y:0},stack=[];let drawn;
+  const ctx={save(){stack.push({...state});},restore(){Object.assign(state,stack.pop());},translate(x,y){state.x+=x;state.y+=y;},fillText(){}};
+  const draw=make({run:r,ctx,virtualWidth:900,WORLD:core.WORLD,bossArenaPose:core.bossArenaPose,
+   enemyEmitterPose:art.enemyEmitterPose,enemyMotionFor:art.enemyMotionFor,prefersReducedMotion:()=>true,
+   drawHoverEnemy(c,args){drawn={x:state.x+args.x,y:state.y+args.y};},bossCue:()=>({action:'jump'})});
+  draw();assert.equal(core.attackRun(r),true);
+  const shot=r.heroShots.at(-1),heightAtBody=shot.y+(drawn.x-shot.x)*shot.vy/shot.vx;
+  assert.ok(Math.abs((core.WORLD.ground-heightAtBody)-(drawn.y-48))<.001,mode+' mira fora do corpo');
+ }
+});
+test('plataforma mantém posição estável quando os efeitos reduzidos estão ativos',()=>{
+ assert.deepEqual(bosses.bossArenaPose({age:0,reducedMotion:true},480),bosses.bossArenaPose({age:99,reducedMotion:true},480));
 });

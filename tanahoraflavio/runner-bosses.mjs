@@ -43,6 +43,7 @@ export function arenaPatternFor(boss,fired=0){
  return {type,action,approach:entry};
 }
 export function bossArenaPose(boss,width=900){
+ if(boss.reducedMotion)return {x:width-94,platformY:68};
  const age=Number(boss.age)||0;
  return {x:width-94+Math.sin(age*.85)*18,platformY:68+Math.sin(age*1.3)*8};
 }

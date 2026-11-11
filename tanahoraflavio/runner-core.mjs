@@ -1,7 +1,7 @@
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=181506ec1b3c';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=fa9433a61a03';
-import {STORY_ENCOUNTERS,storyBossAt,nextStoryBossDistance,arenaPatternFor,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=51603da5a288';
-export {bossArenaPose} from './runner-bosses.mjs?v=51603da5a288';
+import {STORY_ENCOUNTERS,storyBossAt,nextStoryBossDistance,arenaPatternFor,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=a29b81414f96';
+export {bossArenaPose} from './runner-bosses.mjs?v=a29b81414f96';
 // Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
 export const WORLD = Object.freeze({width:900,height:300,ground:246});
 // Envelope de todas as poses no atlas a .95 de escala, incluindo o agachamento.
@@ -454,8 +454,10 @@ function beginBoss(run){
    total:encounter.hp,remaining:encounter.hp,fired:0,volleyLeft:0,evaded:0,plannedAttack:arenaPatternFor(encounter,0)});
   run.player.hp=run.player.maxHp;run.heroShots=[];run.pickups=[];
  }else Object.assign(run.boss,{maxHp:conf.attacks*2,hp:conf.attacks*2,age:0,classId:'sovereign',className:'Soberano',rank:Math.min(4,conf.level),rankName:'Infinito'});
+ run.boss.reducedMotion=run.reducedMotion===true;
  run.obstacles=[];run.nextObstacle=Math.max(1.8,run.nextObstacle);
- announce(run,(conf.foe.type==='bossonari'?'CHEFÃO DOS CHEFÕES ':'CHEFÃO ')+conf.foe.name+'! '+conf.objective);
+ const final=encounter?.index===STORY_BOSS_COUNT-1;
+ announce(run,(final?'CHEFÃO FINAL ':'CHEFÃO ')+run.boss.name+'! '+run.boss.objective);
 }
 function chooseBossPattern(boss,rng,pressure){
  if(boss.type==='pf'&&boss.fired%3===2)return {type:'falling-case',action:'move',approach:'vertical'};
@@ -532,7 +534,8 @@ function resolveBossDodges(run){
   return;
  }
  run.nextBossAt=run.mode==='story'?nextStoryBossDistance(run.bossesDefeated):Math.max(nextBossDistance(run.bossesDefeated),run.routeDistance+7000);run.nextObstacle=Math.max(1.8,run.nextObstacle);
- announce(run,'Você escapou do chefão '+boss.name+'! '+(run.bossesDefeated%BOSS_ROSTER.length===0?'Cinco chefões superados nesta sequência.':'Continue fugindo.'));
+ announce(run,run.mode==='story'?'Você derrotou '+boss.name+'! '+run.bossesDefeated+'/'+STORY_BOSS_COUNT+' confrontos vencidos. '+(run.bossesDefeated%4===0?'Cenário concluído.':'Continue para o próximo confronto.'):
+  'Você escapou do chefão '+boss.name+'! '+(run.bossesDefeated%BOSS_ROSTER.length===0?'Cinco chefões superados nesta sequência.':'Continue fugindo.'));
 }
 function advanceRaid(run,dt,rng){
  if(run.raid){

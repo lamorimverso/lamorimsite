@@ -1,5 +1,5 @@
 import {createVoiceDirector} from './runner-voice-director.mjs?v=088899f48fd6';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,bossArenaPose } from "./runner-core.mjs?v=2c36175e9f23";
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,bossArenaPose } from "./runner-core.mjs?v=1f4c6ea9d4f6";
 import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=37009bd8b110';
 import { drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=42af91493a7e";
 import { createGameAudio } from "./runner-audio.mjs?v=b63783dad9b7";
@@ -95,6 +95,8 @@ function initRunner() {
   }
 
   function updateUI() {
+    run.reducedMotion=prefersReducedMotion();
+    if(run.boss)run.boss.reducedMotion=run.reducedMotion;
     const clock=routeSeconds(),stage=stageAt(clock),score=scoreFor(run),difficulty=difficultyAt(run.distance,run.elapsed);
     const transition=stageTransitionAt(clock),banner=$("game-transition");
     // Destinations remain accessible; the scenery itself communicates transitions.
@@ -514,8 +516,8 @@ function initRunner() {
   function bossFigure(){
     const b=run.boss;if(!b)return;
     const phase=run.elapsed*9;
-    const arenaPose=b.combat?bossArenaPose(b,virtualWidth):null;
-    const pose=arenaPose?{x:arenaPose.x,y:WORLD.ground-arenaPose.platformY,scale:1}:enemyEmitterPose(virtualWidth,WORLD.ground,b.type,true);
+    const arenaPose=bossArenaPose(b,virtualWidth);
+    const pose={x:arenaPose.x,y:WORLD.ground-arenaPose.platformY,scale:1};
     const bossX=pose.x,bossY=pose.y;
     const motion=enemyMotionFor(b.type,prefersReducedMotion()||b.attackFlashFor>0?0:phase,bossX);
     const pending=run.obstacles.find(o=>o.bossAttack&&o.waitFor>0&&!o.launched);
