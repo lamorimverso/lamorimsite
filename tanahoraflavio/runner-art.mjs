@@ -10,10 +10,10 @@ function text(c,value,x,y,size=7,color=CREAM){c.fillStyle=color;c.font='900 '+si
 export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT,CORE_SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=7f111bd8189a";
 // Figuras vetoriais articuladas preservam a silhueta original do meme.
 // Silhueta original do meme: chapéu vermelho, emblema dourado e pernas longas.
-export function drawMemeArmy(c,{x=0,y=0,phase=0,scale=1,reducedMotion=false}={}){
+export function drawMemeArmy(c,{x=0,y=0,phase=0,scale=1,reducedMotion=false,standing=false}={}){
  c.save();c.translate(x,y);c.scale(scale,scale);
- c.translate(0,reducedMotion?0:Math.sin(phase*.35)*1.5);
- const stride=reducedMotion?0:Math.sin(phase*.65)*.22;
+ c.translate(0,reducedMotion||standing?0:Math.sin(phase*.35)*1.5);
+ const stride=reducedMotion||standing?0:Math.sin(phase*.65)*.22;
  // A referência tem chapéu de três pontas e pernas, não cabeça nem lençol.
  // Forma de trás, mais fria e fina: joelho flexionado, salto atrás.
  const silhouette=(fill,stroke,draw)=>{c.beginPath();draw();c.closePath();c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=1.2;c.stroke();}};
@@ -44,6 +44,8 @@ export function drawMemeArmy(c,{x=0,y=0,phase=0,scale=1,reducedMotion=false}={})
  // Faixa escura de união entre chapéu e pernas.
  silhouette('#25283a',null,()=>{c.moveTo(-5,-39);c.lineTo(7,-39);c.bezierCurveTo(12,-34,9,-30,2,-29);c.lineTo(-3,-33);});
  // Chapéu vermelho tridimensional, com pontas levantadas à esquerda/direita.
+ // Na nave, somente a forma superior oscila; os sapatos continuam no convés.
+ if(standing){c.save();c.translate(0,-35);c.rotate(reducedMotion?0:Math.sin(phase*.32)*.045);c.translate(0,35);}
  silhouette('#8c233b','#56203c',()=>{
   c.moveTo(-26,-40);c.bezierCurveTo(-29,-47,-20,-43,-15,-42);
   c.bezierCurveTo(-10,-41,-9,-51,-3,-53);
@@ -56,6 +58,7 @@ export function drawMemeArmy(c,{x=0,y=0,phase=0,scale=1,reducedMotion=false}={})
  // Emblema dourado de foice e martelo.
  line(c,[[-5,-41],[5,-35]],'#f8de63',1.7);line(c,[[-6,-43],[-2,-44],[1,-41]],'#f8de63',2.2);
  c.beginPath();c.ellipse(3,-41,5,4,0,-1.6,1.8);c.strokeStyle='#f8de63';c.lineWidth=1.6;c.stroke();
+ if(standing)c.restore();
  c.restore();
 }
 export function drawComunismoGhostBoss(c,{x=0,y=0,phase=0,reducedMotion=false,preparing=false,attacking=false,scale=1}={}){

@@ -1,7 +1,7 @@
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=181506ec1b3c';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=fa9433a61a03';
-import {STORY_ENCOUNTERS,storyBossAt,nextStoryBossDistance,arenaPatternFor,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=a29b81414f96';
-export {bossArenaPose} from './runner-bosses.mjs?v=a29b81414f96';
+import {STORY_ENCOUNTERS,storyBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=b39bcaed86a2';
+export {bossArenaPose} from './runner-bosses.mjs?v=b39bcaed86a2';
 // Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
 export const WORLD = Object.freeze({width:900,height:300,ground:246});
 // Envelope de todas as poses no atlas a .95 de escala, incluindo o agachamento.
@@ -319,6 +319,13 @@ export function spawnManholeThreat(run,{rng=Math.random}={}){
  const width=64,x=Math.max(0,Math.min(visibleWidth(run)-width,playerX(run)+17-width/2+(random(rng)-.5)*24));
  const arrivals=run.obstacles.filter(o=>!o.passed).map(o=>threatReservation(run,o)).filter(t=>Number.isFinite(t)&&t>0);
  const warningFor=Math.max(1.2,...arrivals.map(t=>t+REACTION_GAP));
+ // Zonas persistentes precisam terminar antes do ensaio isolado. Sem isso,
+ // um bueiro anterior pode consumir toda a janela e apagar a preparação.
+ if(run.mode==='story'&&!run.boss&&!run.raid&&Number.isFinite(run.nextBossAt)){
+  const travelSpeed=difficultyAt(run.distance,run.elapsed).speed*assistance(run);
+  const timeToRehearsal=(nextStoryBossDistance(run.bossesDefeated)-run.routeDistance-1000)/travelSpeed;
+  if(warningFor+1.2>timeToRehearsal)return null;
+ }
  const item={x,width,height:18,type:'manhole',action:'move',approach:'ground',groundHazard:true,age:0,warningFor,activeFor:1.1,y:0,speed:0};
  run.obstacles.push(item);return item;
 }
@@ -494,7 +501,7 @@ function advanceBoss(run,dt,rng,balance){
  boss.nextAttack-=dt;
  if(!boss.combat&&boss.fired>=boss.total||boss.nextAttack>0)return;
  if(run.obstacles.filter(o=>!o.passed&&!o.counted).length>=5){boss.nextAttack=.12;return;}
- // Cada chefão ataca com armas específicas; Flávio não dispara.
+ // Cada chefão ataca com suas armas; o disparo do herói é independente.
  const pattern=boss.combat?arenaPatternFor(boss,boss.fired):boss.plannedFor===boss.fired?boss.plannedAttack:bossAttackFor(boss.type,boss.fired,boss.round-1);
  const attackType=pattern.type;
  let attack;
@@ -517,7 +524,7 @@ function advanceBoss(run,dt,rng,balance){
  if(boss.type==='bossonari')run.phantomCloud={remaining:1.3,medicine:attackType,x:Math.max(180,Math.min(visibleWidth(run)-150,playerX(run)+260))};
  // Projéteis com espera ainda estão em preparação. O loop de movimento
  // aciona a pose de disparo quando a espera termina, junto do corpo físico.
- if(!attack.projectile||!(attack.waitFor>0)){boss.attackFlashFor=.26;boss.lastWeapon=attackType;}
+ if(!attack.projectile||!(attack.waitFor>0)){boss.attackFlashFor=.26;boss.lastWeapon=attackType;boss.lastReleasedAction=pattern.action;}
  boss.fired++;
  boss.actionStreak=pattern.action===boss.lastAction?(boss.actionStreak||0)+1:1;
  boss.lastAction=pattern.action;
@@ -554,7 +561,8 @@ function advanceRaid(run,dt,rng){
   }return;
  }
  run.nextRaid-=dt;
- if(run.player.isJacare||run.boss||run.bossCooldown>0||stageTransitionAt(routeClock(run)).active)return;
+ if(run.player.isJacare||run.boss||run.bossCooldown>0||stageTransitionAt(routeClock(run)).active||
+  run.mode==='story'&&storyApproachAt(run.routeDistance,run.bossesDefeated))return;
  if(run.nextRaid<=0){
   const choices=RAID_FACTS.map((_,i)=>i).filter(i=>i!==run.lastFact);
   const factIndex=choices[Math.floor(random(rng)*choices.length)];run.lastFact=factIndex;
@@ -572,6 +580,20 @@ function rewardForObstacle(run,obstacle,balance,rng){
  run.spawnedPickups++;const center=obstacle.x+obstacle.width/2;
  for(let i=0;i<count;i++)run.pickups.push({x:center+(i-(count-1)/2)*35,
   y:obstacle.action==='crouch'?18:100,type:item.type,value:item.value,speed:obstacle.speed,waitFor:obstacle.waitFor||0,anchor:obstacle});
+}
+function rehearseStoryBoss(run,balance){
+ const approach=storyApproachAt(run.routeDistance,run.bossesDefeated);
+ if(!approach||approach.phase!=='rehearsal'||run.rehearsedBoss===approach.boss.id||
+  run.obstacles.some(o=>!o.passed&&!o.counted))return;
+ const b=approach.boss,pattern=arenaPatternFor(b,0),width=44,x=visibleWidth(run)+40;
+ // Um exemplo isolado da arma, com a mesma geometria de evasão do combate.
+ // Não acrescenta um prêmio, uma segunda onda nem um tutorial que interrompa.
+ const o={x,width,height:40,type:pattern.type,action:'jump',sourceActor:b.type,rehearsal:true,
+  approach:'diagonal',projectile:true,flightStyle:projectileStyle(pattern.type),launchX:x+width/2,
+  targetX:playerX(run)+PLAYER.width/2,launchY:84,targetY:PLAYER.height/2,y:84,
+  ...threatMotion(run,x,balance.obstacleApproach)};
+ run.obstacles.push(o);run.spawnedObstacles++;run.rehearsedBoss=b.id;
+ run.cameo={type:b.type,remaining:1.4};return o;
 }
 export function advanceRun(run,seconds,rng){
  if(run.status!=='running'||!Number.isFinite(seconds)||seconds<=0)return;
@@ -624,7 +646,7 @@ export function advanceRun(run,seconds,rng){
   // evita arcos altos involuntários após uma esquiva lateral obrigatória.
   if(obstacle.projectile&&activeDelta>0){
    if(!obstacle.launched&&waiting>0)obstacle.targetX=playerX(run)+PLAYER.width/2;
-   if(!obstacle.launched&&obstacle.bossAttack&&run.boss){run.boss.attackFlashFor=.26;run.boss.lastWeapon=obstacle.type;}
+   if(!obstacle.launched&&obstacle.bossAttack&&run.boss){run.boss.attackFlashFor=.26;run.boss.lastWeapon=obstacle.type;run.boss.lastReleasedAction=obstacle.action;}
    obstacle.launched=true;
   }
   obstacle.waitFor=Math.max(0,waiting-dt);
@@ -660,6 +682,10 @@ export function advanceRun(run,seconds,rng){
    run.player.nextJacareThreat=anchor?1.7+random(rng)*.7:.12;
   }
  }else if(run.boss)anchor=advanceBoss(run,dt,rng,balance);
+ else if(run.mode==='story'&&!run.raid&&storyApproachAt(run.routeDistance,run.bossesDefeated)){
+  anchor=rehearseStoryBoss(run,balance);
+  run.nextObstacle=Math.max(run.nextObstacle,1.5);
+ }
  else{
   run.nextObstacle-=dt;
   if(run.nextObstacle<=0&&run.obstacles.filter(o=>!o.passed&&!o.counted).length<5){
@@ -743,7 +769,7 @@ export function advanceRun(run,seconds,rng){
   run.nextSupportAt=run.routeDistance+14000;
  }
  run.nextPickup-=dt;run.nextPassport-=dt;run.nextPower-=dt;
- if(anchor?.approach!=='rear'&&!anchor?.falling&&!anchor?.groundHazard)rewardForObstacle(run,anchor,balance,rng);
+ if(!anchor?.rehearsal&&anchor?.approach!=='rear'&&!anchor?.falling&&!anchor?.groundHazard)rewardForObstacle(run,anchor,balance,rng);
  const left=playerX(run)+5,right=playerX(run)+PLAYER.width-3,bottom=run.player.y+3,
   top=run.player.y+(run.player.crouching||run.player.isJacare?25:PLAYER.height-5);
  // Coleta antes do impacto: o escudo ou o centésimo passaporte já valem neste frame.

@@ -1,7 +1,8 @@
+import {bossPresentationFor} from './runner-bosses.mjs?v=b39bcaed86a2';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=088899f48fd6';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,bossArenaPose,heroMuzzleFor } from "./runner-core.mjs?v=d2ebd7de7ffb";
-import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=37009bd8b110';
-import { drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=42af91493a7e";
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,bossArenaPose,heroMuzzleFor } from "./runner-core.mjs?v=f669ea7fbe19";
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=0e53916d3d46';
+import { drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=713e272cb0f6";
 import { createGameAudio } from "./runner-audio.mjs?v=b63783dad9b7";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=fa9433a61a03";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=8970d7d6092a";
@@ -520,12 +521,10 @@ function initRunner() {
     const arenaPose=bossArenaPose(b,virtualWidth);
     const pose={x:arenaPose.x,y:WORLD.ground-arenaPose.platformY,scale:1};
     const bossX=pose.x,bossY=pose.y;
-    const motion=enemyMotionFor(b.type,prefersReducedMotion()||b.attackFlashFor>0?0:phase,bossX);
-    const pending=run.obstacles.find(o=>o.bossAttack&&o.waitFor>0&&!o.launched);
-    const preparing=b.combat?b.phase==='charge':!!pending||(b.nextAttack<.55&&b.fired<b.total);
-    const attacking=b.attackFlashFor>0&&!pending;
-    ctx.save();ctx.translate(bossX,bossY+motion.bob);
-    drawHoverEnemy(ctx,{type:b.type,x:0,y:0,scale:pose.scale,phase,preparing,attacking,hurt:b.hitFlashFor>0,reducedMotion:prefersReducedMotion(),classId:b.classId});
+    const presentation=bossPresentationFor(b,run.obstacles);
+    const {preparing,attacking}=presentation;
+    ctx.save();ctx.translate(bossX,bossY);
+    drawHoverEnemy(ctx,{type:b.type,x:0,y:0,scale:pose.scale,phase,...presentation,hurt:b.hitFlashFor>0,reducedMotion:prefersReducedMotion(),classId:b.classId});
     ctx.restore();
     if(b.nextAttack<.65&&b.fired<b.total&&!run.obstacles.some(o=>o.bossAttack&&!o.counted)){
       ctx.fillStyle="#843338";ctx.font="800 16px system-ui";ctx.textAlign="center";

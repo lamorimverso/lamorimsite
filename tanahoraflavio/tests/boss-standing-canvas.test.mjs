@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
+import {readFileSync} from 'node:fs';
 
 const require=createRequire(import.meta.url);
 let canvas;
@@ -11,7 +12,9 @@ test('real Canvas draws original atlas heads with a planted body, visible ship a
  const {createCanvas,Image}=canvas,previous=Object.getOwnPropertyDescriptor(globalThis,'Image');
  globalThis.Image=class extends Image{set src(value){this.sourceURL=value;super.src=fileURLToPath(value);}get src(){return this.sourceURL;}get naturalWidth(){return this.width;}get naturalHeight(){return this.height;}};
  t.after(()=>previous?Object.defineProperty(globalThis,'Image',previous):delete globalThis.Image);
- const sprites=await import('../runner-sprites.mjs?v=4ff31d443151');await sprites.loadSprites();
+ const artURL=new URL('../runner-boss-art.mjs',import.meta.url);
+ const spriteSpecifier=readFileSync(artURL,'utf8').match(/from '([^']*runner-sprites[^']*)'/)[1];
+ const sprites=await import(new URL(spriteSpecifier,artURL));await sprites.loadSprites();
  const {drawHoverEnemy,drawBossArena}=await import('../runner-boss-art.mjs');
  function render(type,flags={}){const img=createCanvas(260,230),c=img.getContext('2d');drawHoverEnemy(c,{type,x:140,y:160,scale:1,phase:5,...flags});return {c,pixels:c.getImageData(0,0,260,230).data};}
  for(const type of ['haddad','lula','xandao','janones','pf','bossonari','meme-army']){
@@ -23,6 +26,10 @@ test('real Canvas draws original atlas heads with a planted body, visible ship a
   assert.deepEqual(render(type,{phase:0,reducedMotion:true}).pixels,render(type,{phase:90,reducedMotion:true}).pixels);
   assert.equal(c.globalAlpha,1);assert.deepEqual(c.getTransform(),createCanvas(1,1).getContext('2d').getTransform());
  }
+ // The ghost must articulate above its shoes, without moving the contact
+ // strip at the deck. Exclude the moving ship rim and decorative aura.
+ const feet=phase=>{const {c}=render('meme-army',{phase});return c.getImageData(80,150,105,8).data;};
+ assert.deepEqual(feet(0),feet(9),'Fantasma mantém os sapatos na mesma faixa do convés');
  const identities=['flavio','haddad','lula','xandao','janones','pf','army','joice','dilma','simone','soraya','ze-gotinha','vorcaro','jair','michelle','eduardo','carlos','renan','silas','magno','nikolas','tarcisio','damares','bia','trump','milei','bolsominion','jacare','boulos','dino'];
  for(const type of identities){const c=createCanvas(150,80).getContext('2d');assert.equal(sprites.drawSpriteHead(c,{type,x:65,y:65,size:45}),true);const data=c.getImageData(0,0,150,80).data;assert.ok(data.some((v,i)=>i%4===3&&v>200),`${type} contains real visible atlas pixels`);}
  const a=createCanvas(900,300).getContext('2d'),b=createCanvas(900,300).getContext('2d');drawBossArena(a,{phase:0,reducedMotion:true});drawBossArena(b,{phase:80,reducedMotion:true});assert.deepEqual(a.getImageData(0,0,900,300).data,b.getImageData(0,0,900,300).data);

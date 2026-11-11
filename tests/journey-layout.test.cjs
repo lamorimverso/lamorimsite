@@ -281,7 +281,7 @@ test('labels do seletor são apenas Modo História e Modo Infinito',async()=>{
  try{
   const options=page.locator('#game-mode-chooser label');
   assert.deepEqual((await options.allTextContents()).map(s=>s.trim()),['Modo Infinito','Modo História']);
-  assert.equal(await page.locator('#game-mode-infinite').isChecked(),true,'mantém o Infinito como padrão');
+  assert.equal(await page.locator('#game-mode-story').isChecked(),true,'abre na campanha dos quatro chefes por cenário');
   await page.locator('#game-mode-story').check();
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
   assert.equal(await page.locator('#game').getAttribute('data-run-mode'),'story');
@@ -292,7 +292,7 @@ test('Flávio percorre os quadros de corrida durante a partida em ambos os modos
  for(const mode of ['endless','story']){
   const {context,page,errors}=await open({width:900,height:720},{instrument:true});
   try{
-   if(mode==='story')await page.locator('#game-mode-story').check();
+   await page.locator(mode==='story'?'#game-mode-story':'#game-mode-infinite').check();
    await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
    await page.evaluate(()=>{
     const r=globalThis.__journeyRun;

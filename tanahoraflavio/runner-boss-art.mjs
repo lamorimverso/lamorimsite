@@ -1,5 +1,5 @@
 import {drawSpriteHead} from './runner-sprites.mjs?v=7f111bd8189a';
-import {drawMemeArmy} from './runner-art.mjs?v=42af91493a7e';
+import {drawMemeArmy} from './runner-art.mjs?v=713e272cb0f6';
 
 // Standing bosses: original atlas heads, original articulated Canvas bodies.
 // Coordinates are logical game pixels; y always remains the top of the deck.
@@ -23,23 +23,35 @@ function line(c,points,color=INK,width=2){c.beginPath();points.forEach(([x,y],i)
 function joint(x,y){return {x,y};}
 
 /** Pure standing rig. Feet stay planted through breathing, charging and recoil. */
-export function standingEnemyPose({phase=0,preparing=false,attacking=false,hurt=false,reducedMotion=false,classId='sentinel'}={}){
+export function standingEnemyPose({phase=0,preparing=false,attacking=false,recovering=false,hurt=false,reducedMotion=false,classId='sentinel',action='jump',progress}={}){
  const t=reducedMotion?0:(Number.isFinite(phase)?phase:0),breath=reducedMotion?0:Math.sin(t*.32),kind=canonicalClass(classId);
- const state=hurt?'recoil':attacking?'release':preparing?'charge':'idle';
- const lean=state==='recoil'?5:state==='release'?-3:state==='charge'?2:breath*.55;
- const bob=breath*.65,shoulders=joint(lean,-63+bob),neck=joint(lean,-69+bob);
- const left={hip:joint(-9+lean*.25,-34+bob),knee:joint(-11,-17),foot:joint(-13,0)};
- const right={hip:joint(9+lean*.25,-34+bob),knee:joint(12,-17),foot:joint(15,0)};
- let endpoints;
- if(state==='charge')endpoints=[[-29,-72],[-21,-91],[30,-56],[37,-76]];
- else if(state==='release')endpoints=[[-38,-61],[-59,-65],[24,-67],[12,-79]];
- else if(state==='recoil')endpoints=[[-22,-55],[-4,-64],[31,-49],[27,-31]];
- else if(kind==='sovereign')endpoints=[[-31,-57],[-38,-72],[32,-54],[40,-63]];
- else if(kind==='caster')endpoints=[[-27,-60],[-32,-74],[29,-48],[34,-57]];
- else if(kind==='gunner')endpoints=[[-28,-55],[-35,-51],[22,-48],[3,-49]];
- else endpoints=[[-26,-48],[-23,-34],[26,-48],[23,-32]];
+ const state=hurt?'recoil':attacking?'release':preparing?'charge':recovering?'recover':'idle';
+ const u=reducedMotion?1:Math.max(0,Math.min(1,Number.isFinite(progress)?progress:(1+Math.sin(t*.65))*.5));
+ const ease=u*u*(3-2*u);
+ const idle=kind==='sovereign'?[[-31,-57],[-38,-72],[32,-54],[40,-63]]:
+  kind==='caster'?[[-27,-60],[-32,-74],[29,-48],[34,-57]]:
+  kind==='gunner'?[[-28,-55],[-35,-51],[22,-48],[3,-49]]:[[-26,-48],[-23,-34],[26,-48],[23,-32]];
+ // Low throw / high sweep / overhead summon: each describes its danger.
+ const windups={jump:[[-24,-50],[-9,-63],[29,-54],[39,-64]],
+  crouch:[[-25,-76],[-15,-94],[27,-70],[35,-88]],
+  move:[[-30,-72],[-32,-98],[31,-72],[36,-99]]};
+ const releases={jump:[[-39,-51],[-59,-44],[24,-58],[12,-65]],
+  crouch:[[-39,-76],[-60,-83],[25,-70],[14,-83]],
+  move:[[-33,-53],[-47,-36],[32,-53],[44,-36]]};
+ const charge=windups[action]||windups.jump,release=releases[action]||releases.jump;
+ const mix=(a,b,k)=>a.map((v,i)=>[v[0]+(b[i][0]-v[0])*k,v[1]+(b[i][1]-v[1])*k]);
+ let endpoints=idle,lean=breath*.8;
+ if(state==='charge'){endpoints=mix(idle,charge,ease);lean=2+ease*3;}
+ else if(state==='release'){
+  // Fast extension, then follow-through. Every release remains a movement.
+  const k=u<.4?u/.4:1-(u-.4)*.27;endpoints=mix(charge,release,k);lean=3-k*7;
+ }else if(state==='recover'){endpoints=mix(release,idle,ease);lean=-4*(1-ease);}
+ else if(state==='recoil'){endpoints=[[-22,-55],[-4,-64],[31,-49],[27,-31]];lean=5;}
+ const bob=breath*.9-(state==='charge'?ease*1.5:0),shoulders=joint(lean,-63+bob),neck=joint(lean,-69+bob);
+ const left={hip:joint(-9+lean*.25,-34+bob),knee:joint(-11+lean*.35,-17),foot:joint(-13,0)};
+ const right={hip:joint(9+lean*.25,-34+bob),knee:joint(12+lean*.35,-17),foot:joint(15,0)};
  const arms={};for(const [i,side] of ['left','right'].entries()){
-  const sign=i?1:-1,elbow=endpoints[i*2],hand=endpoints[i*2+1],sway=state==='idle'?breath*(i?-.8:.8):0;
+  const sign=i?1:-1,elbow=endpoints[i*2],hand=endpoints[i*2+1],sway=state==='idle'?breath*(i?-1.8:1.8):0;
   arms[side]={shoulder:joint(sign*17+lean,-61+bob),elbow:joint(elbow[0]+lean,elbow[1]+bob+sway),hand:joint(hand[0]+lean,hand[1]+bob+sway),open:state==='charge'||state==='release'||kind==='caster'||kind==='sovereign'};
  }
  return {state,bob,lean,neck,shoulders,left,right,arms,headTilt:state==='recoil'?.12:state==='release'?-.06:breath*.025,motor:reducedMotion?0:(1+Math.sin(t*1.8))*.5};
@@ -111,16 +123,19 @@ function drawBossonariHead(c){
  oval(c,-6,-20,2,2,'#302f43',null);oval(c,6,-20,2,2,'#302f43',null);
 }
 
-export function drawHoverEnemy(c,{type='haddad',x=0,y=0,scale=1,phase=0,preparing=false,attacking=false,hurt=false,reducedMotion=false,classId='sentinel'}={}){
+export function drawHoverEnemy(c,{type='haddad',x=0,y=0,scale=1,phase=0,preparing=false,attacking=false,recovering=false,hurt=false,reducedMotion=false,classId='sentinel',action='jump',progress}={}){
  if(!Number.isFinite(x)||!Number.isFinite(y)||!Number.isFinite(scale)||scale<=0)return;
- const p=standingEnemyPose({phase,preparing,attacking,hurt,reducedMotion,classId}),[suit,dark,accent]=SUITS[type]||['#4d4d70','#292c49','#dbc778'];
+ const p=standingEnemyPose({phase,preparing,attacking,recovering,hurt,reducedMotion,classId,action,progress}),[suit,dark,accent]=SUITS[type]||['#4d4d70','#292c49','#dbc778'];
  c.save();c.translate(x,y);c.scale(scale,scale);
  drawShip(c,p,accent,preparing,attacking,hurt);
  if(type==='meme-army'){
   // Preserve the existing red three-point hat and long-legged silhouette.
   // No skeleton, no substitute head, no running animation in the boss rig.
   oval(c,0,-48,45,57,'#ae83bd20',null);
-  drawMemeArmy(c,{x:7,y:-8,scale:1.85,phase:0,reducedMotion:true});
+  // Spectral arms articulate with the same attack cue; the original hat and
+  // long-legged silhouette stay intact and do not switch to a running stride.
+  for(const side of ['right','left'])drawArm(c,p.arms[side],'#9860a5',accent,side,'#deb9db');
+  drawMemeArmy(c,{x:7,y:-8,scale:1.85,phase,reducedMotion,standing:true});
   if(preparing||attacking){
    oval(c,0,-46,50,56,'#be579414',attacking?'#db5475':'#eec66a',2);
    for(const side of [-1,1]){const xx=side*(attacking?56:44),yy=preparing?-69:-45;oval(c,xx,yy,preparing?8:12,preparing?8:12,'#f5d7a088','#d95a85',2);line(c,[[side*35,-58],[xx,yy]],'#d795bb',3);}

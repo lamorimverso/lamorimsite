@@ -437,7 +437,7 @@ test('HTML antigo no cache se atualiza sem travar a inicialização',async()=>{
 test('seletor oferece dois modos jogáveis, finaliza História e permite reiniciar no Infinito',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
  try{
-  assert.equal(await page.locator('#game-mode-infinite').isChecked(),true);
+  assert.equal(await page.locator('#game-mode-story').isChecked(),true);
   await page.locator('#game-mode-story').check();
   await begin(page);
   assert.equal(await page.evaluate(()=>__testRun.mode),'story');
@@ -595,7 +595,7 @@ test('perda de foco cancela disparo mantido e a corrida pode retomar sem tiros p
 test('J/Z funcionam com Disparar focado e o Infinito mostra dano na vida do chefe',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:900,height:720}});
  try{
-  await begin(page);
+  await page.locator('#game-mode-infinite').check();await begin(page);
   await page.evaluate(()=>{const r=__testRun;r.nextRaid=r.nextObstacle=r.nextPower=Infinity;r.routeDistance=r.distance=22000;r.nextBossAt=0;r.shieldFor=Infinity;r.obstacles=[];});
   await page.waitForFunction(()=>!!__testRun.boss);
   const hp=await page.evaluate(()=>__testRun.boss.hp),button=page.locator('#game-attack');
@@ -605,6 +605,50 @@ test('J/Z funcionam com Disparar focado e o Infinito mostra dano na vida do chef
   assert.equal(await button.evaluate(e=>e===document.activeElement),true);
   assert.match(await page.locator('#game-boss-weapon').textContent(),/PV \d+\/18/);
   assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),false);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+
+test('campanha abre sem trocar o modo e alcança a primeira arena da História',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
+ try{
+  assert.equal(await page.locator('#game-mode-story').isChecked(),true);await begin(page);
+  assert.equal(await page.evaluate(()=>__testRun.mode),'story');
+  await page.evaluate(()=>{const r=__testRun;r.routeDistance=1198;r.obstacles=[];r.pickups=[];r.nextRaid=Infinity;r.shieldFor=Infinity;});
+  await page.waitForFunction(()=>__testRun.boss?.combat===true);
+  assert.match(await page.locator('#game-boss-name').textContent(),/Haddad.*Sentinela.*Patrulha/);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('quadros de preparação e lançamento mudam no Canvas real nas quatro classes e no Fantasma',async()=>{
+ const {context,page,errors}=await open({viewport:{width:1440,height:1000}});
+ try{
+  await page.locator('#game-start').getByText('Começar corrida',{exact:true}).waitFor();
+  const evidence=await page.evaluate(async()=>{
+   const {drawHoverEnemy}=await import('./runner-boss-art.mjs');
+   const types=['haddad','janones','pf','xandao','meme-army'],classes=['sentinel','gunner','caster','sovereign','sovereign'];
+   const sheet=document.createElement('canvas');sheet.id='combat-filmstrip';sheet.width=1000;sheet.height=1100;
+   const c=sheet.getContext('2d');c.fillStyle='#eaf1f7';c.fillRect(0,0,1000,1100);c.font='bold 15px sans-serif';
+   const result=[];
+   for(let row=0;row<types.length;row++){
+    const hashes=[];
+    for(let col=0;col<4;col++){
+     const flags=col<2?{preparing:true,progress:col?.9:.1}:{attacking:true,progress:col===2?.1:.7};
+     c.fillStyle='#292337';c.fillText(types[row]+' · '+(col<2?'preparação':'lançamento')+' '+flags.progress,col*250+12,row*220+22);
+     drawHoverEnemy(c,{type:types[row],classId:classes[row],action:row===2?'move':row===1?'crouch':'jump',x:col*250+140,y:row*220+165,phase:5,...flags});
+     // Compare only the articulated body above the hull, without labels/motor.
+     const data=c.getImageData(col*250+60,row*220+35,170,120).data;
+     let hash=0;for(const value of data)hash=(Math.imul(hash,31)+value)|0;hashes.push(hash);
+    }
+    result.push(hashes);
+   }
+   document.body.replaceChildren(sheet);document.body.style.margin='0';return result;
+  });
+  for(const row of evidence){assert.notEqual(row[0],row[1],'preparação muda no tempo');assert.notEqual(row[2],row[3],'lançamento muda no tempo');}
+  await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
+  await page.locator('#combat-filmstrip').screenshot({path:path.resolve(__dirname,'../ux-captures/combat-filmstrip.png')});
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
