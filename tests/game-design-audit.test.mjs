@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import * as core from '../tanahoraflavio/runner-core.mjs';
+import {fireBindingFor} from '../tanahoraflavio/runner-input.mjs';
 import {nextStoryBossDistance} from '../tanahoraflavio/runner-bosses.mjs';
 const dt=1/120;
 const ui=readFileSync(new URL('../tanahoraflavio/runner.mjs',import.meta.url),'utf8');
@@ -32,7 +33,7 @@ test('atalhos de disparo funcionam com o próprio botão Disparar focado',()=>{
  const end=ui.indexOf('  document.addEventListener("keyup",event=>{',start);
  let handler,shots=0,prevented=false;
  const section={addEventListener(type,callback){handler=callback;}};
- Function('env','const {run,section,fire}=env;'+ui.slice(start,end))({run:{status:'running'},section,fire(){shots++;}});
+ Function('env','const {run,section,fire,isFireKey}=env;'+ui.slice(start,end))({run:{status:'running'},section,isFireKey:code=>fireBindingFor('default').keys.includes(code),fire(){shots++;}});
  const button={};
  handler({code:'KeyJ',repeat:false,target:{closest(selector){return selector.includes('button')||selector==='#game-attack'?button:null;}},preventDefault(){prevented=true;}});
  assert.equal(shots,1,'o próprio controle não pode bloquear J/Z');assert.equal(prevented,true);

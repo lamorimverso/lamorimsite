@@ -1,7 +1,8 @@
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=181506ec1b3c';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=fa9433a61a03';
-import {STORY_ENCOUNTERS,storyBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=b39bcaed86a2';
-export {bossArenaPose} from './runner-bosses.mjs?v=b39bcaed86a2';
+import {STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=0094a5e5951f';
+export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=0094a5e5951f';
+export {bossArenaPose} from './runner-bosses.mjs?v=0094a5e5951f';
 // Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
 export const WORLD = Object.freeze({width:900,height:300,ground:246});
 // Envelope de todas as poses no atlas a .95 de escala, incluindo o agachamento.
@@ -107,7 +108,8 @@ export function createSeededRandom(seed=0){
 const foeFor = type => PURSUERS.find(p=>p.type===type);
 // Mantém stageAt em escala de 20 unidades por cenário, mas o percurso real
 // é SCENE_DISTANCE metros. Assim o cenário exige 7 km de fuga, não 20 s fixos.
-const routeClock = run => run.routeDistance / SCENE_DISTANCE * SCENE_SECONDS;
+export const campaignRouteDistance = run => Math.max(0,run.routeDistance-(run.mode==='story'?STORY_OPENING_DISTANCE:0));
+const routeClock = run => campaignRouteDistance(run) / SCENE_DISTANCE * SCENE_SECONDS;
 const visibleWidth = run => Math.max(480,Math.min(900,Number(run.viewportWidth)||WORLD.width));
 const announce = (run,text) => {run.event=text;run.events++;};
 const assistance = run => run.assisted ? .82 : 1;

@@ -9,7 +9,7 @@ const dt=1/120;
 function scene(index=0){
  const r=core.createRun({mode:'story',seed:32});core.startRun(r);
  for(const k of ['nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
- r.bossesDefeated=index;r.routeDistance=bosses.nextStoryBossDistance(index);r.nextBossAt=0;r.shieldFor=Infinity;
+ r.bossesDefeated=index;r.distance=r.routeDistance=bosses.nextStoryBossDistance(index);r.nextBossAt=0;r.shieldFor=Infinity;
  core.advanceRun(r,dt,()=>.5);return r;
 }
 test('campanha possui quatro encontros por cenário, classes e dificuldade crescente',()=>{
@@ -22,9 +22,9 @@ test('campanha possui quatro encontros por cenário, classes e dificuldade cresc
  }
  assert.equal(rows.at(-1).type,'meme-army');assert.match(rows.at(-1).name,/Fantasma do Comunismo/);
  assert.equal(bosses.storyBossAt(20),null);
- assert.equal(bosses.nextStoryBossDistance(0),1200);
- assert.equal(bosses.nextStoryBossDistance(3),6300);
- assert.equal(bosses.nextStoryBossDistance(4),8200);
+ assert.equal(bosses.nextStoryBossDistance(0),22000);
+ assert.equal(bosses.nextStoryBossDistance(3),27100);
+ assert.equal(bosses.nextStoryBossDistance(4),29000);
 });
 test('sobreviver aos ataques não derrota um chefão da História',()=>{
  const r=scene();const distance=r.routeDistance;

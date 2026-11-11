@@ -1,5 +1,6 @@
 // Encontros ficcionais: quatro classes por cenário, sem mudar identidades.
 export const STORY_ENCOUNTERS=20;
+export const STORY_OPENING_DISTANCE=20800;
 export const BOSS_CLASSES=Object.freeze({
  sentinel:Object.freeze({name:'Sentinela',color:'#63c4e1',telegraph:.92,recover:1.3,burst:1}),
  gunner:Object.freeze({name:'Artilheiro',color:'#f1b65d',telegraph:.82,recover:1.15,burst:3}),
@@ -31,7 +32,7 @@ export function storyBossAt(index){
   attackTypes:attacks[type],objective:'Derrote '+name+' com disparos. Desvie e aproveite a recuperação.'};
 }
 export function nextStoryBossDistance(index){
- const b=storyBossAt(index);return b?b.stageIndex*7000+[1200,2900,4600,6300][b.slot]:Infinity;
+ const b=storyBossAt(index);return b?STORY_OPENING_DISTANCE+b.stageIndex*7000+[1200,2900,4600,6300][b.slot]:Infinity;
 }
 export function arenaPatternFor(boss,fired=0){
  const types=boss.attackTypes||attacks[boss.type]||attacks.haddad;

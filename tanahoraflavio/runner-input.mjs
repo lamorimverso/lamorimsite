@@ -1,4 +1,10 @@
 // A press belongs to a physical key until keyup, cancellation or loss of focus.
+const FIRE_BINDINGS=new Map([
+ ['default',{keys:Object.freeze(['KeyJ','KeyZ']),label:'J/Z'}],
+ ...['F','K','L','X','C'].map(letter=>['Key'+letter,{keys:Object.freeze(['Key'+letter]),label:letter}])
+].map(([id,binding])=>[id,Object.freeze(binding)]));
+export const fireBindingFor=value=>FIRE_BINDINGS.get(value)||FIRE_BINDINGS.get('default');
+
 export function createPressGate(){
  const held=new Set();
  return {
