@@ -279,3 +279,8 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
 .game-card[data-run-state="prison"] .game-overlay{background:#fff;pointer-events:none}
 .game-card[data-run-state="prison"] #runner-canvas{min-height:270px}
 @media(max-width:480px){.game-ballot{grid-template-columns:1fr;max-width:360px;padding:10px;gap:9px}.game-ballot-pad{grid-template-columns:repeat(3,minmax(0,1fr))}.game-ballot-screen{padding:9px}.game-ballot-number{margin:6px 0;font-size:28px}}
+.game-attack{position:absolute;right:12px;bottom:10px;z-index:5;min-width:106px;min-height:46px;padding:10px 14px;border:2px solid #f4d988;border-radius:14px;background:#244c65;color:#fff5d4;font:800 15px system-ui;box-shadow:0 3px 0 #172f45;touch-action:none;user-select:none}
+.game-attack:active{transform:translateY(2px);box-shadow:0 1px 0 #172f45;background:#35738a}
+.game-attack:focus-visible{outline:3px solid #e6a52d;outline-offset:3px}
+.game-attack[hidden]{display:none}
+.game-card[data-run-state="running"]:not([data-boss="none"]) .game-hud{display:flex;top:8px;left:8px;bottom:auto;right:auto;max-width:calc(100% - 16px);animation:none}

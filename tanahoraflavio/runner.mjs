@@ -1,6 +1,7 @@
 import {createVoiceDirector} from './runner-voice-director.mjs?v=088899f48fd6';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor } from "./runner-core.mjs?v=bef3a637ee4c";
-import { drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=e48db735901a";
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,bossArenaPose } from "./runner-core.mjs?v=2c36175e9f23";
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=37009bd8b110';
+import { drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=42af91493a7e";
 import { createGameAudio } from "./runner-audio.mjs?v=b63783dad9b7";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=fa9433a61a03";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=8970d7d6092a";
@@ -15,10 +16,10 @@ function initRunner() {
   if (!canvas || !section) return;
   // Uma aba pode ter conservado o HTML anterior enquanto os módulos já
   // mudaram. Atualizar a página uma vez evita inicializar sobre IDs antigos.
-  if(!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-expand-label")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
+  if(!$("game-attack")||!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-expand-label")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
     const url=new URL(location.href);
-    if(url.searchParams.get("ui")!=="20261106-arena"){
-      url.searchParams.set("ui","20261106-arena");location.replace(url.href);
+    if(url.searchParams.get("ui")!=="20261111-combat"){
+      url.searchParams.set("ui","20261111-combat");location.replace(url.href);
     }else{
       const button=$("game-start"),note=$("game-loading-note");
       if(button){button.disabled=false;button.textContent="Recarregar jogo";button.addEventListener("click",()=>location.reload(),{once:true});}
@@ -55,7 +56,7 @@ function initRunner() {
   $("game-assist").checked=preferences.assisted;
   let run=createRun({assisted:preferences.assisted}),frameId=0;
   run.supportAvailable=false;
-  const trackPointers=new Map(),moveKeys=new Set(),jumpKeys=createPressGate(),crouchSources=createHeldSources();
+  const trackPointers=new Map(),moveKeys=new Set(),jumpKeys=createPressGate(),crouchSources=createHeldSources(),attackSources=createHeldSources();
   const frameClock=createFrameClock(performance.now());
   let spritesReady=false,spritesFailed=false,loadedSprites=0,loadingSprites=false,landingUntil=0;
   let supportReady=false,supportLoading=false,supportFailed=false;
@@ -110,11 +111,11 @@ function initRunner() {
     $("game-passport-progress").style.width=run.passports%100+"%";
     const lap=Math.floor(run.routeDistance/(SCENE_DISTANCE*STAGES.length))+1;
     const sceneElapsed=run.routeDistance%SCENE_DISTANCE;
-    $("game-phase").textContent="Cenário "+(stage.index+1)+" de 5 · "+(run.mode==="story"?"História "+Math.min(run.bossesDefeated,6)+"/6":"Volta "+lap);
+    $("game-phase").textContent="Cenário "+(stage.index+1)+" de 5 · "+(run.mode==="story"?"História "+Math.min(run.bossesDefeated,STORY_BOSS_COUNT)+"/"+STORY_BOSS_COUNT:"Volta "+lap);
     $("game-stage-name").textContent=stage.name;
     const cast=characterProgressAt(run);
     $("game-difficulty").textContent="Risco "+difficulty.level+"/10 · "+cast.available+"/"+cast.total+" rivais";
-    $("game-stage-time").textContent=run.status==="ballot"?"Etapa final · Urna":run.status==="prison"?"Prisão fictícia":run.status==="won"?"História concluída!":run.status==="over"?"Fim da corrida":run.boss?run.boss.remaining+" ataques para escapar do chefão":run.raid?"Perseguição especial":run.mode==="story"?"Chefões "+run.bossesDefeated+"/6":campaignPhases[stage.index];
+    $("game-stage-time").textContent=run.status==="ballot"?"Etapa final · Urna":run.status==="prison"?"Prisão fictícia":run.status==="won"?"História concluída!":run.status==="over"?"Fim da corrida":run.boss?.combat?"Confronto "+(run.boss.slot+1)+"/4 · "+run.boss.rankName:run.boss?run.boss.remaining+" ataques para escapar do chefão":run.raid?"Perseguição especial":run.mode==="story"?"Chefões "+run.bossesDefeated+"/"+STORY_BOSS_COUNT:campaignPhases[stage.index];
     $("game-best").textContent=best.toLocaleString("pt-BR");
     $("game-time").textContent=pad(Math.floor(run.elapsed/60))+":"+pad(Math.floor(run.elapsed%60));
     section.dataset.runState=run.status;section.dataset.runMode=run.mode;
@@ -127,17 +128,30 @@ function initRunner() {
     const power=run.shieldFor>0?"shield":run.graceFor>0?"recovery":"none";
     section.dataset.power=run.player.isJacare?"jacare":power;section.dataset.ammo="none";
     const remainingJacareSeconds=Math.max(0,Math.ceil(JACARE_DURATION_SECONDS-run.player.jacareAge));
-    $("game-power").textContent=run.player.isJacare?"Jacaré · "+remainingJacareSeconds+" s":power==="shield"?"Escudo das Américas · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo";
+    $("game-power").textContent=run.player.isJacare?"Jacaré · "+remainingJacareSeconds+" s":run.boss?.combat?"Energia "+run.player.hp+"/"+run.player.maxHp+(power==='shield'?" · Escudo":""):power==="shield"?"Escudo das Américas · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo";
     const recovery=$("game-jacare-progress");
     if(recovery){
       recovery.hidden=run.status!=="running"||!run.player.isJacare;
       $("game-jacare-seconds").textContent=remainingJacareSeconds+" s";
       recovery.setAttribute("aria-label","Jacaré: "+remainingJacareSeconds+" segundos restantes; desvie lateralmente das ampolas");
     }
-    $("game-ammo").parentElement.hidden=true;
+    $("game-ammo").parentElement.hidden=!run.boss;
+    $("game-ammo").textContent=run.boss?"J / Z · Disparar":"Sem arma";
+    $("game-attack").hidden=run.status!=="running"||!run.boss||run.player.isJacare;
+    if(!run.boss&&attackSources.active){attackSources.clear();setAttackRun(run,false);}
     $("game-boss").hidden=run.status!=="running"||!run.boss;section.dataset.boss=run.boss?.type||"none";
     if(run.boss){
       const b=run.boss;
+      section.dataset.bossPhase=b.phase||'attack';
+      if(b.combat){
+       $("game-boss-name").textContent=b.name+" · "+b.className+" · "+b.rankName;
+       $("game-boss-health").setAttribute("aria-valuemax",String(b.maxHp));
+       $("game-boss-health").setAttribute("aria-valuenow",String(b.hp));
+       $("game-boss-health").setAttribute("aria-label","Energia de "+b.name);
+       $("game-boss-progress").style.width=100*b.hp/b.maxHp+"%";
+       const state=({intro:'ENTRADA',charge:'PREPARANDO',attack:'ATAQUE',recover:'RECUPERAÇÃO · ATIRE!'})[b.phase];
+       $("game-boss-weapon").textContent=state+" · "+b.hp+"/"+b.maxHp+" PV"+(b.enraged?" · FASE 2":"");
+      }else{
       $("game-boss-name").textContent=b.type==="janones"?"Janones · bloco "+Math.min(3,Math.floor((b.total-b.remaining)/Math.ceil(b.total/3))+1)+"/3":(b.type==="haddad"?"Haddad · Taxad":b.type==="pf"?"Blitz da PF":b.name)+" · rodada "+b.level;
       $("game-boss-health").setAttribute("aria-valuemax",String(b.total));
       $("game-boss-health").setAttribute("aria-valuenow",String(b.total-b.remaining));
@@ -148,6 +162,7 @@ function initRunner() {
       const attack=attackCueFor(bossCue());
       $("game-boss-weapon").textContent=(attack?.short||"Observe o ataque")+
         (bossCue().approach==="drop"?" · VEM DO ALTO!":"")+" · "+goal;
+      }
       $("game-boss").style.setProperty("--boss-accent",b.color);
     }
     const liveAttack=run.obstacles.filter(o=>!o.passed&&!o.counted)
@@ -216,7 +231,7 @@ function initRunner() {
       if(lastStatus!=="over")section.dispatchEvent(new Event("runner:over"));
     }
     if(lastStatus!==run.status||lastStage!==stage.index||lastCollected!==run.collected||lastPower!==power||lastLives!==run.lives||lastEvents!==run.events){
-      let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="ballot"?"Etapa final: digite dois números na urna fictícia.":run.status==="prison"?"Flávio foi preso. A campanha vai recomeçar.":run.status==="won"?"História concluída: todos os seis chefões superados.":run.status==="over"?"Foi pego pela Polícia Federal! "+dodgeHint()+" "+score+" metros percorridos. Toque em Tentar de novo.":stage.name+" · pule ou abaixe conforme o perigo.";
+      let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="ballot"?"Etapa final: digite dois números na urna fictícia.":run.status==="prison"?"Flávio foi preso. A campanha vai recomeçar.":run.status==="won"?"História concluída: todos os 20 chefões superados.":run.status==="over"?"Foi pego pela Polícia Federal! "+dodgeHint()+" "+score+" metros percorridos. Toque em Tentar de novo.":stage.name+" · pule ou abaixe conforme o perigo.";
       if(run.status==="running"){
         if(run.events>lastEvents)message=run.event;
         else if(lastCollected!==run.collected)message="Passaporte coletado. Faltam "+(100-run.passports%100)+" para uma vida.";
@@ -333,8 +348,19 @@ function initRunner() {
     else if(!active)draw();
   }
   function clearControls(){
-    trackPointers.clear();moveKeys.clear();jumpKeys.clear();crouchSources.clear();clearRunInput(run);
+    trackPointers.clear();moveKeys.clear();jumpKeys.clear();crouchSources.clear();attackSources.clear();clearRunInput(run);
   }
+  function fire(source,active){
+    attackSources.set(source,active);setAttackRun(run,attackSources.active);
+    if(active){resumeFromGesture();if(attackRun(run))audio.effect('magic');draw();}
+  }
+  $("game-attack").addEventListener('pointerdown',event=>{
+    if(event.button!==0)return;event.preventDefault();canvas.focus({preventScroll:true});
+    fire('pointer:'+event.pointerId,true);
+    try{$('game-attack').setPointerCapture(event.pointerId);}catch{}
+  });
+  for(const type of ['pointerup','pointercancel','lostpointercapture'])$('game-attack').addEventListener(type,event=>fire('pointer:'+event.pointerId,false));
+  $('game-attack').addEventListener('click',event=>{if(event.detail===0){if(attackRun(run))audio.effect('magic');draw();}});
   function updateMovement(){
     const right=moveKeys.has("ArrowRight")||moveKeys.has("KeyD"),left=moveKeys.has("ArrowLeft")||moveKeys.has("KeyA");
     const pointer=[...trackPointers.values()].filter(p=>p.action==="move").at(-1);
@@ -432,7 +458,9 @@ function initRunner() {
       return;
     }
     if (event.target.closest("button,a,input,select,textarea,summary") || event.ctrlKey || event.metaKey || event.altKey) return;
-    if(["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code)){
+    if(['KeyJ','KeyZ'].includes(event.code)){
+      event.preventDefault();if(!event.repeat)fire('key:'+event.code,true);
+    }else if(["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code)){
       event.preventDefault();moveKeys.add(event.code);resumeFromGesture();updateMovement();
     }else if (["Space","ArrowUp"].includes(event.code)) {
       event.preventDefault();
@@ -443,6 +471,7 @@ function initRunner() {
     }
   });
   document.addEventListener("keyup",event=>{
+    if(['KeyJ','KeyZ'].includes(event.code))fire('key:'+event.code,false);
     if(["Space","ArrowUp"].includes(event.code))jumpKeys.release(event.code);
     if(["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code)&&moveKeys.has(event.code)){event.preventDefault();moveKeys.delete(event.code);updateMovement();}
     if(["ArrowDown","KeyS"].includes(event.code)){crouchSources.set("key:"+event.code,false);crouch(crouchSources.active);}
@@ -485,22 +514,15 @@ function initRunner() {
   function bossFigure(){
     const b=run.boss;if(!b)return;
     const phase=run.elapsed*9;
-    // Posição independente dos projéteis; as poses do elenco avançam pelo relógio.
-    const pose=enemyEmitterPose(virtualWidth,WORLD.ground,b.type,true);
+    const arenaPose=b.combat?bossArenaPose(b,virtualWidth):null;
+    const pose=arenaPose?{x:arenaPose.x,y:WORLD.ground-arenaPose.platformY,scale:1}:enemyEmitterPose(virtualWidth,WORLD.ground,b.type,true);
     const bossX=pose.x,bossY=pose.y;
     const motion=enemyMotionFor(b.type,prefersReducedMotion()||b.attackFlashFor>0?0:phase,bossX);
     const pending=run.obstacles.find(o=>o.bossAttack&&o.waitFor>0&&!o.launched);
-    const preparing=!!pending||(b.nextAttack<.55&&b.fired<b.total);
+    const preparing=b.combat?b.phase==='charge':!!pending||(b.nextAttack<.55&&b.fired<b.total);
     const attacking=b.attackFlashFor>0&&!pending;
     ctx.save();ctx.translate(bossX,bossY+motion.bob);
-    if(b.type==="bossonari"){
-      drawComunismoGhostBoss(ctx,{x:-18,y:-7,phase,scale:pose.scale,preparing:preparing&&(pending?.type||b.plannedAttack?.type)==="meme-ghost",attacking:attacking&&b.lastWeapon==="meme-ghost",reducedMotion:prefersReducedMotion()});
-      // Bossonari permanece como o lançador de frascos da batalha.
-      ctx.save();ctx.translate(108,-5);ctx.scale(.55,.55);
-      drawBossOfBosses(ctx,{phase,preparing:preparing&&(pending?.type||b.plannedAttack?.type)!=="meme-ghost",attacking:attacking&&b.lastWeapon!=="meme-ghost",reducedMotion:prefersReducedMotion()});ctx.restore();
-    }else{
-      drawEnemyActor(ctx,{type:b.type,x:0,y:0,scale:pose.scale,phase,preparing,attacking,hurt:b.hitFlashFor>0,reducedMotion:prefersReducedMotion()});
-    }
+    drawHoverEnemy(ctx,{type:b.type,x:0,y:0,scale:pose.scale,phase,preparing,attacking,hurt:b.hitFlashFor>0,reducedMotion:prefersReducedMotion(),classId:b.classId});
     ctx.restore();
     if(b.nextAttack<.65&&b.fired<b.total&&!run.obstacles.some(o=>o.bossAttack&&!o.counted)){
       ctx.fillStyle="#843338";ctx.font="800 16px system-ui";ctx.textAlign="center";
@@ -560,6 +582,11 @@ function initRunner() {
       drawActor(ctx,{type:"flavio",x:playerX(run)+17,y:feet,scale:.95,phase,airborne,
         falling:run.player.velocity<0,landing:crouchTarget,
         hurt:run.status==="over",alpha:blend.human*(run.graceFor>0&&run.shieldFor<=0?.55:1)});
+      if(run.player.attackFor>0){
+        const sx=playerX(run)+PLAYER.width-2,sy=WORLD.ground-run.player.y-(crouchTarget?18:38);
+        ctx.strokeStyle='#f7d6a0';ctx.lineWidth=6;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(sx-12,sy+3);ctx.lineTo(sx,sy);ctx.stroke();
+        ctx.fillStyle='#fff7c8';ctx.beginPath();ctx.ellipse(sx+4,sy,7,5,0,0,Math.PI*2);ctx.fill();
+      }
       if(run.player.restoreFlashFor>0&&!prefersReducedMotion()){
         ctx.save();ctx.globalAlpha=Math.min(.55,run.player.restoreFlashFor/.48*.55);
         ctx.strokeStyle="#5ba86d";ctx.lineWidth=3;ctx.beginPath();
@@ -572,7 +599,7 @@ function initRunner() {
   function joiceFigure(){
     const raid=run.raid;if(run.status!=="running"||!raid)return;
     if(raid.phase==='recovery')return;
-    drawEnemyActor(ctx,{type:"joice",x:virtualWidth-62,y:WORLD.ground-134,scale:.92,phase:run.elapsed*10,reducedMotion:prefersReducedMotion()});
+    drawHoverEnemy(ctx,{type:"joice",x:virtualWidth-62,y:WORLD.ground-134,scale:.92,phase:run.elapsed*10,reducedMotion:prefersReducedMotion()});
   }
   function drawSupport(){
     const aid=run.aid;if(!aid||run.status!=="running")return;
@@ -622,6 +649,8 @@ function initRunner() {
     }
     if(item.projectile){
       drawProjectile(ctx,item,WORLD.ground,run.elapsed*10,{reducedMotion:prefersReducedMotion()});
+    }else if(['pf','janones','army','boulos','dino','lula','xandao','haddad'].includes(item.type)){
+      drawHoverEnemy(ctx,{type:item.type,x:item.x+item.width/2,y:WORLD.ground-5,scale:item.height/105,phase:run.elapsed*10,reducedMotion:prefersReducedMotion()});
     }else drawThreat(ctx,item,WORLD.ground,run.elapsed*10,{reducedMotion:prefersReducedMotion()});
   }
   function pickup(item){
@@ -642,6 +671,10 @@ function initRunner() {
     ctx.setTransform(canvas.width/virtualWidth,0,0,canvas.height/WORLD.height,0,0);
     drawJourneyScenery(ctx,{routeDistance:run.routeDistance,distance:run.distance,width:virtualWidth,reducedMotion:prefersReducedMotion(),quiet:run.aid?.kind==="quiet"?Math.max(0,Math.min(1,(6-run.aid.remaining)/.35,run.aid.remaining/.35)):0});
     drawRaidAtmosphere(ctx,{strength:raidMoodFor(run.raid),width:virtualWidth,distance:run.distance,reducedMotion:prefersReducedMotion()});
+    if(run.boss?.combat)drawBossArena(ctx,{width:virtualWidth,ground:WORLD.ground,phase:run.elapsed*8,state:{phase:run.boss.phase,enraged:run.boss.enraged},stageIndex:run.boss.stageIndex,reducedMotion:prefersReducedMotion()});
+    if(run.boss?.combat){
+      ctx.save();ctx.strokeStyle='#69a5b488';ctx.lineWidth=3;ctx.setLineDash([4,5]);ctx.beginPath();ctx.moveTo(virtualWidth-170,WORLD.ground-35);ctx.lineTo(virtualWidth-170,WORLD.ground+2);ctx.stroke();ctx.restore();
+    }
     // O Fantasma do Comunismo é a figura principal do confronto final, não decoração.
     bossFigure();
     joiceFigure();
@@ -650,10 +683,15 @@ function initRunner() {
       const actor=run.cameo.type,shot=run.obstacles.find(o=>o.sourceActor===actor&&!o.passed);
       const preparing=!!shot&&shot.waitFor>0&&!shot.launched;
       const attacking=!!shot&&shot.launched&&(shot.launchX-shot.x-shot.width/2)<40;
-      drawEnemyActor(ctx,{type:actor,x:virtualWidth-58,y:WORLD.ground-134,scale:actor==="meme-army"?1.36:.92,phase:run.elapsed*10,preparing,attacking,reducedMotion:prefersReducedMotion()});
+      drawHoverEnemy(ctx,{type:actor,x:virtualWidth-58,y:WORLD.ground-134,scale:actor==="meme-army"?1.36:.92,phase:run.elapsed*10,preparing,attacking,reducedMotion:prefersReducedMotion()});
     }
     for(const item of run.pickups)pickup(item);
     for(const item of run.obstacles)obstacle(item);
+    for(const shot of run.heroShots||[]){
+      ctx.save();ctx.translate(shot.x,WORLD.ground-shot.y);ctx.rotate(Math.atan2(-shot.vy,shot.vx));
+      ctx.strokeStyle='#64cde8';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(0,0);ctx.stroke();
+      ctx.fillStyle='#fff4bf';ctx.beginPath();ctx.ellipse(0,0,7,4,0,0,Math.PI*2);ctx.fill();ctx.restore();
+    }
     character();
   }
   for(const id of ["game-sound","game-expand","game-crouch-mode","game-effects","game-assist"])$(id).disabled=false;

@@ -107,3 +107,42 @@ export function drawSpritePortrait(context,type,width,height){
  context.clearRect(0,0,width,height);
  context.drawImage(cast.image,crop.x,crop.y,crop.width,crop.height,(width-crop.width*factor)/2,(height-crop.height*factor)/2,crop.width*factor,crop.height*factor);
 }
+
+// Cabeças revisadas uma vez nos atlas originais (quadro estável de cada ator).
+// [esquerda, topo, largura, altura, eixo do pescoço], relativos ao frame.
+// Recortes fixos não seguem as pernas/braços da corrida e não leem pixels em runtime.
+const headCrops={
+ flavio:[48,3,152,133,86],xandao:[28,1,114,128,65],haddad:[13,0,144,124,83],
+ lula:[31,0,117,127,65],joice:[10,0,224,137,82],army:[17,1,128,119,73],
+ dilma:[28,0,127,119,65],simone:[32,0,176,127,66],soraya:[19,0,204,132,76],
+ 'ze-gotinha':[27,0,113,121,62],
+ vorcaro:[20,0,144,143,79],jair:[25,0,131,137,71],michelle:[25,0,137,141,70],eduardo:[29,0,129,142,69],
+ carlos:[17,0,125,136,73],renan:[17,0,135,139,75],silas:[18,0,133,145,77],magno:[25,0,126,142,71],
+ nikolas:[15,0,125,130,66],tarcisio:[28,0,125,136,69],damares:[21,0,173,136,76],bia:[30,0,165,133,67],
+ trump:[10,0,156,134,83],milei:[12,0,164,145,78],bolsominion:[18,0,135,125,70],jacare:[0,0,129,90,81],
+ boulos:[21,0,127,142,70],dino:[30,0,127,142,68],janones:[22,0,133,144,76],pf:[16,0,137,116,80]
+};
+const castHeadCrops={xandao:[36,0,100,111,60],haddad:[25,0,133,115,72],lula:[36,0,126,147,69],pf:[16,0,122,114,73],janones:[33,0,126,139,69],army:headCrops.army,joice:[29,0,218,135,76]};
+/** Draw only the original head. x/y is the neck anchor; size is head height. */
+export function drawSpriteHead(context,{type,x=0,y=0,size=40,phase=0}={}){
+ if(!Number.isFinite(size)||size<=0||!Number.isFinite(x)||!Number.isFinite(y))return false;
+ const running=runningGroups[type];
+ let selected=type==='flavio'?{sheet:'hero',index:0}:running?{sheet:running.sheet,index:running.start}:actorGroups[type]?{sheet:'cast',index:actorGroups[type][0]}:null;
+ if(!selected)return false;
+ let sheet=sheets.get(selected.sheet),crop=selected.sheet==='cast'?castHeadCrops[type]:headCrops[type];
+ if(!sheet&&actorGroups[type]&&sheets.has('cast')){selected={sheet:'cast',index:actorGroups[type][0]};sheet=sheets.get('cast');crop=castHeadCrops[type];}
+ const frame=sheet?.frames[selected.index];if(!frame||!crop)return false;
+ const [left,top,width,height,neckX]=crop;
+ if(left<0||top<0||left+width>frame.width||top+height>frame.height)return false;
+ const factor=size/height,dx=x-neckX*factor,dy=y-size,dw=width*factor;
+ context.save();context.imageSmoothingEnabled=true;
+ // Preserve the hair/hat at the top, taper the lower corners to the neck.
+ // The mask removes shoulders, microphones and stray running hands.
+ context.beginPath();
+ for(const [i,[u,v]] of [[0,0],[1,0],[1,.70],[.83,.88],[.64,1],[.32,1],[.15,.88],[0,.70]].entries()){
+  const px=dx+u*dw,py=dy+v*size;if(i)context.lineTo(px,py);else context.moveTo(px,py);
+ }
+ context.closePath();context.clip();
+ context.drawImage(sheet.image,frame.x+left,frame.y+top,width,height,dx,dy,dw,size);
+ context.restore();return true;
+}

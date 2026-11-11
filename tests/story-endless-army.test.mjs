@@ -14,7 +14,7 @@ test('Infinito permanece padrão, História é opção explícita, entradas inv�
  assert.equal(core.createRun().mode,'endless');
  assert.equal(core.createRun({mode:'story'}).mode,'story');
  assert.equal(core.createRun({mode:'invalid'}).mode,'endless');
- assert.equal(core.STORY_BOSS_COUNT,core.BOSS_ROSTER.length+1);
+ assert.equal(core.STORY_BOSS_COUNT,20);
 });
 test('chefão dos chefões apresenta 14 ataques de medicamentos fictícios com duas formas de esquiva',()=>{
  const boss=core.bossAtRound(5,'bossonari');
@@ -27,22 +27,23 @@ test('chefão dos chefões apresenta 14 ataques de medicamentos fictícios com d
  assert.ok(moves.some(m=>m.action==='jump')&&moves.some(m=>m.action==='crouch'));
  assert.ok(moves.every(m=>!('medicinalEffect' in m)));
 });
-test('História conclui somente depois de desviar do sexto chefão',()=>{
+test('História conclui somente depois de derrotar o vigésimo chefão',()=>{
  const r=isolated('story');
- r.distance=r.routeDistance=57000;r.bossesDefeated=5;r.nextBossAt=0;r.shieldFor=Infinity;
+ r.distance=r.routeDistance=34300;r.bossesDefeated=19;r.nextBossAt=0;r.shieldFor=Infinity;
  const seen=new Set();
  for(let i=0;i<120*42&&r.status==='running';i++){
+  if(r.boss)core.setAttackRun(r,true);
   core.advanceRun(r,DT,()=>.5);
   if(r.boss)seen.add(r.boss.type);
  }
- assert.deepEqual([...seen],['bossonari']);
+ assert.deepEqual([...seen],['meme-army']);
  assert.equal(r.status,'ballot');
- assert.equal(r.bossesDefeated,6);
+ assert.equal(r.bossesDefeated,20);
  assert.equal(core.ballotDigit(r,'1'),true);
  assert.equal(core.ballotDigit(r,'3'),true);
  assert.equal(core.ballotConfirm(r),'won');
  assert.equal(r.status,'won');
- assert.equal(r.lastBoss,'bossonari');
+ assert.equal(r.lastBoss,'meme-army');
  assert.equal(r.nextBossAt,Infinity);
  assert.ok(r.event.includes('HISTÓRIA CONCLUÍDA'));
  const before=structuredClone(r);
