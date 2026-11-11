@@ -426,7 +426,7 @@ test('HUD do chefão fica fora da pista e não desloca pista ou controles',async
 test('HTML antigo no cache se atualiza sem travar a inicialização',async()=>{
  const {context,page,errors}=await open({legacyFirst:true});
  try{
-  await page.waitForURL(url=>url.searchParams.get('ui')==='20261106-arena', {timeout:4000});
+  await page.waitForURL(url=>url.searchParams.get('ui')==='20261111-combat', {timeout:4000});
   await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
   assert.equal(await page.locator('#game-settings').count(),1);
   assert.match(await page.locator('#days').textContent(),/^\d+$/);
@@ -444,7 +444,7 @@ test('seletor oferece dois modos jogáveis, finaliza História e permite reinici
   assert.equal(await page.locator('#game-mode-chooser').isVisible(),false);
   await page.evaluate(()=>{
    const r=__testRun;
-   r.bossesDefeated=5;
+   r.bossesDefeated=19;
    r.nextRaid=r.nextObstacle=r.nextBossAt=Infinity;
    r.shieldFor=Infinity;
    r.boss={type:'bossonari',name:'Bossonari',color:'#7a4f8d',total:1,remaining:1,
@@ -500,7 +500,7 @@ test('urna 22 mostra prisão e recomeça História automaticamente',async()=>{
  try{
   await page.locator('#game-mode-story').check();await begin(page);
   await page.evaluate(()=>{
-   const r=__testRun;r.bossesDefeated=5;r.nextRaid=r.nextObstacle=r.nextBossAt=Infinity;r.shieldFor=Infinity;
+   const r=__testRun;r.bossesDefeated=19;r.nextRaid=r.nextObstacle=r.nextBossAt=Infinity;r.shieldFor=Infinity;
    r.boss={type:'bossonari',name:'Bossonari',color:'#7a4f8d',total:1,remaining:1,fired:1,nextAttack:100,attackFlashFor:0,hitFlashFor:0,plannedFor:1,plannedAttack:{type:'cloroquina-prop',action:'jump'},goalKind:'phantoms',objective:'Desvie'};
    r.obstacles=[{x:-100,width:38,height:38,type:'cloroquina-prop',action:'jump',bossAttack:true,counted:false,speed:250,y:23}];
   });
@@ -530,18 +530,62 @@ test('chefão final redesenhado aparece com investida do fantasma em celular e d
   try{
    await page.locator('#game-mode-story').check();await begin(page);
    await page.evaluate(()=>{
-    const r=__testRun;r.bossesDefeated=5;r.distance=r.routeDistance=57000;r.nextRaid=r.nextObstacle=Infinity;
+    const r=__testRun;r.bossesDefeated=19;r.distance=r.routeDistance=34300;r.nextRaid=r.nextObstacle=Infinity;
     r.nextBossAt=0;r.shieldFor=Infinity;
    });
-   await page.waitForFunction(()=>document.getElementById('game').dataset.boss==='bossonari');
-   await page.waitForFunction(()=>globalThis.__drawnBossLabels.length>0);
+   await page.waitForFunction(()=>document.getElementById('game').dataset.boss==='meme-army');
+   assert.match(await page.locator('#game-boss-name').textContent(),/Fantasma do Comunismo/);
    await page.evaluate(()=>{
     const r=__testRun;r.boss.fired=3;r.boss.plannedFor=3;
     r.boss.plannedAttack={type:'meme-ghost',action:'crouch',approach:'sweep'};
-    r.boss.nextAttack=0;
+    r.boss.phase='attack';r.boss.phaseFor=Infinity;r.boss.volleyLeft=1;r.boss.nextAttack=0;
    });
    await page.waitForFunction(()=>__testRun.obstacles.some(o=>o.type==='meme-ghost'&&o.bossAttack));
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
  }
+});
+
+for(const viewport of [{width:390,height:844},{width:1440,height:900}])test(`arena de combate ${viewport.width}px mostra classe, energia e disparo funcional`,async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport,hasTouch:viewport.width<500,isMobile:viewport.width<500});
+ try{
+  await page.locator('#game-mode-story').check();await begin(page);
+  await page.evaluate(()=>{
+   const r=__testRun;r.nextRaid=r.nextObstacle=r.nextPower=r.nextPassport=Infinity;r.shieldFor=Infinity;
+   r.routeDistance=1200;r.nextBossAt=0;r.obstacles=[];r.pickups=[];
+  });
+  await page.waitForFunction(()=>__testRun.boss?.combat===true);
+  assert.match(await page.locator('#game-boss-name').textContent(),/Sentinela.*Patrulha/);
+  assert.match(await page.locator('#game-power').textContent(),/Energia 5\/5/);
+  assert.equal(await page.locator('#game-attack').isVisible(),true);
+  const hp=await page.evaluate(()=>__testRun.boss.hp);
+  if(viewport.width<500){
+   await page.locator('#game-attack').dispatchEvent('pointerdown',{button:0,pointerId:91,pointerType:'touch'});
+  }else{
+   await page.locator('#runner-canvas').focus();await page.keyboard.down('j');
+  }
+  await page.waitForFunction(previous=>__testRun.boss.hp<previous,hp,{timeout:6000});
+  assert.ok(await page.evaluate(()=>__testRun.shotsFired>0));
+  assert.ok(Number(await page.locator('#game-boss-health').getAttribute('aria-valuenow'))<hp);
+  if(viewport.width<500)await page.locator('#game-attack').dispatchEvent('pointercancel',{pointerId:91,pointerType:'touch'});
+  else await page.keyboard.up('j');
+  assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),false);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('perda de foco cancela disparo mantido e a corrida pode retomar sem tiros presos',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:900,height:720}});
+ try{
+  await page.locator('#game-mode-story').check();await begin(page);
+  await page.evaluate(()=>{const r=__testRun;r.nextRaid=r.nextObstacle=Infinity;r.routeDistance=1200;r.nextBossAt=0;r.shieldFor=Infinity;});
+  await page.waitForFunction(()=>!!__testRun.boss);await page.locator('#runner-canvas').focus();await page.keyboard.down('z');
+  assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),true);
+  await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
+  assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),false);
+  await page.keyboard.up('z');await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+  assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),false);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
 });
