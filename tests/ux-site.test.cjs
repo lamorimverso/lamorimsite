@@ -571,6 +571,8 @@ for(const viewport of [{width:390,height:844},{width:1440,height:900}])test(`are
   else await page.keyboard.up('j');
   assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),false);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
+  await page.locator('#game').screenshot({path:path.resolve(__dirname,'../ux-captures/arena-'+viewport.width+'.png')});
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
@@ -585,6 +587,23 @@ test('perda de foco cancela disparo mantido e a corrida pode retomar sem tiros p
   await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
   assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),false);
   await page.keyboard.up('z');await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+  assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),false);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('J/Z funcionam com Disparar focado e o Infinito mostra dano na vida do chefe',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:900,height:720}});
+ try{
+  await begin(page);
+  await page.evaluate(()=>{const r=__testRun;r.nextRaid=r.nextObstacle=r.nextPower=Infinity;r.routeDistance=r.distance=22000;r.nextBossAt=0;r.shieldFor=Infinity;r.obstacles=[];});
+  await page.waitForFunction(()=>!!__testRun.boss);
+  const hp=await page.evaluate(()=>__testRun.boss.hp),button=page.locator('#game-attack');
+  await button.focus();await page.keyboard.down('j');
+  await page.waitForFunction(previous=>__testRun.boss.hp<previous,hp,{timeout:6000});
+  await page.keyboard.up('j');
+  assert.equal(await button.evaluate(e=>e===document.activeElement),true);
+  assert.match(await page.locator('#game-boss-weapon').textContent(),/PV \d+\/18/);
   assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),false);
   assert.deepEqual(errors,[]);
  }finally{await context.close();}

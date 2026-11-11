@@ -194,7 +194,7 @@ export function createRun({assisted=false,seed,mode='endless'}={}) {
  return {status:'ready',mode:mode==='story'?'story':'endless',assisted:assisted===true,elapsed:0,distance:0,routeDistance:0,viewportWidth:WORLD.width,bonus:0,collected:0,passports:0,lives:1,
   randomState:seed===undefined?null:Number(seed)>>>0,
   ballot:{digits:'',message:''},
-  event:'',events:0,player:{x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareAge:0,nextJacareThreat:3,restoreFlashFor:0,jumpBufferedUntil:0,attackHeld:false,attackFor:0,attackCooldown:0,hp:5,maxHp:5},obstacles:[],pickups:[],heroShots:[],shotsFired:0,lastHit:null,
+  event:'',events:0,player:{x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareAge:0,nextJacareThreat:3,restoreFlashFor:0,jumpBufferedUntil:0,attackHeld:false,attackFor:0,attackCooldown:0,shotFacing:1,hp:5,maxHp:5},obstacles:[],pickups:[],heroShots:[],shotsFired:0,lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,shieldFor:0,graceFor:0,
   lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,phantomCloud:null,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:null,bossCooldown:0,
@@ -338,10 +338,15 @@ export function setAttackRun(run,active){
  run.player.attackHeld=!!active&&run.status==='running'&&!!run.boss&&!run.player.isJacare;
  return run.player.attackHeld;
 }
+export function heroMuzzleFor(run,facing=1){
+ return {x:playerX(run)+(facing<0?2:PLAYER.width-2),y:run.player.y+(run.player.crouching?18:38)};
+}
 export function attackRun(run){
  const b=run.boss,p=run.player;
  if(run.status!=='running'||!b||p.isJacare||b.phase==='intro'||p.attackCooldown>0||(run.heroShots?.length||0)>=6)return false;
- const pose=bossArenaPose(b,visibleWidth(run)),x=playerX(run)+PLAYER.width-2,y=p.y+(p.crouching?18:38);
+ const pose=bossArenaPose(b,visibleWidth(run));
+ p.shotFacing=pose.x<playerX(run)+PLAYER.width/2?-1:1;
+ const {x,y}=heroMuzzleFor(run,p.shotFacing);
  const dx=pose.x-x,dy=pose.platformY+48-y,distance=Math.max(1,Math.hypot(dx,dy));
  (run.heroShots??=[]).push({x,y,previousX:x,previousY:y,vx:dx/distance*760,vy:dy/distance*760,age:0});
  p.attackCooldown=.28;p.attackFor=.13;run.shotsFired=(run.shotsFired||0)+1;return true;
@@ -481,6 +486,8 @@ function advanceBoss(run,dt,rng,balance){
  boss.attackFlashFor=Math.max(0,boss.attackFlashFor-dt);
  boss.hitFlashFor=Math.max(0,(boss.hitFlashFor||0)-dt);
  if(boss.combat){
+  // Recuperação só após o lançamento efetivo, não seu agendamento.
+  if(boss.phase==='attack'&&boss.volleyLeft<=0&&(boss.attackFlashFor>0||run.obstacles.some(o=>o.bossAttack&&o.projectile&&!o.launched&&o.waitFor>0))){boss.age+=dt;return;}
   stepBossPhase(boss,dt);
   if(boss.phase!=='attack'||boss.volleyLeft<=0)return;
  }else boss.age=(boss.age||0)+dt;
