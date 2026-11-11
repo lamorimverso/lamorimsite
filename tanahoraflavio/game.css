@@ -284,3 +284,5 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
 .game-attack:focus-visible{outline:3px solid #e6a52d;outline-offset:3px}
 .game-attack[hidden]{display:none}
 .game-card[data-run-state="running"]:not([data-boss="none"]) .game-hud{display:flex;top:8px;left:8px;bottom:auto;right:auto;max-width:calc(100% - 16px);animation:none}
+
+.game-attack:disabled{opacity:.55;cursor:default;box-shadow:none}

@@ -426,7 +426,7 @@ test('HUD do chefão fica fora da pista e não desloca pista ou controles',async
 test('HTML antigo no cache se atualiza sem travar a inicialização',async()=>{
  const {context,page,errors}=await open({legacyFirst:true});
  try{
-  await page.waitForURL(url=>url.searchParams.get('ui')==='20261111-combat', {timeout:4000});
+  await page.waitForURL(url=>url.searchParams.get('ui')==='20261111-controls', {timeout:4000});
   await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
   assert.equal(await page.locator('#game-settings').count(),1);
   assert.match(await page.locator('#days').textContent(),/^\d+$/);
@@ -530,7 +530,7 @@ test('chefão final redesenhado aparece com investida do fantasma em celular e d
   try{
    await page.locator('#game-mode-story').check();await begin(page);
    await page.evaluate(()=>{
-    const r=__testRun;r.bossesDefeated=19;r.distance=r.routeDistance=34300;r.nextRaid=r.nextObstacle=Infinity;
+    const r=__testRun;r.bossesDefeated=19;r.distance=r.routeDistance=55100;r.nextRaid=r.nextObstacle=Infinity;
     r.nextBossAt=0;r.shieldFor=Infinity;
    });
    await page.waitForFunction(()=>document.getElementById('game').dataset.boss==='meme-army');
@@ -552,7 +552,7 @@ for(const viewport of [{width:390,height:844},{width:1440,height:900}])test(`are
   await page.locator('#game-mode-story').check();await begin(page);
   await page.evaluate(()=>{
    const r=__testRun;r.nextRaid=r.nextObstacle=r.nextPower=r.nextPassport=Infinity;r.shieldFor=Infinity;
-   r.routeDistance=1200;r.nextBossAt=0;r.obstacles=[];r.pickups=[];
+   r.routeDistance=22000;r.nextBossAt=0;r.obstacles=[];r.pickups=[];
   });
   await page.waitForFunction(()=>__testRun.boss?.combat===true);
   assert.match(await page.locator('#game-boss-name').textContent(),/Sentinela.*Patrulha/);
@@ -581,7 +581,7 @@ test('perda de foco cancela disparo mantido e a corrida pode retomar sem tiros p
  const {context,page,errors}=await open({instrument:true,viewport:{width:900,height:720}});
  try{
   await page.locator('#game-mode-story').check();await begin(page);
-  await page.evaluate(()=>{const r=__testRun;r.nextRaid=r.nextObstacle=Infinity;r.routeDistance=1200;r.nextBossAt=0;r.shieldFor=Infinity;});
+  await page.evaluate(()=>{const r=__testRun;r.nextRaid=r.nextObstacle=Infinity;r.routeDistance=22000;r.nextBossAt=0;r.shieldFor=Infinity;});
   await page.waitForFunction(()=>!!__testRun.boss);await page.locator('#runner-canvas').focus();await page.keyboard.down('z');
   assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),true);
   await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
@@ -615,7 +615,7 @@ test('campanha abre sem trocar o modo e alcança a primeira arena da História',
  try{
   assert.equal(await page.locator('#game-mode-story').isChecked(),true);await begin(page);
   assert.equal(await page.evaluate(()=>__testRun.mode),'story');
-  await page.evaluate(()=>{const r=__testRun;r.routeDistance=1198;r.obstacles=[];r.pickups=[];r.nextRaid=Infinity;r.shieldFor=Infinity;});
+  await page.evaluate(()=>{const r=__testRun;r.routeDistance=21998;r.obstacles=[];r.pickups=[];r.nextRaid=Infinity;r.shieldFor=Infinity;});
   await page.waitForFunction(()=>__testRun.boss?.combat===true);
   assert.match(await page.locator('#game-boss-name').textContent(),/Haddad.*Sentinela.*Patrulha/);
   assert.deepEqual(errors,[]);
@@ -649,6 +649,42 @@ test('quadros de preparação e lançamento mudam no Canvas real nas quatro clas
   for(const row of evidence){assert.notEqual(row[0],row[1],'preparação muda no tempo');assert.notEqual(row[2],row[3],'lançamento muda no tempo');}
   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
   await page.locator('#combat-filmstrip').screenshot({path:path.resolve(__dirname,'../ux-captures/combat-filmstrip.png')});
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('disparo fica visível, respeita a tecla configurada, cancela troca mantida e persiste ajustes',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
+ try{
+  await page.locator('#game-settings summary').click();
+  await page.locator('#game-crouch-mode').selectOption('toggle');
+  await page.locator('#game-fire-key').selectOption('KeyF');
+  await begin(page);
+  assert.equal(await page.locator('#game-attack').isVisible(),true);
+  assert.equal(await page.locator('#game-attack').isDisabled(),true);
+  assert.match(await page.locator('#game-attack').getAttribute('title'),/confrontos/);
+  await page.evaluate(()=>{const r=__testRun;r.nextRaid=r.nextObstacle=r.nextPower=r.nextPassport=Infinity;r.routeDistance=r.distance=21998;r.obstacles=[];r.pickups=[];r.shieldFor=Infinity;});
+  await page.waitForFunction(()=>__testRun.boss?.phase==='charge');
+  assert.equal(await page.locator('#game-attack').isEnabled(),true);
+  assert.match(await page.locator('#game-attack').getAttribute('aria-label'),/tecla F/);
+  await page.locator('#game-attack').focus();await page.keyboard.down('f');
+  await page.waitForFunction(()=>__testRun.shotsFired>0);await page.keyboard.up('f');
+  const fired=await page.evaluate(()=>__testRun.shotsFired);await page.keyboard.press('j');
+  assert.equal(await page.evaluate(()=>__testRun.shotsFired),fired,'atalho antigo deixa de disparar');
+  await page.keyboard.down('f');await page.waitForFunction(n=>__testRun.shotsFired>n,fired);
+  await page.locator('#game-settings summary').click();await page.locator('#game-fire-key').selectOption('KeyK');
+  assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),false);
+  const changed=await page.evaluate(()=>__testRun.shotsFired);await page.waitForTimeout(350);
+  assert.equal(await page.evaluate(()=>__testRun.shotsFired),changed,'troca cancela o tiro mantido');
+  await page.keyboard.up('f');await page.locator('#game-settings summary').click();
+  await page.locator('#runner-canvas').scrollIntoViewIfNeeded();await page.locator('#runner-canvas').focus();
+  await page.keyboard.down('k');await page.waitForFunction(n=>__testRun.shotsFired>n,changed);await page.keyboard.up('k');
+  assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),false);
+  await page.reload();await page.locator('#game-settings summary').click();
+  assert.equal(await page.locator('#game-fire-key').inputValue(),'KeyK');
+  assert.equal(await page.locator('#game-crouch-mode').inputValue(),'toggle');
+  await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
+  await page.locator('#game-settings').screenshot({path:path.resolve(__dirname,'../ux-captures/fire-controls-390.png')});
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });

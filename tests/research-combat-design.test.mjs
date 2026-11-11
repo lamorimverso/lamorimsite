@@ -44,7 +44,7 @@ test('Fantasma move a silhueta e os braços, preservando estabilidade de efeitos
 });
 function runAt(distance){
  const r=core.createRun({mode:'story'});core.startRun(r);r.routeDistance=distance;r.distance=distance;
- r.nextRaid=r.nextPower=r.nextPassport=r.nextAllyAt=r.nextSupportAt=Infinity;r.nextBossAt=1200;r.nextObstacle=0;return r;
+ r.nextRaid=r.nextPower=r.nextPassport=r.nextAllyAt=r.nextSupportAt=Infinity;r.nextBossAt=22000;r.nextObstacle=0;return r;
 }
 test('aproximação reserva um corredor sem novos perigos antes de cada chefe',()=>{
  for(const index of [0,3,4,19]){
@@ -53,7 +53,7 @@ test('aproximação reserva um corredor sem novos perigos antes de cada chefe',(
  }
 });
 test('ensaio da História usa a arma do próximo chefe, isolada e com prazo de reação',()=>{
- const r=runAt(400);core.advanceRun(r,1/120,()=>.5);
+ const r=runAt(21200);core.advanceRun(r,1/120,()=>.5);
  assert.equal(r.obstacles.length,1);assert.equal(r.obstacles[0].type,'receipts');
  assert.equal(r.obstacles[0].sourceActor,'haddad');assert.equal(r.obstacles[0].rehearsal,true);
  assert.ok(core.threatTimeToContact(r,r.obstacles[0])>=.82);

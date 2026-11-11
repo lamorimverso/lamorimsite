@@ -29,7 +29,7 @@ test('chefão dos chefões apresenta 14 ataques de medicamentos fictícios com d
 });
 test('História conclui somente depois de derrotar o vigésimo chefão',()=>{
  const r=isolated('story');
- r.distance=r.routeDistance=34300;r.bossesDefeated=19;r.nextBossAt=0;r.shieldFor=Infinity;
+ r.distance=r.routeDistance=55100;r.bossesDefeated=19;r.nextBossAt=0;r.shieldFor=Infinity;
  const seen=new Set();
  for(let i=0;i<120*42&&r.status==='running';i++){
   if(r.boss)core.setAttackRun(r,true);

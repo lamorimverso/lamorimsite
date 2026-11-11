@@ -88,11 +88,11 @@ const paletteChannels=Object.fromEntries(journeyStages.map(id=>[id,Object.fromEn
 function blendPalette(from,to,amount){
  return Object.fromEntries(Object.keys(from).map(key=>[key,from[key].map((value,i)=>value+(to[key][i]-value)*amount)]));
 }
-function paletteAlongRoute(location){
+function paletteAlongRoute(location,stageFor=stageAt){
  // A 2,200 m feather is spatial: its right-hand colors arrive before its left-hand colors.
  const index=Math.floor((location+1100)/segmentLength);
  const amount=smooth((location-index*segmentLength+1100)/2200);
- return blendPalette(paletteChannels[stageAt(index-1)],paletteChannels[stageAt(index)],amount);
+ return blendPalette(paletteChannels[stageFor(index-1)],paletteChannels[stageFor(index)],amount);
 }
 
 /**
@@ -107,25 +107,29 @@ function paletteAlongRoute(location){
  * the final 1,000 m of each place, so the route still communicates its next stop.
  * Palette channels are floating RGB triples; paletteStops offsets run from 0 to 1.
  */
-export function journeySceneryGeometry({routeDistance=0,distance=routeDistance,width=900,reducedMotion=false}={}){
- const route=Number.isFinite(routeDistance)?Math.max(0,routeDistance):0;
+export function journeySceneryGeometry({routeDistance=0,distance=routeDistance,width=900,reducedMotion=false,openingDistance=0}={}){
+ const opening=Number.isFinite(openingDistance)?Math.max(0,openingDistance):0;
+ const route=(Number.isFinite(routeDistance)?Math.max(0,routeDistance):0)-opening;
+ // Abertura contínua: ocorrências anteriores à campanha também são Brasília.
+ // Coordenadas negativas mantêm o parallax, sem congelar nem reiniciar o fundo.
+ const stageFor=index=>stageAt(opening?Math.max(0,index):index);
  const travelled=Number.isFinite(distance)?Math.max(0,distance):route;
  const w=Number.isFinite(width)?Math.max(1,width):900;
  const index=Math.floor(route/segmentLength),anchor=w*.35;
  const amount=smooth((route-index*segmentLength-6000)/1000);
- const identities=[{segmentIndex:index,stageId:stageAt(index),alpha:1-amount},{segmentIndex:index+1,stageId:stageAt(index+1),alpha:amount}];
+ const identities=[{segmentIndex:index,stageId:stageFor(index),alpha:1-amount},{segmentIndex:index+1,stageId:stageFor(index+1),alpha:amount}];
  const layers=planeScales.map((scale,layer)=>({
   id:['far','middle','landmark'][layer],scale,
   segments:reducedMotion?identities.map(identity=>({...identity,x:0,width:w,stationary:true})):
    Array.from({length:5},(_,offset)=>{
     const segmentIndex=index+offset-2;
-    return {segmentIndex,stageId:stageAt(segmentIndex),alpha:1,x:anchor+(segmentIndex*segmentLength-route)*scale,width:segmentLength*scale,stationary:false};
+    return {segmentIndex,stageId:stageFor(segmentIndex),alpha:1,x:anchor+(segmentIndex*segmentLength-route)*scale,width:segmentLength*scale,stationary:false};
    })
  }));
  const landmarks=reducedMotion?identities.map(identity=>({...identity,x:w*.70})):
   layers[2].segments.map(segment=>({segmentIndex:segment.segmentIndex,stageId:segment.stageId,alpha:1,x:segment.x+2500*layers[2].scale}));
- const uniform=reducedMotion?blendPalette(paletteChannels[stageAt(index)],paletteChannels[stageAt(index+1)],amount):null;
- const paletteStops=Array.from({length:25},(_,i)=>({offset:i/24,palette:uniform||paletteAlongRoute(route+(w*i/24-anchor)/planeScales[2])}));
+ const uniform=reducedMotion?blendPalette(paletteChannels[stageFor(index)],paletteChannels[stageFor(index+1)],amount):null;
+ const paletteStops=Array.from({length:25},(_,i)=>({offset:i/24,palette:uniform||paletteAlongRoute(route+(w*i/24-anchor)/planeScales[2],stageFor)}));
  const decorativeDistance=reducedMotion?0:travelled;
  return {width:w,layers,landmarks,paletteStops,roadOffset:wrap(decorativeDistance,98),clouds:[
   {x:wrap(145-decorativeDistance*.016,w+140)-70,y:65,scale:.73},
