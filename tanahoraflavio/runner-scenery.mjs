@@ -3,6 +3,7 @@ const palettes={
  brasilia:{sky:'#dceefa',haze:'#fcf9ed',far:'#b8d5d7',near:'#80aead',ink:'#577c86',stone:'#f8f6e8',shade:'#c4d8d5',road:'#dce3dc'},
  rio:{sky:'#d3f0f2',haze:'#fff7e0',far:'#a8cfc3',near:'#73b3a0',ink:'#478582',stone:'#f8f5de',shade:'#c7dfc8',road:'#e6ddc8'},
  argentina:{sky:'#dbe7f5',haze:'#fcf4df',far:'#bdcadb',near:'#90abbf',ink:'#647f9a',stone:'#fff6da',shade:'#d7ccb4',road:'#dce0e6'},
+ paraguai:{sky:'#f3e2dc',haze:'#fff6df',far:'#d2bdbb',near:'#91b491',ink:'#8c6d73',stone:'#fff0d9',shade:'#dcc9bd',road:'#e4ddcd'},
  florida:{sky:'#fbe4d5',haze:'#fff9e8',far:'#dfc6cb',near:'#b7bfc8',ink:'#927e8b',stone:'#ffe8d2',shade:'#d6b9ba',road:'#e6dcd1'},
  'casa-branca':{sky:'#e3eafa',haze:'#fcf7e8',far:'#c0ccdf',near:'#94b4a9',ink:'#718898',stone:'#fffff3',shade:'#d6dfe5',road:'#dce3d7'}
 };
@@ -49,6 +50,16 @@ function landmark(c,stage,p,x){
   shape(c,p.stone,p.ink,()=>{c.moveTo(-13,0);c.lineTo(-8,-119);c.lineTo(0,-139);c.lineTo(8,-119);c.lineTo(13,0);c.closePath();});
   shape(c,p.shade,null,()=>{c.moveTo(0,-137);c.lineTo(8,-119);c.lineTo(13,0);c.lineTo(0,0);c.closePath();});
   rect(c,-4,-24,5,13,p.ink+'8c');rect(c,-21,0,42,4,p.stone,p.ink,1);
+ }else if(stage.id==='paraguai'){
+  // Palacio de López, Asunción: arcades, coral roofs and central tower.
+  rect(c,-130,-48,260,48,p.stone,p.ink,2);rect(c,-41,-78,82,78,p.stone,p.ink,2);
+  shape(c,'#bc655d',p.ink,()=>{c.moveTo(-141,-48);c.lineTo(-126,-64);c.lineTo(126,-64);c.lineTo(141,-48);c.closePath();});
+  rect(c,-25,-112,50,45,p.stone,p.ink,1);rect(c,-12,-133,24,21,p.shade,p.ink,1);
+  shape(c,'#bd655c',p.ink,()=>{c.moveTo(-18,-133);c.lineTo(0,-147);c.lineTo(18,-133);c.closePath();});
+  for(const xx of [-111,-87,-63,53,77,101]){rect(c,xx,-40,12,29,p.shade,p.ink,6);line(c,[[xx-4,-44],[xx-4,-4]],p.stone,4);}
+  for(const xx of [-24,-6,12])rect(c,xx,-64,12,23,p.shade,p.ink,5);
+  rect(c,-17,-31,34,31,p.shade,p.ink,13);oval(c,0,-93,7,7,'#fffdf0');line(c,[[0,-98],[0,-93],[4,-91]],p.ink,1.3);
+  palm(c,-156,0,p);palm(c,151,0,p);
  }else if(stage.id==='florida'){
   rect(c,-94,-64,78,64,'#f2c9bf',p.ink,3);rect(c,-16,-83,26,83,'#f8dfc8',p.ink,3);rect(c,10,-53,69,53,'#d7d1e6',p.ink,3);
   for(let i=0;i<4;i++){rect(c,-83,-53+i*13,55,4,p.stone);rect(c,21,-42+i*11,47,3,p.stone);}
@@ -97,7 +108,7 @@ function paletteAlongRoute(location,stageFor=stageAt){
 
 /**
  * Pure, unbounded route geometry shared by rendering and continuity tests.
- * Each segmentIndex is an occurrence on the journey (never modulo 35 km); only its
+ * Each segmentIndex is an occurrence on the journey (never modulo a route lap); only its
  * stageId repeats. Screen x = .35*width + (world metres-routeDistance)*plane.scale.
  * The far/middle/landmark planes use .14/.18/.22 px per route metre. Each place has
  * one landmark at 2,500 m into its 7,000 m segment. A few offscreen neighbours are

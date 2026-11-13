@@ -6,16 +6,11 @@ import {standingEnemyPose,drawHoverEnemy} from '../tanahoraflavio/runner-boss-ar
 
 // These fail if classes collapse to the same responses, or animated joints
 // return a held key pose throughout an entire wind-up/release.
-test('classes exigem leituras diferentes mesmo com identidade, nível e slot iguais',()=>{
- const signatures=[];
- for(const classId of ['sentinel','gunner','caster','sovereign']){
-  const b={...bosses.storyBossAt(0),classId,slot:0,hp:18,maxHp:18};
-  const actions=Array.from({length:12},(_,i)=>bosses.arenaPatternFor(b,i).action);
-  signatures.push(actions.join('/'));
-  if(classId==='gunner')assert.deepEqual(actions.slice(0,3),['jump','jump','jump']);
-  if(classId==='caster')assert.ok(actions.includes('move'));
- }
+test('personagens de cada nível têm rotinas próprias e conservam seus poderes',()=>{
+ const rows=[0,1,2,3].map(index=>bosses.storyBossAt(index));
+ const signatures=rows.map(b=>Array.from({length:12},(_,i)=>bosses.arenaPatternFor({...b,maxHp:b.hp},i)).map(a=>a.action+'/'+a.type).join('|'));
  assert.equal(new Set(signatures).size,4);
+ for(const b of rows)for(let i=0;i<12;i++)assert.ok(b.attackTypes.includes(bosses.arenaPatternFor(b,i).type));
 });
 test('gestos de preparação e disparo percorrem trajetórias e anunciam a resposta correta',()=>{
  for(const flags of [{preparing:true},{attacking:true},{recovering:true}]){
@@ -54,8 +49,8 @@ test('aproximação reserva um corredor sem novos perigos antes de cada chefe',(
 });
 test('ensaio da História usa a arma do próximo chefe, isolada e com prazo de reação',()=>{
  const r=runAt(21200);core.advanceRun(r,1/120,()=>.5);
- assert.equal(r.obstacles.length,1);assert.equal(r.obstacles[0].type,'receipts');
- assert.equal(r.obstacles[0].sourceActor,'haddad');assert.equal(r.obstacles[0].rehearsal,true);
+ assert.equal(r.obstacles.length,1);assert.equal(r.obstacles[0].type,'barrier');
+ assert.equal(r.obstacles[0].sourceActor,'pf');assert.equal(r.obstacles[0].rehearsal,true);
  assert.ok(core.threatTimeToContact(r,r.obstacles[0])>=.82);
  const count=r.spawnedObstacles;for(let i=0;i<25;i++){r.nextObstacle=0;core.advanceRun(r,1/120,()=>.5);}
  assert.equal(r.spawnedObstacles,count,'o ensaio não se repete a cada quadro');

@@ -49,7 +49,7 @@ test('padrão público mistura salto e abaixar usando as armas de cada chefão',
   ['lula',['jump','crouch','jump','jump']]
  ]){
   for(let fired=0;fired<4;fired++){
-   const action=actions[fired],weapon=type==='xandao'?(action==='jump'?'hammer':'mandado'):type==='lula'?'lhand':'receipts';
+   const action=actions[fired],weapon=type==='xandao'?(action==='jump'?'hammer':'mandado'):type==='lula'?'lhand':fired>=3&&fired%2===1?'stamp':'receipts';
    assert.deepEqual(core.bossAttackFor(type,fired),{type:weapon,action});
    const run=isolatedBoss(type,612,0,false,fired),attack=run.obstacles.at(-1);
    assert.equal(attack.type,weapon);assert.equal(attack.action,action);
@@ -86,15 +86,15 @@ function bossContact(width,distance,assisted=false){
 }
 
 test('primeira visibilidade de inimigos comuns dá a mesma janela em celular e desktop',()=>{
- for(const [distance,min,max] of [[0,1.62,1.68],[9000000,.92,.98]]){
+ for(const [distance,min,max] of [[0,1.62,1.68],[9000000,.79,.85]]){
   const times=[480,612,900].map(width=>commonContact(width,distance));
   assert.ok(times.every(t=>t>=min&&t<=max),`${distance}m: ${times}`);
   assert.ok(Math.max(...times)-Math.min(...times)<.026,`largura não altera a reação: ${times}`);
  }
 });
 
-test('lançamento de chefão dá 1,15 a .85 segundo até contato em qualquer largura',()=>{
- for(const [distance,min,max] of [[0,1.12,1.18],[9000000,.83,.88]]){
+test('lançamento de chefão dá 1,15 a .72 segundo até contato em qualquer largura',()=>{
+ for(const [distance,min,max] of [[0,1.12,1.18],[9000000,.70,.75]]){
   const times=[480,612,900].map(width=>bossContact(width,distance));
   assert.ok(times.every(t=>t>=min&&t<=max),`${distance}m: ${times}`);
   assert.ok(Math.max(...times)-Math.min(...times)<.026,`largura não altera a reação: ${times}`);

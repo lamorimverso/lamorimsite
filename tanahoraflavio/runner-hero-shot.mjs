@@ -1,4 +1,4 @@
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=69851726fc55';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=fb27da4c3c50';
 // Essential action timing shared by the hero renderer and physical launch.
 export const HERO_SHOT_DURATION=.22;
 export function heroShotPose({age=0,crouching=false,airborne=false,facing=1}={}){

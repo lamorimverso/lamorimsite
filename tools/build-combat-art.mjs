@@ -33,7 +33,7 @@ for(const source of manifest.sources){
   // Points reviewed on the full-size grid: palm, phone, and ghost hat tip.
   const type=source.actors[row],u=type.startsWith('flavio')?.88:type==='meme-army'?(col===2?.06:.15):col===2?.105:.28;
   const v=type==='flavio-slide-shot'?.60:type.startsWith('flavio')?.405:type==='meme-army'?.33:col===2?.55:.65;
-  frames.push({x:x0-2,y:y0-2,width:x1-x0+5,height:y1-y0+5,center:(footLeft+footRight)/2,groundY:y1+1,muzzle:{x:Math.round(left+width/4*u),y:Math.round(top+height/4*v)}});
+  frames.push({x:Math.max(0,x0-2),y:Math.max(0,y0-2),width:Math.min(width-1,x1+2)-Math.max(0,x0-2)+1,height:Math.min(height-1,y1+2)-Math.max(0,y0-2)+1,center:(footLeft+footRight)/2,groundY:y1+1,muzzle:{x:Math.round(left+width/4*u),y:Math.round(top+height/4*v)}});
  }
  for(let row=0;row<4;row++)if(source.actors[row].endsWith('-run')||source.actors[row]==='flavio-air-shot'){const groundY=Math.max(...frames.slice(row*4,row*4+4).map(f=>f.groundY));for(const f of frames.slice(row*4,row*4+4))f.groundY=groundY;}
  const webp=await sharp(input).webp({lossless:true,effort:6}).toBuffer(),sha256=createHash('sha256').update(webp).digest('hex');

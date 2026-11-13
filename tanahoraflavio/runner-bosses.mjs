@@ -1,5 +1,7 @@
+import {STAGES} from './runner-route-data.mjs?v=859ae4e257bd';
+import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=ad8596a8668a';
 // Encontros ficcionais: quatro classes por cenário, sem mudar identidades.
-export const STORY_ENCOUNTERS=20;
+export const STORY_ENCOUNTERS=STAGES.length*4;
 export const STORY_OPENING_DISTANCE=20800;
 export const BOSS_CLASSES=Object.freeze({
  sentinel:Object.freeze({name:'Sentinela',color:'#63c4e1',telegraph:.92,recover:1.3,burst:1}),
@@ -7,44 +9,31 @@ export const BOSS_CLASSES=Object.freeze({
  caster:Object.freeze({name:'Conjurador',color:'#bc8af0',telegraph:.90,recover:1.2,burst:2}),
  sovereign:Object.freeze({name:'Soberano',color:'#ee7588',telegraph:.76,recover:1.05,burst:3})
 });
-const ranks=['Patrulha','Tático','Elite','Chefe de cenário'];
 const cast=[
- [['haddad','Haddad · Taxad'],['janones','Janones'],['pf','Blitz da PF'],['xandao','Xandão']],
- [['dilma','Dilma'],['soraya','Soraya'],['boulos','Boulos'],['lula','Lula']],
- [['dino','Dino'],['janones','Janones · Comando'],['simone','Simone Tebet'],['haddad','Taxad · Auditor Supremo']],
- [['joice','Joice'],['pf','PF · Interceptor'],['soraya','Soraya · Guarda Aérea'],['bossonari','Bossonari']],
- [['lula','Lula · Soberano'],['xandao','Xandão · Fortaleza'],['bossonari','Bossonari · Arauto'],['meme-army','Fantasma do Comunismo']]
+ [['pf','Blitz da PF'],['janones','Janones'],['haddad','Haddad · Taxad'],['xandao','Xandão']],
+ [['army','Patrulha do Rio'],['joice','Joice'],['simone','Simone Tebet'],['lula','Lula']],
+ [['pf','PF · Interceptor'],['soraya','Soraya'],['dino','Dino'],['dilma','Dilma']],
+ [['army','Patrulha paraguaia'],['janones','Janones · Comando'],['haddad','Taxad · Auditor'],['santiago','Santiago Peña']],
+ [['pf','PF · Patrulha'],['joice','Joice · Comando'],['simone','Simone · Orçamento'],['bossonari','Bossonari']],
+ [['army','Guarda da Casa Branca'],['boulos','Boulos'],['dino','Dino · Tribunal'],['meme-army','Fantasma do Comunismo']]
 ];
-const classes=Object.keys(BOSS_CLASSES);
-const attacks={
- haddad:['receipts','stamp'],janones:['message','message'],pf:['barrier','handcuffs'],xandao:['hammer','mandado'],
- dilma:['wind','wind'],soraya:['parachute-cross','parachute-cross'],boulos:['rolling-case','falling-case'],lula:['lhand','lhand'],
- dino:['mandado','hammer'],simone:['budget-sheets','budget-sheets'],joice:['handcuffs','microphone'],
- bossonari:['cloroquina-prop','ivermectina-prop'],'meme-army':['meme-ghost','meme-ghost']
-};
 export function storyBossAt(index){
  if(!Number.isInteger(index)||index<0||index>=STORY_ENCOUNTERS)return null;
- const stageIndex=Math.floor(index/4),slot=index%4,[type,name]=cast[stageIndex][slot],classId=classes[slot],group=BOSS_CLASSES[classId];
+ const stageIndex=Math.floor(index/4),slot=index%4,[type,name]=cast[stageIndex][slot],profile=bossProfileFor(type),classId=profile.classId,group=BOSS_CLASSES[classId];
  return {id:'stage-'+stageIndex+'-boss-'+slot,index,stageIndex,slot,type,name,classId,className:group.name,
-  rank:slot+1,rankName:ranks[slot],hp:18+stageIndex*8+slot*2,
+  rank:profile.rank,rankName:BOSS_RANKS[profile.rank-1],powerName:profile.powerName,hp:18+stageIndex*8+slot*2,
   color:group.color,burst:group.burst,telegraph:Math.max(.58,group.telegraph-stageIndex*.035),
   recover:Math.max(.8,group.recover-stageIndex*.04),interval:Math.max(.68,1.04-slot*.055-stageIndex*.035),
-  attackTypes:attacks[type],objective:'Derrote '+name+' com disparos. Desvie e aproveite a recuperação.'};
+  attackTypes:profile.attackTypes,objective:'Nível '+profile.rank+' · '+profile.powerName+'. Atire nas aberturas e desvie do poder anunciado.'};
 }
 export function nextStoryBossDistance(index){
  const b=storyBossAt(index);return b?STORY_OPENING_DISTANCE+b.stageIndex*7000+[1200,2900,4600,6300][b.slot]:Infinity;
 }
 export function arenaPatternFor(boss,fired=0){
- const types=boss.attackTypes||attacks[boss.type]||attacks.haddad;
- const phase=boss.hp<=boss.maxHp/2?2:1;
- // Cada classe ensina uma leitura própria antes de combinar respostas.
- const sequences={sentinel:['jump','jump','crouch'],gunner:['jump','jump','jump','crouch','crouch','crouch'],
-  caster:['jump','crouch','jump','move','crouch','move'],sovereign:['jump','crouch','jump','move','jump','crouch','move','jump']};
- const sequence=sequences[boss.classId]||sequences.sentinel;
- const action=sequence[fired%sequence.length];
- const type=types[fired%types.length];
- if(action==='move')return {type:'falling-case',action,approach:'vertical'};
- const entry=action==='jump'&&fired%3===1?'drop':action==='crouch'&&phase===2?'sweep':'diagonal';
+ const profile=bossProfileFor(boss.type);if(!profile)return {type:null,action:'jump',approach:'diagonal'};
+ const sequence=profile.sequence,action=sequence[fired%sequence.length];
+ const type=bossWeaponFor(boss.type,fired,action);
+ const entry=action==='move'?'vertical':profile.style==='drop'?'drop':action==='jump'&&fired%3===1?'drop':action==='crouch'&&boss.hp<=boss.maxHp/2?'sweep':'diagonal';
  return {type,action,approach:entry};
 }
 // Only choose when a new wind-up begins; the published cue is a commitment.
@@ -52,13 +41,13 @@ export function planArenaAttack(boss,player={},rng=Math.random){
  const fired=Number(boss.fired)||0;
  if(fired<3)return arenaPatternFor(boss,fired);
  const roll=Math.max(0,Math.min(.999999,Number(rng())||0));
- const complex=boss.classId==='caster'||boss.classId==='sovereign';
+ const profile=bossProfileFor(boss.type);if(!profile)return arenaPatternFor(boss,fired);
+ const complex=profile.sequence.includes('move');
  let action=player.crouching?'jump':player.y>20?'crouch':
   complex&&player.stillFor>2?'move':player.x>(player.viewportWidth||900)*.5?(roll<.6?'crouch':'jump'):roll<.46?'jump':roll<.86?'crouch':complex?'move':'jump';
  if(action===boss.lastAction&&boss.actionStreak>=3)action=action==='jump'?'crouch':'jump';
- const types=boss.attackTypes||attacks[boss.type]||attacks.haddad;
- const type=types[(fired+Math.floor(roll*types.length))%types.length];
- const approach=action==='move'?'vertical':action==='jump'?(roll<.5?'drop':'diagonal'):
+ const type=bossWeaponFor(boss.type,fired+Math.floor(roll*profile.attackTypes.length),action);
+ const approach=action==='move'?'vertical':profile.style==='drop'?'drop':action==='jump'?(roll<.5?'drop':'diagonal'):
   player.y>20||roll>.5?'sweep':'diagonal';
  // The target lane remains dodgeable. Position is sampled for the announced
  // overhead marker; projectiles commit their horizontal aim on actual release.

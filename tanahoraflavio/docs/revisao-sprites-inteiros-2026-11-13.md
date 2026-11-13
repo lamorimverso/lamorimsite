@@ -1,5 +1,7 @@
 # Personagens inteiros no estilo dos atlas originais
 
+Atualização: [hierarquia de24chefes, Paraguai, novos poderes e sons](hierarquia-paraguai-audio-2026-11-13.md).
+
 A composição de cabeça recortada com corpo vetorial foi substituída, no combate, por desenhos completos: rosto, cabelo, roupa, braços, mãos, pernas e sapatos pertencem ao mesmo quadro ilustrado. Os novos desenhos usam os atlas originais de Flávio e do elenco como referência.
 
 São seis atlas transparentes, com 96 quadros no total. Eles incluem preparação, lançamento e recuperação dos chefes; Flávio atirando de pé, no salto e agachado; corrida do soldado e de Bossonari; quatro uniformes regionais adicionais. Os demais ciclos completos de corrida e as animações de Flávio e do jacaré foram preservados.

@@ -48,7 +48,7 @@ test('Padrões do chefe Haddad continuam distinguindo salto e abaixar',()=>{
  const patterns=Array.from({length:9},(_,i)=>core.bossAttackFor('haddad',i));
  assert.ok(patterns.some(p=>p.action==='jump'));
  assert.ok(patterns.some(p=>p.action==='crouch'));
- assert.ok(patterns.every(p=>p.type==='receipts'),'o visual Taxad não deve quebrar as assinaturas dos ataques');
+ assert.ok(patterns.every(p=>['receipts','stamp'].includes(p.type)),'o visual Taxad não deve quebrar as assinaturas dos ataques');
 });
 
 

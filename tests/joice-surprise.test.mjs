@@ -75,5 +75,5 @@ test('dificuldade cresce de forma perceptível e contínua a cada destino',()=>{
   const a=core.difficultyAt(distance),b=core.difficultyAt(distance+.01);
   assert.ok(Math.abs(a.speed-b.speed)<.001);assert.ok(Math.abs(a.obstacleGap-b.obstacleGap)<.001);
  }
- const limit=core.difficultyAt(1e12);assert.ok(limit.speed<=435);assert.ok(limit.obstacleGap>=1.12);assert.ok(limit.obstacleApproach>=.95);
+ const limit=core.difficultyAt(1e12);assert.ok(limit.speed<=535);assert.ok(limit.obstacleGap>=.94);assert.ok(limit.obstacleApproach>=.82);
 });

@@ -1,10 +1,13 @@
+import {createVoiceSelector} from './runner-voice-selector.mjs?v=ad3200a88cd4';
+import {getMovementSoundBank} from './runner-movement-audio.mjs?v=3b96b07ed6e3';
 import {createGameSoundtrack} from './runner-soundtrack.mjs?v=eef47a2a323c';
-import {getCastSoundBank} from './runner-cast-sounds.mjs?v=f28c809d2ffb';
-import {getEnemyShotBank} from './runner-shot-sounds.mjs?v=e2aab7660085';
-import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=a924d1c62bee';
+import {getCastSoundBank} from './runner-cast-sounds.mjs?v=98d14d07de0c';
+import {getEnemyShotBank} from './runner-shot-sounds.mjs?v=fd84e4e83e32';
+import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=e89d6a84511d';
 // Efeitos locais e recorte de arquivo identificado; nenhuma imitação de voz.
-export function createGameAudio({onVoice=()=>{}}={}) {
+export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelector()}={}) {
  let enabled=true,context=null,nodes=[],primed=false,recording=null,recordingName=null,raidVoice=false,raidPrepared=false,music=null,voicePriority=0,alertUntil=0;
+ const raidLines=['joice','extra-joice-1','extra-joice-2','extra-joice-3'];let raidChoice=null;
  const shotVariants=new Map();let nextPresenceAt=0;const presencePlayed=new Map();
  const preferenceKey='tanahoraflavio.runner.sound.v1';
  try{enabled=window.localStorage?.getItem(preferenceKey)!=='off';}catch{/* Armazenamento é opcional. */}
@@ -13,7 +16,7 @@ export function createGameAudio({onVoice=()=>{}}={}) {
   recording=null;recordingName=null;voicePriority=0;onVoice(null);
  };
  const stop=()=>{
-  raidVoice=false;raidPrepared=false;alertUntil=0;
+  raidVoice=false;raidPrepared=false;raidChoice=null;alertUntil=0;
   stopRecording();music?.stop();
   for(const node of nodes){try{node.stop();}catch{/* Nó já encerrado. */}}nodes=[];
  };
@@ -38,6 +41,11 @@ export function createGameAudio({onVoice=()=>{}}={}) {
    player.onerror=failed;player.play()?.catch?.(failed);
    return true;
   }catch{stopRecording();return false;}
+ };
+ const raidSpeech=()=>{
+  if(!raidChoice||!voiceSelector.current(raidChoice))raidChoice=voiceSelector.select('joice',raidLines,{preferred:'joice'});
+  const choice=raidChoice,accepted=voice(choice.clip,{priority:3,onFailure:()=>voiceSelector.rollback(choice)});
+  if(accepted)voiceSelector.commit(choice);return accepted;
  };
  const knocks=()=>{
   if(!enabled||!context||context.state!=='running'||nodes.length+3>12)return;
@@ -129,7 +137,7 @@ export function createGameAudio({onVoice=()=>{}}={}) {
  };
  // Não há sintetizador de voz: só trechos identificados e efeitos originais.
  // Ausência de clipe não é preenchida por uma voz inventada.
- return {get enabled(){return enabled;},prime,stop,effect,enemyShot,actorCue,voice,
+ return {get enabled(){return enabled;},prime,stop,effect,enemyShot,actorCue,voice,voiceSelector,movement:name=>playBank(getMovementSoundBank(name),{alert:false}),
   background(state={}){
    if(state.active===false){stop();return;}
    if(!enabled||!primed)return;
@@ -140,12 +148,12 @@ export function createGameAudio({onVoice=()=>{}}={}) {
   toggle(){enabled=!enabled;try{window.localStorage?.setItem(preferenceKey,enabled?'on':'off');}catch{/* A escolha vale nesta sessão. */}if(!enabled)stop();else prime();return enabled;},
   event(phase,fact){
    if(!enabled)return;
-   if(phase==='warning'){if(raidPrepared&&raidVoice)return;raidPrepared=true;stopRecording();raidVoice=voice('joice',{priority:3});if(!raidVoice)knocks();}
-   else if(phase==='active'){if(!raidVoice){raidPrepared=true;raidVoice=voice('joice',{priority:3});if(!raidVoice)knocks();}}
+   if(phase==='warning'){if(raidPrepared&&raidVoice)return;if(!raidPrepared)raidChoice=null;raidPrepared=true;stopRecording();raidVoice=raidSpeech();if(!raidVoice)knocks();}
+   else if(phase==='active'){if(!raidVoice){if(!raidPrepared)raidChoice=null;raidPrepared=true;raidVoice=raidSpeech();if(!raidVoice)knocks();}}
    // Recovery mantém a frase final. Fim natural também permite terminar uma
    // reprodução que iniciou tarde; cancelamento/mute/foco/derrota chamam stop.
    else if(phase==='recovery')return;
-   else if(phase==='end'){raidPrepared=false;raidVoice=false;if(recordingName!=='joice')stopRecording();}
+   else if(phase==='end'){raidPrepared=false;raidVoice=false;if(recordingName!=='joice'&&ARCHIVE_VOICES[recordingName]?.actor!=='joice')stopRecording();}
    else {raidPrepared=false;raidVoice=false;stopRecording();}
   }};
 }

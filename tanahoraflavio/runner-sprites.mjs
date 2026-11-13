@@ -1,14 +1,14 @@
 // Atlas e recortes gerados dos desenhos escolhidos, preservando os PNGs fontes.
 import {definitions} from './runner-sprite-data.mjs?v=4a931cb52b80';
-import {combatDefinitions} from './runner-combat-sprite-data.mjs?v=5c8ff35ddc6b';
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=69851726fc55';
+import {combatDefinitions} from './runner-combat-sprite-data.mjs?v=d5c24efff5c6';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=fb27da4c3c50';
 export const spriteDefinitions={...definitions,...combatDefinitions};
 const sheets=new Map();let activeAttempt=null;
 const actorGroups={flavio:[0,1,2,3,4,5,6,7],xandao:[0,1,2],haddad:[4,5,6],lula:[8,9,10],pf:[3,13],janones:[7,14],army:[11,15],joice:[12]};
 const runningGroups={haddad:{sheet:'chase',start:0},lula:{sheet:'chase',start:4},xandao:{sheet:'chase',start:8},joice:{sheet:'chase',start:12},dilma:{sheet:'cameos',start:0},simone:{sheet:'cameos',start:4},soraya:{sheet:'cameos',start:8},'ze-gotinha':{sheet:'cameos',start:12}};
 for(const [sheet,definition] of Object.entries(definitions))for(const [row,type] of (definition.actors||[]).entries())runningGroups[type]={sheet,start:row*4};
 export const SPRITE_SHEET_COUNT=Object.keys(spriteDefinitions).length;
-export const CORE_SPRITE_SHEET_COUNT=11;
+export const CORE_SPRITE_SHEET_COUNT=13;
 export function loadSprites(onProgress=()=>{},{coreOnly=false}={}){
  const base=['hero','cast','cameos','chase','pursuers',...Object.keys(combatDefinitions)];
  const entries=Object.entries(spriteDefinitions).filter(([name])=>(!coreOnly||base.includes(name))&&!sheets.has(name)),total=entries.length;

@@ -70,7 +70,7 @@ test('chefões improvisam depois da abertura, com aviso do ataque efetivamente p
     attacks.push(o.action+'/'+o.approach+'/'+o.type);
     if(i<boss.total-1){
      assert.equal(boss.plannedFor,boss.fired);
-     assert.ok(['jump','crouch'].includes(boss.plannedAttack.action));
+     assert.ok(['jump','crouch','move'].includes(boss.plannedAttack.action));
     }
    }
    assert.ok(attacks.some(a=>a.startsWith('jump/'))&&attacks.some(a=>a.startsWith('crouch/')));

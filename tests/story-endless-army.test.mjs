@@ -14,7 +14,7 @@ test('Infinito permanece padrão, História é opção explícita, entradas inv�
  assert.equal(core.createRun().mode,'endless');
  assert.equal(core.createRun({mode:'story'}).mode,'story');
  assert.equal(core.createRun({mode:'invalid'}).mode,'endless');
- assert.equal(core.STORY_BOSS_COUNT,20);
+ assert.equal(core.STORY_BOSS_COUNT,24);
 });
 test('chefão dos chefões apresenta 14 ataques de medicamentos fictícios com duas formas de esquiva',()=>{
  const boss=core.bossAtRound(5,'bossonari');
@@ -27,9 +27,9 @@ test('chefão dos chefões apresenta 14 ataques de medicamentos fictícios com d
  assert.ok(moves.some(m=>m.action==='jump')&&moves.some(m=>m.action==='crouch'));
  assert.ok(moves.every(m=>!('medicinalEffect' in m)));
 });
-test('História conclui somente depois de derrotar o vigésimo chefão',()=>{
+test('História conclui somente depois de derrotar o último chefão',()=>{
  const r=isolated('story');
- r.distance=r.routeDistance=55100;r.bossesDefeated=19;r.nextBossAt=0;r.shieldFor=Infinity;
+ r.distance=r.routeDistance=62100;r.bossesDefeated=23;r.nextBossAt=0;r.shieldFor=Infinity;
  const seen=new Set();
  for(let i=0;i<120*42&&r.status==='running';i++){
   if(r.boss)core.setAttackRun(r,true);
@@ -38,7 +38,7 @@ test('História conclui somente depois de derrotar o vigésimo chefão',()=>{
  }
  assert.deepEqual([...seen],['meme-army']);
  assert.equal(r.status,'ballot');
- assert.equal(r.bossesDefeated,20);
+ assert.equal(r.bossesDefeated,24);
  assert.equal(core.ballotDigit(r,'1'),true);
  assert.equal(core.ballotDigit(r,'3'),true);
  assert.equal(core.ballotConfirm(r),'won');

@@ -6,7 +6,7 @@ import * as scenery from '../tanahoraflavio/runner-scenery.mjs';
 
 const require=createRequire(import.meta.url);
 const {chromium}=require('playwright');
-const stageIds=['brasilia','rio','argentina','florida','casa-branca'];
+const stageIds=['brasilia','rio','argentina','paraguai','florida','casa-branca'];
 let browser,page;
 before(async()=>{
  browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{})});
@@ -41,13 +41,13 @@ test('journey renderer exports the integration API',()=>{
 });
 
 for(const width of [480,900]){
- test(`all five landmarks arrive, pass and leave in a continuing route at ${width}px`,()=>{
-  for(let index=0;index<10;index++){
+ test(`all six landmarks arrive, pass and leave in a continuing route at ${width}px`,()=>{
+  for(let index=0;index<stageIds.length*2;index++){
    const start=landmark(geometry({routeDistance:index*7000,width}),index);
    const passing=landmark(geometry({routeDistance:index*7000+2500,width}),index);
    const end=landmark(geometry({routeDistance:index*7000+6500,width}),index);
    assert.ok(start&&passing&&end,'offscreen geometry retains the same destination occurrence');
-   assert.equal(passing.stageId,stageIds[index%5]);
+   assert.equal(passing.stageId,stageIds[index%stageIds.length]);
    assert.ok(start.x>width-170,'a landmark approaches from the right');
    assert.ok(passing.x>0&&passing.x<width*.6,'the landmark passes the runner');
    assert.ok(end.x<-170,'the landmark exits to the left');
@@ -56,7 +56,7 @@ for(const width of [480,900]){
  });
 
  test(`three geographic planes advance from the right without resets at ${width}px`,()=>{
-  for(let index=1;index<=10;index++){
+  for(let index=1;index<=stageIds.length*2;index++){
    const before=geometry({routeDistance:index*7000-1000,width});
    const after=geometry({routeDistance:index*7000+1000,width});
    assert.equal(before.layers.length,3);
@@ -64,7 +64,7 @@ for(const width of [480,900]){
    for(let layer=0;layer<3;layer++){
     const incoming=before.layers[layer].segments.find(s=>s.segmentIndex===index);
     const advanced=after.layers[layer].segments.find(s=>s.segmentIndex===index);
-    assert.equal(incoming.stageId,stageIds[index%5]);
+    assert.equal(incoming.stageId,stageIds[index%stageIds.length]);
     assert.ok(incoming.x>width*.5&&incoming.x<width,'new geography first occupies the right side');
     assert.ok(advanced.x<width*.5,'the same geographic border passes left');
     assert.ok(advanced.x<incoming.x);
@@ -72,8 +72,8 @@ for(const width of [480,900]){
   }
  });
 
- test(`every 7 km border and the 35 km loop are continuous at ${width}px`,()=>{
-  for(const boundary of [7000,14000,21000,28000,35000,42000,70000]){
+ test(`every 7 km border and the 42 km loop are continuous at ${width}px`,()=>{
+  for(const boundary of [7000,14000,21000,28000,35000,42000,84000]){
    const before=geometry({routeDistance:boundary-.001,distance:boundary-.001,width});
    const after=geometry({routeDistance:boundary+.001,distance:boundary+.001,width});
    for(let layer=0;layer<3;layer++){
@@ -111,7 +111,7 @@ test('reduced motion freezes decorative positions but blends destination identit
  assert.deepEqual(a.landmarks,b.landmarks);
  assert.deepEqual(a.clouds,b.clouds);
  assert.equal(a.roadOffset,0);assert.equal(b.roadOffset,0);
- for(const boundary of [7000,14000,21000,28000,35000,70000]){
+ for(const boundary of [7000,14000,21000,28000,35000,42000,84000]){
   const middle=geometry({routeDistance:boundary-500,width:900,reducedMotion:true});
   const before=geometry({routeDistance:boundary-.001,width:900,reducedMotion:true});
   const after=geometry({routeDistance:boundary+.001,width:900,reducedMotion:true});
@@ -130,7 +130,7 @@ test('Canvas pixels stay continuous at all borders and form a soft spatial sky t
   for(const width of [480,900])for(const reducedMotion of [false,true]){
    const canvas=document.createElement('canvas');canvas.width=width;canvas.height=300;const c=canvas.getContext('2d');
    function render(routeDistance){c.clearRect(0,0,width,300);scenery.drawJourneyScenery(c,{routeDistance,distance:routeDistance,width,reducedMotion});return c.getImageData(0,0,width,300).data;}
-   for(const boundary of [7000,14000,21000,28000,35000,70000]){
+   for(const boundary of [7000,14000,21000,28000,35000,42000,84000]){
     const a=render(boundary-.001),b=render(boundary+.001);let delta=0;
     for(let i=0;i<a.length;i++)delta+=Math.abs(a[i]-b[i]);
     render(boundary);const row=c.getImageData(0,8,width,1).data;let wall=0;
@@ -151,7 +151,7 @@ test('Canvas pixels stay continuous at all borders and form a soft spatial sky t
 test('journey painting preserves caller alpha/style/transform and a flat shared road',async()=>{
  const results=await page.evaluate(()=>{
   const results=[];
-  for(const width of [480,900])for(const routeDistance of [0,7000,14000,21000,28000,35000]){
+  for(const width of [480,900])for(const routeDistance of [0,7000,14000,21000,28000,42000]){
    const canvas=document.createElement('canvas');canvas.width=width;canvas.height=300;const c=canvas.getContext('2d');
    c.globalAlpha=0;c.fillStyle='#123456';c.lineWidth=7;c.translate(2,3);
    scenery.drawJourneyScenery(c,{routeDistance,width});

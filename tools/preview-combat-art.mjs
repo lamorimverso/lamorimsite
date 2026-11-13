@@ -29,14 +29,14 @@ await sharp(board.toBuffer('image/png')).webp({lossless:true}).toFile(fileURLToP
 await writeFile(new URL('docs/elenco-ilustrado-pronto-2026-11-13.webp',root),await sharp(frames[0]).webp({lossless:true}).toBuffer());
 console.log('Saved complete-figure animation (4 frames), contact sheet (64 poses), and ready board.');
 const {SOLDIER_VARIANTS}=await import(new URL('runner-soldier-variants.mjs',root)),{drawThreat}=await import(new URL('runner-art.mjs',root));
-const uniforms=Object.entries(SOLDIER_VARIANTS),runs=[];
+const uniforms=Object.entries(SOLDIER_VARIANTS),runs=[],uniformWidth=uniforms.length*180;
 for(let phase=0;phase<4;phase++){
- const img=createCanvas(900,200),c=img.getContext('2d');c.fillStyle='#edf0f2';c.fillRect(0,0,900,200);
+ const img=createCanvas(uniformWidth,200),c=img.getContext('2d');c.fillStyle='#edf0f2';c.fillRect(0,0,uniformWidth,200);
  for(const [index,[armyVariant,variant]] of uniforms.entries()){
   c.fillStyle='#485063';c.font='12px system-ui';c.textAlign='center';c.fillText(variant.name,index*180+90,22);c.fillText(variant.country,index*180+90,40);
   drawThreat(c,{type:'army',x:index*180+70,width:40,height:47,armyVariant,approach:'front'},170,phase,{reducedMotion:true,weaponEffects:false});
  }
  runs.push(await sharp(img.toBuffer('image/png')).ensureAlpha().raw().toBuffer());
 }
-await sharp(Buffer.concat(runs),{raw:{width:900,height:200*4,channels:4,pageHeight:200}}).webp({lossless:true,loop:0,delay:[140,140,140,140]}).toFile(fileURLToPath(new URL('docs/soldados-por-cenario-2026-11-13.webp',root)));
-console.log('Saved five regional uniforms with four real running frames each.');
+await sharp(Buffer.concat(runs),{raw:{width:uniformWidth,height:200*4,channels:4,pageHeight:200}}).webp({lossless:true,loop:0,delay:[140,140,140,140]}).toFile(fileURLToPath(new URL('docs/soldados-por-cenario-2026-11-13.webp',root)));
+console.log('Saved '+uniforms.length+' regional uniforms with four real running frames each.');

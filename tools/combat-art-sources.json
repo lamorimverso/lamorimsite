@@ -78,6 +78,28 @@
         "army-casa-branca-run"
       ],
       "sourceGeneration": "a97945f7-3812-4ba8-84f6-adf705644ae3"
+    },
+    {
+      "name": "combatG",
+      "file": "paraguay-motion-v1",
+      "actors": [
+        "santiago",
+        "army-paraguai-run",
+        "army-paraguai-combat",
+        "santiago-phase2"
+      ],
+      "sourceGeneration": "ffb6d952-d37a-4942-81d2-42d713641a06"
+    },
+    {
+      "name": "combatH",
+      "file": "soldiers-combat-regions-v1",
+      "actors": [
+        "army-rio-combat",
+        "army-argentina-combat",
+        "army-florida-combat",
+        "army-casa-branca-combat"
+      ],
+      "sourceGeneration": "7a891dbc-63f7-4ea0-9b19-2a83a5e44b05"
     }
   ]
 }

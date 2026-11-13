@@ -1,0 +1,15 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sons e novas falas · Corre, Flávio!</title>
+<style>body{font:16px/1.5 system-ui,sans-serif;background:#edf2f5;color:#29354b;max-width:900px;margin:32px auto;padding:0 18px}h1{font-size:28px}h2{font-size:20px;margin-top:28px}button{font:inherit;border:1px solid #849aaf;border-radius:12px;padding:12px 16px;background:white;color:#29354b;cursor:pointer}button:hover{background:#dcecef}button:focus-visible{outline:3px solid #4d93b0}.grid{display:flex;flex-wrap:wrap;gap:10px}.voice{display:grid;gap:8px;padding:16px 0;border-bottom:1px solid #cbd5df}.voice button{text-align:left}small{color:#52667b}a{color:#236585}#status{min-height:32px}</style>
+<h1>Sons e novas falas</h1><p>Ouça os movimentos e os 17 novos trechos de arquivo usados no jogo. Cada clique nos efeitos de movimento alterna entre três versões.</p><p><a href="../">Voltar ao jogo</a> · <button id="mute">Desligar som</button></p>
+<h2>Movimento</h2><div id="motion" class="grid"></div><p id="status" role="status"></p>
+<h2>Falas dos personagens</h2><p>Os trechos preservam as vozes e o contexto das gravações originais. A fonte de cada fala está indicada abaixo.</p><div id="voices"></div>
+<script type="module">
+import {createGameAudio} from '../runner-audio.mjs';
+import {EXTRA_ARCHIVE_VOICES} from '../runner-extra-voices.mjs';
+const audio=createGameAudio(),status=document.querySelector('#status');document.querySelector('#mute').textContent=audio.enabled?'Desligar som':'Ligar som';
+const names={jump:'Pulo',land:'Pouso','run-start':'Arrancada','run-back':'Passo para trás',brake:'Frenagem',slide:'Escorregão','slide-stop':'Fim do escorregão','slide-drag':'Arrasto no chão'};
+for(const [id,label] of Object.entries(names)){const button=document.createElement('button');button.textContent=label;button.onclick=()=>{audio.stop();audio.prime();audio.movement(id);status.textContent=label;};document.querySelector('#motion').append(button);}
+for(const [id,clip] of Object.entries(EXTRA_ARCHIVE_VOICES)){const row=document.createElement('div');row.className='voice';const button=document.createElement('button');button.textContent=clip.speaker+' · “'+clip.quote+'”';button.onclick=()=>{audio.stop();audio.prime();audio.voice(id);status.textContent=clip.speaker+' · '+clip.quote;};const source=document.createElement('a');source.href=clip.source;source.textContent='Fonte da gravação';source.target='_blank';source.rel='noopener';const context=document.createElement('small');context.textContent=clip.context;row.append(button,source,context);document.querySelector('#voices').append(row);}
+document.querySelector('#mute').onclick=event=>{const enabled=audio.toggle();event.target.textContent=enabled?'Desligar som':'Ligar som';status.textContent=enabled?'Som ligado':'Som desligado';};
+window.addEventListener('pagehide',()=>audio.stop());document.addEventListener('visibilitychange',()=>{if(document.hidden)audio.stop();});
+</script></html>

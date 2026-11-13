@@ -11,18 +11,18 @@ test('corpos inteiros continuam preenchidos e animados sem contar cabeça, nave 
    let filled=0,changed=0;for(let i=3;i<frames[0].length;i+=4){if(frames[0][i]>150)filled++;if(frames[0][i]!==frames[1][i]||frames[0][i-1]!==frames[1][i-1])changed++;}rows.push({type,scale,filled,changed});}return rows;
  });for(const row of rows){assert.ok(row.filled>700*row.scale**2,JSON.stringify(row));assert.ok(row.changed>60*row.scale**2,JSON.stringify(row));}}finally{await page.close();}
 });
-test('19 famílias de armas têm desenho e movimento interno em três tamanhos reais',async()=>{
+test('23 famílias de armas têm desenho e movimento interno em três tamanhos reais',async()=>{
  const page=await browser.newPage();try{await page.goto(base);const rows=await page.evaluate(async()=>{
   const {drawCompleteWeapon,COMPLETE_WEAPONS}=await import('./runner-weapon-art.mjs');const rows=[];
   for(const type of COMPLETE_WEAPONS)for(const width of [16,46,138]){const frames=[];for(const phase of [0,7]){const c=document.createElement('canvas');c.width=512;c.height=512;const ctx=c.getContext('2d');ctx.translate(256,400);drawCompleteWeapon(ctx,{type,width,height:width*1.8,phase});frames.push(ctx.getImageData(0,0,512,512).data);}let filled=0,changed=0;for(let i=3;i<frames[0].length;i+=4){if(frames[0][i]>150)filled++;if(frames[0][i]!==frames[1][i]||frames[0][i-1]!==frames[1][i-1])changed++;}rows.push({type,width,filled,changed});}return rows;
- });assert.equal(rows.length,57);for(const row of rows){assert.ok(row.filled>row.width**2*.07,JSON.stringify(row));assert.ok(row.changed>2,JSON.stringify(row));}}finally{await page.close();}
+ });assert.equal(rows.length,69);for(const row of rows){assert.ok(row.filled>row.width**2*.07,JSON.stringify(row));assert.ok(row.changed>2,JSON.stringify(row));}}finally{await page.close();}
 });
 
 
 test('armas nas proporções reais do motor ocupam a altura anunciada e ficam junto da colisão',async()=>{
  const page=await browser.newPage();try{await page.goto(base);const rows=await page.evaluate(async()=>{
   const {drawCompleteWeapon,COMPLETE_WEAPONS}=await import('./runner-weapon-art.mjs');
-  const sizes={hammer:[46,44],mandado:[42,44],microphone:[46,40],handcuffs:[46,40],barrier:[44,32],stamp:[44,36],message:[44,36],lhand:[60,46],receipts:[44,40],'paper-gate':[44,40],'budget-sheets':[46,42],'parachute-cross':[46,44],'cloroquina-prop':[52,38],'ivermectina-prop':[52,38],'rolling-case':[40,30],'falling-case':[36,36],case:[34,28],popcorn:[40,35],wind:[46,44]};
+  const sizes={hammer:[46,44],mandado:[42,44],microphone:[46,40],handcuffs:[46,40],barrier:[44,32],stamp:[44,36],message:[44,36],lhand:[60,46],receipts:[44,40],'paper-gate':[44,40],'budget-sheets':[46,42],'parachute-cross':[46,44],'cloroquina-prop':[52,38],'ivermectina-prop':[52,38],'rolling-case':[40,30],'falling-case':[36,36],case:[34,28],popcorn:[40,35],wind:[46,44],'court-seal':[44,44],'signal-flare':[38,42],'terere-gourd':[44,44],'harp-note':[42,44]};
   const rows=[];for(const type of COMPLETE_WEAPONS)for(const tall of [false,true]){
    const [width,natural]=sizes[type],height=tall?84:natural,c=document.createElement('canvas');c.width=400;c.height=240;const ctx=c.getContext('2d');ctx.translate(200,180);drawCompleteWeapon(ctx,{type,width,height,phase:5});
    const data=ctx.getImageData(0,0,c.width,c.height).data;let minY=Infinity,maxY=-Infinity,minX=Infinity,maxX=-Infinity;

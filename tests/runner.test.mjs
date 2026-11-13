@@ -36,11 +36,11 @@ test('dt inválido não altera estado e frame enorme é limitado',()=>{
  core.advanceRun(r,120,()=>.5);assert.ok(r.elapsed<=.05);assert.ok(r.distance<20);
 });
 test('dificuldade aumenta com distância e preserva intervalo completo entre saltos',()=>{
- const a=core.difficultyAt(0),b=core.difficultyAt(9000000);assert.ok(b.speed>a.speed);assert.ok(b.speed<=435);
- assert.ok(b.obstacleGap<a.obstacleGap);assert.ok(b.obstacleGap>=1.12);
+ const a=core.difficultyAt(0),b=core.difficultyAt(9000000);assert.ok(b.speed>a.speed);assert.ok(b.speed<=535);
+ assert.ok(b.obstacleGap<a.obstacleGap);assert.ok(b.obstacleGap>=.94);
 });
-test('os cinco destinos repetem em voltas sem encerrar a partida',()=>{
- for(const [s,id] of [[0,'brasilia'],[20,'rio'],[40,'argentina'],[60,'florida'],[80,'casa-branca'],[100,'brasilia'],[120,'rio']])assert.equal(core.stageAt(s).id,id);
+test('os seis destinos repetem em voltas sem encerrar a partida',()=>{
+ for(const [s,id] of [[0,'brasilia'],[20,'rio'],[40,'argentina'],[60,'paraguai'],[80,'florida'],[100,'casa-branca'],[120,'brasilia'],[140,'rio']])assert.equal(core.stageAt(s).id,id);
  const r=running();r.elapsed=200;r.routeDistance=35000;r.shieldFor=100;r.nextBossAt=Infinity;frames(r,1);assert.equal(r.status,'running');
 });
 test('transição é contínua e inclui a volta da Casa Branca a Brasília',()=>{
