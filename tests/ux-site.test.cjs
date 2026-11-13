@@ -19,7 +19,7 @@ before(async()=>{
  browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{})});
 });
 after(async()=>{await browser?.close();await new Promise(resolve=>server?.close(resolve));});
-async function open({instrument=false,instrumentAudio=false,instrumentSprites=false,init,blockEntry=false,blockSupports=false,legacyFirst=false,...options}={}){
+async function open({instrument=false,instrumentAudio=false,instrumentCasting=false,instrumentSprites=false,init,blockEntry=false,blockSupports=false,legacyFirst=false,...options}={}){
  const context=await browser.newContext(options);
  await context.route(/^https:\/\//,route=>route.abort());
  if(blockSupports)await context.route(url=>/\/assets\/(?:allies-motion-|pursuers-motion-)/.test(url.pathname),route=>route.abort());
@@ -28,13 +28,17 @@ async function open({instrument=false,instrumentAudio=false,instrumentSprites=fa
   const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-core.mjs'),'utf8');
   await context.route('**/runner-core.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+'\nconst originalCreateRun=createRun;createRun=(...args)=>{const run=originalCreateRun(...args);globalThis.__testRun=run;return run;};'}));
  }
+ if(instrumentCasting){
+  const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-boss-art.mjs'),'utf8');
+  await context.route('**/runner-boss-art.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+'\nconst originalHover=drawHoverEnemy;drawHoverEnemy=(ctx,args)=>{const rows=(globalThis.__castPoses??=[]);rows.push({...args});if(rows.length>600)rows.shift();return originalHover(ctx,args);};'}));
+ }
  if(instrumentSprites){
   const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-sprites.mjs'),'utf8');
   await context.route('**/runner-sprites.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+"\nconst drawOriginal=drawSpriteActor;drawSpriteActor=(c,args)=>{const rows=(globalThis.__actorMotion??=[]);rows.push({type:args.type,facing:args.facing,frame:spriteFrameFor(args.type,args)?.index});if(rows.length>1000)rows.shift();return drawOriginal(c,args);};"}));
  }
  if(instrumentAudio){
   const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-audio.mjs'),'utf8');
-  await context.route('**/runner-audio.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+'\nconst originalAudio=createGameAudio;createGameAudio=(...args)=>{const audio=originalAudio(...args),effect=audio.effect;globalThis.__testEffects=[];audio.effect=(name)=>{__testEffects.push(name);return effect(name);};return audio;};'}));
+  await context.route('**/runner-audio.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+'\nconst originalAudio=createGameAudio;createGameAudio=(...args)=>{const audio=originalAudio(...args),effect=audio.effect,shot=audio.enemyShot;globalThis.__testEffects=[];globalThis.__enemyShotCalls=[];audio.enemyShot=(actor,weapon)=>{__enemyShotCalls.push({actor,weapon});return shot(actor,weapon);};audio.effect=(name)=>{__testEffects.push(name);return effect(name);};return audio;};'}));
  }
  if(blockEntry)await context.route('**/runner.mjs*',route=>route.abort());
  if(legacyFirst){
@@ -735,6 +739,33 @@ test('WASD anima recuo, retorno, salto e perseguidores de solo sem prancha',asyn
   const power=await page.locator('.game-hud').boundingBox(),fire=await page.locator('#game-attack').boundingBox();
   assert.ok(power.x+power.width<=fire.x||fire.x+fire.width<=power.x||power.y+power.height<=fire.y||fire.y+fire.height<=power.y,'aviso de escudo não cobre o disparo');
   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});await page.locator('#game').screenshot({path:path.resolve(__dirname,'../ux-captures/running-ground-900.png')});
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+for(const [viewport,reducedMotion] of [[{width:900,height:720},'no-preference'],[{width:390,height:844},'reduce']])test(`emissor prepara, solta e recupera com áudio no lançamento: ${viewport.width}/${reducedMotion}`,async()=>{
+ const {context,page,errors}=await open({instrument:true,instrumentAudio:true,instrumentCasting:true,viewport,reducedMotion});
+ try{
+  await begin(page);
+  const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner.mjs'),'utf8'),corePath=source.match(/from ["']([^"']*runner-core[^"']*)["']/)[1];
+  await page.evaluate(async corePath=>{
+   const core=await import(corePath),r=__testRun;
+   for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
+   r.elapsed=11;r.obstacles=[];r.pickups=[];r.cameo=null;r.nextObstacle=0;r.shieldFor=Infinity;
+   core.advanceRun(r,1/120,()=>0);r.nextObstacle=Infinity;globalThis.__castPoses=[];globalThis.__enemyShotCalls=[];
+  },corePath);
+  await page.waitForFunction(()=>__castPoses.some(p=>p.preparing));
+  assert.equal(await page.evaluate(()=>__enemyShotCalls.length),0,'preparação não dispara som');
+  assert.equal(await page.evaluate(()=>__testRun.obstacles.find(o=>o.cast).launched),undefined);
+  await page.waitForFunction(()=>__enemyShotCalls.length===1);
+  await page.waitForFunction(()=>__castPoses.some(p=>p.attacking));
+  const shot=await page.evaluate(()=>{const o=__testRun.obstacles.find(o=>o.cast);return {actor:o.sourceActor,type:o.type,launchX:o.launchX,width:__testRun.viewportWidth};});
+  assert.ok(shot.launchX>0&&shot.launchX<shot.width,'a origem é a mão visível');
+  assert.deepEqual(await page.evaluate(()=>__enemyShotCalls),[{actor:shot.actor,weapon:shot.type}]);
+  await page.waitForFunction(()=>__castPoses.some(p=>p.recovering));
+  assert.equal(await page.evaluate(()=>__enemyShotCalls.length),1,'renderizações não repetem o disparo');
+  await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
+  await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/casting-${viewport.width}.png`)});
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });

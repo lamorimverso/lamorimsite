@@ -1,8 +1,10 @@
 import {createGameSoundtrack} from './runner-soundtrack.mjs?v=eef47a2a323c';
+import {getEnemyShotBank} from './runner-shot-sounds.mjs?v=e2aab7660085';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=fa9433a61a03';
 // Efeitos locais e recorte de arquivo identificado; nenhuma imitação de voz.
 export function createGameAudio({onVoice=()=>{}}={}) {
  let enabled=true,context=null,nodes=[],primed=false,recording=null,recordingName=null,raidVoice=false,raidPrepared=false,music=null,voicePriority=0,alertUntil=0;
+ const shotVariants=new Map();
  const preferenceKey='tanahoraflavio.runner.sound.v1';
  try{enabled=window.localStorage?.getItem(preferenceKey)!=='off';}catch{/* Armazenamento é opcional. */}
  const stopRecording=()=>{
@@ -37,7 +39,7 @@ export function createGameAudio({onVoice=()=>{}}={}) {
   }catch{stopRecording();return false;}
  };
  const knocks=()=>{
-  if(!enabled||!context)return;
+  if(!enabled||!context||context.state!=='running'||nodes.length+3>12)return;
   try{
    for(let i=0;i<3;i++){const oscillator=context.createOscillator(),gain=context.createGain(),t=context.currentTime+i*.28;
     oscillator.type='triangle';oscillator.frequency.setValueAtTime(95,t);oscillator.frequency.exponentialRampToValueAtTime(38,t+.09);
@@ -85,9 +87,42 @@ export function createGameAudio({onVoice=()=>{}}={}) {
    osc.onended=()=>{osc.disconnect();gain.disconnect();nodes=nodes.filter(n=>n!==osc);};
   }catch{/* Efeitos não podem interromper o jogo. */}
  };
+ // Executado pelo lançamento real do projétil, nunca pela aparição do ator.
+ // Ciclo local por timbre: não altera nem consulta a aleatoriedade da corrida.
+ const enemyShot=(actor,weapon)=>{
+  if(!enabled||!primed||!context||context.state!=='running')return false;
+  const bank=getEnemyShotBank(actor,weapon);if(!bank)return false;
+  const variant=shotVariants.get(bank.id)||0,notes=bank.variants[variant];
+  // Reserva o padrão inteiro: não emite meia notificação ao esgotar os canais.
+  if(nodes.length+notes.length>12)return false;
+  const created=[],t=context.currentTime;
+  try{
+   for(const note of notes){
+    const osc=context.createOscillator();let gain;
+    const release=()=>{try{osc.disconnect();gain?.disconnect();}catch{/* Já desconectado. */}nodes=nodes.filter(n=>n!==osc);};
+    // Registrar antes de configurar garante limpeza também se a API falhar.
+    created.push({osc,release});gain=context.createGain();
+    const at=t+note.delay;
+    osc.type=note.wave;osc.frequency.setValueAtTime(note.start,at);
+    osc.frequency.exponentialRampToValueAtTime(note.end,at+note.length);
+    gain.gain.setValueAtTime(.001,at);
+    gain.gain.linearRampToValueAtTime(note.volume,at+note.attack);
+    gain.gain.exponentialRampToValueAtTime(.001,at+note.length);
+    osc.connect(gain);gain.connect(context.destination);osc.onended=release;
+    nodes.push(osc);osc.start(at);osc.stop(at+note.length+.015);
+   }
+   shotVariants.set(bank.id,(variant+1)%bank.variants.length);
+   alertUntil=Math.max(alertUntil,t+Math.max(...notes.map(n=>n.delay+n.length))+.1);
+   if(recording)recording.volume=.28;
+   return true;
+  }catch{
+   for(const {osc,release} of created){try{osc.stop();}catch{/* Início bloqueado. */}release();}
+   return false;
+  }
+ };
  // Não há sintetizador de voz: só trechos identificados e efeitos originais.
  // Ausência de clipe não é preenchida por uma voz inventada.
- return {get enabled(){return enabled;},prime,stop,effect,voice,
+ return {get enabled(){return enabled;},prime,stop,effect,enemyShot,voice,
   background(state={}){
    if(state.active===false){stop();return;}
    if(!enabled||!primed)return;
