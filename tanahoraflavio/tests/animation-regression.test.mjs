@@ -14,7 +14,7 @@ before(async()=>{
 function canvas(){
  const calls=[];
  const ctx={calls,globalAlpha:1};
- for(const name of ['save','restore','translate','rotate','scale','beginPath','closePath','moveTo','lineTo','bezierCurveTo','quadraticCurveTo','ellipse','fill','stroke','roundRect','fillText','drawImage'])
+ for(const name of ['save','restore','translate','rotate','scale','beginPath','closePath','moveTo','lineTo','bezierCurveTo','quadraticCurveTo','ellipse','fill','stroke','roundRect','fillText','drawImage','clip'])
   ctx[name]=(...args)=>calls.push([name,...args]);
  return ctx;
 }
@@ -35,8 +35,8 @@ test('rastro fica atrás do deslocamento também em disparo para a direita',()=>
  const tail=c.calls.find(v=>v[0]==='quadraticCurveTo');
  assert.ok(tail&&tail[3]<222,'rastro da retaguarda deve apontar para a esquerda');
 });
-test('perseguidor no chão alterna os recortes reais de corrida',()=>{
- for(const type of ['pf','janones','army','haddad','lula','xandao','boulos','dino']){
+test('perseguidor com atlas no chão alterna os recortes reais de corrida',()=>{
+ for(const type of ['pf','janones','haddad','lula','xandao','boulos','dino']){
   const a=canvas(),b=canvas();
   art.drawThreat(a,{type,x:100,width:40,height:46},246,0);
   art.drawThreat(b,{type,x:100,width:40,height:46},246,1);

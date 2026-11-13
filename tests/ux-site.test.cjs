@@ -19,7 +19,7 @@ before(async()=>{
  browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{})});
 });
 after(async()=>{await browser?.close();await new Promise(resolve=>server?.close(resolve));});
-async function open({instrument=false,instrumentAudio=false,instrumentCasting=false,instrumentSprites=false,init,blockEntry=false,blockSupports=false,legacyFirst=false,...options}={}){
+async function open({instrument=false,instrumentAudio=false,instrumentCasting=false,instrumentHero=false,instrumentSprites=false,init,blockEntry=false,blockSupports=false,legacyFirst=false,...options}={}){
  const context=await browser.newContext(options);
  await context.route(/^https:\/\//,route=>route.abort());
  if(blockSupports)await context.route(url=>/\/assets\/(?:allies-motion-|pursuers-motion-)/.test(url.pathname),route=>route.abort());
@@ -27,6 +27,10 @@ async function open({instrument=false,instrumentAudio=false,instrumentCasting=fa
  if(instrument){
   const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-core.mjs'),'utf8');
   await context.route('**/runner-core.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+'\nconst originalCreateRun=createRun;createRun=(...args)=>{const run=originalCreateRun(...args);globalThis.__testRun=run;return run;};'}));
+ }
+ if(instrumentHero){
+  const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-character-art.mjs'),'utf8');
+  await context.route('**/runner-character-art.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+'\nconst originalShot=drawHeroShot;drawHeroShot=(ctx,args)=>{const rows=(globalThis.__heroPoses??=[]);rows.push({...args});if(rows.length>600)rows.shift();return originalShot(ctx,args);};'}));
  }
  if(instrumentCasting){
   const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-boss-art.mjs'),'utf8');
@@ -766,6 +770,57 @@ for(const [viewport,reducedMotion] of [[{width:900,height:720},'no-preference'],
   assert.equal(await page.evaluate(()=>__enemyShotCalls.length),1,'renderizações não repetem o disparo');
   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
   await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/casting-${viewport.width}.png`)});
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+for(const [viewport,reducedMotion] of [[{width:900,height:720},'no-preference'],[{width:390,height:844},'reduce']])test(`Flávio atira com braço, recuo e retorno no jogo real: ${viewport.width}/${reducedMotion}`,async()=>{
+ const {context,page,errors}=await open({instrument:true,instrumentHero:true,viewport,reducedMotion});
+ try{
+  await begin(page);await page.evaluate(()=>{const r=__testRun;r.nextRaid=r.nextObstacle=r.nextPower=r.nextPassport=Infinity;r.shieldFor=Infinity;r.routeDistance=22000;r.nextBossAt=0;r.obstacles=[];r.pickups=[];globalThis.__heroPoses=[];});
+  await page.waitForFunction(()=>__testRun.boss?.combat&&__testRun.boss.phase!=='intro');
+  const canvas=page.locator('#runner-canvas');await canvas.focus();
+  await page.keyboard.down('a');
+  if(viewport.width<500)await page.locator('#game-attack').dispatchEvent('pointerdown',{button:0,pointerId:92,pointerType:'touch'});else await page.keyboard.down('j');
+  await page.waitForFunction(()=>__heroPoses.some(p=>p.age>.15));
+  assert.ok(await page.evaluate(()=>__heroPoses.every(p=>p.facing===1)),'braço mira no chefe mesmo recuando');
+  assert.ok(await page.evaluate(()=>__testRun.shotsFired>0));await page.keyboard.up('a');
+  await page.keyboard.down('w');await page.waitForFunction(()=>__heroPoses.some(p=>p.airborne));await page.keyboard.up('w');
+  await page.waitForFunction(()=>__testRun.player.y===0);await page.keyboard.down('s');await page.waitForFunction(()=>__heroPoses.some(p=>p.crouching));
+  await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/hero-fire-${viewport.width}.png`)});
+  await page.keyboard.up('s');if(viewport.width<500)await page.locator('#game-attack').dispatchEvent('pointercancel',{pointerId:92,pointerType:'touch'});else await page.keyboard.up('j');await page.waitForFunction(()=>__testRun.player.attackFor===0);
+  const count=await page.evaluate(()=>__heroPoses.length);await page.waitForTimeout(120);assert.equal(await page.evaluate(()=>__heroPoses.length),count,'soltar disparo retorna à corrida');
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('elenco completo possui corpo e animação no Canvas do navegador',async()=>{
+ const {context,page,errors}=await open({viewport:{width:1000,height:1000}});
+ try{
+  const result=await page.evaluate(async()=>{
+   const art=await import('./runner-art.mjs');await art.loadSprites();const {PURSUERS}=await import('./runner-core.mjs'),{ALLIES}=await import('./runner-allies.mjs');
+   const enemies=PURSUERS.filter(p=>!['barrier','case'].includes(p.type));
+   const actors=[{type:'flavio'},...enemies,...['joice','ze-gotinha','jacare',...ALLIES.map(a=>a.id)].map(type=>({type}))];
+   const results=[];
+   for(let sheet=0;sheet<4;sheet++){
+    const film=document.createElement('canvas');film.id='roster-'+sheet;film.width=800;film.height=1120;const c=film.getContext('2d');c.fillStyle='#e7f1f4';c.fillRect(0,0,800,1120);
+    for(let row=0;row<8;row++){
+     const actor=actors[sheet*8+row];if(!actor)continue;const hashes=[];
+     for(let phase=0;phase<4;phase++){
+      const px=phase*200,py=row*140;c.fillStyle='#293548';c.font='14px sans-serif';c.fillText(actor.type+' · '+phase,px+12,py+18);
+      if(enemies.includes(actor))art.drawThreat(c,{...actor,x:px+85,action:'jump'},py+124,phase,{reducedMotion:true});
+      else art.drawActor(c,{type:actor.type,x:px+102,y:py+124,phase,scale:.95});
+      const data=c.getImageData(px+20,py+24,160,112).data;let painted=0,hash=0;
+      for(let i=0;i<data.length;i+=4){if(data[i]!==231||data[i+1]!==241||data[i+2]!==244)painted++;hash=(Math.imul(hash,31)+data[i]+data[i+1]+data[i+2])|0;}
+      if(painted<100)throw Error('Sem corpo: '+actor.type);hashes.push(hash);
+     }
+     results.push({type:actor.type,frames:new Set(hashes).size});
+    }
+    document.body.append(film);
+   }return results;
+  });
+  assert.equal(result.length,32);for(const actor of result)assert.ok(actor.frames>=3,actor.type+' precisa de passada visível');
+  await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});for(let sheet=0;sheet<4;sheet++)await page.locator('#roster-'+sheet).screenshot({path:path.resolve(__dirname,`../ux-captures/roster-${sheet}.png`)});
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });

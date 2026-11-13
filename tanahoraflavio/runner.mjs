@@ -1,10 +1,11 @@
+import {HERO_SHOT_DURATION} from './runner-hero-shot.mjs?v=4447edaa9d9a';
 import {regularEmitterPose,regularCastPresentation} from './runner-cast-pose.mjs?v=26402722b1e5';
 import {createShotSoundTracker} from './runner-shot-events.mjs?v=a3769f250d68';
 import {bossPresentationFor} from './runner-bosses.mjs?v=0094a5e5951f';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=088899f48fd6';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=7605478ac4d0";
-import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=7aefac4f676a';
-import { drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=f15d7323705b";
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=cf2e63cd6815";
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=e965824b8d85';
+import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=acf55693ecf1";
 import { createGameAudio } from "./runner-audio.mjs?v=3a0ebda941d8";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=fa9433a61a03";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=c9fb039ac877";
@@ -554,12 +555,12 @@ function initRunner() {
     // passada visível mesmo nas velocidades mais tranquilas.
     // O herói e os perseguidores de solo usam seus ciclos de corrida.
     const phase=active?run.elapsed*(run.assisted?9:11):0;
-    const crouchTarget=run.player.crouching&&!airborne;
+    const crouchTarget=run.player.crouching&&!airborne,shooting=active&&run.player.attackFor>0;
     const frameTime=performance.now();
     crouchPose=crouchAnimationStep(crouchPose,crouchTarget,(frameTime-lastPoseFrame)/1000,reduced);
     lastPoseFrame=frameTime;
     const runningStride=active&&!airborne&&!crouchTarget&&!run.player.isJacare;
-    const bounce=decorative&&runningStride?Math.abs(Math.sin(phase*Math.PI/4))*2.6:0;
+    const bounce=decorative&&runningStride&&!shooting?Math.abs(Math.sin(phase*Math.PI/4))*2.6:0;
     if(decorative&&!airborne){
       circle(playerX(run)-8-run.distance%19,WORLD.ground-2,2.8,"#a6a7aa70");
       // Pequena poeira que acompanha o deslize, sem afetar a pista.
@@ -574,15 +575,15 @@ function initRunner() {
     const feet=WORLD.ground-run.player.y-bounce;
     const protection={x:playerX(run)+17,y:feet,crouching:crouchTarget||run.player.isJacare,remaining:run.shieldFor};
     ctx.save();
-    if(crouchTarget){
+    if(crouchTarget&&!shooting){
       const pivot=playerX(run)+17;
       ctx.translate(pivot,feet);
       ctx.rotate(-.018*crouchPose);
       ctx.translate(-pivot,-feet);
-    }else if(active&&!airborne&&run.elapsed<landingUntil){
+    }else if(!shooting&&active&&!airborne&&run.elapsed<landingUntil){
       const ease=(landingUntil-run.elapsed)/.12,pivot=playerX(run)+17;
       ctx.translate(pivot,feet);ctx.scale(1+.025*ease,1-.025*ease);ctx.translate(-pivot,-feet);
-    }else if(decorative&&runningStride){
+    }else if(!shooting&&decorative&&runningStride){
       // Inclinação pequena e alternada para que a corrida não pareça
       // apenas o cenário rolando por trás de um personagem imóvel.
       const pivot=playerX(run)+17;
@@ -596,14 +597,10 @@ function initRunner() {
       drawJacare(ctx,{x:playerX(run)+17,y:feet,phase,facing:run.player.moveHeld<0?-1:1,age:run.player.jacareAge,reducedMotion:reduced});ctx.restore();
     }
     if(blend.human>0){
-      drawActor(ctx,{type:"flavio",x:playerX(run)+17,y:feet,scale:.95,phase,airborne,facing:run.player.moveHeld<0?-1:1,
-        falling:run.player.velocity<0,landing:crouchTarget,
-        hurt:run.status==="over",alpha:blend.human*(run.graceFor>0&&run.shieldFor<=0?.55:1)});
-      if(run.player.attackFor>0){
-        const facing=run.player.shotFacing||1,muzzle=heroMuzzleFor(run,facing),sx=muzzle.x,sy=WORLD.ground-muzzle.y;
-        ctx.strokeStyle='#f7d6a0';ctx.lineWidth=6;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(sx-facing*12,sy+3);ctx.lineTo(sx,sy);ctx.stroke();
-        ctx.fillStyle='#fff7c8';ctx.beginPath();ctx.ellipse(sx+facing*4,sy,7,5,0,0,Math.PI*2);ctx.fill();
-      }
+      const alpha=blend.human*(run.graceFor>0&&run.shieldFor<=0?.55:1);
+      if(shooting)drawHeroShot(ctx,{x:playerX(run)+17,y:feet,phase,age:HERO_SHOT_DURATION-run.player.attackFor,crouching:crouchTarget,airborne,falling:run.player.velocity<0,facing:run.player.shotFacing||1,alpha});
+      else drawActor(ctx,{type:"flavio",x:playerX(run)+17,y:feet,scale:.95,phase,airborne,facing:run.player.moveHeld<0?-1:1,
+        falling:run.player.velocity<0,landing:crouchTarget,hurt:run.status==="over",alpha});
       if(run.player.restoreFlashFor>0&&!prefersReducedMotion()){
         ctx.save();ctx.globalAlpha=Math.min(.55,run.player.restoreFlashFor/.48*.55);
         ctx.strokeStyle="#5ba86d";ctx.lineWidth=3;ctx.beginPath();
