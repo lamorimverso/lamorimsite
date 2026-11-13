@@ -1,3 +1,4 @@
+import {regularCastMuzzle} from './runner-cast-pose.mjs?v=26402722b1e5';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=181506ec1b3c';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=fa9433a61a03';
 import {STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=0094a5e5951f';
@@ -124,6 +125,7 @@ const JACARE_ENTRY_GRACE = 3;
 const JACARE_RESTORE_GRACE = .55;
 const JACARE_RESTORE_FLASH = .48;
 export function threatTimeToContact(run,o){
+ if(o.cast)return (o.waitFor||0)+o.cast.flightFor-o.cast.flightAge;
  if(o.groundHazard)return o.warningFor-o.age;
  if(o.falling)return o.warningFor+o.fallFor*.7-o.age;
  if(o.approach==='rear')return (o.waitFor||0)+(playerX(run)+5-(o.x+o.width-3))/-o.speed;
@@ -146,7 +148,7 @@ export function difficultyAt(distance,elapsed=0) {
 function threatSpeed(run,x,seconds,visibleX=x){
  if(run.aid?.kind==='telegraph')seconds+=.24;
  const contactX=frontContact(run),rearContact=playerX(run)+5;
- const pending=run.obstacles.filter(o=>!o.passed&&o.x>contactX&&o.speed>0)
+ const pending=run.obstacles.filter(o=>!o.passed&&(o.cast||o.x>contactX)&&o.speed>0)
   .map(o=>threatReservation(run,o));
  const rear=run.obstacles.filter(o=>o.approach==='rear'&&o.speed<0)
   .map(o=>threatReservation(run,o))
@@ -185,7 +187,7 @@ export function pursuitAt(seconds,rng=()=>.5,level=10,seen=[],last=null) {
 // Retaguarda usa a mesma janela de leitura, sem disputar o contato com um perigo frontal.
 function rearMotion(run,x,width){
  const contactX=frontContact(run),rearContact=playerX(run)+5;
- const front=run.obstacles.filter(o=>!o.passed&&o.x>contactX&&o.speed>0).map(o=>threatReservation(run,o));
+ const front=run.obstacles.filter(o=>!o.passed&&(o.cast||o.x>contactX)&&o.speed>0).map(o=>threatReservation(run,o));
  const rear=run.obstacles.filter(o=>o.approach==='rear'&&o.speed<0).map(o=>threatReservation(run,o));
  const drops=run.obstacles.filter(o=>o.falling||o.groundHazard).map(o=>threatReservation(run,o));
  const seconds=Math.max(run.assisted?1.22:1.06,...front.concat(rear,drops).filter(t=>t>0).map(t=>t+REACTION_GAP));
@@ -219,7 +221,11 @@ export function resizeRun(run,width){
  for(const shot of run.heroShots||[]){shot.x=project(shot.x);shot.previousX=project(shot.previousX);shot.vx*=ratio;}
  for(const o of run.obstacles){
   const start=o.x;
-  if(o.falling||o.groundHazard||o.passed||!Number.isFinite(o.speed)||o.speed===0){o.x+=delta;}
+  if(o.cast){
+   const factor=visibleWidth(run)/previous,half=o.width/2,oldContact=o.speed<0?oldRear+3-half:oldFront+half,newContact=o.speed<0?rear+3-half:contactX+half,map=x=>newContact+(x-oldContact)*factor;
+   o.x=map(o.x+o.width/2)-o.width/2;o.launchX=map(o.launchX);o.targetX=map(o.targetX);o.speed*=factor;
+   o.cast.fromX=map(o.cast.fromX);o.cast.toX=map(o.cast.toX);
+  }else if(o.falling||o.groundHazard||o.passed||!Number.isFinite(o.speed)||o.speed===0){o.x+=delta;}
   else if(o.speed>0&&o.x>oldFront){
    o.x=project(o.x);o.speed*=ratio;
    if(o.speed<180){
@@ -583,6 +589,34 @@ function rewardForObstacle(run,obstacle,balance,rng){
  for(let i=0;i<count;i++)run.pickups.push({x:center+(i-(count-1)/2)*35,
   y:obstacle.action==='crouch'?18:100,type:item.type,value:item.value,speed:obstacle.speed,waitFor:obstacle.waitFor||0,anchor:obstacle});
 }
+function regularShot(run,type,actor,approach){
+ const width=46,muzzle=regularCastMuzzle(actor,visibleWidth(run),WORLD.ground,run.elapsed*10);
+ const reserved=run.obstacles.filter(o=>!o.passed&&!o.counted).map(o=>threatReservation(run,o)).filter(t=>Number.isFinite(t)&&t>0);
+ const eta=Math.max(1.08,approach/assistance(run),...reserved.map(t=>t+REACTION_GAP));
+ const flightFor=.6,waitFor=eta-flightFor;
+ return {x:muzzle.x-width/2,y:muzzle.y,width,height:72,type,action:'crouch',sourceActor:actor,projectile:true,
+  approach:'overhead',flightStyle:projectileStyle(type),launchX:muzzle.x,launchY:muzzle.y,targetX:playerX(run)+17,targetY:84,speed:180,waitFor,
+  cast:{windupFor:waitFor,flightFor,flightAge:0,fromX:muzzle.x,fromY:muzzle.y,toX:playerX(run)+17}};
+}
+function advanceRegularShot(run,o,dt){
+ const waiting=o.waitFor||0,active=Math.max(0,dt-waiting);o.waitFor=Math.max(0,waiting-dt);
+ if(active<=0)return;
+ const cast=o.cast;
+ if(!o.launched){
+  const muzzle=regularCastMuzzle(o.sourceActor,visibleWidth(run),WORLD.ground,run.elapsed*10),center=playerX(run)+17,half=o.width/2;
+  const direction=muzzle.x>=center?1:-1,near=direction>0?frontContact(run)+half:playerX(run)+5-half+3;
+  const far=direction>0?playerX(run)+5-half+3:frontContact(run)+half;
+  cast.fromX=o.launchX=muzzle.x;cast.fromY=o.launchY=muzzle.y;cast.toX=direction*(muzzle.x-near)>=0?near:far;
+  o.targetX=center;o.approach=direction>0?'overhead':'rear';o.speed=direction*Math.max(180,Math.abs(cast.fromX-cast.toX)/cast.flightFor);
+  cast.releasePhase=run.elapsed*10;o.launched=true;
+ }
+ cast.flightAge+=active;const u=Math.min(1,cast.flightAge/cast.flightFor);
+ o.x=cast.fromX+(cast.toX-cast.fromX)*u-o.width/2-o.speed*Math.max(0,cast.flightAge-cast.flightFor);
+ o.y=cast.fromY+(o.targetY-cast.fromY)*u;
+ if(cast.flightAge>=cast.flightFor){const left=playerX(run)+5,right=playerX(run)+PLAYER.width-3;
+  if(o.speed>0&&o.x+o.width-3<=left||o.speed<0&&o.x+3>=right)o.passed=true;
+ }
+}
 function rehearseStoryBoss(run,balance){
  const approach=storyApproachAt(run.routeDistance,run.bossesDefeated);
  if(!approach||approach.phase!=='rehearsal'||run.rehearsedBoss===approach.boss.id||
@@ -635,7 +669,9 @@ export function advanceRun(run,seconds,rng){
   if(run.player.jumpBufferedUntil>0)jumpRun(run);
  }
  run.shieldFor=Math.max(0,run.shieldFor-dt);run.graceFor=Math.max(0,run.graceFor-dt);
+ const castDeltas=new Map();
  for(const obstacle of run.obstacles){
+  if(obstacle.cast){const before=obstacle.x;advanceRegularShot(run,obstacle,dt);castDeltas.set(obstacle,obstacle.x-before);continue;}
   if(obstacle.groundHazard){obstacle.age+=dt;continue;}
   if(obstacle.falling){
    obstacle.age+=dt;
@@ -663,6 +699,7 @@ export function advanceRun(run,seconds,rng){
   if(obstacle.speed>0&&obstacle.x+obstacle.width-3<=left||obstacle.speed<0&&obstacle.x+3>=right)obstacle.passed=true;
  }
  for(const pickup of run.pickups){
+  if(pickup.anchor?.cast&&castDeltas.has(pickup.anchor)){pickup.x+=castDeltas.get(pickup.anchor);pickup.speed=pickup.anchor.speed;pickup.waitFor=pickup.anchor.waitFor;continue;}
   const activeDelta=Math.max(0,dt-(pickup.waitFor||0));pickup.waitFor=Math.max(0,(pickup.waitFor||0)-dt);
   pickup.x-=Number.isFinite(pickup.speed)?pickup.speed*activeDelta:travel;
  }
@@ -717,9 +754,8 @@ export function advanceRun(run,seconds,rng){
      run.lastOverheadActor=type;run.overheadCount++;
     }
     const attackType={dilma:'wind',simone:'budget-sheets',soraya:'parachute-cross','meme-army':'meme-ghost',joice:'handcuffs'}[type];
-    anchor={x,width:46,height:72,type:attackType,action,sourceActor:type,projectile:true,
-     flightStyle:projectileStyle(attackType),launchX:x+23,targetX:playerX(run)+17,launchY:84,targetY:84,y:84,...threatMotion(run,x,approach,visibleWidth(run))};
-    if(!raidActive)run.cameo={type,remaining:1.4};
+    anchor=regularShot(run,attackType,type,approach);
+    if(!raidActive)run.cameo={type,remaining:anchor.waitFor+.78,shot:anchor};
    }else{
     const selected=raidActive?foeFor('pf'):pursuitAt(routeClock(run),rng,balance.level,run.seenGroundActors,run.lastGroundActor);
     const foe=run.supportAvailable===false&&['boulos','dino'].includes(selected.type)?foeFor('pf'):selected;

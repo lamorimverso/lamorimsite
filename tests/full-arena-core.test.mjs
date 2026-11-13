@@ -178,7 +178,7 @@ test('2.000 sequências com sementes e entradas reais mantêm rotas vencíveis p
    if(r.spawnedObstacles>count){
     count=r.spawnedObstacles;waves++;const o=r.obstacles.at(-1);styles.add(o.approach||'overhead');sequence.push(o.type+'/'+o.approach);
     assert.ok(!o.falling&&!o.groundHazard||o.age<o.warningFor,'zona nasce como aviso sem hitbox ativa');
-    if(!o.falling&&!o.groundHazard)assert.ok(o.approach==='rear'?o.x+o.width<r.player.x+5:o.x>r.player.x+28,'projétil não nasce em contato');
+    if(!o.falling&&!o.groundHazard&&!(o.cast&&!o.launched&&o.waitFor>=.45))assert.ok(o.approach==='rear'?o.x+o.width<r.player.x+5:o.x>r.player.x+28,'projétil não nasce em contato');
     assert.ok(r.obstacles.filter(o=>!o.passed&&!o.counted).length<=5);
    }
   }

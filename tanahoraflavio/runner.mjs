@@ -1,9 +1,11 @@
+import {regularEmitterPose,regularCastPresentation} from './runner-cast-pose.mjs?v=26402722b1e5';
+import {createShotSoundTracker} from './runner-shot-events.mjs?v=a3769f250d68';
 import {bossPresentationFor} from './runner-bosses.mjs?v=0094a5e5951f';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=088899f48fd6';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=afb9178a8f2b";
-import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=fd94f55f4052';
-import { drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=b09571a4072b";
-import { createGameAudio } from "./runner-audio.mjs?v=b63783dad9b7";
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=7605478ac4d0";
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=7aefac4f676a';
+import { drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=f15d7323705b";
+import { createGameAudio } from "./runner-audio.mjs?v=3a0ebda941d8";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=fa9433a61a03";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=c9fb039ac877";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
@@ -74,6 +76,7 @@ function initRunner() {
     note.textContent=clip?clip.speaker+" · "+(clip.label||clip.quote):"";
     note.title=clip?clip.speaker+". "+clip.context:"";
   }});
+  const shotSounds=createShotSoundTracker((actor,weapon,shot)=>{if(!audio.enemyShot(actor,weapon))audio.effect(weaponEffect(shot));});
   const voices=createVoiceDirector({play:(id,options)=>audio.voice(id,options)});
   $("game-sound-label").textContent=audio.enabled?"Som ligado":"Som desligado";
   $("game-sound").title=$("game-sound-label").textContent;
@@ -291,11 +294,10 @@ function initRunner() {
     else if(before.jacare&&!run.player.isJacare)audio.effect("restore");
     else if(before.boss&&!run.boss)audio.effect("victory");
     else if(!before.boss&&run.boss){audio.effect("boss");voices.event("boss",run);}
-    else if(run.boss&&run.boss.fired>before.attacks)audio.effect(weaponEffect(run.obstacles.at(-1)));
     else if(run.collected>before.collected)audio.effect(run.lastPickup==="ze-gotinha"?"transform":run.lastPickup==="ally"?"ally":"pickup");
     if(run.spawnedObstacles>before.spawned){
       const newest=run.obstacles.at(-1);
-      audio.effect(weaponEffect(newest));
+      if(!newest?.projectile&&!newest?.falling)audio.effect(weaponEffect(newest));
       const actor=newest?.sourceActor||newest?.type;
       if(actor)voices.event("actor",run,actor);
     }
@@ -304,6 +306,7 @@ function initRunner() {
     }
     const nearest=Math.min(Infinity,...run.obstacles.filter(o=>!o.passed&&!o.counted).map(o=>threatTimeToContact(run,o)));
     voices.update(run,{safe:nearest>.9});
+    shotSounds.update(run.obstacles,run.boss?.type);
     audio.background({active:run.status==="running",pressure:difficultyAt(run.distance,run.elapsed).pressure,boss:!!run.boss,raid:run.raid?.phase==="active"});
     if(bufferedTakeoff&&run.status==="running")audio.effect("jump");
     draw();schedule();
@@ -340,6 +343,7 @@ function initRunner() {
     cancelAnimationFrame(frameId);frameId=0;resumeFromGesture();
     audio.stop();audio.prime();voices.reset();lastRaidKey="";
     clearControls();
+    shotSounds.reset();
     run=createRun({assisted:preferences.assisted,mode:$("game-mode-story").checked?"story":"endless"});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);landingUntil=0;
     if(!supportReady)prepareSupport();
     $("game-settings").open=false;$("game-options-panel").open=false;$("game-help").open=false;
@@ -612,7 +616,8 @@ function initRunner() {
   function joiceFigure(){
     const raid=run.raid;if(run.status!=="running"||!raid)return;
     if(raid.phase==='recovery')return;
-    drawHoverEnemy(ctx,{type:"joice",x:virtualWidth-62,y:WORLD.ground-134,scale:.92,phase:run.elapsed*10,reducedMotion:prefersReducedMotion()});
+    const shot=run.obstacles.filter(o=>o.sourceActor==='joice'&&o.cast&&!o.passed).at(-1);
+    drawHoverEnemy(ctx,{type:'joice',...regularEmitterPose('joice',virtualWidth,WORLD.ground),...regularCastPresentation(shot),phase:run.elapsed*10,reducedMotion:prefersReducedMotion()});
   }
   function drawSupport(){
     const aid=run.aid;if(!aid||run.status!=="running")return;
@@ -662,7 +667,7 @@ function initRunner() {
       ctx.fillText("→ !",12,WORLD.ground-96);ctx.restore();
     }
     if(item.projectile){
-      drawProjectile(ctx,item,WORLD.ground,run.elapsed*10,{reducedMotion:prefersReducedMotion()});
+      drawProjectile(ctx,item,WORLD.ground,item.cast?(item.cast.flightAge||0)*24:run.elapsed*10,{reducedMotion:prefersReducedMotion()});
     }else drawThreat(ctx,item,WORLD.ground,run.elapsed*10,{reducedMotion:prefersReducedMotion()});
   }
   function pickup(item){
@@ -692,10 +697,9 @@ function initRunner() {
     joiceFigure();
     drawSupport();
     if(run.cameo&&!run.boss&&!run.raid){
-      const actor=run.cameo.type,shot=run.obstacles.find(o=>o.sourceActor===actor&&!o.passed);
-      const preparing=!!shot&&shot.waitFor>0&&!shot.launched;
-      const attacking=!!shot&&shot.launched&&(shot.launchX-shot.x-shot.width/2)<40;
-      drawHoverEnemy(ctx,{type:actor,x:virtualWidth-58,y:WORLD.ground-134,scale:actor==="meme-army"?1.36:.92,phase:run.elapsed*10,preparing,attacking,reducedMotion:prefersReducedMotion()});
+      const actor=run.cameo.type,shot=run.cameo.shot||run.obstacles.find(o=>o.sourceActor===actor&&!o.passed);
+      const pose=regularEmitterPose(actor,virtualWidth,WORLD.ground),presentation=regularCastPresentation(shot);
+      drawHoverEnemy(ctx,{type:actor,...pose,...presentation,phase:run.elapsed*10,reducedMotion:prefersReducedMotion()});
     }
     for(const item of run.pickups)pickup(item);
     for(const item of run.obstacles)obstacle(item);

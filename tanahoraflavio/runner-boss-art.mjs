@@ -1,5 +1,7 @@
+import {standingEnemyPose} from './runner-cast-pose.mjs?v=26402722b1e5';
+export {standingEnemyPose} from './runner-cast-pose.mjs?v=26402722b1e5';
 import {drawSpriteHead} from './runner-sprites.mjs?v=9a9d2bd998a8';
-import {drawMemeArmy} from './runner-art.mjs?v=b09571a4072b';
+import {drawMemeArmy} from './runner-art.mjs?v=f15d7323705b';
 
 // Standing bosses: original atlas heads, original articulated Canvas bodies.
 // Coordinates are logical game pixels; y always remains the top of the deck.
@@ -20,42 +22,6 @@ function canonicalClass(value){return CLASS_ALIASES[value]||value||'sentinel';}
 function oval(c,x,y,rx,ry,fill,stroke=INK,width=1.6){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke();}}
 function polygon(c,points,fill,stroke=INK,width=1.6){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.closePath();c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke();}}
 function line(c,points,color=INK,width=2){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.lineCap='round';c.lineJoin='round';c.strokeStyle=color;c.lineWidth=width;c.stroke();}
-function joint(x,y){return {x,y};}
-
-/** Pure standing rig. Feet stay planted through breathing, charging and recoil. */
-export function standingEnemyPose({phase=0,preparing=false,attacking=false,recovering=false,hurt=false,reducedMotion=false,classId='sentinel',action='jump',progress}={}){
- const t=reducedMotion?0:(Number.isFinite(phase)?phase:0),breath=reducedMotion?0:Math.sin(t*.32),kind=canonicalClass(classId);
- const state=hurt?'recoil':attacking?'release':preparing?'charge':recovering?'recover':'idle';
- const u=reducedMotion?1:Math.max(0,Math.min(1,Number.isFinite(progress)?progress:(1+Math.sin(t*.65))*.5));
- const ease=u*u*(3-2*u);
- const idle=kind==='sovereign'?[[-31,-57],[-38,-72],[32,-54],[40,-63]]:
-  kind==='caster'?[[-27,-60],[-32,-74],[29,-48],[34,-57]]:
-  kind==='gunner'?[[-28,-55],[-35,-51],[22,-48],[3,-49]]:[[-26,-48],[-23,-34],[26,-48],[23,-32]];
- // Low throw / high sweep / overhead summon: each describes its danger.
- const windups={jump:[[-24,-50],[-9,-63],[29,-54],[39,-64]],
-  crouch:[[-25,-76],[-15,-94],[27,-70],[35,-88]],
-  move:[[-30,-72],[-32,-98],[31,-72],[36,-99]]};
- const releases={jump:[[-39,-51],[-59,-44],[24,-58],[12,-65]],
-  crouch:[[-39,-76],[-60,-83],[25,-70],[14,-83]],
-  move:[[-33,-53],[-47,-36],[32,-53],[44,-36]]};
- const charge=windups[action]||windups.jump,release=releases[action]||releases.jump;
- const mix=(a,b,k)=>a.map((v,i)=>[v[0]+(b[i][0]-v[0])*k,v[1]+(b[i][1]-v[1])*k]);
- let endpoints=idle,lean=breath*.8;
- if(state==='charge'){endpoints=mix(idle,charge,ease);lean=2+ease*3;}
- else if(state==='release'){
-  // Fast extension, then follow-through. Every release remains a movement.
-  const k=u<.4?u/.4:1-(u-.4)*.27;endpoints=mix(charge,release,k);lean=3-k*7;
- }else if(state==='recover'){endpoints=mix(release,idle,ease);lean=-4*(1-ease);}
- else if(state==='recoil'){endpoints=[[-22,-55],[-4,-64],[31,-49],[27,-31]];lean=5;}
- const bob=breath*.9-(state==='charge'?ease*1.5:0),shoulders=joint(lean,-63+bob),neck=joint(lean,-69+bob);
- const left={hip:joint(-9+lean*.25,-34+bob),knee:joint(-11+lean*.35,-17),foot:joint(-13,0)};
- const right={hip:joint(9+lean*.25,-34+bob),knee:joint(12+lean*.35,-17),foot:joint(15,0)};
- const arms={};for(const [i,side] of ['left','right'].entries()){
-  const sign=i?1:-1,elbow=endpoints[i*2],hand=endpoints[i*2+1],sway=state==='idle'?breath*(i?-1.8:1.8):0;
-  arms[side]={shoulder:joint(sign*17+lean,-61+bob),elbow:joint(elbow[0]+lean,elbow[1]+bob+sway),hand:joint(hand[0]+lean,hand[1]+bob+sway),open:state==='charge'||state==='release'||kind==='caster'||kind==='sovereign'};
- }
- return {state,bob,lean,neck,shoulders,left,right,arms,headTilt:state==='recoil'?.12:state==='release'?-.06:breath*.025,motor:reducedMotion?0:(1+Math.sin(t*1.8))*.5};
-}
 
 function drawShip(c,p,accent,preparing,attacking,hurt){
  // Motors are below the hull; the top ellipse is an exposed walkable deck.

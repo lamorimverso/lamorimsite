@@ -244,7 +244,7 @@ export function drawFallingThreat(c,item,ground=246){
 // Efeitos vetoriais temporizados pela simulação, não por PNG nem timer real.
 // Nenhum desenho altera hitboxes ou cria ataques extras no motor.
 export function drawWindVortex(c,{phase=0,reducedMotion=false}={}){
- const t=reducedMotion?0:phase*.13;
+ const t=reducedMotion?0:phase*.5;
  c.save();
  // Corpo em camadas: túnel de rajadas, curvas largas e núcleo turbulento.
  for(let i=0;i<5;i++){
@@ -365,6 +365,7 @@ export function enemyEmitterPose(width,ground,type,drop=false){
  return {x:width-(drop?155:62),y:ground-149,scale:.92};
 }
 export function drawProjectile(c,item,ground,phase,{reducedMotion=false}={}){
+ if(item.cast&&!item.launched)return;
  const x=item.x+item.width/2,y=ground-item.y;
  const style=item.flightStyle||'glide',color=WEAPON_FX[item.type]||'#70c7df';
  c.save();
@@ -533,7 +534,7 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
   c.translate(0,movement.bob);c.rotate(movement.lean);
   // Perseguidores de solo usam as poses de corrida do atlas. O emissor
   // suspenso continua independente e não transporta o projétil no corpo.
-  drawActor(c,{type:item.type,x:0,y:0,scale:item.height/94,phase,facing:item.approach==='rear'?1:-1});
+  drawActor(c,{type:item.type,x:0,y:0,scale:.95,phase,facing:item.approach==='rear'?1:-1});
  }
  drawWeaponEffects(c,item,phase,reducedMotion);
  c.restore();

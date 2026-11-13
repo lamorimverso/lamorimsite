@@ -14,3 +14,19 @@ test('virar o corpo muda a orientação real sem deslocar o retângulo visível'
   assert.ok(Math.abs(right.min-left.min)<=1&&Math.abs(right.max-left.max)<=1,type+' mantém tamanho e envelope ao virar');
  }
 });
+test('perseguidores de solo têm altura comparável ao herói e mantêm quadros reais de corrida',{skip:!canvas},async t=>{
+ const {readFileSync}=await import('node:fs');
+ const {createCanvas,Image}=canvas,previous=Object.getOwnPropertyDescriptor(globalThis,'Image');
+ globalThis.Image=class extends Image{set src(v){this.url=v;super.src=fileURLToPath(v);}get src(){return this.url;}get naturalWidth(){return this.width;}get naturalHeight(){return this.height;}};
+ t.after(()=>previous?Object.defineProperty(globalThis,'Image',previous):delete globalThis.Image);
+ const url=new URL('../runner-art.mjs',import.meta.url),source=readFileSync(url,'utf8');
+ const spec=source.match(/from ["']([^"']*runner-sprites[^"']*)["']/)[1];await (await import(new URL(spec,url))).loadSprites();
+ const {drawThreat,drawActor}=await import(url);
+ function render(type,phase){const c=createCanvas(320,200).getContext('2d');if(type==='flavio')drawActor(c,{type,x:150,y:160,scale:.95,phase});else drawThreat(c,{type,x:133,width:34,height:58,action:'jump'},160,phase);const pixels=c.getImageData(0,0,320,200).data;let min=200,max=-1;for(let y=0;y<200;y++)for(let x=0;x<320;x++)if(pixels[(y*320+x)*4+3]>80){min=Math.min(min,y);max=Math.max(max,y);}return {height:max-min+1,pixels};}
+ const hero=render('flavio',0);
+ for(const type of ['pf','army','janones','boulos','dino','xandao','haddad','lula','dilma','simone','soraya']){
+  const frames=[0,1,2,3].map(p=>render(type,p));
+  for(const frame of frames)assert.ok(frame.height>=hero.height*.8&&frame.height<=hero.height*1.2,`${type}: ${frame.height}px vs ${hero.height}px`);
+  assert.notDeepEqual(frames[0].pixels,frames[2].pixels,type+' corre em quadros distintos');
+ }
+});
