@@ -56,9 +56,44 @@ test('boca visual do tiro espelha junto com o braço e coincide com o disparo f�
  const art=await artwork(t),core=await import('../runner-core.mjs');
  for(const crouching of [false,true])for(const facing of [-1,1]){
   const r=core.createRun();r.player.x=113;r.player.y=12;r.player.crouching=crouching;
-  const muzzle=core.heroMuzzleFor(r,facing);assert.equal(muzzle.x,130+facing*15);assert.equal(muzzle.y,12+(crouching?18:38));
-  const c=canvas.createCanvas(260,180).getContext('2d');art.drawHeroShot(c,{x:130,y:150,phase:0,age:0,crouching,facing});
-  const d=c.getImageData(130+facing*27-3,150-(crouching?18:38)-4,7,9).data;
-  assert.ok(d.some((v,i)=>i%4===0&&v>230&&d[i+1]>150&&d[i+2]<220&&d[i+3]>100),'clarão junto à mão no lado '+facing);
+  const {heroShotPose}=await import('../runner-hero-shot.mjs');
+  const pose=heroShotPose({crouching,airborne:true,facing}),muzzle=core.heroMuzzleFor(r,facing);
+  assert.equal(muzzle.x,130+pose.muzzle.x);assert.equal(muzzle.y,12-pose.muzzle.y);
+  const c=canvas.createCanvas(260,180).getContext('2d');art.drawHeroShot(c,{x:130,y:150,phase:0,age:0,crouching,airborne:true,facing});
+  const d=c.getImageData(Math.round(130+pose.muzzle.x+facing*8)-4,Math.round(150+pose.muzzle.y)-4,9,9).data;
+  assert.ok(d.some((v,i)=>i%4===0&&v>230&&d[i+1]>150&&d[i+2]<220&&d[i+3]>100),'clarão junto ao telefone no lado '+facing);
+
  }
+});
+
+test('cada quadro de combate desenha uma figura inteira em uma única chamada, sem colagem de cabeça',{skip:!canvas},async t=>{
+ await artwork(t);
+ const url=new URL('../runner-boss-art.mjs',import.meta.url),spec=readFileSync(url,'utf8').match(/from ["']([^"']*runner-sprites[^"']*)["']/)[1];
+ const sprites=await import(new URL(spec,url)),{combatActors}=await import('../runner-combat-sprite-data.mjs'),{combatGeometryFor}=await import('../runner-combat-geometry.mjs');
+ for(const type of Object.keys(combatActors))for(const frame of [0,1,2,3]){
+  const c=canvas.createCanvas(260,200).getContext('2d'),draw=c.drawImage.bind(c),calls=[];
+  c.drawImage=(...args)=>{calls.push(args);draw(...args);};
+  assert.equal(sprites.drawCombatSprite(c,{type,x:130,y:160,frame}),true,type);
+  assert.equal(calls.length,1,'one full figure, no separate head/body layers');
+  const g=combatGeometryFor(type,{frame});assert.deepEqual(calls[0].slice(1,5),[g.frame.x,g.frame.y,g.frame.width,g.frame.height]);
+  assert.ok(opaque(c.getImageData(0,0,260,200).data)>300,type+' full frame has visible pixels');
+ }
+});
+
+test('os cinco uniformes regionais usam os quadros completos corretos nos dois sentidos',{skip:!canvas},async t=>{
+ const art=await artwork(t),{SOLDIER_VARIANTS}=await import('../runner-soldier-variants.mjs'),{combatGeometryFor}=await import('../runner-combat-geometry.mjs');
+ const identities=[];
+ for(const [armyVariant,variant] of Object.entries(SOLDIER_VARIANTS)){
+  const frames=[];
+  for(const approach of ['front','rear'])for(let phase=0;phase<4;phase++){
+   const c=canvas.createCanvas(260,200).getContext('2d'),draw=c.drawImage.bind(c),calls=[];
+   c.drawImage=(...args)=>{calls.push(args);draw(...args);};
+   art.drawThreat(c,{type:'army',x:110,width:40,height:47,armyVariant,approach},160,phase,{reducedMotion:true,weaponEffects:false});
+   assert.equal(calls.length,1,'uniforme é figura inteira');
+   const g=combatGeometryFor(variant.actor,{frame:phase});assert.deepEqual(calls[0].slice(1,5),[g.frame.x,g.frame.y,g.frame.width,g.frame.height]);
+   frames.push(Buffer.from(c.getImageData(0,0,260,200).data).toString('base64'));
+  }
+  assert.equal(new Set(frames).size,8,'quatro passadas próprias e orientação real');identities.push(frames[0]);
+ }
+ assert.equal(new Set(identities).size,5,'cada cenário tem desenho diferente');
 });

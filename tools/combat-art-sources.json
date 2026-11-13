@@ -1,0 +1,83 @@
+{
+  "references": [
+    "flavio-motion-v2.png",
+    "characters-motion-v2.png",
+    "cameos-motion-v1.png",
+    "chase-motion-v1.png",
+    "pursuers-motion-v1.png"
+  ],
+  "poses": [
+    "ready",
+    "windup",
+    "release",
+    "recovery"
+  ],
+  "sources": [
+    {
+      "name": "combatA",
+      "file": "combat-original-a-v1",
+      "actors": [
+        "janones",
+        "joice",
+        "dilma",
+        "simone"
+      ],
+      "sourceGeneration": "dab26210-289a-4746-8410-fca54638e780"
+    },
+    {
+      "name": "combatB",
+      "file": "combat-original-b-v1",
+      "actors": [
+        "haddad",
+        "lula",
+        "xandao",
+        "pf"
+      ],
+      "sourceGeneration": "6bebb83c-0297-439e-89a6-48f5ed852335"
+    },
+    {
+      "name": "combatC",
+      "file": "combat-original-c-v1",
+      "actors": [
+        "soraya",
+        "boulos",
+        "dino",
+        "bossonari"
+      ],
+      "sourceGeneration": "fe217549-76df-49fe-8ba0-b73113d70974"
+    },
+    {
+      "name": "combatD",
+      "file": "combat-original-d-v1",
+      "actors": [
+        "meme-army",
+        "army",
+        "flavio",
+        "ze-gotinha"
+      ],
+      "sourceGeneration": "3e5de6ce-0c5a-4395-8df6-533d693252ab"
+    },
+    {
+      "name": "combatE",
+      "file": "combat-original-e-v1",
+      "actors": [
+        "army-run",
+        "bossonari-run",
+        "flavio-air-shot",
+        "flavio-slide-shot"
+      ],
+      "sourceGeneration": "00599027-6d06-4dc3-a0e2-b4e9a1d25b0a"
+    },
+    {
+      "name": "combatF",
+      "file": "soldiers-regions-v1",
+      "actors": [
+        "army-rio-run",
+        "army-argentina-run",
+        "army-florida-run",
+        "army-casa-branca-run"
+      ],
+      "sourceGeneration": "a97945f7-3812-4ba8-84f6-adf705644ae3"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=69851726fc55';
 import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
-import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=4447edaa9d9a';
-import {regularCastMuzzle} from './runner-cast-pose.mjs?v=9536f7dc0f61';
+import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=7401390dbcd6';
+import {regularCastMuzzle} from './runner-cast-pose.mjs?v=81dca23c7b76';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=181506ec1b3c';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=a924d1c62bee';
 import {STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,planArenaAttack,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=b2fd49a73db3';
@@ -68,8 +69,8 @@ export const RAID_FACTS = Object.freeze([
  {title:'Arquivo · 2020',text:'Fabrício Queiroz e outros 15 investigados também foram denunciados pelo MP-RJ.',source:'MP-RJ · 04/11/2020',url:'https://www.mprj.mp.br/web/guest/visualizar?noticiaId=96203'}
 ].map(Object.freeze));
 const POOLS = [
- ['pf','barrier','janones','boulos'],['janones','army','barrier','pf'],
- ['pf','barrier','case','dino'],['army','pf','case'],['pf','janones','army','dino','case','barrier']
+ ['pf','barrier','janones','boulos','army'],['janones','army','barrier','pf'],
+ ['pf','barrier','case','dino','army'],['army','pf','case'],['pf','janones','army','dino','case','barrier']
 ];
 // Desbloqueio por risco: cada ator entra em cena após o jogador aprender a
 // reagir aos anteriores. Chefões mantêm a ordem e os marcos da História.
@@ -356,7 +357,7 @@ export function setAttackRun(run,active){
  return run.player.attackHeld;
 }
 export function heroMuzzleFor(run,facing=1){
- const {muzzle}=heroShotPose({facing,crouching:run.player.crouching});
+ const {muzzle}=heroShotPose({facing,crouching:run.player.crouching,airborne:run.player.y>0});
  return {x:playerX(run)+PLAYER.width/2+muzzle.x,y:run.player.y-muzzle.y};
 }
 export function attackRun(run){
@@ -365,7 +366,7 @@ export function attackRun(run){
  const pose=bossArenaPose(b,visibleWidth(run));
  p.shotFacing=pose.x<playerX(run)+PLAYER.width/2?-1:1;
  const {x,y}=heroMuzzleFor(run,p.shotFacing);
- const dx=pose.x-x,dy=pose.platformY+48-y,distance=Math.max(1,Math.hypot(dx,dy));
+ const dx=p.shotFacing*Math.max(1,Math.abs(pose.x-x)),dy=pose.platformY+48-y,distance=Math.max(1,Math.hypot(dx,dy));
  (run.heroShots??=[]).push({x,y,previousX:x,previousY:y,vx:dx/distance*760,vy:dy/distance*760,age:0,damage:b.combat?bossCounterWindow(b).damage:undefined});
  p.attackCooldown=.28;p.attackFor=HERO_SHOT_DURATION;run.shotsFired=(run.shotsFired||0)+1;return true;
 }
@@ -526,9 +527,10 @@ function advanceBoss(run,dt,rng,balance){
  const [width,baseHeight]=({hammer:[46,44],mandado:[42,44],
   lhand:[60,46],receipts:[44,40],stamp:[44,36],message:[44,36],microphone:[46,40],handcuffs:[46,40],barrier:[44,32],wind:[46,44],'budget-sheets':[46,42],'parachute-cross':[46,44],'rolling-case':[40,30],'falling-case':[36,36],'cloroquina-prop':[52,38],'ivermectina-prop':[52,38],'meme-ghost':[52,44]})[attackType];
  const height=pattern.action==='crouch'?84:baseHeight;
- const x=Math.max(boss.combat?bossArenaPose(boss,visibleWidth(run)).x-48-width/2:visibleWidth(run)-104,frontContact(run)+60);
+ const spriteMuzzle=combatGeometryFor(boss.type,{frame:2})?.muzzle;
+ const x=Math.max(boss.combat?bossArenaPose(boss,visibleWidth(run)).x+(spriteMuzzle?.x??-48)-width/2:visibleWidth(run)-104,frontContact(run)+60);
  const entry=pattern.approach||'diagonal';
- const fromY=boss.combat?bossArenaPose(boss,visibleWidth(run)).platformY+52:entry==='drop'?155:pattern.action==='jump'?77:90;
+ const fromY=boss.combat?bossArenaPose(boss,visibleWidth(run)).platformY-(spriteMuzzle?.y??-52):entry==='drop'?155:pattern.action==='jump'?77:90;
  const toY=Number.isFinite(pattern.targetY)?pattern.targetY:pattern.action==='jump'?(entry==='drop'?22:PLAYER.height/2):90;
  attack={x,width,height,type:attackType,action:pattern.action,owner:boss.type,bossAttack:true,counted:false,
   approach:entry,flightStyle:projectileStyle(attackType),...threatMotion(run,x,balance.bossApproach),
@@ -600,7 +602,8 @@ function regularShot(run,type,actor,approach){
  const width=46,muzzle=regularCastMuzzle(actor,visibleWidth(run),WORLD.ground,run.elapsed*10);
  const reserved=run.obstacles.filter(o=>!o.passed&&!o.counted).map(o=>threatReservation(run,o)).filter(t=>Number.isFinite(t)&&t>0);
  const eta=Math.max(1.08,approach/assistance(run),...reserved.map(t=>t+REACTION_GAP));
- const flightFor=.6,waitFor=eta-flightFor;
+ // A nearby emitter holds its wind-up longer so a preceding jump can land.
+ const flightFor=Math.min(.6,.24+Math.abs(muzzle.x-(playerX(run)+17))/900),waitFor=eta-flightFor;
  return {x:muzzle.x-width/2,y:muzzle.y,width,height:72,type,action:'crouch',sourceActor:actor,projectile:true,
   approach:'overhead',flightStyle:projectileStyle(type),launchX:muzzle.x,launchY:muzzle.y,targetX:playerX(run)+17,targetY:84,speed:180,waitFor,
   cast:{windupFor:waitFor,flightFor,flightAge:0,fromX:muzzle.x,fromY:muzzle.y,toX:playerX(run)+17}};
@@ -793,6 +796,7 @@ export function advanceRun(run,seconds,rng){
      run.lastGroundActor=foe.type;
     }
    }
+   if(anchor.type==='army')anchor.armyVariant=stageAt(routeClock(run)).id;
    if(!anchor.falling&&!anchor.groundHazard)run.obstacles.push(anchor);run.spawnedObstacles++;
    if(raidActive)run.raid.waves=(run.raid.waves||0)+1;
    run.attackStyles.push(anchor.approach||'overhead');

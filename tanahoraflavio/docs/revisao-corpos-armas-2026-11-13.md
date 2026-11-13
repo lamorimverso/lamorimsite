@@ -1,5 +1,7 @@
 # Revisão de corpos completos e armas proporcionais
 
+Registro da revisão anterior. A composição dos corpos descrita abaixo foi substituída por [sprites inteiros ilustrados e soldados por cenário](revisao-sprites-inteiros-2026-11-13.md). O detalhamento das armas continua válido.
+
 O print mostrava uma cabeça ilustrada sobre um corpo genérico de torso plano e braços/pernas feitos com linhas grossas. A existência de movimento não demonstrava que o corpo estivesse desenhado com o mesmo acabamento da cabeça.
 
 ## Corpos

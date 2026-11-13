@@ -21,11 +21,12 @@ test('resize preserva o prazo do projétil emitido e os pontos continuam finitos
  assert.ok(Math.abs(core.threatTimeToContact(r,o)-eta)<1e-9);assert.ok(Number.isFinite(o.cast.fromX)&&Number.isFinite(o.cast.toX));
 });
 test('origem do disparo coincide com a mão no início da soltura, inclusive com movimento reduzido',async()=>{
- const {standingEnemyPose,regularCastMuzzle,regularEmitterPose}=await import('../tanahoraflavio/runner-cast-pose.mjs');
+ const {regularCastMuzzle,regularEmitterPose}=await import('../tanahoraflavio/runner-cast-pose.mjs');
+ const {combatGeometryFor}=await import('../tanahoraflavio/runner-combat-geometry.mjs');
  for(const width of [480,900])for(const reducedMotion of [false,true])for(const type of ['dilma','simone','soraya','joice']){
-  const phase=19,pose=regularEmitterPose(type,width,core.WORLD.ground),rig=standingEnemyPose({phase,reducedMotion,attacking:true,progress:0,action:'crouch',classId:'caster'}),muzzle=regularCastMuzzle(type,width,core.WORLD.ground,phase);
-  assert.equal(muzzle.x,pose.x+(rig.arms.left.hand.x-7)*pose.scale);
-  assert.ok(Math.abs(muzzle.y-(core.WORLD.ground-pose.y-rig.arms.left.hand.y*pose.scale))<1,'diferença subpixel de respiração');
+  const phase=19,pose=regularEmitterPose(type,width,core.WORLD.ground),rig=combatGeometryFor(type,{phase,reducedMotion,frame:2,scale:pose.scale}),muzzle=regularCastMuzzle(type,width,core.WORLD.ground,phase);
+  assert.equal(muzzle.x,pose.x+rig.muzzle.x);
+  assert.ok(Math.abs(muzzle.y-(core.WORLD.ground-pose.y-rig.muzzle.y))<1,'diferença subpixel de respiração');
  }
 });
 test('passaportes vinculados seguem o disparo durante preparação, voo e resize',()=>{

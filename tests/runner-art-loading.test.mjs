@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {definitions} from '../tanahoraflavio/runner-sprite-data.mjs';
+import {spriteDefinitions as definitions} from '../tanahoraflavio/runner-sprites.mjs';
 
 let moduleId=0;
 const sheetCount=Object.keys(definitions).length;
@@ -130,15 +130,16 @@ test('atlas com dimensões incompatíveis é rejeitado e pode ser tentado de nov
 test('corrida base carrega antes dos apoios e falha opcional não descarta os personagens prontos',async t=>{
  const {sprites,images,load}=await browserEvents(t);
  const core=sprites.loadSprites(()=>{},{coreOnly:true});
- assert.equal(images.length,5,'cinco folhas essenciais cobrem os rostos de todos os chefes');
+ assert.equal(images.length,11,'onze folhas essenciais incluem os corpos completos de combate');
  for(const image of images)load(image);await core;
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'pf'}),true,'PF usa seu próprio desenho original enquanto a expansão carrega');
+ for(const type of ['army-run','army-rio-run','army-argentina-run','army-florida-run','army-casa-branca-run'])assert.equal(sprites.drawCombatSprite(drawingContext(),{type,frame:2}),true,'uniforme inteiro é essencial: '+type);
  const extras=sprites.loadSprites(),error=extras.then(()=>null,e=>e);
- assert.equal(images.length,9,'as quatro folhas de apoio não baixam novamente as cinco prontas');
- images[5].onerror();assert.ok(await error);
+ assert.equal(images.length,15,'as quatro folhas de apoio não baixam novamente as onze prontas');
+ images[11].onerror();assert.ok(await error);
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'flavio'}),true);
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'pf'}),true);
- const retry=sprites.loadSprites();for(const image of images.slice(9))load(image);await retry;
+ const retry=sprites.loadSprites();for(const image of images.slice(15))load(image);await retry;
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'boulos'}),true);
 });
 test('rostos de todos os chefes normais estão nos atlas essenciais',async t=>{
