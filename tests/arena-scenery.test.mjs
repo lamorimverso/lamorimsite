@@ -88,13 +88,13 @@ test('lighting and route geometry stay continuous across every destination and t
  }
 });
 
-test('the five destinations retain their 7 km journey and distinct parallax speeds',()=>{
- const places=['brasilia','rio','argentina','florida','casa-branca'];
- for(let index=0;index<10;index++){
+test('the six destinations retain their 7 km journey and distinct parallax speeds',()=>{
+ const places=['brasilia','rio','argentina','paraguai','florida','casa-branca'];
+ for(let index=0;index<12;index++){
   const routeDistance=index*7000+2500;
   const a=journeySceneryGeometry({routeDistance,width:480});
   const b=journeySceneryGeometry({routeDistance:routeDistance+100,width:480});
-  assert.equal(a.landmarks.find(item=>item.segmentIndex===index).stageId,places[index%5]);
+  assert.equal(a.landmarks.find(item=>item.segmentIndex===index).stageId,places[index%places.length]);
   assert.equal(a.landmarks.find(item=>item.segmentIndex===index).x,168);
   for(const [layer,delta] of [[0,14],[1,18],[2,22]]){
    const previous=a.layers[layer].segments.find(item=>item.segmentIndex===index);

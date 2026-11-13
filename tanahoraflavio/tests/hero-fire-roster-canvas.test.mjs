@@ -42,9 +42,9 @@ test('todos os apoios e as duas formas do herói possuem desenhos animados próp
   }assert.ok(new Set(poses).size>=3,type+' não fica preso em um quadro');
  }
 });
-test('os vinte encontros desenham cabeça e corpo e articulam carga e soltura',{skip:!canvas},async t=>{
+test('os24 encontros desenham cabeça e corpo e articulam carga e soltura',{skip:!canvas},async t=>{
  await artwork(t);const {storyBossAt}=await import('../runner-bosses.mjs'),{drawHoverEnemy}=await import('../runner-boss-art.mjs');
- for(let i=0;i<20;i++){
+ for(let i=0;i<24;i++){
   const boss=storyBossAt(i),poses=[];for(const flags of [{preparing:true,progress:.8},{attacking:true,progress:.7},{recovering:true,progress:.5}]){
    const c=canvas.createCanvas(260,210).getContext('2d');drawHoverEnemy(c,{type:boss.type,classId:boss.classId,x:130,y:160,phase:2,...flags});
    assert.ok(opaque(c.getImageData(65,38,125,65).data)>150,boss.id+' cabeça visível');
@@ -80,7 +80,7 @@ test('cada quadro de combate desenha uma figura inteira em uma única chamada, s
  }
 });
 
-test('os cinco uniformes regionais usam os quadros completos corretos nos dois sentidos',{skip:!canvas},async t=>{
+test('os seis uniformes regionais usam os quadros completos corretos nos dois sentidos',{skip:!canvas},async t=>{
  const art=await artwork(t),{SOLDIER_VARIANTS}=await import('../runner-soldier-variants.mjs'),{combatGeometryFor}=await import('../runner-combat-geometry.mjs');
  const identities=[];
  for(const [armyVariant,variant] of Object.entries(SOLDIER_VARIANTS)){
@@ -95,5 +95,5 @@ test('os cinco uniformes regionais usam os quadros completos corretos nos dois s
   }
   assert.equal(new Set(frames).size,8,'quatro passadas próprias e orientação real');identities.push(frames[0]);
  }
- assert.equal(new Set(identities).size,5,'cada cenário tem desenho diferente');
+ assert.equal(new Set(identities).size,6,'cada cenário tem desenho diferente');
 });

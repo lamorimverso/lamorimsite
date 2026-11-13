@@ -13,15 +13,15 @@ function scene(index=0){
  core.advanceRun(r,dt,()=>.5);return r;
 }
 test('campanha possui quatro encontros por cenário, classes e dificuldade crescente',()=>{
- const rows=Array.from({length:20},(_,i)=>bosses.storyBossAt(i));
- for(let stage=0;stage<5;stage++){
+ const rows=Array.from({length:core.STORY_BOSS_COUNT},(_,i)=>bosses.storyBossAt(i));
+ for(let stage=0;stage<core.STAGES.length;stage++){
   const group=rows.filter(b=>b.stageIndex===stage);assert.equal(group.length,4);
   assert.equal(new Set(group.map(b=>b.classId)).size,4);
   assert.ok(group.every((b,i)=>b.rank===i+1&&b.hp>0));
   assert.ok(group.every((b,i)=>i===0||b.hp>group[i-1].hp));
  }
  assert.equal(rows.at(-1).type,'meme-army');assert.match(rows.at(-1).name,/Fantasma do Comunismo/);
- assert.equal(bosses.storyBossAt(20),null);
+ assert.equal(bosses.storyBossAt(core.STORY_BOSS_COUNT),null);
  assert.equal(bosses.nextStoryBossDistance(0),22000);
  assert.equal(bosses.nextStoryBossDistance(3),27100);
  assert.equal(bosses.nextStoryBossDistance(4),29000);
@@ -44,13 +44,13 @@ test('disparo real possui intervalo e acerta o chefe sem dano durante sua entrad
  for(let i=0;i<160;i++)core.advanceRun(r,dt,()=>.5);
  assert.ok(r.boss.hp<hp,'é preciso existir colisão de tiro, não apenas animação');
 });
-test('atirar e esquivar vence encontros e a urna só abre depois do vigésimo',()=>{
- for(let index=0;index<20;index++){
+test('atirar e esquivar vence encontros e a urna só abre depois do último',()=>{
+ for(let index=0;index<core.STORY_BOSS_COUNT;index++){
   const r=scene(index);core.setAttackRun(r,true);
   for(let i=0;i<120*60&&r.bossesDefeated===index;i++)core.advanceRun(r,dt,()=>.5);
   assert.equal(r.bossesDefeated,index+1,'encontro '+index);
   assert.equal(r.boss,null);assert.equal(r.heroShots.length,0);
-  assert.equal(r.status,index===19?'ballot':'running');
+  assert.equal(r.status,index===core.STORY_BOSS_COUNT-1?'ballot':'running');
  }
 });
 test('resize da arena conserva combate e tiros; entrada reposiciona sem teleporte',()=>{
@@ -83,26 +83,26 @@ test('artilheiro dispara rajadas e conjurador inclui queda com alvo marcado',()=
  }
  assert.ok(counts[1]>counts[0],'artilheiro deve ter rajadas distintas da sentinela');
 });
-test('anúncios da História usam a identidade e o objetivo real dos vinte encontros',()=>{
- for(let index=0;index<20;index++){
+test('anúncios da História usam a identidade e o objetivo real dos 24 encontros',()=>{
+ for(let index=0;index<core.STORY_BOSS_COUNT;index++){
   const r=scene(index);
   assert.ok(r.event.includes(r.boss.name),'identidade '+index+': '+r.event);
   assert.ok(r.event.includes(r.boss.objective),'objetivo de combate '+index);
-  assert.equal(r.event.startsWith('CHEFÃO FINAL'),index===19,'somente o vigésimo é final');
+  assert.equal(r.event.startsWith('CHEFÃO FINAL'),index===core.STORY_BOSS_COUNT-1,'somente o último é final');
  }
  const r=scene();r.boss.hp=0;core.advanceRun(r,dt,()=>.5);
- assert.match(r.event,/1\/20/);
+ assert.match(r.event,new RegExp('1/'+core.STORY_BOSS_COUNT));
 });
 test('bossFigure desenha o corpo na mesma posição atingida pelo tiro nos dois modos',()=>{
  const source=readFileSync(new URL('../tanahoraflavio/runner.mjs',import.meta.url),'utf8');
  const start=source.indexOf('  function bossFigure(){'),end=source.indexOf('  function character(){',start);
- const make=Function('env','const {run,ctx,virtualWidth,WORLD,bossArenaPose,bossPresentationFor,enemyEmitterPose,enemyMotionFor,prefersReducedMotion,drawHoverEnemy,bossCue}=env;'+source.slice(start,end)+';return bossFigure;');
+ const make=Function('env','const {run,ctx,virtualWidth,WORLD,STAGES,bossArenaPose,bossPresentationFor,enemyEmitterPose,enemyMotionFor,prefersReducedMotion,drawHoverEnemy,bossCue}=env;'+source.slice(start,end)+';return bossFigure;');
  for(const mode of ['story','endless'])for(const reduced of [true,false]){
   const r=core.createRun({mode});core.startRun(r);r.nextBossAt=0;r.nextRaid=Infinity;r.shieldFor=Infinity;
   core.advanceRun(r,dt,()=>.5);for(let i=0;i<160;i++)core.advanceRun(r,dt,()=>.5);
   const state={x:0,y:0},stack=[];let drawn;
   const ctx={save(){stack.push({...state});},restore(){Object.assign(state,stack.pop());},translate(x,y){state.x+=x;state.y+=y;},fillText(){}};
-  const draw=make({run:r,ctx,virtualWidth:900,WORLD:core.WORLD,bossArenaPose:core.bossArenaPose,bossPresentationFor:bosses.bossPresentationFor,
+  const draw=make({run:r,ctx,STAGES:core.STAGES,virtualWidth:900,WORLD:core.WORLD,bossArenaPose:core.bossArenaPose,bossPresentationFor:bosses.bossPresentationFor,
    enemyEmitterPose:art.enemyEmitterPose,enemyMotionFor:art.enemyMotionFor,prefersReducedMotion:()=>reduced,
    drawHoverEnemy(c,args){drawn={x:state.x+args.x,y:state.y+args.y};},bossCue:()=>({action:'jump'})});
   draw();assert.equal(core.attackRun(r),true);

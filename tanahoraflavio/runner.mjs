@@ -1,18 +1,19 @@
-import {HERO_SHOT_DURATION} from './runner-hero-shot.mjs?v=7401390dbcd6';
-import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=81dca23c7b76';
+import {createMovementSoundDirector} from './runner-movement-audio.mjs?v=3b96b07ed6e3';
+import {HERO_SHOT_DURATION} from './runner-hero-shot.mjs?v=82acbd3c19d6';
+import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=ef9cdbeacd92';
 import {createShotSoundTracker} from './runner-shot-events.mjs?v=a3769f250d68';
-import {bossPresentationFor} from './runner-bosses.mjs?v=b2fd49a73db3';
-import {createVoiceDirector} from './runner-voice-director.mjs?v=566f29af1611';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=b0ef86751f58";
-import {bossCounterWindow} from './runner-bosses.mjs?v=b2fd49a73db3';
-import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=99096aedd1b2';
-import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=909ad8a2bd7c";
-import { createGameAudio } from "./runner-audio.mjs?v=800218e88fa7";
-import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=a924d1c62bee";
-import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=c9fb039ac877";
+import {bossPresentationFor} from './runner-bosses.mjs?v=bd83e2f8c95b';
+import {createVoiceDirector} from './runner-voice-director.mjs?v=a8018f2b07c5';
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=36ca231973a9";
+import {bossCounterWindow} from './runner-bosses.mjs?v=bd83e2f8c95b';
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=d95ecb34dba9';
+import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=35fcedf56da3";
+import { createGameAudio } from "./runner-audio.mjs?v=c5f2615fb3e7";
+import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=e89d6a84511d";
+import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=5bf1abd1a18b";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
 
-import {allyById} from './runner-allies.mjs?v=181506ec1b3c';
+import {allyById} from './runner-allies.mjs?v=5bdfc0ff6fb7';
 import {createPressGate,createHeldSources,fireBindingFor} from './runner-input.mjs?v=bbf7f3e16548';
 
 function initRunner() {
@@ -79,12 +80,13 @@ function initRunner() {
     note.title=clip?clip.speaker+". "+clip.context:"";
   }});
   const shotSounds=createShotSoundTracker((actor,weapon,shot)=>{if(!audio.enemyShot(actor,weapon))audio.effect(weaponEffect(shot));});
-  const voices=createVoiceDirector({play:(id,options)=>audio.voice(id,options)});
+  const voices=createVoiceDirector({play:(id,options)=>audio.voice(id,options),selector:audio.voiceSelector});
+  const movementSounds=createMovementSoundDirector({play:name=>audio.movement(name)});
   $("game-sound-label").textContent=audio.enabled?"Som ligado":"Som desligado";
   $("game-sound").title=$("game-sound-label").textContent;
   $("game-sound").setAttribute("aria-pressed",String(audio.enabled));
   let lastRaidKey="",lastPageMotion=null;
-  const campaignPhases=["Convenções","Campanha","1º turno","Reta final","Diplomação"];
+  const campaignPhases=["Convenções","Campanha","1º turno","Travessia do Paraguai","Reta final","Diplomação"];
   const routeSeconds=()=>campaignRouteDistance(run)/SCENE_DISTANCE*SCENE_SECONDS;
   const pad = number => String(number).padStart(2, "0");
   // A preferência pode mudar enquanto o jogo está aberto.
@@ -122,10 +124,10 @@ function initRunner() {
     $("game-passport-progress").style.width=run.passports%100+"%";
     const lap=Math.floor(campaignRouteDistance(run)/(SCENE_DISTANCE*STAGES.length))+1;
 
-    $("game-phase").textContent="Cenário "+(stage.index+1)+" de 5 · "+(run.mode==="story"?"História "+Math.min(run.bossesDefeated,STORY_BOSS_COUNT)+"/"+STORY_BOSS_COUNT:"Volta "+lap);
+    $("game-phase").textContent="Cenário "+(stage.index+1)+" de "+STAGES.length+" · "+(run.mode==="story"?"História "+Math.min(run.bossesDefeated,STORY_BOSS_COUNT)+"/"+STORY_BOSS_COUNT:"Volta "+lap);
     $("game-stage-name").textContent=stage.name;
     const cast=characterProgressAt(run);
-    $("game-difficulty").textContent="Risco "+difficulty.level+"/10 · "+cast.available+"/"+cast.total+" rivais";
+    $("game-difficulty").textContent="Risco "+difficulty.level+" · "+cast.available+"/"+cast.total+" rivais";
     $("game-stage-time").textContent=run.status==="ballot"?"Etapa final · Urna":run.status==="prison"?"Prisão fictícia":run.status==="won"?"História concluída!":run.status==="over"?"Fim da corrida":run.boss?.combat?"Confronto "+(run.boss.slot+1)+"/4 · "+run.boss.rankName:run.boss?run.boss.remaining+" ataques para escapar do chefão":run.raid?"Perseguição especial":run.mode==="story"?"Chefões "+run.bossesDefeated+"/"+STORY_BOSS_COUNT:campaignPhases[stage.index];
     $("game-best").textContent=best.toLocaleString("pt-BR");
     $("game-time").textContent=pad(Math.floor(run.elapsed/60))+":"+pad(Math.floor(run.elapsed%60));
@@ -159,7 +161,7 @@ function initRunner() {
       const b=run.boss;
       section.dataset.bossPhase=b.phase||'attack';
       if(b.combat){
-       $("game-boss-name").textContent=b.name+" · "+b.className+" · "+b.rankName;
+       $("game-boss-name").textContent=b.name+" · "+b.className+" · "+b.rankName+" "+b.rank;
        $("game-boss-health").setAttribute("aria-valuemax",String(b.maxHp));
        $("game-boss-health").setAttribute("aria-valuenow",String(b.hp));
        $("game-boss-health").setAttribute("aria-label","Energia de "+b.name);
@@ -246,7 +248,7 @@ function initRunner() {
       if(lastStatus!=="over")section.dispatchEvent(new Event("runner:over"));
     }
     if(lastStatus!==run.status||lastStage!==stage.index||lastCollected!==run.collected||lastPower!==power||lastLives!==run.lives||lastEvents!==run.events){
-      let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="ballot"?"Etapa final: digite dois números na urna fictícia.":run.status==="prison"?"Flávio foi preso. A campanha vai recomeçar.":run.status==="won"?"História concluída: todos os 20 chefões superados.":run.status==="over"?"Foi pego pela Polícia Federal! "+dodgeHint()+" "+score+" metros percorridos. Toque em Tentar de novo.":stage.name+" · pule ou abaixe conforme o perigo.";
+      let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="ballot"?"Etapa final: digite dois números na urna fictícia.":run.status==="prison"?"Flávio foi preso. A campanha vai recomeçar.":run.status==="won"?"História concluída: todos os "+STORY_BOSS_COUNT+" chefões superados.":run.status==="over"?"Foi pego pela Polícia Federal! "+dodgeHint()+" "+score+" metros percorridos. Toque em Tentar de novo.":stage.name+" · pule ou abaixe conforme o perigo.";
       if(run.status==="running"){
         if(run.events>lastEvents)message=run.event;
         else if(lastCollected!==run.collected)message="Passaporte coletado. Faltam "+(100-run.passports%100)+" para uma vida.";
@@ -282,7 +284,7 @@ function initRunner() {
   function frame(now) {
     frameId=0;if(run.status!=="running")return;
     const timing=advanceFrameClock(frameClock,now),wasAirborne=run.player.y>0;
-    const before={lives:run.lives,collected:run.collected,boss:run.boss?.type,
+    const before={hp:run.player.hp,lives:run.lives,collected:run.collected,boss:run.boss?.type,
       passports:run.passports,spawned:run.spawnedObstacles,attacks:run.boss?.fired||0,jacare:run.player.isJacare};
     let bufferedTakeoff=false;
     for(let i=0;i<timing.steps&&run.status==="running";i++){
@@ -292,7 +294,7 @@ function initRunner() {
     }
     if(wasAirborne&&run.player.y===0)landingUntil=run.elapsed+.12;
     updateUI();
-    if(run.lives<before.lives)audio.effect("hit");
+    if(run.status==="running"&&(run.lives<before.lives||run.player.hp<before.hp))audio.effect("hit");
     else if(before.jacare&&!run.player.isJacare)audio.effect("restore");
     else if(before.boss&&!run.boss)audio.effect("victory");
     else if(!before.boss&&run.boss){audio.actorCue(run.boss.type);audio.effect("boss");voices.event("boss",run);}
@@ -311,7 +313,8 @@ function initRunner() {
     voices.update(run,{safe:nearest>.9});
     shotSounds.update(run.obstacles,run.boss?.type);
     audio.background({active:run.status==="running",pressure:difficultyAt(run.distance,run.elapsed).pressure,boss:!!run.boss,raid:run.raid?.phase==="active"});
-    if(bufferedTakeoff&&run.status==="running")audio.effect("jump");
+    if(run.status==="over"&&run.lives<before.lives)audio.effect("hit");
+    movementSounds.update(run,{bufferedTakeoff});
     draw();schedule();
   }
   function resumeFromGesture(){
@@ -347,7 +350,7 @@ function initRunner() {
     audio.stop();audio.prime();audio.actorCue("flavio");voices.reset();lastRaidKey="";
     clearControls();
     shotSounds.reset();
-    run=createRun({assisted:preferences.assisted,mode:$("game-mode-story").checked?"story":"endless"});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);landingUntil=0;
+    run=createRun({assisted:preferences.assisted,mode:$("game-mode-story").checked?"story":"endless"});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);movementSounds.reset(run);landingUntil=0;
     if(!supportReady)prepareSupport();
     $("game-settings").open=false;$("game-options-panel").open=false;$("game-help").open=false;
     crouchPose=0;lastPoseFrame=performance.now();
@@ -358,14 +361,14 @@ function initRunner() {
   function jump(){
     resumeFromGesture();
     if(["ready","over"].includes(run.status))begin();
-    if(jumpRun(run)){audio.effect("jump");draw();}
+    if(jumpRun(run)){movementSounds.update(run);draw();}
   }
   function crouch(active){
     if(crouchRun(run,active)){draw();}
     else if(!active)draw();
   }
   function clearControls(){
-    trackPointers.clear();moveKeys.clear();jumpKeys.clear();crouchSources.clear();attackSources.clear();clearRunInput(run);
+    trackPointers.clear();moveKeys.clear();jumpKeys.clear();crouchSources.clear();attackSources.clear();clearRunInput(run);movementSounds.reset(run);
   }
   function fire(source,active){
     attackSources.set(source,active);setAttackRun(run,attackSources.active);
@@ -542,7 +545,7 @@ function initRunner() {
     const presentation=bossPresentationFor(b,run.obstacles);
     const {preparing,attacking}=presentation;
     ctx.save();ctx.translate(bossX,bossY);
-    drawHoverEnemy(ctx,{type:b.type,x:0,y:0,scale:pose.scale,phase,...presentation,hurt:b.hitFlashFor>0,reducedMotion:prefersReducedMotion(),classId:b.classId});
+    drawHoverEnemy(ctx,{type:b.type,x:0,y:0,scale:pose.scale,phase,...presentation,hurt:b.hitFlashFor>0,reducedMotion:prefersReducedMotion(),classId:b.classId,armyVariant:STAGES[b.stageIndex]?.id,enraged:b.enraged});
     ctx.restore();
     if(b.nextAttack<.65&&b.fired<b.total&&!run.obstacles.some(o=>o.bossAttack&&!o.counted)){
       ctx.fillStyle="#843338";ctx.font="800 16px system-ui";ctx.textAlign="center";
@@ -632,8 +635,8 @@ function initRunner() {
     if(["route","destination"].includes(aid.kind)){
       // Compact itinerary: keep the allies' route information without scene captions.
       const index=stageAt(routeSeconds()).index;
-      for(let i=0;i<5;i++){
-        ctx.fillStyle=i===index?"#267448":"#b8d0bf";ctx.beginPath();ctx.arc(virtualWidth-91+i*14,83,i===index?4:2.5,0,Math.PI*2);ctx.fill();
+      for(let i=0;i<STAGES.length;i++){
+        ctx.fillStyle=i===index?"#267448":"#b8d0bf";ctx.beginPath();ctx.arc(virtualWidth-(STAGES.length*14+21)+i*14,83,i===index?4:2.5,0,Math.PI*2);ctx.fill();
       }
       ctx.strokeStyle="#267448";ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(virtualWidth-20,80);ctx.lineTo(virtualWidth-17,83);ctx.lineTo(virtualWidth-20,86);ctx.stroke();
     }

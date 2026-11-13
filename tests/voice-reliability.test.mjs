@@ -12,7 +12,7 @@ for(const replacement of [null,{type:'lula'},{type:'haddad'}]){
  });
 }
 test('chefão Joice usa o recorte de arquivo existente',()=>{
- const played=[],d=createVoiceDirector({play:(id,options)=>(played.push({id,priority:options.priority}),true)}),run=bossRun();
+ const played=[],d=createVoiceDirector({random:()=>0,play:(id,options)=>(played.push({id,priority:options.priority}),true)}),run=bossRun();
  run.boss.type='joice';d.event('boss',run);d.update(run,{safe:true});
  assert.deepEqual(played,[{id:'joice',priority:2}]);
 });

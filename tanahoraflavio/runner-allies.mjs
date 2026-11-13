@@ -12,7 +12,7 @@ export const ALLIES=Object.freeze([
  {id:'tarcisio',name:'Tarcísio de Freitas',kind:'destination',label:'Próximo destino indicado',duration:6},
  {id:'damares',name:'Damares Alves',kind:'sky',label:'Atenção às quedas',duration:6},
  {id:'bia',name:'Bia Kicis',kind:'quest',label:'Colete três passaportes',duration:8},
- {id:'trump',name:'Donald Trump',kind:'telegraph',label:'Mais tempo para ler o perigo',duration:5,stages:[3,4]},
+ {id:'trump',name:'Donald Trump',kind:'telegraph',label:'Mais tempo para ler o perigo',duration:5,stages:[4,5]},
  {id:'milei',name:'Javier Milei',kind:'clear',label:'Um obstáculo cenográfico removido',duration:4,stages:[2]},
  {id:'bolsominion',name:'Apoiador fictício',kind:'guide',label:'Coleta em destaque',duration:4}
 ].map(Object.freeze));

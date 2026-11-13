@@ -6,7 +6,7 @@ import {createHash} from 'node:crypto';
 test('combat uses complete illustrated character frames and foot/muzzle anchors',async()=>{
  const {combatDefinitions,combatActors}=await import('../tanahoraflavio/runner-combat-sprite-data.mjs');
  const {combatFrameFor,combatGeometryFor}=await import('../tanahoraflavio/runner-combat-geometry.mjs');
- assert.equal(Object.keys(combatActors).length,24);
+ assert.equal(Object.keys(combatActors).length,32);
  for(const [type,actor] of Object.entries(combatActors)){
   const sheet=combatDefinitions[actor.sheet],indices=[0,1,2,3].map(frame=>combatFrameFor(type,{frame}).index);
   assert.equal(new Set(indices).size,4,type);

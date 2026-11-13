@@ -2,6 +2,9 @@
 // Cada nota: atraso, frequência inicial/final, duração, onda, volume, ataque.
 const n=(delay,start,end,length,wave,volume=.055,attack=.006)=>({delay,start,end,length,wave,volume,attack});
 const banks={
+ army:[[n(0,180,1080,.16,'sawtooth',.03),n(.12,540,270,.08,'triangle')],[n(0,240,1440,.12,'triangle'),n(.09,720,360,.12,'sawtooth',.028)],[n(0,320,1280,.08,'square',.025),n(.1,640,160,.15,'triangle')]],
+ 'santiago-harp':[[n(0,392,784,.1,'sine'),n(.08,523,1047,.12,'sine'),n(.17,659,1318,.14,'triangle',.035)],[n(0,440,880,.12,'sine'),n(.1,587,1174,.16,'triangle',.04)],[n(0,330,660,.08,'triangle'),n(.075,494,988,.1,'sine'),n(.15,740,1480,.12,'sine')]],
+ 'santiago-terere':[[n(0,800,330,.08,'sine'),n(.09,620,270,.12,'triangle')],[n(0,660,220,.12,'triangle'),n(.12,880,440,.08,'sine')],[n(0,1100,550,.06,'sine'),n(.08,730,240,.14,'sine')]],
  // Sopro ascendente, rajada quebrada e redemoinho grave.
  dilma:[
   [n(0,170,940,.22,'sawtooth',.035,.04)],
@@ -101,10 +104,10 @@ const banks={
  ]
 };
 const defaults={dilma:'dilma',simone:'simone',soraya:'soraya',janones:'janones',lula:'lula',haddad:'haddad-paper',
- xandao:'xandao-hammer',pf:'pf-barrier',joice:'joice-cuffs',bossonari:'bossonari-bottle','meme-army':'ghost',dino:'dino',boulos:'boulos'};
+ xandao:'xandao-hammer',pf:'pf-barrier',joice:'joice-mic',bossonari:'bossonari-bottle','meme-army':'ghost',dino:'dino',boulos:'boulos',army:'army',santiago:'santiago-terere'};
 // A arma refina o timbre dentro do ator; armas novas mantêm sua identidade.
 const weapons={haddad:{stamp:'haddad-stamp'},xandao:{mandado:'xandao-mandado'},pf:{handcuffs:'pf-cuffs'},
- joice:{microphone:'joice-mic'},bossonari:{'ivermectina-prop':'bossonari-bottle-alt','meme-ghost':'ghost'}};
+ joice:{microphone:'joice-mic'},santiago:{'harp-note':'santiago-harp'},bossonari:{'ivermectina-prop':'bossonari-bottle-alt'}};
 export function getEnemyShotBank(actor,weapon){
  const type=typeof actor==='string'?actor:actor?.type;
  const attack=typeof weapon==='string'?weapon:weapon?.attackType||weapon?.type;

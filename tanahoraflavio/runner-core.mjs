@@ -1,12 +1,15 @@
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=69851726fc55';
+import {STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=859ae4e257bd';
+export {STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=859ae4e257bd';
+import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=ad8596a8668a';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=fb27da4c3c50';
 import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
-import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=7401390dbcd6';
-import {regularCastMuzzle} from './runner-cast-pose.mjs?v=81dca23c7b76';
-import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=181506ec1b3c';
-import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=a924d1c62bee';
-import {STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,planArenaAttack,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=b2fd49a73db3';
-export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=b2fd49a73db3';
-export {bossArenaPose} from './runner-bosses.mjs?v=b2fd49a73db3';
+import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=82acbd3c19d6';
+import {regularCastMuzzle} from './runner-cast-pose.mjs?v=ef9cdbeacd92';
+import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=5bdfc0ff6fb7';
+import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=e89d6a84511d';
+import {BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,planArenaAttack,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=bd83e2f8c95b';
+export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=bd83e2f8c95b';
+export {bossArenaPose} from './runner-bosses.mjs?v=bd83e2f8c95b';
 // Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
 export const WORLD = Object.freeze({width:900,height:300,ground:246});
 // Envelope de todas as poses no atlas a .95 de escala, incluindo o agachamento.
@@ -15,8 +18,6 @@ export const PLAYER = Object.freeze({x:120,width:34,height:58,visualLeft:-26,vis
 export const JACARE_DURATION_SECONDS = 10;
 export const GAME_MODES = Object.freeze(['endless','story']);
 export const STORY_BOSS_COUNT = STORY_ENCOUNTERS;
-export const SCENE_SECONDS = 20;
-export const SCENE_DISTANCE = 7000; // 7 km efetivos por cenário; 35 km por volta
 export const PASSPORTS_PER_LIFE = 100;
 export const STARTING_LIVES = 1;
 export const RECOVERY_AFTER_EXTRA = 1.2;
@@ -25,13 +26,6 @@ const RAID_WARNING_FOR=1.2,RAID_ACTIVE_FOR=10,RAID_AUDIO_MARGIN_FOR=1;
 // sem alongar os dez segundos de perigos ativos.
 export const RAID_TIMING=Object.freeze({warningFor:RAID_WARNING_FOR,activeFor:RAID_ACTIVE_FOR,audioMarginFor:RAID_AUDIO_MARGIN_FOR,
  recoveryFor:Math.max(2,(Number(ARCHIVE_VOICES.joice.durationSeconds)||0)+RAID_AUDIO_MARGIN_FOR-RAID_WARNING_FOR-RAID_ACTIVE_FOR)});
-export const STAGES = Object.freeze([
- {id:'brasilia',name:'Brasília',short:'Brasília',sky:'#e5f2ff',ink:'#456b85',accent:'#52889c',ground:'#cbdcc1'},
- {id:'rio',name:'Rio de Janeiro',short:'Rio',sky:'#dff7fa',ink:'#287b82',accent:'#238e85',ground:'#e4d7a9'},
- {id:'argentina',name:'Argentina',short:'Argentina',sky:'#e8efff',ink:'#4b6e9f',accent:'#397ab7',ground:'#ccd9ea'},
- {id:'florida',name:'Flórida',short:'Flórida',sky:'#ffece0',ink:'#a86765',accent:'#bd7378',ground:'#e9cfac'},
- {id:'casa-branca',name:'Casa Branca',short:'Casa Branca',sky:'#e7eafa',ink:'#596d8c',accent:'#7777a9',ground:'#c9dcb9'}
-].map((s,index)=>Object.freeze({...s,index})));
 export const PURSUERS = Object.freeze([
  {type:'pf',name:'Polícia Federal',short:'PF',width:34,height:44,color:'#284c70'},
  {type:'janones',name:'Janones',short:'Janones',width:36,height:46,color:'#346a9c'},
@@ -54,7 +48,7 @@ const BOSS_GOALS = Object.freeze({
  haddad:{attacks:9,goalKind:'papers'},
  lula:{attacks:10,goalKind:'patterns'},
  xandao:{attacks:12,goalKind:'hammer-mandado'},janones:{attacks:9,goalKind:'urgent'},pf:{attacks:8,goalKind:'blitz'},
- bossonari:{attacks:14,goalKind:'phantoms'}
+ army:{attacks:8,goalKind:'flares'},santiago:{attacks:14,goalKind:'paraguay'},bossonari:{attacks:14,goalKind:'phantoms'}
 });
 export const PICKUPS = Object.freeze([
  Object.freeze({type:'passport',name:'Passaporte',value:10,purpose:'100 passaportes = +1 vida'}),
@@ -70,7 +64,7 @@ export const RAID_FACTS = Object.freeze([
 ].map(Object.freeze));
 const POOLS = [
  ['pf','barrier','janones','boulos','army'],['janones','army','barrier','pf'],
- ['pf','barrier','case','dino','army'],['army','pf','case'],['pf','janones','army','dino','case','barrier']
+ ['pf','barrier','case','dino','army'],['army','pf','case','janones'],['army','pf','case'],['pf','janones','army','dino','case','barrier']
 ];
 // Desbloqueio por risco: cada ator entra em cena após o jogador aprender a
 // reagir aos anteriores. Chefões mantêm a ordem e os marcos da História.
@@ -109,7 +103,7 @@ export function createSeededRandom(seed=0){
  let state=Number(seed)>>>0;
  return ()=>{state=nextSeed(state);return state/4294967296;};
 }
-const foeFor = type => PURSUERS.find(p=>p.type===type);
+const foeFor = type => PURSUERS.find(p=>p.type===type)||(type==='santiago'?{type:'santiago',name:'Santiago Peña',short:'Peña',width:40,height:49,color:'#b95169'}:null);
 // Mantém stageAt em escala de 20 unidades por cenário, mas o percurso real
 // é SCENE_DISTANCE metros. Assim o cenário exige 7 km de fuga, não 20 s fixos.
 export const campaignRouteDistance = run => Math.max(0,run.routeDistance-(run.mode==='story'?STORY_OPENING_DISTANCE:0));
@@ -141,11 +135,11 @@ export function difficultyAt(distance,elapsed=0) {
  const d=Number.isFinite(distance)?Math.max(0,distance):0,t=Number.isFinite(elapsed)?Math.max(0,elapsed):0;
  // Pressão cresce por várias voltas em vez de saturar na primeira.
  // O tempo e a distância continuam contínuos ao atravessar os cenários.
- const pressure=1-Math.exp(-(d/62000+t/500)),p=d/(d+10000);
- return {level:1+Math.floor(9*pressure),pressure,
-  speed:270+165*pressure,obstacleGap:Math.max(1.12,1.70-.58*pressure),
+ const pressure=1-Math.exp(-(d/62000+t/500)),endurance=1-Math.exp(-d/250000),p=d/(d+10000);
+ return {level:1+Math.floor(9*pressure)+Math.floor(6*endurance),pressure,endurance,
+  speed:270+165*pressure+100*endurance,obstacleGap:Math.max(.94,1.70-.58*pressure-.18*endurance),
   pickupGap:12+8*p,passportGap:5.2+1.2*p,powerGap:24+32*p,
-  bossApproach:Math.max(.85,1.15-.30*pressure),obstacleApproach:Math.max(.95,1.65-.70*pressure)};
+  bossApproach:Math.max(.72,1.15-.30*pressure-.13*endurance),obstacleApproach:Math.max(.82,1.65-.70*pressure-.13*endurance)};
 }
 // Uma onda mais rápida nunca alcança a anterior e forma um par impossível.
 function threatSpeed(run,x,seconds,visibleX=x){
@@ -180,7 +174,7 @@ export function stageTransitionAt(seconds) {
  const index=Math.round(s/SCENE_SECONDS),boundary=index*SCENE_SECONDS;
  if(index<1||Math.abs(s-boundary)>=2)return {from:current,to:current,progress:1,active:false};
  const linear=Math.max(0,Math.min(1,(s-boundary+2)/4));
- return {from:STAGES[(index-1)%5],to:STAGES[index%5],progress:linear*linear*(3-2*linear),active:true};
+ return {from:STAGES[(index-1)%STAGES.length],to:STAGES[index%STAGES.length],progress:linear*linear*(3-2*linear),active:true};
 }
 export function pursuitAt(seconds,rng=()=>.5,level=10,seen=[],last=null) {
  const stagePool=POOLS[stageAt(seconds).index];
@@ -283,13 +277,13 @@ export function moveRun(run,direction){
  run.player.moveHeld=Number.isFinite(direction)?Math.sign(direction):0;return true;
 }
 // Alvo comprometido ao anunciar. O jogador pode fugir para ambos os lados.
-export function spawnFallingThreat(run,{bossAttack=false,owner='joice'}={}){
+export function spawnFallingThreat(run,{bossAttack=false,owner='joice',type}={}){
  if(run.status!=='running'||run.obstacles.some(o=>o.falling||o.groundHazard))return null;
  const isAmpoule=owner==='pfizer',width=isAmpoule?42:56;
  const x=Math.max(0,Math.min(visibleWidth(run)-width,playerX(run)+17-width/2));
  const arrivals=run.obstacles.filter(o=>!o.passed).map(o=>threatReservation(run,o)).filter(t=>Number.isFinite(t)&&t>0);
  const warningFor=Math.max(1.2,...arrivals.map(t=>t+REACTION_GAP))+(run.aid?.kind==='sky'?.35:0);
- const item={x,width,height:isAmpoule?48:44,type:isAmpoule?'pfizer-ampoule':'falling-case',action:'move',approach:'vertical',falling:true,age:0,warningFor,fallFor:isAmpoule?.72:.4,y:310,speed:0,owner,bossAttack,counted:false};
+ const item={x,width,height:isAmpoule?48:44,type:isAmpoule?'pfizer-ampoule':type||bossWeaponFor(owner,0,'move')||'falling-case',action:'move',approach:'vertical',falling:true,age:0,warningFor,fallFor:isAmpoule?.72:.4,y:310,speed:0,owner,bossAttack,counted:false};
  run.obstacles.push(item);return item;
 }
 // Cada ampola marca um ponto sorteado na pista. Aviso simultâneo,
@@ -329,7 +323,7 @@ export function spawnManholeThreat(run,{rng=Math.random}={}){
  if(run.status!=='running'||run.obstacles.some(o=>o.falling||o.groundHazard))return null;
  const width=64,x=Math.max(0,Math.min(visibleWidth(run)-width,playerX(run)+17-width/2+(random(rng)-.5)*24));
  const arrivals=run.obstacles.filter(o=>!o.passed).map(o=>threatReservation(run,o)).filter(t=>Number.isFinite(t)&&t>0);
- const warningFor=Math.max(1.2,...arrivals.map(t=>t+REACTION_GAP));
+ const warningFor=Math.max(1.2,...arrivals.map(t=>t+REACTION_GAP+.3));
  // Zonas persistentes precisam terminar antes do ensaio isolado. Sem isso,
  // um bueiro anterior pode consumir toda a janela e apagar a preparação.
  if(run.mode==='story'&&!run.boss&&!run.raid&&Number.isFinite(run.nextBossAt)){
@@ -416,6 +410,7 @@ export const ATTACK_NAMES=Object.freeze({
  hammer:'Martelo de Xandão',mandado:'Mandado de Xandão',
  message:'Mensagens urgentes de Janones',barrier:'Barreira da PF',
  'falling-case':'Mala em queda','rolling-case':'Mala rolando',case:'Mala',
+ 'court-seal':'Selo do tribunal de Dino','signal-flare':'Sinalizador da patrulha','terere-gourd':'Tereré de Santiago Peña','harp-note':'Notas de harpa de Santiago Peña',
  popcorn:'Pipoca','cloroquina-prop':'Cloroquina cenográfica de Bossonari',
  'ivermectina-prop':'Ivermectina cenográfica de Bossonari',
  'pfizer-ampoule':'Ampola cenográfica da Pfizer'
@@ -432,15 +427,15 @@ export function attackCueFor(attack){
 export function bossAtRound(round,type) {
  const safe=Math.max(0,Math.floor(Number.isFinite(round)?round:0)),level=Math.floor(safe/BOSS_ROSTER.length)+1;
  const foe=foeFor(type||BOSS_ROSTER[safe%BOSS_ROSTER.length]),goal=BOSS_GOALS[foe.type],attacks=goal.attacks+(foe.type==='bossonari'?0:2*Math.min(2,level-1));
- const noun=({haddad:'papéis',lula:'gestos em L',xandao:'martelos e mandados',janones:'mensagens em três blocos',pf:'bloqueios da blitz',bossonari:'frascos satíricos e aparições fictícias'})[foe.type];
+ const noun=({haddad:'papéis',lula:'gestos em L',xandao:'martelos e mandados',janones:'mensagens em três blocos',pf:'bloqueios da blitz',bossonari:'frascos cenográficos',army:'sinalizadores',santiago:'tererés e notas de harpa'})[foe.type];
  return {foe,level,supreme:foe.type==='lula',round:safe+1,goalKind:goal.goalKind,attacks,
   objective:'Desvie de '+attacks+' '+noun+'. '+({
     haddad:'Pule os papéis baixos e abaixe dos recibos altos.',
     lula:'Observe os gestos em L: pule os baixos e abaixe dos altos.',
     xandao:'Pule os martelos baixos e abaixe dos mandados altos.',
     janones:'Mensagens urgentes: alterne salto e agachamento.',
-    pf:'Blitz: pule barreiras, abaixe das algemas e saia das malas marcadas.',
-    bossonari:'Pule ou abaixe dos frascos satíricos de Bossonari e abaixe das investidas do Fantasma do Comunismo.'
+    pf:'Blitz: pule barreiras, abaixe das algemas e saia dos alvos marcados.',
+    army:'Pule ou abaixe dos sinalizadores e leia o aviso da patrulha.',santiago:'Desvie do tereré e das notas de harpa e saia dos alvos marcados.',bossonari:'Pule ou abaixe dos frascos cenográficos de Bossonari.'
    }[foe.type]||'Leia o próximo aviso antes de reagir.'),
   interval:foe.type==='bossonari'?1.18:Math.max(1.04,1.32-.08*BOSS_ROSTER.indexOf(foe.type)-.04*(level-1))};
 }
@@ -451,9 +446,9 @@ export function bossAttackFor(type,fired,round=0) {
   xandao:['jump','jump','crouch','jump','crouch','crouch','jump','crouch','jump','crouch','crouch','jump'],
   janones:['jump','crouch','jump','crouch','jump','crouch','jump','jump','crouch'],pf:['jump','crouch','move','jump','crouch','move','jump','crouch'],
   bossonari:['jump','crouch','jump','crouch','jump','jump','crouch','jump','crouch','jump','crouch','jump','crouch','jump']};
- const sequence=patterns[type]||patterns.haddad,index=Math.max(0,Math.floor(Number(fired)||0))+2*Math.floor(Math.max(0,round)/BOSS_ROSTER.length);
+ const sequence=patterns[type]||bossProfileFor(type)?.sequence||patterns.haddad,index=Math.max(0,Math.floor(Number(fired)||0))+2*Math.floor(Math.max(0,round)/BOSS_ROSTER.length);
  const action=sequence[index%sequence.length];
- return {type:type==='bossonari'?(index%2===0?'cloroquina-prop':'ivermectina-prop'):type==='xandao'?(action==='jump'?'hammer':'mandado'):type==='lula'?'lhand':type==='janones'?'message':type==='pf'?(action==='move'?'falling-case':action==='crouch'?'handcuffs':'barrier'):'receipts',action};
+ return {type:bossWeaponFor(type,index,action)||'receipts',action};
 }
 // Primeiro marco após21km; cada vitória reserva mais7km de corrida.
 // Um marco alcançado fica pendente enquanto houver evento ou cooldown.
@@ -477,28 +472,19 @@ function beginBoss(run){
   Object.assign(run.boss,encounter,{combat:true,maxHp:encounter.hp,hp:encounter.hp,age:0,phase:'intro',phaseFor:1.1,
    total:encounter.hp,remaining:encounter.hp,fired:0,volleyLeft:0,evaded:0,plannedAttack:arenaPatternFor(encounter,0)});
   run.player.hp=run.player.maxHp;run.heroShots=[];run.pickups=[];
- }else Object.assign(run.boss,{maxHp:conf.attacks*2,hp:conf.attacks*2,age:0,classId:'sovereign',className:'Soberano',rank:Math.min(4,conf.level),rankName:'Infinito'});
+ }else {const profile=bossProfileFor(type);Object.assign(run.boss,{maxHp:conf.attacks*2,hp:conf.attacks*2,age:0,classId:profile.classId,className:BOSS_CLASSES[profile.classId].name,rank:profile.rank,rankName:BOSS_RANKS[profile.rank-1],powerName:profile.powerName,attackTypes:profile.attackTypes});}
  run.boss.reducedMotion=run.reducedMotion===true;
  run.obstacles=[];run.nextObstacle=Math.max(1.8,run.nextObstacle);
  const final=encounter?.index===STORY_BOSS_COUNT-1;
  announce(run,(final?'CHEFÃO FINAL ':'CHEFÃO ')+run.boss.name+'! '+run.boss.objective);
 }
 function chooseBossPattern(boss,rng,pressure){
- if(boss.type==='pf'&&boss.fired%3===2)return {type:'falling-case',action:'move',approach:'vertical'};
- // A abertura ensina o tipo de ameaça; depois o próprio chefe improvisa.
  if(boss.fired<3)return {...bossAttackFor(boss.type,boss.fired,boss.round-1),approach:'diagonal'};
- if(boss.type==='bossonari'){
-  // O fantasma é participante ativo: depois de aprender os frascos,
-  // alterna investidas aéreas próprias e os disparos do aliado Bossonari.
-  if(boss.fired%3===0)return {type:'meme-ghost',action:'crouch',approach:'sweep'};
-  return {type:random(rng)<.5?'cloroquina-prop':'ivermectina-prop',action:random(rng)<.5?'jump':'crouch',approach:random(rng)<.38?'drop':'diagonal'};
- }
- let action=random(rng)<(.48+.06*pressure)?'crouch':'jump';
+ const roll=random(rng),profile=bossProfileFor(boss.type);
+ let action=roll<(.48+.06*pressure)?'crouch':'jump';
+ if(profile?.sequence.includes('move')&&boss.fired%5===3)action='move';
  if(action===boss.lastAction&&boss.actionStreak>=2)action=action==='jump'?'crouch':'jump';
- const type=boss.type==='xandao'?(action==='jump'?'hammer':'mandado'):
-  boss.type==='lula'?'lhand':boss.type==='janones'?'message':boss.type==='pf'?(action==='crouch'?'handcuffs':'barrier'):(action==='jump'&&random(rng)<.48?'stamp':'receipts');
- const approach=action==='jump'&&random(rng)<.48?'drop':action==='crouch'&&random(rng)<.45?'sweep':'diagonal';
- return {type,action,approach};
+ return {type:bossWeaponFor(boss.type,boss.fired,action),action,approach:action==='move'?'vertical':action==='jump'&&roll<.48?'drop':action==='crouch'&&roll>.65?'sweep':'diagonal'};
 }
 function advanceBoss(run,dt,rng,balance){
  const boss=run.boss;if(!boss)return;
@@ -521,13 +507,13 @@ function advanceBoss(run,dt,rng,balance){
  const attackType=pattern.type;
  let attack;
  if(pattern.action==='move'){
-  attack=spawnFallingThreat(run,{bossAttack:true,owner:boss.type});if(!attack){boss.nextAttack=.1;return;}
+  attack=spawnFallingThreat(run,{bossAttack:true,owner:boss.type,type:attackType});if(!attack){boss.nextAttack=.1;return;}
   if(boss.combat)attack.type=attackType;
  }else{
  const [width,baseHeight]=({hammer:[46,44],mandado:[42,44],
-  lhand:[60,46],receipts:[44,40],stamp:[44,36],message:[44,36],microphone:[46,40],handcuffs:[46,40],barrier:[44,32],wind:[46,44],'budget-sheets':[46,42],'parachute-cross':[46,44],'rolling-case':[40,30],'falling-case':[36,36],'cloroquina-prop':[52,38],'ivermectina-prop':[52,38],'meme-ghost':[52,44]})[attackType];
+  lhand:[60,46],receipts:[44,40],stamp:[44,36],message:[44,36],microphone:[46,40],handcuffs:[46,40],barrier:[44,32],wind:[46,44],'budget-sheets':[46,42],'parachute-cross':[46,44],'rolling-case':[40,30],'falling-case':[36,36],'cloroquina-prop':[52,38],'ivermectina-prop':[52,38],'meme-ghost':[52,44],'signal-flare':[38,42],'court-seal':[44,44],'terere-gourd':[44,44],'harp-note':[42,44]})[attackType];
  const height=pattern.action==='crouch'?84:baseHeight;
- const spriteMuzzle=combatGeometryFor(boss.type,{frame:2})?.muzzle;
+ const spriteMuzzle=combatGeometryFor(boss.type,{frame:2,armyVariant:STAGES[boss.stageIndex]?.id,enraged:boss.enraged})?.muzzle;
  const x=Math.max(boss.combat?bossArenaPose(boss,visibleWidth(run)).x+(spriteMuzzle?.x??-48)-width/2:visibleWidth(run)-104,frontContact(run)+60);
  const entry=pattern.approach||'diagonal';
  const fromY=boss.combat?bossArenaPose(boss,visibleWidth(run)).platformY-(spriteMuzzle?.y??-52):entry==='drop'?155:pattern.action==='jump'?77:90;
@@ -763,7 +749,7 @@ export function advanceRun(run,seconds,rng){
      if(!run.seenOverheadActors.includes(type))run.seenOverheadActors.push(type);
      run.lastOverheadActor=type;run.overheadCount++;
     }
-    const attackType={dilma:'wind',simone:'budget-sheets',soraya:'parachute-cross','meme-army':'meme-ghost',joice:'handcuffs'}[type];
+    const attackType={dilma:'wind',simone:'budget-sheets',soraya:'parachute-cross','meme-army':'meme-ghost',joice:'microphone'}[type];
     anchor=regularShot(run,attackType,type,approach);
     if(!raidActive)run.cameo={type,remaining:anchor.waitFor+.78,shot:anchor};
    }else{
@@ -810,7 +796,7 @@ export function advanceRun(run,seconds,rng){
  }
  if(!run.boss&&!run.raid&&run.routeDistance>=run.nextAllyAt){
   run.pickups.push({type:'ze-gotinha',x:visibleWidth(run)+40,y:20,speed:balance.speed*assistance(run),value:0});
-  run.nextAllyAt+=35000;run.alliesMet++;
+  run.nextAllyAt+=ROUTE_DISTANCE;run.alliesMet++;
  }
  if(run.supportAvailable!==false&&!run.boss&&!run.raid&&run.routeDistance>=run.nextSupportAt&&!run.pickups.some(p=>p.type==='ally')){
   const ally=allyForStage(stageAt(routeClock(run)).index,run.allyVisits,rng);

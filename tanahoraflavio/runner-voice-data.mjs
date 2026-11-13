@@ -1,8 +1,10 @@
+import {EXTRA_ARCHIVE_VOICES} from './runner-extra-voices.mjs?v=dcb3792d1a76';
 import {MEME_VOICES} from './runner-meme-data.mjs?v=7d02847aff0a';
 import {NEW_ARCHIVE_VOICES} from './runner-archive-voices.mjs?v=7c025577c1cc';
 export const ARCHIVE_VOICES=Object.freeze({
  ...MEME_VOICES,
  ...NEW_ARCHIVE_VOICES,
+ ...EXTRA_ARCHIVE_VOICES,
  joice:Object.freeze({
   file:'assets/audio/joice-toc-toc-v2.mp3',
   sha256:'5d87b61d55fc3608945a303259a7eaf767c25224be6d25adff35ffff6b94f59c',

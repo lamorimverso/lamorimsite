@@ -19,7 +19,7 @@ test('entrada escalonada sem retirar personagens já conhecidos',()=>{
  assert.equal(core.unlockedCharacters(6,'ground').includes('dino'),true);
 });
 test('cada estágio usa somente inimigos do patamar, sem alterar o cenário',()=>{
- for(let level=1;level<=10;level++)for(let stage=0;stage<5;stage++)for(let seed=1;seed<=90;seed++){
+ for(let level=1;level<=10;level++)for(let stage=0;stage<core.STAGES.length;stage++)for(let seed=1;seed<=90;seed++){
   const selected=core.pursuitAt(stage*20,core.createSeededRandom(seed),level);
   assert.ok(tier[selected.type]<=level,selected.type+' antes do desbloqueio');
   assert.ok(core.PURSUERS.some(p=>p.type===selected.type));
@@ -51,8 +51,8 @@ test('no motor, personagens aéreos só surgem após a liberação da dificuldad
   assert.ok(r.seenOverheadActors.every(actor=>tier[actor]<=core.difficultyAt(r.distance,r.elapsed).level),risk);
  }
 });
-test('História possui vinte chefões e o Infinito permanece sem final',()=>{
- assert.equal(core.STORY_BOSS_COUNT,20);
+test('História possui 24 chefões e o Infinito permanece sem final',()=>{
+ assert.equal(core.STORY_BOSS_COUNT,24);
  assert.deepEqual(core.BOSS_ROSTER,['haddad','lula','xandao','janones','pf']);
  for(const mode of core.GAME_MODES){
   const r=core.createRun({mode});assert.equal(r.mode,mode);

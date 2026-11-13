@@ -9,7 +9,7 @@ function simulate(r,seconds,rng=seeded(103)){for(let i=0;i<Math.ceil(seconds/dt)
 test('pressão cresce pelo tempo e distância até limites explícitos',()=>{
  const a=core.difficultyAt(0,0),b=core.difficultyAt(0,70),c=core.difficultyAt(20000,70),z=core.difficultyAt(1e12,1e9);
  assert.equal(a.pressure,0);assert.ok(b.pressure>a.pressure);assert.ok(c.pressure>b.pressure);
- assert.equal(z.pressure,1);assert.equal(z.speed,435);assert.ok(z.obstacleGap>=1.12&&z.obstacleApproach>=.95&&z.bossApproach>=.85);
+ assert.equal(z.pressure,1);assert.equal(z.speed,535);assert.ok(z.obstacleGap>=.94&&z.obstacleApproach>=.82&&z.bossApproach>=.72);
  assert.ok(c.obstacleGap<a.obstacleGap&&c.obstacleApproach<a.obstacleApproach);
 });
 test('corrida comum oferece altos e baixos e limita repetições para exigir leitura',()=>{

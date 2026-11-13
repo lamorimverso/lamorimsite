@@ -2,7 +2,7 @@
 // height changes the actual construction (cords, handles, sheet arrangements),
 // never stretches a finished image or its lettering along one axis.
 const INK='#30283c',WHITE='#fff5df';
-export const COMPLETE_WEAPONS=Object.freeze(['hammer','mandado','microphone','handcuffs','barrier','stamp','message','lhand','receipts','paper-gate','budget-sheets','parachute-cross','cloroquina-prop','ivermectina-prop','rolling-case','falling-case','case','popcorn','wind']);
+export const COMPLETE_WEAPONS=Object.freeze(['hammer','mandado','microphone','handcuffs','barrier','stamp','message','lhand','receipts','paper-gate','budget-sheets','parachute-cross','cloroquina-prop','ivermectina-prop','rolling-case','falling-case','case','popcorn','wind','court-seal','signal-flare','terere-gourd','harp-note']);
 function grad(c,x1,y1,x2,y2,colors){const g=c.createLinearGradient?.(x1,y1,x2,y2);if(!g||typeof g.addColorStop!=='function')return colors[1]||colors[0];colors.forEach((v,i)=>g.addColorStop(i/(colors.length-1),v));return g;}
 function shape(c,draw,color,stroke=INK,width=1.5){c.beginPath();draw();c.closePath();c.fillStyle=color;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke();}}
 function line(c,pts,color,width=1.2){c.beginPath();pts.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.strokeStyle=color;c.lineWidth=width;c.lineCap='round';c.lineJoin='round';c.stroke();}
@@ -51,7 +51,30 @@ export function drawCompleteWeapon(c,{type,width=46,height=44,phase=0,reducedMot
  if(!COMPLETE_WEAPONS.includes(type)||!Number.isFinite(width)||!Number.isFinite(height)||width<=0||height<=0)return false;
  const scale=width/46,H=Math.max(28,height/scale),t=reducedMotion?0:Number(phase)||0,f=reducedMotion?0:Math.sin(t*.43),g=reducedMotion?0:Math.sin(t*.67);
  c.save();c.scale(scale,scale);
- if(type==='hammer'){
+ if(type==='court-seal'){
+  const cy=-H*.62,r=Math.min(19,H*.34);
+  for(const side of [-1,1])shape(c,()=>{c.moveTo(side*4,cy+r-3);c.lineTo(side*16,-2+g*2);c.lineTo(side*7,-7);c.lineTo(side*3,-1);c.lineTo(-side*1,cy+r-1);},side<0?'#744d9e':'#a982c5','#44315d',1.1);
+  c.save();c.translate(0,cy);c.rotate(f*.15);
+  for(let i=0;i<16;i++){const a=i*Math.PI/8;line(c,[[Math.cos(a)*(r-2),Math.sin(a)*(r-2)],[Math.cos(a)*(r+2),Math.sin(a)*(r+2)]],'#cda65e',3);}
+  oval(c,0,0,r,r,grad(c,-r,-r,r,r,['#fff0aa','#cfa358','#88663d']),'#6f503e',1.3);oval(c,0,0,r*.7,r*.7,'#554374','#f6d78a',1);
+  line(c,[[0,-r*.48],[0,r*.43]],'#f8dfa3',2);line(c,[[-r*.44,-r*.2],[r*.44,-r*.2]],'#f8dfa3',1.5);
+  for(const side of [-1,1]){line(c,[[side*r*.37,-r*.18],[side*r*.5,r*.16]],'#f8dfa3',1);line(c,[[side*r*.37,-r*.18],[side*r*.23,r*.16]],'#f8dfa3',1);line(c,[[side*r*.5,r*.16],[side*r*.23,r*.16]],'#f8dfa3',1.5);}c.restore();
+ }else if(type==='signal-flare'){
+  box(c,-7,-H+16,14,H-18,grad(c,-7,0,7,0,['#f2a16d','#c65642','#763b48']),3);box(c,-8,-9,16,8,'#5a687c',2);box(c,-9,-H+12,18,8,'#b5c4c9',2);
+  const tip=-H+12;shape(c,()=>{c.moveTo(-7,tip);c.lineTo(-12,tip-9-f*3);c.lineTo(-5,tip-7);c.lineTo(0,tip-15+g*2);c.lineTo(5,tip-7);c.lineTo(12,tip-10+f*3);c.lineTo(7,tip);},'#ffce6c','#d56b43',1);line(c,[[-3,tip-2],[0,tip-9],[3,tip-2]],'#fff7c5',2);
+  for(let i=0;i<3;i++)line(c,[[-4,-H+23+i*5],[4,-H+23+i*5]],'#ffe3c1',1);
+ }else if(type==='terere-gourd'){
+  const top=-H+15;shape(c,()=>{c.moveTo(-12,top);c.quadraticCurveTo(-22,top+8,-18,-7);c.quadraticCurveTo(-15,2,0,-1);c.quadraticCurveTo(15,2,18,-7);c.quadraticCurveTo(22,top+8,12,top);},grad(c,-18,top,18,0,['#bade93','#508a58','#244e48']),'#29463c',1.5);
+  oval(c,0,top,13,5,'#315d40','#dcbd85',2);for(let i=0;i<5;i++)line(c,[[-8+i*4,top+1],[-6+i*4,top-3+g]],'#94bc74',1.2);
+  c.save();c.translate(3,top);c.rotate(f*.08);line(c,[[0,0],[5,-12],[12,-16]],'#596e7a',4);line(c,[[0,-1],[5,-13],[11,-16]],'#d4e7e7',1.5);c.restore();
+  box(c,-16,-H*.43,32,11,'#aa7854',2);line(c,[[-13,-H*.43+3],[13,-H*.43+3]],'#e5c192',1);oval(c,0,-H*.43+6,4,4,'#ddb780','#70513e',1);
+ }else if(type==='harp-note'){
+  const top=-H+4; c.save();c.rotate(f*.06);
+  shape(c,()=>{c.moveTo(-17,-3);c.quadraticCurveTo(-23,-H*.55,-13,top);c.quadraticCurveTo(10,top-3,19,top+12);c.lineTo(6,-3);c.closePath();},grad(c,-19,top,17,0,['#fff0a0','#d2a75f','#94713d']),'#725338',1.4);
+  shape(c,()=>{c.moveTo(-12,-8);c.lineTo(-9,top+9);c.quadraticCurveTo(7,top+8,13,top+16);c.lineTo(1,-8);c.closePath();},'#5f8f9b','#647e80',.8);
+  for(let i=0;i<5;i++){const x=-7+i*4;line(c,[[x,top+13+i],[x+Math.sin(t*.7+i)*1.4, -9]],'#fff7d7',.8);}
+  box(c,-19,-6,29,6,'#b7894f',2);c.restore();
+ }else if(type==='hammer'){
   const head=-H+12;box(c,-4,head+4,8,H-17,grad(c,-4,0,4,0,['#dcac72','#a36943','#684638']),2,'#513d3c');
   for(let i=0;i<4;i++)line(c,[[-3,-7-i*4],[3,-9-i*4]],'#684638',1);
   c.save();c.translate(0,head);c.rotate(f*.22);

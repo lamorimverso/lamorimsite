@@ -46,7 +46,7 @@ async function open({instrument=false,instrumentAudio=false,instrumentCasting=fa
  }
  if(instrumentAudio){
   const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-audio.mjs'),'utf8');
-  await context.route('**/runner-audio.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+'\nconst originalAudio=createGameAudio;createGameAudio=(...args)=>{const audio=originalAudio(...args),effect=audio.effect,shot=audio.enemyShot;globalThis.__testEffects=[];globalThis.__enemyShotCalls=[];audio.enemyShot=(actor,weapon)=>{__enemyShotCalls.push({actor,weapon});return shot(actor,weapon);};audio.effect=(name)=>{__testEffects.push(name);return effect(name);};return audio;};'}));
+  await context.route('**/runner-audio.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+'\nconst originalAudio=createGameAudio;createGameAudio=(...args)=>{const audio=originalAudio(...args),effect=audio.effect,shot=audio.enemyShot,movement=audio.movement;globalThis.__testEffects=[];globalThis.__enemyShotCalls=[];audio.enemyShot=(actor,weapon)=>{__enemyShotCalls.push({actor,weapon});return shot(actor,weapon);};audio.effect=(name)=>{__testEffects.push(name);return effect(name);};audio.movement=(name)=>{__testEffects.push(name);return movement(name);};return audio;};'}));
  }
  if(blockEntry)await context.route('**/runner.mjs*',route=>route.abort());
  if(legacyFirst){
@@ -314,8 +314,14 @@ test('salto executado no pouso produz um único efeito de salto',async()=>{
  try{
   await begin(page);
   await page.evaluate(()=>{
+   // Establish the first takeoff through the real input path so the Foley
+   // director already knows the player is airborne before queuing the next.
+   const canvas=document.getElementById('runner-canvas');
+   canvas.dispatchEvent(new KeyboardEvent('keydown',{code:'Space',bubbles:true}));
+   canvas.dispatchEvent(new KeyboardEvent('keyup',{code:'Space',bubbles:true}));
    __testRun.player.y=2;__testRun.player.velocity=-100;
-   document.getElementById('runner-canvas').dispatchEvent(new KeyboardEvent('keydown',{code:'Space',bubbles:true}));
+   __testEffects.length=0;
+   canvas.dispatchEvent(new KeyboardEvent('keydown',{code:'Space',bubbles:true}));
   });
   await page.waitForFunction(()=>__testRun.player.y>20);
   assert.equal(await page.evaluate(()=>__testEffects.filter(x=>x==='jump').length),1,'o comando guardado tem o mesmo retorno sonoro do salto imediato');
@@ -462,7 +468,7 @@ test('seletor oferece dois modos jogáveis, finaliza História e permite reinici
   assert.equal(await page.locator('#game-mode-chooser').isVisible(),false);
   await page.evaluate(()=>{
    const r=__testRun;
-   r.bossesDefeated=19;
+   r.bossesDefeated=23;
    r.nextRaid=r.nextObstacle=r.nextBossAt=Infinity;
    r.shieldFor=Infinity;
    r.boss={type:'bossonari',name:'Bossonari',color:'#7a4f8d',total:1,remaining:1,
@@ -518,7 +524,7 @@ test('urna 22 mostra prisão e recomeça História automaticamente',async()=>{
  try{
   await page.locator('#game-mode-story').check();await begin(page);
   await page.evaluate(()=>{
-   const r=__testRun;r.bossesDefeated=19;r.nextRaid=r.nextObstacle=r.nextBossAt=Infinity;r.shieldFor=Infinity;
+   const r=__testRun;r.bossesDefeated=23;r.nextRaid=r.nextObstacle=r.nextBossAt=Infinity;r.shieldFor=Infinity;
    r.boss={type:'bossonari',name:'Bossonari',color:'#7a4f8d',total:1,remaining:1,fired:1,nextAttack:100,attackFlashFor:0,hitFlashFor:0,plannedFor:1,plannedAttack:{type:'cloroquina-prop',action:'jump'},goalKind:'phantoms',objective:'Desvie'};
    r.obstacles=[{x:-100,width:38,height:38,type:'cloroquina-prop',action:'jump',bossAttack:true,counted:false,speed:250,y:23}];
   });
@@ -548,7 +554,7 @@ test('chefão final redesenhado aparece com investida do fantasma em celular e d
   try{
    await page.locator('#game-mode-story').check();await begin(page);
    await page.evaluate(()=>{
-    const r=__testRun;r.bossesDefeated=19;r.distance=r.routeDistance=55100;r.nextRaid=r.nextObstacle=Infinity;
+    const r=__testRun;r.bossesDefeated=23;r.distance=r.routeDistance=62100;r.nextRaid=r.nextObstacle=Infinity;
     r.nextBossAt=0;r.shieldFor=Infinity;
    });
    await page.waitForFunction(()=>document.getElementById('game').dataset.boss==='meme-army');
@@ -635,7 +641,7 @@ test('campanha abre sem trocar o modo e alcança a primeira arena da História',
   assert.equal(await page.evaluate(()=>__testRun.mode),'story');
   await page.evaluate(()=>{const r=__testRun;r.routeDistance=21998;r.obstacles=[];r.pickups=[];r.nextRaid=Infinity;r.shieldFor=Infinity;});
   await page.waitForFunction(()=>__testRun.boss?.combat===true);
-  assert.match(await page.locator('#game-boss-name').textContent(),/Haddad.*Sentinela.*Patrulha/);
+  assert.match(await page.locator('#game-boss-name').textContent(),/PF.*Sentinela.*Patrulha/);
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
@@ -845,5 +851,53 @@ for(const viewport of [{width:900,height:720},{width:390,height:844}])test(`pers
   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/full-traverse-${viewport.width}.png`)});
   await page.waitForFunction(()=>__testRun.obstacles.length===0,null,{timeout:5000});
   assert.equal(await page.evaluate(()=>__testRun.status),'running');assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('Paraguai aparece entre Argentina e Flórida e Santiago ataca com corpo completo nas duas fases',async()=>{
+ for(const width of [390,1440]){
+  const {context,page,errors}=await open({instrument:true,instrumentCasting:true,viewport:{width,height:900}});
+  try{
+   await begin(page);await page.evaluate(async()=>{const c=await import('./runner-core.mjs'),r=__testRun;r.mode='story';r.routeDistance=c.STORY_OPENING_DISTANCE+3*c.SCENE_DISTANCE+2500;r.nextBossAt=r.nextRaid=r.nextObstacle=r.nextAllyAt=r.nextSupportAt=r.nextPower=r.nextPassport=Infinity;r.obstacles=[];r.pickups=[];});
+   await page.waitForFunction(()=>document.getElementById('game-stage-name').textContent.includes('Paraguai'));
+   assert.match(await page.locator('#game-phase').textContent(),/Cenário 4 de 6/);
+   await page.evaluate(()=>{const r=__testRun;r.bossesDefeated=15;r.nextBossAt=0;r.bossCooldown=0;r.player.hp=r.player.maxHp;r.shieldFor=0;r.graceFor=0;});
+   await page.waitForFunction(()=>__testRun.boss?.type==='santiago');
+   assert.match(await page.locator('#game-boss-name').textContent(),/Santiago Peña.*Governante 4/);
+   await page.waitForFunction(()=>__castPoses.some(p=>p.type==='santiago'),null,{timeout:5000});
+   await page.waitForFunction(()=>__testRun.boss?.fired>0&&__testRun.player.hp<__testRun.player.maxHp,null,{timeout:7000});
+   assert.equal(await page.evaluate(()=>__testRun.shotsFired),0,'inimigo inicia e causa dano sem esperar tiro');
+   const powers=await page.evaluate(()=>__testRun.obstacles.filter(o=>o.bossAttack).map(o=>o.type));assert.ok(powers.every(p=>['terere-gourd','harp-note'].includes(p)));
+   await page.evaluate(()=>{const r=__testRun;r.shieldFor=Infinity;r.boss.hp=Math.floor(r.boss.maxHp/2);r.boss.phase='recover';r.boss.phaseFor=0;});
+   await page.waitForFunction(()=>__castPoses.some(p=>p.type==='santiago'&&p.enraged));
+   await page.evaluate(()=>{const r=__testRun;r.distance=500000;});await page.waitForTimeout(60);
+   assert.doesNotMatch(await page.locator('#game-difficulty').textContent(),/\/10/);assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ }
+});
+
+test('sons de pulo, pouso, avanço, frenagem e escorregão acompanham teclado e toque reais',async()=>{
+ for(const touch of [false,true]){
+  const {context,page,errors}=await open({instrument:true,instrumentAudio:true,viewport:{width:touch?390:1440,height:900}});
+  try{
+   await begin(page);await page.evaluate(()=>{const r=__testRun;r.nextRaid=r.nextBossAt=r.nextObstacle=r.nextAllyAt=r.nextSupportAt=r.nextPower=r.nextPassport=Infinity;r.obstacles=[];const s=document.getElementById('game-crouch-mode');s.value='hold';s.dispatchEvent(new Event('change'));__testEffects=[];});
+   await page.keyboard.press('Space');await page.waitForFunction(()=>__testRun.player.y>30);await page.waitForFunction(()=>__testRun.player.y===0&&__testRun.player.velocity===0);
+   assert.equal(await page.evaluate(()=>__testEffects.filter(x=>x==='jump').length),1);assert.ok(await page.evaluate(()=>__testEffects.includes('land')));
+   await page.keyboard.down('ArrowRight');await page.waitForTimeout(220);await page.keyboard.up('ArrowRight');await page.waitForFunction(()=>__testEffects.includes('brake'));
+   assert.ok(await page.evaluate(()=>__testEffects.includes('run-start')));
+   if(touch){await page.evaluate(()=>{const c=document.getElementById('runner-canvas'),r=c.getBoundingClientRect(),x=r.x+r.width*.5,y=r.y+r.height*.3;for(const [type,yy] of [['pointerdown',y],['pointermove',y+35]])c.dispatchEvent(new PointerEvent(type,{pointerId:71,pointerType:'touch',isPrimary:true,button:0,bubbles:true,clientX:x,clientY:yy}));});}
+   else await page.keyboard.down('ArrowDown');
+   await page.waitForFunction(()=>__testEffects.includes('slide'));await page.waitForTimeout(150);assert.equal(await page.evaluate(()=>__testEffects.filter(x=>x==='slide').length),1);
+   if(touch)await page.evaluate(()=>document.getElementById('runner-canvas').dispatchEvent(new PointerEvent('pointerup',{pointerId:71,pointerType:'touch',isPrimary:true,button:0,bubbles:true})));
+   else await page.keyboard.up('ArrowDown');
+   await page.waitForFunction(()=>__testEffects.includes('slide-stop'));assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ }
+});
+
+test('os17 novos recortes de fala decodificam e contêm áudio real no navegador',async()=>{
+ const {context,page,errors}=await open();try{
+  const rows=await page.evaluate(async()=>{const {EXTRA_ARCHIVE_VOICES}=await import('./runner-extra-voices.mjs'),ac=new AudioContext(),rows=[];try{for(const [id,clip] of Object.entries(EXTRA_ARCHIVE_VOICES)){const bytes=await(await fetch(clip.file)).arrayBuffer(),buffer=await ac.decodeAudioData(bytes),pcm=buffer.getChannelData(0);let energy=0,peak=0;for(const value of pcm){energy+=value*value;peak=Math.max(peak,Math.abs(value));}rows.push({id,duration:buffer.duration,rms:Math.sqrt(energy/pcm.length),peak});}return rows;}finally{await ac.close();}});
+  assert.equal(rows.length,17);for(const row of rows){assert.ok(row.duration>.5&&row.duration<9,JSON.stringify(row));assert.ok(row.rms>.001&&row.peak<1,JSON.stringify(row));}assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });

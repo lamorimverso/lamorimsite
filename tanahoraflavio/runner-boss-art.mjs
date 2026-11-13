@@ -1,10 +1,10 @@
 import {drawCharacterBody,drawCharacterArm} from './runner-body-art.mjs?v=67badae0df52';
-import {drawBossonariHead} from './runner-character-art.mjs?v=6e1fcb7814d8';
-import {standingEnemyPose} from './runner-cast-pose.mjs?v=81dca23c7b76';
-export {standingEnemyPose} from './runner-cast-pose.mjs?v=81dca23c7b76';
-import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=8a27c3295d8b';
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=69851726fc55';
-import {drawMemeArmy} from './runner-art.mjs?v=909ad8a2bd7c';
+import {drawBossonariHead} from './runner-character-art.mjs?v=a83cbf27d5c5';
+import {standingEnemyPose} from './runner-cast-pose.mjs?v=ef9cdbeacd92';
+export {standingEnemyPose} from './runner-cast-pose.mjs?v=ef9cdbeacd92';
+import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=ef90058f6d92';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=fb27da4c3c50';
+import {drawMemeArmy} from './runner-art.mjs?v=35fcedf56da3';
 
 // Full illustrated combat sprites share the original running artwork style.
 // Coordinates are logical game pixels; y always remains the top of the deck.
@@ -60,12 +60,12 @@ function fallbackHead(c,type,accent){
  line(c,[[-5,-78],[5,-78]],accent,1.5);
 }
 
-export function drawHoverEnemy(c,{type='haddad',x=0,y=0,scale=1,phase=0,preparing=false,attacking=false,recovering=false,hurt=false,reducedMotion=false,classId='sentinel',action='jump',progress}={}){
+export function drawHoverEnemy(c,{type='haddad',x=0,y=0,scale=1,phase=0,preparing=false,attacking=false,recovering=false,hurt=false,reducedMotion=false,classId='sentinel',action='jump',progress,armyVariant,enraged=false}={}){
  if(!Number.isFinite(x)||!Number.isFinite(y)||!Number.isFinite(scale)||scale<=0)return;
  const p=standingEnemyPose({phase,preparing,attacking,recovering,hurt,reducedMotion,classId,action,progress}),[,,accent]=SUITS[type]||['#4d4d70','#292c49','#dbc778'];
  c.save();c.translate(x,y);c.scale(scale,scale);
  drawShip(c,p,accent,preparing,attacking,hurt);
- const spriteOptions={phase,preparing,attacking,recovering,hurt,reducedMotion,progress};
+ const spriteOptions={phase,preparing,attacking,recovering,hurt,reducedMotion,progress,armyVariant,enraged};
  if(drawCombatSprite(c,{type,...spriteOptions})){
   const hand=combatGeometryFor(type,spriteOptions).muzzle;
   drawMagic(c,{arms:{left:{hand:{x:hand.x+7,y:hand.y}}}},accent,preparing&&!hurt,attacking&&!hurt);

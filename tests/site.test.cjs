@@ -243,7 +243,7 @@ test('100 passaportes concedem +1 vida e a corrida permanece infinita', async ()
     });
     await page.waitForFunction(() => document.getElementById('game-stage-name').textContent === 'Casa Branca');
     assert.match(await page.locator('#game-difficulty').textContent(),/Risco/);
-    assert.match(await page.locator('#game-phase').textContent(),/Cenário 5 de 5/);
+    assert.match(await page.locator('#game-phase').textContent(),/Cenário 6 de 6/);
     assert.equal(await page.locator('#game-progress').count(),0);
     assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
     assert.deepEqual(errors,[]);
@@ -582,7 +582,7 @@ test('passagem gradual da paisagem e aviso de destino sem perder a jogabilidade'
     assert.equal(await page.locator('#game-transition').isVisible(),false);
     const halfway=await sample(60);
     assert.equal(await page.locator('#game-transition').isVisible(),false,'a passagem visual não exibe legenda de cenário');
-    assert.match(await page.locator('#game-transition-name').textContent(),/Flórida/);
+    assert.match(await page.locator('#game-transition-name').textContent(),/Paraguai/);
     const transitionWidth=await page.locator('#game-transition-progress').evaluate(el=>parseFloat(el.style.width));
     assert.ok(transitionWidth>=48 && transitionWidth<=65, `progresso interno da transição: ${transitionWidth}%`);
     const florida=await sample(62.5);
