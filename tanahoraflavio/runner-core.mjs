@@ -1,3 +1,4 @@
+import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=4447edaa9d9a';
 import {regularCastMuzzle} from './runner-cast-pose.mjs?v=26402722b1e5';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=181506ec1b3c';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=fa9433a61a03';
@@ -354,7 +355,8 @@ export function setAttackRun(run,active){
  return run.player.attackHeld;
 }
 export function heroMuzzleFor(run,facing=1){
- return {x:playerX(run)+(facing<0?2:PLAYER.width-2),y:run.player.y+(run.player.crouching?18:38)};
+ const {muzzle}=heroShotPose({facing,crouching:run.player.crouching});
+ return {x:playerX(run)+PLAYER.width/2+muzzle.x,y:run.player.y-muzzle.y};
 }
 export function attackRun(run){
  const b=run.boss,p=run.player;
@@ -364,7 +366,7 @@ export function attackRun(run){
  const {x,y}=heroMuzzleFor(run,p.shotFacing);
  const dx=pose.x-x,dy=pose.platformY+48-y,distance=Math.max(1,Math.hypot(dx,dy));
  (run.heroShots??=[]).push({x,y,previousX:x,previousY:y,vx:dx/distance*760,vy:dy/distance*760,age:0});
- p.attackCooldown=.28;p.attackFor=.13;run.shotsFired=(run.shotsFired||0)+1;return true;
+ p.attackCooldown=.28;p.attackFor=HERO_SHOT_DURATION;run.shotsFired=(run.shotsFired||0)+1;return true;
 }
 function advanceHeroShots(run,dt){
  const p=run.player;p.attackCooldown=Math.max(0,(p.attackCooldown||0)-dt);p.attackFor=Math.max(0,(p.attackFor||0)-dt);

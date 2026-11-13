@@ -1,7 +1,8 @@
+import {drawBossonariHead} from './runner-character-art.mjs?v=fe4cf8cf74ca';
 import {standingEnemyPose} from './runner-cast-pose.mjs?v=26402722b1e5';
 export {standingEnemyPose} from './runner-cast-pose.mjs?v=26402722b1e5';
 import {drawSpriteHead} from './runner-sprites.mjs?v=9a9d2bd998a8';
-import {drawMemeArmy} from './runner-art.mjs?v=f15d7323705b';
+import {drawMemeArmy} from './runner-art.mjs?v=acf55693ecf1';
 
 // Standing bosses: original atlas heads, original articulated Canvas bodies.
 // Coordinates are logical game pixels; y always remains the top of the deck.
@@ -81,12 +82,6 @@ function fallbackHead(c,type,accent){
  // Loading fallback is a neutral silhouette; it never borrows another identity.
  oval(c,0,-87,13,17,'#536173',INK,1.5);oval(c,-4,-89,1.3,1.3,CREAM,null);oval(c,4,-89,1.3,1.3,CREAM,null);
  line(c,[[-5,-78],[5,-78]],accent,1.5);
-}
-function drawBossonariHead(c){
- // Same human face/hair as the existing drawBossOfBosses vector, at the neck.
- oval(c,0,-19,18,21,'#e7b68e','#583c4b',2);
- polygon(c,[[-18,-28],[-9,-42],[9,-42],[18,-30],[10,-33],[-10,-33]],'#302f43');
- oval(c,-6,-20,2,2,'#302f43',null);oval(c,6,-20,2,2,'#302f43',null);
 }
 
 export function drawHoverEnemy(c,{type='haddad',x=0,y=0,scale=1,phase=0,preparing=false,attacking=false,recovering=false,hurt=false,reducedMotion=false,classId='sentinel',action='jump',progress}={}){

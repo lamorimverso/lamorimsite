@@ -1,3 +1,5 @@
+import {drawSpecialRunner} from './runner-character-art.mjs?v=fe4cf8cf74ca';
+export {drawHeroShot} from './runner-character-art.mjs?v=fe4cf8cf74ca';
 import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=9a9d2bd998a8";
 // Personagens em atlas WebP; itens e perigos continuam vetoriais em Canvas.
 const INK='#292337',CREAM='#fff6e5';
@@ -10,10 +12,10 @@ function text(c,value,x,y,size=7,color=CREAM){c.fillStyle=color;c.font='900 '+si
 export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT,CORE_SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=9a9d2bd998a8";
 // Figuras vetoriais articuladas preservam a silhueta original do meme.
 // Silhueta original do meme: chapéu vermelho, emblema dourado e pernas longas.
-export function drawMemeArmy(c,{x=0,y=0,phase=0,scale=1,reducedMotion=false,standing=false}={}){
+export function drawMemeArmy(c,{x=0,y=0,phase=0,scale=1,reducedMotion=false,standing=false,running=false}={}){
  c.save();c.translate(x,y);c.scale(scale,scale);
  c.translate(0,reducedMotion||standing?0:Math.sin(phase*.35)*1.5);
- const stride=reducedMotion||standing?0:Math.sin(phase*.65)*.22;
+ const stride=standing||reducedMotion&&!running?0:Math.sin(phase*.65)*.22;
  // A referência tem chapéu de três pontas e pernas, não cabeça nem lençol.
  // Forma de trás, mais fria e fina: joelho flexionado, salto atrás.
  const silhouette=(fill,stroke,draw)=>{c.beginPath();draw();c.closePath();c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=1.2;c.stroke();}};
@@ -344,7 +346,7 @@ export function drawEnemyActor(c,{type,x=0,y=0,scale=1,phase=0,preparing=false,a
  if(type==='meme-army')drawMemeArmy(c,{phase,reducedMotion,scale});
  // A animação essencial do elenco avança inclusive com efeitos reduzidos,
  // assim como a corrida de Flávio. Só o balanço decorativo é removido.
- else drawActor(c,{type,x:0,y:0,scale,phase,preparing,attacking,hurt});
+ else if(!drawSpecialRunner(c,{type,x:0,y:0,scale,phase}))drawActor(c,{type,x:0,y:0,scale,phase,preparing,attacking,hurt});
  // Nenhum objeto de ataque é desenhado no corpo. A preparação é uma pose,
  // e o disparo existe somente na lista de projéteis do motor.
  if(preparing||attacking){
@@ -534,7 +536,9 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
   c.translate(0,movement.bob);c.rotate(movement.lean);
   // Perseguidores de solo usam as poses de corrida do atlas. O emissor
   // suspenso continua independente e não transporta o projétil no corpo.
-  drawActor(c,{type:item.type,x:0,y:0,scale:.95,phase,facing:item.approach==='rear'?1:-1});
+  const facing=item.approach==='rear'?1:-1;
+  if(item.type==='meme-army'){c.save();if(facing>0)c.scale(-1,1);drawMemeArmy(c,{y:-6,scale:1.55,phase,reducedMotion,running:true});c.restore();}
+  else if(!drawSpecialRunner(c,{type:item.type,scale:.95,phase,facing}))drawActor(c,{type:item.type,x:0,y:0,scale:.95,phase,facing});
  }
  drawWeaponEffects(c,item,phase,reducedMotion);
  c.restore();
