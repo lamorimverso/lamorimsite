@@ -1,5 +1,6 @@
-import {drawSpecialRunner} from './runner-character-art.mjs?v=f9a33d351ab1';
-export {drawHeroShot} from './runner-character-art.mjs?v=f9a33d351ab1';
+import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=914de50b4010';
+import {drawSpecialRunner} from './runner-character-art.mjs?v=f20aef46ef11';
+export {drawHeroShot} from './runner-character-art.mjs?v=f20aef46ef11';
 import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=aa3ca259afdd";
 // Personagens em atlas WebP; itens e perigos continuam vetoriais em Canvas.
 const INK='#292337',CREAM='#fff6e5';
@@ -402,143 +403,15 @@ export function drawProjectile(c,item,ground,phase,{reducedMotion=false}={}){
  drawThreat(c,item,y+item.height/2,phase,{reducedMotion});
  c.restore();
 }
-export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
+export function drawThreat(c,item,ground,phase,{reducedMotion=false,weaponEffects=true}={}){
  const x=item.x+item.width/2;c.save();c.translate(x,ground);
- const motion=reducedMotion?0:Math.sin((Number(phase)||0)*.42),flutter=reducedMotion?0:Math.sin((Number(phase)||0)*.61);
- if(item.action==='crouch'){
-  // Sem painel retangular: o objeto ocupa a mesma altura de colisão.
-  const h=item.height||72;
-  c.scale(1,h/44);
+ if(drawCompleteWeapon(c,{type:item.type,width:item.width||46,height:item.height||44,phase,reducedMotion})){
+  if(weaponEffects)drawWeaponEffects(c,item,phase,reducedMotion);c.restore();return;
  }
-
  if(item.type==='meme-ghost'){
+  if(item.height>60)drawMemeArmy(c,{y:-item.height*.44,phase:phase+2,reducedMotion,scale:.64});
   drawMemeArmy(c,{phase,reducedMotion,scale:.78});
- }
- else if(item.type==='cloroquina-prop'||item.type==='ivermectina-prop'){
-  // Frascos fictícios, jamais indicação de medicamento.
-  const isC=item.type==='cloroquina-prop';
-  c.save();c.rotate(isC?-.22:.18);
-  box(c,-19,-37,38,33,isC?'#f7e2a2':'#c5e5f0',6,'#6a5877');
-  box(c,-14,-42-motion*2,28,7,isC?'#9c6ca7':'#5f88a1',3,'#6a5877');
-  box(c,-18,-22,36,12,isC?'#8b628f':'#417e9b',3,null);
-  // Liquid surface and bubbles move inside the rigid glass.
-  c.save();
-  c.beginPath();c.moveTo(-16,-19+motion*3);c.quadraticCurveTo(0,-25-motion*4,16,-19-motion*3);c.lineTo(16,-5);c.lineTo(-16,-5);c.closePath();c.fillStyle=isC?'#d3a24488':'#6bbbd388';c.fill();
-  for(let i=0;i<3;i++)oval(c,-9+i*9,-12-((reducedMotion?i*5:((phase*1.5+i*6)%21+21)%21)),1.4,2,'#ffffff99',null);
-  c.restore();
-  text(c,isC?'CLOROQ.':'IVERM.',0,-13,8,'#ffffff');line(c,[[-13,-34],[-13,-25]],'#ffffff',3);line(c,[[12,-8],[12,-5]],'#8f82a2',2);
-  c.restore();
- }
- else if(item.type==='message'){
-  box(c,-22,-37,44,34,'#fff5e6',4,'#873249');
-  box(c,-16,-30-motion*5,32,18+motion*4,'#fffaf0',2,'#a87e91');
-  path(c,[[-21,-34],[0,-16],[21,-34]],'#e7bac0','#873249');
-  line(c,[[-20,-4],[-5,-18]],'#c78591',1.8);line(c,[[20,-4],[5,-18]],'#c78591',1.8);
-  box(c,-17,-12,34,10,'#a83750',2,null);text(c,'URGENTE',0,-5,7,'#fff8ef');
- }
- else if(item.type==='falling-case'){
-  // Mala em queda oblíqua, com silhueta de impacto claramente distinguível.
-  c.save();if(!reducedMotion)c.rotate(Math.sin(phase*.23)*.16);
-  box(c,-15,-33,30,30,'#9c5b83',5);box(c,-7,-39-motion*3,14,7+motion*2,'#e5ba88',2);
-  line(c,[[-10,-24],[-10,-8]],'#e8c6e7',2.5);line(c,[[10,-24],[10,-8]],'#e8c6e7',2.5);
-  c.restore();
- }
- else if(item.type==='rolling-case'){
-  // Obstáculo de solo com movimento de rotação, não uma simples imagem estática.
-  c.save();if(!reducedMotion)c.rotate(Math.sin(phase*.65)*.11);
-  box(c,-18,-29,36,26,'#7f5e96',5);
-  box(c,-6,-35,12,7,'#d3b480',2);for(const wheel of [-11,11]){oval(c,wheel,-2,4,4,'#2c2b3c','#f2cf86',1);const a=reducedMotion?0:phase*.8;line(c,[[wheel-Math.cos(a)*3,-2-Math.sin(a)*3],[wheel+Math.cos(a)*3,-2+Math.sin(a)*3]],'#efcf8c',1);}line(c,[[-10,-24],[-10,-6]],'#c9aedc',2);line(c,[[10,-24],[10,-6]],'#c9aedc',2);
-  line(c,[[-14,-23],[14,-23]],'#cfacdc',2);c.restore();
- }
- else if(item.type==='barrier'){box(c,-22,-28+motion*2,44,12,'#f1bd65');for(let i=-15;i<20;i+=14)line(c,[[i,-27],[i+7,-17]],'#543b42',4);line(c,[[-15,-16],[-17,0]],INK,4);line(c,[[15,-16],[17,0]],INK,4);}
- else if(item.type==='wind'){
-  // Vendaval animado em várias camadas, não três curvas estáticas.
-  drawWindVortex(c,{phase,reducedMotion});
- }
- else if(item.type==='budget-sheets'){
-  // Simone: planilhas de orçamento soltas.
-  c.save();c.rotate(-.08+(reducedMotion?0:Math.sin(phase*.12)*.18));
-  c.save();c.translate(3,-4);c.rotate(.20+(reducedMotion?0:Math.sin(phase*.17)*.09));box(c,-18,-32,29,30,'#d8eced',2,'#587c8b');c.restore();
-  box(c,-20-flutter*3,-40+motion*3,25,38,'#fff7df',2,'#476b7f');
-  line(c,[[-15,-34],[-1,-34]],'#527c93',1.5);
-  for(let i=0;i<3;i++)line(c,[[-15,-26+i*7],[-2,-26+i*7]],'#8cacae',1);
-  box(c,1+flutter*3,-34-motion*3,21,32,'#f7fbff',2,'#49748c');
-  text(c,'BRL',11,-25,7,'#34546a');line(c,[[4,-19],[19,-19]],'#8bb2b9',1);line(c,[[4,-15],[19,-15]],'#8bb2b9',1);
-  for(let i=0;i<3;i++)box(c,4+i*5,-6-(i+1)*5,3,(i+1)*5,'#64a4ac',1,null);
-  c.restore();
- }
- else if(item.type==='parachute-cross'){
-  // Soraya: cruz cenográfica suspensa por paraquedas.
-  c.save();if(!reducedMotion)c.rotate(Math.sin(phase*.09)*.09);
-  c.beginPath();c.moveTo(-23,-28);c.bezierCurveTo(-19-motion*3,-49-motion*5,19+motion*3,-49-motion*5,23,-28);
-  c.quadraticCurveTo(11,-34,0,-28);c.quadraticCurveTo(-11,-34,-23,-28);
-  c.closePath();c.fillStyle='#e6f0e8';c.fill();c.strokeStyle='#537c7e';c.lineWidth=2;c.stroke();
-  line(c,[[-23,-28],[-9,-16]],'#63878b',1.4);
-  line(c,[[23,-28],[9,-16]],'#63878b',1.4);
-  line(c,[[0,-28],[0,-19]],'#63878b',1.4);line(c,[[-13,-39],[-7,-30]],'#a2c1bf',2);line(c,[[12,-39],[6,-30]],'#a2c1bf',2);
-  path(c,[[-4,-19],[4,-19],[4,-13],[10,-13],[10,-7],[4,-7],[4,0],[-4,0],[-4,-7],[-10,-7],[-10,-13],[-4,-13]],'#e6ba66','#744e56');
-  c.restore();
- }
- else if(item.type==='handcuffs'){
-  // Joice e PF: algemas soltas com corrente, sem moldura.
-  c.save();c.rotate(.12+(reducedMotion?0:Math.sin(phase*.15)*.18));
-  oval(c,-11-motion*3,-30+flutter*2,10,11,'#b8ccd7','#486278',2.5);
-  oval(c,-11-motion*3,-30+flutter*2,5.5,6.5,'#e9f4f9','#486278',1.4);
-  oval(c,-1-motion,-22+flutter*3,4,3,'#8aa6ba','#486278',1.3);oval(c,4+motion,-19-flutter*2,4,3,'#c5dbe7','#486278',1.3);
-  oval(c,11+motion*3,-10-flutter*2,10,11,'#b8ccd7','#486278',2.5);
-  oval(c,11+motion*3,-10-flutter*2,5.5,6.5,'#e9f4f9','#486278',1.4);
-  c.restore();
- }
- else if(item.type==='microphone'){
-  // Flexible cable articulates independently of the microphone body.
-  box(c,-12,-8+motion*2,7,8,'#51465c',2);
-  c.beginPath();c.moveTo(-9,-3);c.bezierCurveTo(-22-motion*7,7,-4+flutter*6,13,9,4);c.strokeStyle='#746780';c.lineWidth=2;c.stroke();
-  line(c,[[-9,-3],[8,-23]],'#444056',6);oval(c,10,-27,10,9,'#716a83','#2d283e',2);line(c,[[4,-30],[14,-24]],'#cbc4d5',2);
- }
- else if(item.type==='popcorn'){
-  path(c,[[-19,-25],[19,-25],[14,-1],[-14,-1]],'#e15262');for(let i=-9;i<=9;i+=9)line(c,[[i,-22],[i*.7,-4]],'#fff5db',4);
-  for(const [px,py] of [[-14,-28],[-6,-32],[3,-30],[12,-31],[17,-25]])oval(c,px,py,6,5,'#fff2bd','#a58049',1);
- }
- else if(item.type==='case'){box(c,-17,-31,34,28,'#906490');box(c,-6,-37-motion*3,12,6+motion*2,'#e1b985',2);line(c,[[-8,-28],[-8,-7]],'#d9b88a',2);line(c,[[8,-28],[8,-7]],'#d9b88a',2);oval(c,-10,0,3,3,INK);oval(c,10,0,3,3,INK);}
- else if(item.type==='stamp'){box(c,-21,-15,42,13,'#a53e54');box(c,-8,-31+motion*5,16,16-motion*5,'#81584a');line(c,[[-23,-1],[23,-1]],'#e1a05e',3);text(c,'TAXA',0,-5,8,'#fff7e3');}
- else if((item.type==='receipts'||item.type==='paper-gate')){
-  for(let i=0;i<3;i++){box(c,-18+i*10+flutter*i,-34+i*4+motion*(i-1)*3,20,25+flutter*(i-1)*2,'#fff1cf',2);for(let j=0;j<3;j++)line(c,[[-14+i*10,-28+i*4+j*5],[-3+i*10,-28+i*4+j*5]],'#417884',1.5);}
-  if(item.owner==='haddad'){box(c,-15,-13,30,10,'#a33e52',2,null);text(c,'TAXA',0,-6,8,'#fff8df');}
- }
- else if(item.type==='hammer'){
-  // Martelo do chefão Xandão: cabo de madeira, cabeça metálica.
-  c.save();c.rotate(-.35+(reducedMotion?0:Math.sin(phase*.15)*.16));
-  box(c,-4,-38,9,37,'#9b654b',2);box(c,-23,-43+motion*2,46,18,'#606575',4);
-  box(c,-20,-41,40,6,'#c6ced9',2,null);line(c,[[-19,-27],[19,-27]],'#343b50',2.5);line(c,[[-1,-24],[-1,-4]],'#d19b72',2);c.restore();
- }
- else if(item.type==='mandado'){
-  // Mandado de papel: legível como objeto arremessado, não uma pessoa.
-  c.save();c.rotate(.13+(reducedMotion?0:Math.sin(phase*.14)*.14));box(c,-17,-40,34,39,'#fffaf0',2,'#816c8c');
-  box(c,7-flutter*3,-39,9+flutter*3,8+motion*4,'#e6dccb',1,'#a58d9b');
-  text(c,'MANDADO',0,-29,7,'#40384d');
-  for(let i=0;i<3;i++)line(c,[[-11,-22+i*6],[11,-22+i*6]],'#80758b',1.5);
-  oval(c,9,-8,5,5,'#b74557','#7d293f',1.2);line(c,[[-11,-8],[-1,-8]],'#aa4966',2.6);c.restore();
- }
- else if(item.type==='lhand'){
-  // Indicador e polegar em L inequívoco, com volume, contorno e palma.
-  // O tamanho acompanha a largura física, sem esticar o golpe para fora da pista.
-  c.save();c.scale((item.width||46)/46,1);
-  c.beginPath();c.moveTo(-16,-2);c.lineTo(-20,-16);
-  c.quadraticCurveTo(-20,-22,-12,-22);c.lineTo(-7,-18);
-  c.lineTo(-7,-39+motion*3);c.quadraticCurveTo(-7-flutter*3,-46+motion*3,0,-46+motion*3);
-  c.quadraticCurveTo(7+flutter*2,-46+motion*3,7,-39+motion*3);c.lineTo(7,-19);
-  c.lineTo(18,-19);c.quadraticCurveTo(25+motion*4,-19,25+motion*4,-12+flutter*2);
-  c.quadraticCurveTo(24,-6,16,-7);c.lineTo(8,-7);
-  c.lineTo(8,-1);c.quadraticCurveTo(-3,5,-16,-2);c.closePath();
-  c.fillStyle='#efb382';c.fill();c.strokeStyle='#fff1bb';c.lineWidth=5;c.stroke();c.strokeStyle='#63372e';c.lineWidth=2.4;c.stroke();
-  path(c,[[-14,-15],[-7,-11],[-5,-2],[-15,-3]],'#c98760',null);
-  line(c,[[-3,-39],[-3,-23]],'#ffe1b6',2.5);
-  line(c,[[10,-15],[20,-15]],'#ffe1b6',2.2);
-  line(c,[[-13,-13],[-6,-10]],'#97583e',1.7);
-  line(c,[[-12,-7],[-5,-5]],'#97583e',1.7);
-  c.restore();
- }
- else {
+ }else{
   const movement=enemyMotionFor(item.type,reducedMotion?0:phase,x);
   c.translate(0,movement.bob);c.rotate(movement.lean);
   // Perseguidores de solo usam as poses de corrida do atlas. O emissor
@@ -547,6 +420,6 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false}={}){
   if(item.type==='meme-army'){c.save();if(facing>0)c.scale(-1,1);drawMemeArmy(c,{y:-6,scale:1.55,phase,reducedMotion,running:true});c.restore();}
   else if(!drawSpecialRunner(c,{type:item.type,scale:.95,phase,facing}))drawActor(c,{type:item.type,x:0,y:0,scale:.95,phase,facing});
  }
- drawWeaponEffects(c,item,phase,reducedMotion);
+ if(weaponEffects)drawWeaponEffects(c,item,phase,reducedMotion);
  c.restore();
 }

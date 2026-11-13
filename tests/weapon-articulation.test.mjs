@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {drawThreat} from '../tanahoraflavio/runner-art.mjs';
 function geometry(type,phase,reducedMotion=false){
- const calls=[],ctx=new Proxy({globalAlpha:1},{get(o,k){if(k in o)return o[k];return (...a)=>{if(['roundRect','bezierCurveTo','quadraticCurveTo','ellipse'].includes(k))calls.push([k,...a]);};},set(o,k,v){o[k]=v;return true;}});
- drawThreat(ctx,{type,x:150,width:46,height:44,action:'jump'},246,phase,{reducedMotion});
- return type==='handcuffs'?calls.filter(c=>c[0]==='ellipse').slice(0,6):calls.filter(c=>type==='lhand'||type==='parachute-cross'?c[0].endsWith('CurveTo'):c[0]==='roundRect');
+ const calls=[],ctx=new Proxy({globalAlpha:1},{get(o,k){if(k in o)return o[k];return (...a)=>{if(['roundRect','bezierCurveTo','quadraticCurveTo','ellipse','rotate','translate'].includes(k))calls.push([k,...a]);};},set(o,k,v){o[k]=v;return true;}});
+ drawThreat(ctx,{type,x:150,width:46,height:44,action:'jump'},246,phase,{reducedMotion,weaponEffects:false});
+ return calls;
 }
 for(const type of ['message','stamp','lhand','handcuffs','parachute-cross','cloroquina-prop','ivermectina-prop','microphone','receipts','budget-sheets','hammer','mandado','barrier','case','falling-case'])test(type+' articula a geometria interna, além da rotação e das partículas',()=>{
  assert.notDeepEqual(geometry(type,0),geometry(type,9),type+' está rígido');
