@@ -1,14 +1,17 @@
 // Atlas e recortes gerados dos desenhos escolhidos, preservando os PNGs fontes.
 import {definitions} from './runner-sprite-data.mjs?v=4a931cb52b80';
+import {combatDefinitions} from './runner-combat-sprite-data.mjs?v=5c8ff35ddc6b';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=69851726fc55';
+export const spriteDefinitions={...definitions,...combatDefinitions};
 const sheets=new Map();let activeAttempt=null;
 const actorGroups={flavio:[0,1,2,3,4,5,6,7],xandao:[0,1,2],haddad:[4,5,6],lula:[8,9,10],pf:[3,13],janones:[7,14],army:[11,15],joice:[12]};
 const runningGroups={haddad:{sheet:'chase',start:0},lula:{sheet:'chase',start:4},xandao:{sheet:'chase',start:8},joice:{sheet:'chase',start:12},dilma:{sheet:'cameos',start:0},simone:{sheet:'cameos',start:4},soraya:{sheet:'cameos',start:8},'ze-gotinha':{sheet:'cameos',start:12}};
 for(const [sheet,definition] of Object.entries(definitions))for(const [row,type] of (definition.actors||[]).entries())runningGroups[type]={sheet,start:row*4};
-export const SPRITE_SHEET_COUNT=Object.keys(definitions).length;
-export const CORE_SPRITE_SHEET_COUNT=5;
+export const SPRITE_SHEET_COUNT=Object.keys(spriteDefinitions).length;
+export const CORE_SPRITE_SHEET_COUNT=11;
 export function loadSprites(onProgress=()=>{},{coreOnly=false}={}){
- const base=['hero','cast','cameos','chase','pursuers'];
- const entries=Object.entries(definitions).filter(([name])=>(!coreOnly||base.includes(name))&&!sheets.has(name)),total=entries.length;
+ const base=['hero','cast','cameos','chase','pursuers',...Object.keys(combatDefinitions)];
+ const entries=Object.entries(spriteDefinitions).filter(([name])=>(!coreOnly||base.includes(name))&&!sheets.has(name)),total=entries.length;
  if(!total)return Promise.resolve();
  if(activeAttempt)return activeAttempt.coreOnly===coreOnly?activeAttempt.promise:activeAttempt.promise.then(()=>loadSprites(onProgress,{coreOnly}));
  const attempt={images:[],loaded:new Map(),settled:false,coreOnly};
@@ -145,5 +148,17 @@ export function drawSpriteHead(context,{type,x=0,y=0,size=40,phase=0}={}){
  }
  context.closePath();context.clip();
  context.drawImage(sheet.image,frame.x+left,frame.y+top,width,height,dx,dy,dw,size);
+ context.restore();return true;
+}
+
+/** One drawImage samples one COMPLETE illustrated pose, including face, torso and shoes. */
+export function drawCombatSprite(context,{type,x=0,y=0,alpha=1,...options}={}){
+ const geometry=combatGeometryFor(type,options);if(!geometry)return false;
+ const sheet=sheets.get(geometry.sheet);if(!sheet)return false;
+ const {frame,factor,flip,rect}=geometry;
+ context.save();context.globalAlpha*=alpha;context.imageSmoothingEnabled=true;
+ context.translate(x,y);if(flip!==1)context.scale(flip,1);
+ if(options.hurt){context.shadowColor='#ffd56b';context.shadowBlur=5;}
+ context.drawImage(sheet.image,frame.x,frame.y,frame.width,frame.height,rect.x,rect.y,frame.width*factor,frame.height*factor);
  context.restore();return true;
 }

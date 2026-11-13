@@ -1,11 +1,12 @@
 import {drawCharacterBody,drawCharacterArm} from './runner-body-art.mjs?v=67badae0df52';
-import {drawBossonariHead} from './runner-character-art.mjs?v=f20aef46ef11';
-import {standingEnemyPose} from './runner-cast-pose.mjs?v=9536f7dc0f61';
-export {standingEnemyPose} from './runner-cast-pose.mjs?v=9536f7dc0f61';
-import {drawSpriteHead} from './runner-sprites.mjs?v=aa3ca259afdd';
-import {drawMemeArmy} from './runner-art.mjs?v=2d614cb73df8';
+import {drawBossonariHead} from './runner-character-art.mjs?v=6e1fcb7814d8';
+import {standingEnemyPose} from './runner-cast-pose.mjs?v=81dca23c7b76';
+export {standingEnemyPose} from './runner-cast-pose.mjs?v=81dca23c7b76';
+import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=8a27c3295d8b';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=69851726fc55';
+import {drawMemeArmy} from './runner-art.mjs?v=909ad8a2bd7c';
 
-// Standing bosses: original atlas heads, original articulated Canvas bodies.
+// Full illustrated combat sprites share the original running artwork style.
 // Coordinates are logical game pixels; y always remains the top of the deck.
 const INK='#292337',CREAM='#fff4dc';
 const SUITS={
@@ -64,6 +65,13 @@ export function drawHoverEnemy(c,{type='haddad',x=0,y=0,scale=1,phase=0,preparin
  const p=standingEnemyPose({phase,preparing,attacking,recovering,hurt,reducedMotion,classId,action,progress}),[,,accent]=SUITS[type]||['#4d4d70','#292c49','#dbc778'];
  c.save();c.translate(x,y);c.scale(scale,scale);
  drawShip(c,p,accent,preparing,attacking,hurt);
+ const spriteOptions={phase,preparing,attacking,recovering,hurt,reducedMotion,progress};
+ if(drawCombatSprite(c,{type,...spriteOptions})){
+  const hand=combatGeometryFor(type,spriteOptions).muzzle;
+  drawMagic(c,{arms:{left:{hand:{x:hand.x+7,y:hand.y}}}},accent,preparing&&!hurt,attacking&&!hurt);
+  c.restore();return;
+ }
+ // Emergency unloaded-art fallback; required atlases are loaded before play.
  if(type==='meme-army'){
   // Preserve the existing red three-point hat and long-legged silhouette.
   // No skeleton, no substitute head, no running animation in the boss rig.

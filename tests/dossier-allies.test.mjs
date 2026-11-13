@@ -32,6 +32,6 @@ test('todos os aliados são coletáveis no motor e nenhum concede arma ou invuln
 });
 test('expansão indisponível adia apoios e não cria um perigo sem desenho próprio',()=>{
  const r=isolated();r.supportAvailable=false;r.elapsed=80;r.distance=r.routeDistance=19000;r.nextSupportAt=r.nextObstacle=0;
- core.advanceRun(r,dt,()=>.999);assert.ok(['pf','barrier','case'].includes(r.obstacles.at(-1).type),'sem atlas adicional: apenas ameaças com desenho garantido');assert.ok(!r.pickups.some(p=>p.type==='ally'));
+ core.advanceRun(r,dt,()=>.999);assert.ok(['pf','barrier','case','army'].includes(r.obstacles.at(-1).type),'sem atlas adicional: apenas ameaças com desenho garantido');assert.ok(!r.pickups.some(p=>p.type==='ally'));
  r.supportAvailable=true;core.advanceRun(r,dt,()=>.999);assert.ok(r.pickups.some(p=>p.type==='ally'));
 });

@@ -2,7 +2,7 @@ import test,{before} from 'node:test';
 import assert from 'node:assert/strict';
 import * as art from '../runner-art.mjs';
 import * as core from '../runner-core.mjs';
-import {definitions} from '../runner-sprite-data.mjs';
+import {spriteDefinitions as definitions} from '../runner-sprites.mjs';
 
 before(async()=>{
  const original=globalThis.Image;

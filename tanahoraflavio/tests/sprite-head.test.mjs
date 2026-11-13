@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {definitions} from '../runner-sprite-data.mjs';
+import {spriteDefinitions as definitions} from '../runner-sprites.mjs';
 let id=0;
 async function setup(t){const images=[];const original=Object.getOwnPropertyDescriptor(globalThis,'Image');globalThis.Image=class{constructor(){images.push(this);}set src(url){this.url=url;}get src(){return this.url;}};t.after(()=>original?Object.defineProperty(globalThis,'Image',original):delete globalThis.Image);const sprites=await import(`../runner-sprites.mjs?heads-test=${++id}`);return {sprites,images,async load(coreOnly=false){const pending=sprites.loadSprites(()=>{},{coreOnly});for(const image of images)if(image.onload){const d=Object.values(definitions).find(d=>d.url===image.src);image.naturalWidth=d.width;image.naturalHeight=d.height;image.onload();}await pending;}};}
 function context(){const drawn=[],clips=[];return {drawn,clips,save(){},restore(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},clip(){clips.push(true);},drawImage(...args){drawn.push(args);}};}

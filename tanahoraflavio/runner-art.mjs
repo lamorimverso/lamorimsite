@@ -1,7 +1,7 @@
 import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=914de50b4010';
-import {drawSpecialRunner} from './runner-character-art.mjs?v=f20aef46ef11';
-export {drawHeroShot} from './runner-character-art.mjs?v=f20aef46ef11';
-import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=aa3ca259afdd";
+import {drawSpecialRunner} from './runner-character-art.mjs?v=6e1fcb7814d8';
+export {drawHeroShot} from './runner-character-art.mjs?v=6e1fcb7814d8';
+import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=8a27c3295d8b";
 // Personagens em atlas WebP; itens e perigos continuam vetoriais em Canvas.
 const INK='#292337',CREAM='#fff6e5';
 function oval(c,x,y,rx,ry,fill,stroke=INK,w=1.8){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=w;c.stroke();}}
@@ -10,7 +10,7 @@ function path(c,points,fill,stroke=INK){c.beginPath();points.forEach(([x,y],i)=>
 function line(c,points,color=INK,width=2){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.strokeStyle=color;c.lineWidth=width;c.lineCap='round';c.lineJoin='round';c.stroke();}
 function text(c,value,x,y,size=7,color=CREAM){c.fillStyle=color;c.font='900 '+size+'px system-ui';c.textAlign='center';c.fillText(value,x,y);}
 
-export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT,CORE_SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=aa3ca259afdd";
+export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT,CORE_SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=8a27c3295d8b";
 // Figuras vetoriais articuladas preservam a silhueta original do meme.
 // Silhueta original do meme: chapéu vermelho, emblema dourado e pernas longas.
 export function drawMemeArmy(c,{x=0,y=0,phase=0,scale=1,reducedMotion=false,standing=false,running=false}={}){
@@ -418,7 +418,7 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false,weaponEffect
   // suspenso continua independente e não transporta o projétil no corpo.
   const facing=item.approach==='rear'?1:-1;
   if(item.type==='meme-army'){c.save();if(facing>0)c.scale(-1,1);drawMemeArmy(c,{y:-6,scale:1.55,phase,reducedMotion,running:true});c.restore();}
-  else if(!drawSpecialRunner(c,{type:item.type,scale:.95,phase,facing}))drawActor(c,{type:item.type,x:0,y:0,scale:.95,phase,facing});
+  else if(!drawSpecialRunner(c,{type:item.type,scale:.95,phase,facing,armyVariant:item.armyVariant}))drawActor(c,{type:item.type,x:0,y:0,scale:.95,phase,facing});
  }
  if(weaponEffects)drawWeaponEffects(c,item,phase,reducedMotion);
  c.restore();

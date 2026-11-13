@@ -1,3 +1,4 @@
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=69851726fc55';
 // Pure rig shared by rendering and regular projectile launch coordinates.
 const CLASS_ALIASES={sentinela:'sentinel',artilheiro:'gunner',conjurador:'caster',soberano:'sovereign'};
 const canonicalClass=value=>CLASS_ALIASES[value]||value||'sentinel';
@@ -45,7 +46,7 @@ export function standingEnemyPose({phase=0,preparing=false,attacking=false,recov
 }
 
 
-export function regularEmitterPose(type,width=900,ground=246){return {x:width-58,y:ground-134,scale:type==='meme-army'?1.36:.92};}
+export function regularEmitterPose(type,width=900,ground=246){return {x:width-58,y:ground-134,scale:.92};}
 export function regularCastPresentation(shot){
  const cast=shot?.cast;if(!cast)return {preparing:false,attacking:false,recovering:false,progress:0,action:'crouch',classId:'caster'};
  const age=cast.flightAge||0,pending=!shot.launched;
@@ -53,8 +54,9 @@ export function regularCastPresentation(shot){
   progress:pending?Math.max(0,Math.min(1,1-shot.waitFor/cast.windupFor)):age<.26?age/.26:Math.min(1,(age-.26)/.5),action:shot.action,classId:'caster'};
 }
 export function regularCastMuzzle(type,width=900,ground=246,phase=0){
- const pose=regularEmitterPose(type,width,ground),rig=standingEnemyPose({phase,attacking:true,progress:0,action:'crouch',classId:'caster'}),hand=rig.arms.left.hand;
- return {x:pose.x+(hand.x-7)*pose.scale,y:ground-(pose.y+hand.y*pose.scale)};
+ const pose=regularEmitterPose(type,width,ground),hand=combatGeometryFor(type,{frame:2,scale:pose.scale})?.muzzle;
+ if(!hand)return {x:pose.x-40*pose.scale,y:ground-pose.y+45*pose.scale};
+ return {x:pose.x+hand.x,y:ground-pose.y-hand.y};
 }
 
 // Exit only during the final recovery: the projectile already committed its

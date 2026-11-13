@@ -8,7 +8,7 @@ const require=createRequire(import.meta.url);
 let canvas;
 try{canvas=require('@napi-rs/canvas');}catch{if(process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES){try{canvas=require(process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES+'/@napi-rs/canvas');}catch{}}}
 
-test('real Canvas draws original atlas heads with a planted body, visible ship and distinct combat frames',{skip:!canvas&&'Native Canvas is optional for local pixel QA'},async t=>{
+test('real Canvas draws complete illustrated figures with planted feet, visible ship and distinct combat frames',{skip:!canvas&&'Native Canvas is optional for local pixel QA'},async t=>{
  const {createCanvas,Image}=canvas,previous=Object.getOwnPropertyDescriptor(globalThis,'Image');
  globalThis.Image=class extends Image{set src(value){this.sourceURL=value;super.src=fileURLToPath(value);}get src(){return this.sourceURL;}get naturalWidth(){return this.width;}get naturalHeight(){return this.height;}};
  t.after(()=>previous?Object.defineProperty(globalThis,'Image',previous):delete globalThis.Image);
@@ -26,10 +26,9 @@ test('real Canvas draws original atlas heads with a planted body, visible ship a
   assert.deepEqual(render(type,{phase:0,reducedMotion:true}).pixels,render(type,{phase:90,reducedMotion:true}).pixels);
   assert.equal(c.globalAlpha,1);assert.deepEqual(c.getTransform(),createCanvas(1,1).getContext('2d').getTransform());
  }
- // The ghost must articulate above its shoes, without moving the contact
- // strip at the deck. Exclude the moving ship rim and decorative aura.
- const feet=phase=>{const {c}=render('meme-army',{phase});return c.getImageData(80,150,105,8).data;};
- assert.deepEqual(feet(0),feet(9),'Fantasma mantém os sapatos na mesma faixa do convés');
+ // Complete ghost drawings may change shoe shape, but their support baseline stays on the deck.
+ const {combatGeometryFor}=await import('../runner-combat-geometry.mjs');
+ for(const frame of [0,1,2,3]){const g=combatGeometryFor('meme-army',{frame});assert.ok(Math.abs(g.rect.y+g.rect.height)<2,'sole remains on deck');}
  const identities=['flavio','haddad','lula','xandao','janones','pf','army','joice','dilma','simone','soraya','ze-gotinha','vorcaro','jair','michelle','eduardo','carlos','renan','silas','magno','nikolas','tarcisio','damares','bia','trump','milei','bolsominion','jacare','boulos','dino'];
  for(const type of identities){const c=createCanvas(150,80).getContext('2d');assert.equal(sprites.drawSpriteHead(c,{type,x:65,y:65,size:45}),true);const data=c.getImageData(0,0,150,80).data;assert.ok(data.some((v,i)=>i%4===3&&v>200),`${type} contains real visible atlas pixels`);}
  const a=createCanvas(900,300).getContext('2d'),b=createCanvas(900,300).getContext('2d');drawBossArena(a,{phase:0,reducedMotion:true});drawBossArena(b,{phase:80,reducedMotion:true});assert.deepEqual(a.getImageData(0,0,900,300).data,b.getImageData(0,0,900,300).data);
