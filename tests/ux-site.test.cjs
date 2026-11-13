@@ -314,8 +314,14 @@ test('salto executado no pouso produz um único efeito de salto',async()=>{
  try{
   await begin(page);
   await page.evaluate(()=>{
+   // Establish the first takeoff through the real input path so the Foley
+   // director already knows the player is airborne before queuing the next.
+   const canvas=document.getElementById('runner-canvas');
+   canvas.dispatchEvent(new KeyboardEvent('keydown',{code:'Space',bubbles:true}));
+   canvas.dispatchEvent(new KeyboardEvent('keyup',{code:'Space',bubbles:true}));
    __testRun.player.y=2;__testRun.player.velocity=-100;
-   document.getElementById('runner-canvas').dispatchEvent(new KeyboardEvent('keydown',{code:'Space',bubbles:true}));
+   __testEffects.length=0;
+   canvas.dispatchEvent(new KeyboardEvent('keydown',{code:'Space',bubbles:true}));
   });
   await page.waitForFunction(()=>__testRun.player.y>20);
   assert.equal(await page.evaluate(()=>__testEffects.filter(x=>x==='jump').length),1,'o comando guardado tem o mesmo retorno sonoro do salto imediato');
