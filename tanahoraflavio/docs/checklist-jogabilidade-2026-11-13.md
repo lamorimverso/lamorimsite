@@ -109,8 +109,8 @@ A consulta ao artigo Tanagra no portal AAAI foi bloqueada nesta rodada; ele não
 - [x] Conferir controles, salto armazenado, retorno e cancelamento nas regressões existentes.
 - [x] Simular2.000 sequências com entradas legais e campanhas completas pelo piloto existente.
 - [x] Conferir os11 hashes dos arquivos de fala e distinguir fala de SFX.
-- [ ] Concluir CI de navegador desta alteração, com travessia completa em desktop/celular e falha de apoios.
-- [ ] Conferir capturas desta alteração e arquivos efetivamente publicados.
+- [x] CI de navegador desta alteração: 445/445 testes aprovados, incluindo travessia completa em desktop/celular e falha de apoios.
+- [x] Capturas desta alteração em 390 px e 900 px conferidas: Flávio no centro, perseguidores e objeto dos dois lados, permanecendo até a borda.
 - [ ] Jogar campanha inteira manualmente, com teclado e toque, observando dificuldade, repetição e fadiga.
 - [ ] Validar Safari/iOS e Android em aparelhos físicos; Chrome headless não substitui esse teste.
 - [ ] Medir frames e tempo de carregamento em aparelho modesto e conexão lenta, incluindo novo atlas essencial.
@@ -118,4 +118,4 @@ A consulta ao artigo Tanagra no portal AAAI foi bloqueada nesta rodada; ele não
 - [ ] Avaliar legibilidade/contraste e identificação do locutor com pessoas que usam recursos de acessibilidade.
 - [ ] Finalizar vozes ausentes e revisão de uniformidade artística; essas pendências não foram apagadas pelos testes.
 
-Verificação local e CI final ficam registrados no PR desta mudança. Esta checklist preserva pendências explícitas; não é um certificado de jogo sem erros.
+Verificação local: 352/352 testes; campanhas completas: 20/20; CI: 445/445 no código `b3bbb8fe1161e2aa7fad03617ad249eb19ede08c`. A conferência posterior dos arquivos publicados fica registrada no [PR38](https://github.com/lamorimverso/lamorimsite/pull/38). Esta checklist preserva pendências explícitas; não é um certificado de jogo sem erros.
