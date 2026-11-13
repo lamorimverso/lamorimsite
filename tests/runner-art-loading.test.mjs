@@ -130,14 +130,19 @@ test('atlas com dimensões incompatíveis é rejeitado e pode ser tentado de nov
 test('corrida base carrega antes dos apoios e falha opcional não descarta os personagens prontos',async t=>{
  const {sprites,images,load}=await browserEvents(t);
  const core=sprites.loadSprites(()=>{},{coreOnly:true});
- assert.equal(images.length,4,'somente quatro folhas essenciais bloqueiam a largada');
+ assert.equal(images.length,5,'cinco folhas essenciais cobrem os rostos de todos os chefes');
  for(const image of images)load(image);await core;
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'pf'}),true,'PF usa seu próprio desenho original enquanto a expansão carrega');
  const extras=sprites.loadSprites(),error=extras.then(()=>null,e=>e);
- assert.equal(images.length,9,'as cinco folhas novas não baixam novamente as quatro prontas');
- images[4].onerror();assert.ok(await error);
+ assert.equal(images.length,9,'as quatro folhas de apoio não baixam novamente as cinco prontas');
+ images[5].onerror();assert.ok(await error);
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'flavio'}),true);
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'pf'}),true);
  const retry=sprites.loadSprites();for(const image of images.slice(9))load(image);await retry;
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'boulos'}),true);
+});
+test('rostos de todos os chefes normais estão nos atlas essenciais',async t=>{
+ const {sprites,images,load}=await browserEvents(t);const pending=sprites.loadSprites(()=>{},{coreOnly:true});for(const image of images)load(image);await pending;
+ const c=new Proxy({globalAlpha:1},{get(o,k){return k in o?o[k]:()=>{};}});
+ for(const type of ['boulos','dino','pf','janones','haddad','lula','xandao','joice','dilma','simone','soraya'])assert.equal(sprites.drawSpriteHead(c,{type,x:30,y:45,size:40}),true,type+' possui rosto mesmo sem os apoios');
 });

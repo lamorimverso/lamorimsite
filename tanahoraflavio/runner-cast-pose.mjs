@@ -50,3 +50,10 @@ export function regularCastMuzzle(type,width=900,ground=246,phase=0){
  const pose=regularEmitterPose(type,width,ground),rig=standingEnemyPose({phase,attacking:true,progress:0,action:'crouch',classId:'caster'}),hand=rig.arms.left.hand;
  return {x:pose.x+(hand.x-7)*pose.scale,y:ground-(pose.y+hand.y*pose.scale)};
 }
+
+// Exit only during the final recovery: the projectile already committed its
+// launch origin before the emitter leaves. Core lifetime remains unchanged.
+export function regularEmitterExitPose(type,width=900,ground=246,remaining=1){
+ const pose=regularEmitterPose(type,width,ground),exit=Math.max(0,Math.min(1,1-remaining/.3));
+ return {...pose,x:pose.x+200*exit*exit};
+}

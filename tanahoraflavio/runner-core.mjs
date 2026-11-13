@@ -1,5 +1,6 @@
+import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
 import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=4447edaa9d9a';
-import {regularCastMuzzle} from './runner-cast-pose.mjs?v=26402722b1e5';
+import {regularCastMuzzle} from './runner-cast-pose.mjs?v=53226bef19e8';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=181506ec1b3c';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=fa9433a61a03';
 import {STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=0094a5e5951f';
@@ -151,7 +152,7 @@ function threatSpeed(run,x,seconds,visibleX=x){
  const contactX=frontContact(run),rearContact=playerX(run)+5;
  const pending=run.obstacles.filter(o=>!o.passed&&(o.cast||o.x>contactX)&&o.speed>0)
   .map(o=>threatReservation(run,o));
- const rear=run.obstacles.filter(o=>o.approach==='rear'&&o.speed<0)
+ const rear=run.obstacles.filter(o=>!o.passed&&!o.counted&&o.approach==='rear'&&o.speed<0)
   .map(o=>threatReservation(run,o))
   .filter(t=>t>0);
  const speed=Math.max(1,visibleX-contactX)/seconds*assistance(run);
@@ -189,7 +190,7 @@ export function pursuitAt(seconds,rng=()=>.5,level=10,seen=[],last=null) {
 function rearMotion(run,x,width){
  const contactX=frontContact(run),rearContact=playerX(run)+5;
  const front=run.obstacles.filter(o=>!o.passed&&(o.cast||o.x>contactX)&&o.speed>0).map(o=>threatReservation(run,o));
- const rear=run.obstacles.filter(o=>o.approach==='rear'&&o.speed<0).map(o=>threatReservation(run,o));
+ const rear=run.obstacles.filter(o=>!o.passed&&!o.counted&&o.approach==='rear'&&o.speed<0).map(o=>threatReservation(run,o));
  const drops=run.obstacles.filter(o=>o.falling||o.groundHazard).map(o=>threatReservation(run,o));
  const seconds=Math.max(run.assisted?1.22:1.06,...front.concat(rear,drops).filter(t=>t>0).map(t=>t+REACTION_GAP));
  const distance=rearContact-(x+width-3),requested=distance/seconds,speed=Math.max(180,requested);
@@ -708,7 +709,7 @@ export function advanceRun(run,seconds,rng){
  advanceHeroShots(run,dt);
  resolveBossDodges(run);
  if(run.status!=='running')return;
- run.obstacles=run.obstacles.filter(o=>o.groundHazard?o.age<o.warningFor+o.activeFor:o.falling?o.age<o.warningFor+o.fallFor+.25:o.approach==='rear'?o.x<playerX(run)+PLAYER.width+80:o.x+o.width>-20);
+ run.obstacles=run.obstacles.filter(o=>o.groundHazard?o.age<o.warningFor+o.activeFor:o.falling?o.age<o.warningFor+o.fallFor+.25:retainMovingThreat(o,visibleWidth(run)));
  run.pickups=run.pickups.filter(p=>p.x>-30);
  // Uma Joice já vencida tem prioridade sobre o próximo marco de chefe.
  advanceRaid(run,dt,rng);
