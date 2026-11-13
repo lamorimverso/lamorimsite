@@ -67,3 +67,20 @@ test('arranjo chiptune renderiza sinal contínuo sem saturação na emenda do lo
   assert.ok(metrics.peak<.25,'volume reserva espaço para vozes e efeitos');assert.ok(metrics.rms>.002,'música audível');assert.ok(metrics.seamRms>.0001,'emenda não fica vazia');
  }finally{await context.close();}
 });
+
+test('12 novos recortes de arquivo decodificam, têm sinal e mantêm margem de volume',async()=>{
+ const {context,page}=await open();try{
+  const clips=await page.evaluate(async()=>{
+   const {NEW_ARCHIVE_VOICES}=await import('./runner-archive-voices.mjs');const ctx=new AudioContext(),result=[];
+   for(const [id,clip] of Object.entries(NEW_ARCHIVE_VOICES)){
+    const response=await fetch(clip.file),buffer=await ctx.decodeAudioData(await response.arrayBuffer());
+    const samples=buffer.getChannelData(0);let peak=0,squared=0;for(const v of samples){peak=Math.max(peak,Math.abs(v));squared+=v*v;}
+    result.push({id,status:response.status,duration:buffer.duration,peak,rms:Math.sqrt(squared/samples.length)});
+   }
+   await ctx.close();return result;
+  });
+  assert.equal(clips.length,12);
+  for(const clip of clips){assert.equal(clip.status,200);assert.ok(clip.duration>1&&clip.duration<9,clip.id);assert.ok(clip.peak>.05&&clip.peak<.8,clip.id+' pico '+clip.peak);assert.ok(clip.rms>.02,clip.id+' sem sinal');}
+  console.log('Arquivo: '+clips.length+' recortes; maior pico '+Math.max(...clips.map(c=>c.peak)).toFixed(3));
+ }finally{await context.close();}
+});

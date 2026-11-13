@@ -698,7 +698,7 @@ test('disparo fica visível, respeita a tecla configurada, cancela troca mantida
   await page.locator('#runner-canvas').scrollIntoViewIfNeeded();await page.locator('#runner-canvas').focus();
   await page.keyboard.down('k');await page.waitForFunction(n=>__testRun.shotsFired>n,changed);await page.keyboard.up('k');
   assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),false);
-  await page.reload();await page.locator('#game-settings summary').click();
+  await page.reload();await page.waitForFunction(()=>!document.querySelector('#game-fire-key').disabled);await page.locator('#game-settings summary').click();
   assert.equal(await page.locator('#game-fire-key').inputValue(),'KeyK');
   assert.equal(await page.locator('#game-crouch-mode').inputValue(),'toggle');
   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});

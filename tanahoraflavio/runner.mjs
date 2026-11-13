@@ -1,13 +1,14 @@
 import {HERO_SHOT_DURATION} from './runner-hero-shot.mjs?v=4447edaa9d9a';
-import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=53226bef19e8';
+import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=9536f7dc0f61';
 import {createShotSoundTracker} from './runner-shot-events.mjs?v=a3769f250d68';
-import {bossPresentationFor} from './runner-bosses.mjs?v=0094a5e5951f';
-import {createVoiceDirector} from './runner-voice-director.mjs?v=362f4456ecfb';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=726103632b21";
-import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=d51f847444e1';
-import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=36ba6ded6d2a";
-import { createGameAudio } from "./runner-audio.mjs?v=fb4420a185eb";
-import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=fa9433a61a03";
+import {bossPresentationFor} from './runner-bosses.mjs?v=b2fd49a73db3';
+import {createVoiceDirector} from './runner-voice-director.mjs?v=566f29af1611';
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=3042ed94989f";
+import {bossCounterWindow} from './runner-bosses.mjs?v=b2fd49a73db3';
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=23386381c59c';
+import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=c1ff85b89c0a";
+import { createGameAudio } from "./runner-audio.mjs?v=800218e88fa7";
+import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=a924d1c62bee";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=c9fb039ac877";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
 
@@ -97,7 +98,7 @@ function initRunner() {
   function dodgeHint(){
     const hit=run.lastHit;if(!hit)return "Observe os perigos e tente novamente.";
     const names={stamp:'Carimbo TAXA',wind:"Vento",'meme-ghost':"Exército de Memes",'cloroquina-prop':"Cloroquina fictícia",'ivermectina-prop':"Ivermectina fictícia","budget-sheets":"Planilhas","parachute-cross":"Cruz com paraquedas",handcuffs:"Algemas",microphone:"Microfone","paper-gate":"Papéis",popcorn:"Pipoca",hammer:"Martelo",mandado:"Mandado",receipts:"Papéis",lhand:"Mão em L"};
-    if(hit.action==="move")return hit.type==="pfizer-ampoule"?"Ampola cenográfica da Pfizer: desvie lateralmente para sair do alvo.":"Mala em queda: saia do alvo no chão com ←/→ ou deslize lateral.";
+    if(hit.action==="move")return hit.type==="pfizer-ampoule"?"Ampola cenográfica da Pfizer: desvie lateralmente para sair do alvo.":(names[hit.type]||"Objeto")+" em queda: saia do alvo no chão com ←/→ ou deslize lateral.";
     if(hit.action==="crouch")return (names[hit.type]||"Ataque")+" no alto: abaixe para desviar.";
     return (names[hit.type]||"Perigo")+" baixo: sincronize o salto para desviar.";
   }
@@ -163,7 +164,7 @@ function initRunner() {
        $("game-boss-health").setAttribute("aria-valuenow",String(b.hp));
        $("game-boss-health").setAttribute("aria-label","Energia de "+b.name);
        $("game-boss-progress").style.width=100*b.hp/b.maxHp+"%";
-       const state=({intro:'ENTRADA',charge:'PREPARANDO',attack:'ATAQUE',recover:'RECUPERAÇÃO · ATIRE!'})[b.phase];
+       const state=bossCounterWindow(b).label||({intro:'ENTRADA',charge:'PREPARANDO',attack:'ATAQUE',recover:'RECUPERAÇÃO · ATIRE!'})[b.phase];
        $("game-boss-weapon").textContent=state+" · "+b.hp+"/"+b.maxHp+" PV"+(b.enraged?" · FASE 2":"");
       }else{
       $("game-boss-name").textContent=b.type==="janones"?"Janones · bloco "+Math.min(3,Math.floor((b.total-b.remaining)/Math.ceil(b.total/3))+1)+"/3":(b.type==="haddad"?"Haddad · Taxad":b.type==="pf"?"Blitz da PF":b.name)+" · rodada "+b.level;
@@ -294,16 +295,17 @@ function initRunner() {
     if(run.lives<before.lives)audio.effect("hit");
     else if(before.jacare&&!run.player.isJacare)audio.effect("restore");
     else if(before.boss&&!run.boss)audio.effect("victory");
-    else if(!before.boss&&run.boss){audio.effect("boss");voices.event("boss",run);}
+    else if(!before.boss&&run.boss){audio.actorCue(run.boss.type);audio.effect("boss");voices.event("boss",run);}
     else if(run.collected>before.collected)audio.effect(run.lastPickup==="ze-gotinha"?"transform":run.lastPickup==="ally"?"ally":"pickup");
     if(run.spawnedObstacles>before.spawned){
       const newest=run.obstacles.at(-1);
-      if(!newest?.projectile&&!newest?.falling)audio.effect(weaponEffect(newest));
-      const actor=newest?.sourceActor||newest?.type;
+      const actor=newest?.sourceActor||newest?.type,cued=actor&&audio.actorCue(actor);
+      if(!newest?.projectile&&!newest?.falling&&!cued)audio.effect(weaponEffect(newest));
       if(actor)voices.event("actor",run,actor);
     }
     if(run.collected>before.collected){
-      if(run.lastPickup==="ze-gotinha")voices.event("ally",run);
+      if(run.lastPickup==="ze-gotinha"){audio.actorCue("jacare");voices.event("ally",run,"ze-gotinha");}
+      else if(run.lastPickup==="ally"){audio.actorCue(run.lastAllyId);voices.event("ally",run,run.lastAllyId);}
     }
     const nearest=Math.min(Infinity,...run.obstacles.filter(o=>!o.passed&&!o.counted).map(o=>threatTimeToContact(run,o)));
     voices.update(run,{safe:nearest>.9});
@@ -342,7 +344,7 @@ function initRunner() {
   function begin(){
     if(!spritesReady){if(spritesFailed)prepareSprites();return;}
     cancelAnimationFrame(frameId);frameId=0;resumeFromGesture();
-    audio.stop();audio.prime();voices.reset();lastRaidKey="";
+    audio.stop();audio.prime();audio.actorCue("flavio");voices.reset();lastRaidKey="";
     clearControls();
     shotSounds.reset();
     run=createRun({assisted:preferences.assisted,mode:$("game-mode-story").checked?"story":"endless"});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);landingUntil=0;
@@ -647,7 +649,7 @@ function initRunner() {
     ctx.restore();
   }
   function obstacle(item){
-    if(item.falling){drawFallingThreat(ctx,item,WORLD.ground);return;}
+    if(item.falling){drawFallingThreat(ctx,item,WORLD.ground,run.elapsed*10,{reducedMotion:prefersReducedMotion()});return;}
     if(item.groundHazard){drawManholeThreat(ctx,item,WORLD.ground);return;}
     if(item.approach==='drop'&&!item.passed&&!item.counted){
       // Alerta visual obrigatório, inclusive para quem reduz movimento.

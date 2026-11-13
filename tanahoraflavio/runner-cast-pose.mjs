@@ -19,7 +19,13 @@ export function standingEnemyPose({phase=0,preparing=false,attacking=false,recov
  const releases={jump:[[-39,-51],[-59,-44],[24,-58],[12,-65]],
   crouch:[[-39,-76],[-60,-83],[25,-70],[14,-83]],
   move:[[-33,-53],[-47,-36],[32,-53],[44,-36]]};
- const charge=windups[action]||windups.jump,release=releases[action]||releases.jump;
+ const shape=(points,release=false)=>points.map(([x,y],i)=>{
+  if(kind==='gunner')return [x+(i>1?-9:0),y+(i>1?-5:4)];
+  if(kind==='caster')return [x+(i<2?-6:6),y-(i%2?9:5)];
+  if(kind==='sovereign')return [x+(i<2?(release?-8:5):8),y+(i<2?-5:5)];
+  return [x,y];
+ });
+ const charge=shape(windups[action]||windups.jump),release=shape(releases[action]||releases.jump,true);
  const mix=(a,b,k)=>a.map((v,i)=>[v[0]+(b[i][0]-v[0])*k,v[1]+(b[i][1]-v[1])*k]);
  let endpoints=idle,lean=breath*.8;
  if(state==='charge'){endpoints=mix(idle,charge,ease);lean=2+ease*3;}

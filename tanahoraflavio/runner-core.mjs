@@ -1,11 +1,11 @@
 import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
 import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=4447edaa9d9a';
-import {regularCastMuzzle} from './runner-cast-pose.mjs?v=53226bef19e8';
+import {regularCastMuzzle} from './runner-cast-pose.mjs?v=9536f7dc0f61';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=181506ec1b3c';
-import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=fa9433a61a03';
-import {STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=0094a5e5951f';
-export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=0094a5e5951f';
-export {bossArenaPose} from './runner-bosses.mjs?v=0094a5e5951f';
+import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=a924d1c62bee';
+import {STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,planArenaAttack,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=b2fd49a73db3';
+export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=b2fd49a73db3';
+export {bossArenaPose} from './runner-bosses.mjs?v=b2fd49a73db3';
 // Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
 export const WORLD = Object.freeze({width:900,height:300,ground:246});
 // Envelope de todas as poses no atlas a .95 de escala, incluindo o agachamento.
@@ -366,7 +366,7 @@ export function attackRun(run){
  p.shotFacing=pose.x<playerX(run)+PLAYER.width/2?-1:1;
  const {x,y}=heroMuzzleFor(run,p.shotFacing);
  const dx=pose.x-x,dy=pose.platformY+48-y,distance=Math.max(1,Math.hypot(dx,dy));
- (run.heroShots??=[]).push({x,y,previousX:x,previousY:y,vx:dx/distance*760,vy:dy/distance*760,age:0});
+ (run.heroShots??=[]).push({x,y,previousX:x,previousY:y,vx:dx/distance*760,vy:dy/distance*760,age:0,damage:b.combat?bossCounterWindow(b).damage:undefined});
  p.attackCooldown=.28;p.attackFor=HERO_SHOT_DURATION;run.shotsFired=(run.shotsFired||0)+1;return true;
 }
 function advanceHeroShots(run,dt){
@@ -385,7 +385,7 @@ function advanceHeroShots(run,dt){
   }
   if(near>far)return true;
   if(b.phase==='intro')return false;
-  b.hp=Math.max(0,(b.hp??b.total)-(b.phase==='recover'?2:1));b.hitFlashFor=.16;
+  b.hp=Math.max(0,(b.hp??b.total)-(b.combat?(shot.damage??bossCounterWindow(b).damage):b.phase==='recover'?2:1));b.hitFlashFor=.16;
   return false;
  });
 }
@@ -506,18 +506,22 @@ function advanceBoss(run,dt,rng,balance){
  if(boss.combat){
   // Recuperação só após o lançamento efetivo, não seu agendamento.
   if(boss.phase==='attack'&&boss.volleyLeft<=0&&(boss.attackFlashFor>0||run.obstacles.some(o=>o.bossAttack&&o.projectile&&!o.launched&&o.waitFor>0))){boss.age+=dt;return;}
-  stepBossPhase(boss,dt);
+  boss.stillFor=run.player.moveHeld?0:(boss.stillFor||0)+dt;
+  const previousPhase=boss.phase;
+  stepBossPhase(boss,dt,{...run.player,viewportWidth:visibleWidth(run),stillFor:boss.stillFor},rng);
+  if(previousPhase!==boss.phase&&boss.phase==='charge')boss.volleyPattern=boss.plannedAttack;
   if(boss.phase!=='attack'||boss.volleyLeft<=0)return;
  }else boss.age=(boss.age||0)+dt;
  boss.nextAttack-=dt;
  if(!boss.combat&&boss.fired>=boss.total||boss.nextAttack>0)return;
  if(run.obstacles.filter(o=>!o.passed&&!o.counted).length>=5){boss.nextAttack=.12;return;}
  // Cada chefão ataca com suas armas; o disparo do herói é independente.
- const pattern=boss.combat?arenaPatternFor(boss,boss.fired):boss.plannedFor===boss.fired?boss.plannedAttack:bossAttackFor(boss.type,boss.fired,boss.round-1);
+ const pattern=boss.combat?(boss.volleyPattern||boss.plannedAttack||arenaPatternFor(boss,boss.fired)):boss.plannedFor===boss.fired?boss.plannedAttack:bossAttackFor(boss.type,boss.fired,boss.round-1);
  const attackType=pattern.type;
  let attack;
  if(pattern.action==='move'){
   attack=spawnFallingThreat(run,{bossAttack:true,owner:boss.type});if(!attack){boss.nextAttack=.1;return;}
+  if(boss.combat)attack.type=attackType;
  }else{
  const [width,baseHeight]=({hammer:[46,44],mandado:[42,44],
   lhand:[60,46],receipts:[44,40],stamp:[44,36],message:[44,36],microphone:[46,40],handcuffs:[46,40],barrier:[44,32],wind:[46,44],'budget-sheets':[46,42],'parachute-cross':[46,44],'rolling-case':[40,30],'falling-case':[36,36],'cloroquina-prop':[52,38],'ivermectina-prop':[52,38],'meme-ghost':[52,44]})[attackType];
@@ -525,11 +529,11 @@ function advanceBoss(run,dt,rng,balance){
  const x=Math.max(boss.combat?bossArenaPose(boss,visibleWidth(run)).x-48-width/2:visibleWidth(run)-104,frontContact(run)+60);
  const entry=pattern.approach||'diagonal';
  const fromY=boss.combat?bossArenaPose(boss,visibleWidth(run)).platformY+52:entry==='drop'?155:pattern.action==='jump'?77:90;
- const toY=pattern.action==='jump'?(entry==='drop'?22:PLAYER.height/2):90;
+ const toY=Number.isFinite(pattern.targetY)?pattern.targetY:pattern.action==='jump'?(entry==='drop'?22:PLAYER.height/2):90;
  attack={x,width,height,type:attackType,action:pattern.action,owner:boss.type,bossAttack:true,counted:false,
   approach:entry,flightStyle:projectileStyle(attackType),...threatMotion(run,x,balance.bossApproach),
   projectile:true,launchX:x+width/2,targetX:playerX(run)+PLAYER.width/2,
-  launchY:fromY,targetY:toY,y:fromY};
+  launchY:fromY,targetY:toY,arcHeight:pattern.arcHeight||0,y:fromY};
  run.obstacles.push(attack);
  }
  if(boss.type==='bossonari')run.phantomCloud={remaining:1.3,medicine:attackType,x:Math.max(180,Math.min(visibleWidth(run)-150,playerX(run)+260))};
@@ -540,7 +544,7 @@ function advanceBoss(run,dt,rng,balance){
  boss.actionStreak=pattern.action===boss.lastAction?(boss.actionStreak||0)+1:1;
  boss.lastAction=pattern.action;
  boss.plannedFor=boss.fired;
- boss.plannedAttack=boss.combat?arenaPatternFor(boss,boss.fired):chooseBossPattern(boss,rng,balance.pressure);
+ boss.plannedAttack=boss.combat?boss.volleyPattern:chooseBossPattern(boss,rng,balance.pressure);
  boss.nextAttack+=boss.interval+random(rng)*.22+(boss.type==='janones'&&boss.fired%Math.ceil(boss.total/3)===0?.55:0);
  if(boss.combat&&--boss.volleyLeft<=0)boss.phaseFor=Math.max(.24,boss.interval*.55);
  return attack;
@@ -696,7 +700,7 @@ export function advanceRun(run,seconds,rng){
    const landingX=obstacle.targetX+PLAYER.width/2-6+obstacle.width/2;
    const span=Math.max(1,obstacle.launchX-landingX);
    const progress=Math.max(0,Math.min(1,(obstacle.launchX-(obstacle.x+obstacle.width/2))/span));
-   obstacle.y=obstacle.launchY+(obstacle.targetY-obstacle.launchY)*progress;
+   obstacle.y=obstacle.launchY+(obstacle.targetY-obstacle.launchY)*progress+Math.sin(Math.PI*progress)*(obstacle.arcHeight||0);
   }
   const left=playerX(run)+(run.player.isJacare?-15:5),right=playerX(run)+(run.player.isJacare?PLAYER.width+17:PLAYER.width-3);
   if(obstacle.speed>0&&obstacle.x+obstacle.width-3<=left||obstacle.speed<0&&obstacle.x+3>=right)obstacle.passed=true;

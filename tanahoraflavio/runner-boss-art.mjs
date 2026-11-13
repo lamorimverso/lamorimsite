@@ -1,8 +1,8 @@
 import {drawBossonariHead} from './runner-character-art.mjs?v=f9a33d351ab1';
-import {standingEnemyPose} from './runner-cast-pose.mjs?v=53226bef19e8';
-export {standingEnemyPose} from './runner-cast-pose.mjs?v=53226bef19e8';
+import {standingEnemyPose} from './runner-cast-pose.mjs?v=9536f7dc0f61';
+export {standingEnemyPose} from './runner-cast-pose.mjs?v=9536f7dc0f61';
 import {drawSpriteHead} from './runner-sprites.mjs?v=aa3ca259afdd';
-import {drawMemeArmy} from './runner-art.mjs?v=36ba6ded6d2a';
+import {drawMemeArmy} from './runner-art.mjs?v=c1ff85b89c0a';
 
 // Standing bosses: original atlas heads, original articulated Canvas bodies.
 // Coordinates are logical game pixels; y always remains the top of the deck.
