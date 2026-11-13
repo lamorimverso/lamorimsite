@@ -39,7 +39,7 @@ test('ameaças altas variam com sementes diferentes sem repetir ordem fixa',()=>
  assert.ok(new Set(routes).size>1,'o elenco não segue um ciclo idêntico em todas as corridas');
 });
 
-test('somente inimigos com meme atribuído agendam fala, sem locução para os outros',()=>{
+test('somente inimigos com gravação atribuída agendam fala, sem locução inventada',()=>{
  const events=[],director=createVoiceDirector({random:()=>0,play:(id,settings)=>{events.push({id,settings});return true;}});
  const run={status:'running',elapsed:0,boss:null,raid:null};
  director.event('start',run);director.update(run,{safe:true});
@@ -51,7 +51,7 @@ test('somente inimigos com meme atribuído agendam fala, sem locução para os o
  run.elapsed=5;director.event('actor',run,'janones');director.update(run,{safe:true});
  assert.equal(events.length,1,'sem spam do mesmo meme');
  run.elapsed=25;director.event('actor',run,'simone');director.update(run,{safe:true});
- assert.equal(events.length,1,'sem voz inventada para quem não tem clipe');
+ assert.equal(events.length,2,'Simone agora tem gravação de arquivo própria');assert.match(events.at(-1).id,/^archive-simone-/);
  run.elapsed=35;director.event('actor',run,'lula');director.update(run,{safe:true});
  assert.ok(['bora-pra-rua','picanha','mesmo-mundo','ate-teu-pai'].includes(events.at(-1).id));
 });

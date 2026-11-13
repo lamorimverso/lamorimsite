@@ -172,3 +172,18 @@ O sequenciador agora aceita múltiplos arranjos reais por uma sacola de sorteio 
 ### Reprodução de Joice
 
 O clipe toca uma vez por evento e continua durante a recuperação até a frase terminar. A janela da recuperação reserva um segundo para o carregamento. Se o clipe começar mais tarde, o fim natural do evento deixa a gravação concluir. Cancelamento, som desligado, inatividade, perda de foco e derrota interrompem a fala.
+
+
+## Continuação de 13/11/2026: novos recortes e cobertura verdadeira
+
+Foram acrescentados 12 recortes de arquivo, dois por personagem: Soraya Thronicke, Dilma Rousseff, Flávio Dino, Simone Tebet, Alexandre de Moraes e Guilherme Boulos. As fontes são a Rádio Senado/Agência Senado e o Arquivo Sonoro da Câmara. `runner-archive-voices.mjs` registra a URL da página, URL da mídia, locutor, data, contexto, início/fim, transcrição pretendida e SHA-256 do original e do recorte.
+
+Os arquivos foram cortados continuamente, sem trocar palavras, alterar o tom da voz, sintetizar ou clonar pessoas. Normalização de volume: alvo de −20 LUFS, teto de −3 dBTP, mono a 44,1 kHz; fades curtos evitam estalos. Fonte e recorte foram conferidos com ASR local; isso não é certificação por audição humana. Os limites de quatro recortes foram ajustados após a transcrição detectar corte de palavra/entrada da frase seguinte.
+
+Contextos: Soraya, candidatura à presidência do Senado (01/02/2025); Dilma, posse no Congresso (01/01/2015); Dino, despedida do Senado (21/02/2024, usar somente a sonora dele, sem a repórter); Simone, pronunciamento (10/08/2017, sem a intervenção do presidente da sessão); Moraes, sabatina (21/02/2017, sonora atribuída na transcrição oficial); Boulos, audiência de alimentação (26/04/2023, item 2, 17:55:37–18:02:56). Nenhuma dessas falas se refere a Flávio ou ao jogo.
+
+Créditos: Rádio Senado / Agência Senado; Câmara dos Deputados. Consultar os termos vinculados em cada registro. A escolha e edição dos recortes para a sátira são do projeto, não dessas instituições.
+
+Cobertura: 10 dos 13 tipos de chefão têm alguma fala/meme de arquivo. PF, Bossonari e Fantasma possuem efeitos não verbais próprios. Os 32 personagens/formas têm bancos de três efeitos de presença, incluindo herói, jacaré e aliados. **Isso não significa 32 vozes:** os 15 aliados, Flávio, jacaré e personagens ficcionais continuam sem fala própria integrada. A fala associada ao Zé Gotinha continua corretamente atribuída a Lula. Um aliado diferente jamais aciona a fala do Zé Gotinha.
+
+O volume da música abaixa sob voz/alerta. Presenças são discretas e não interrompem gravações ou avisos. Mute, gesto inicial, foco, limite de canais, expiração, prioridade e anti-repetição continuam obrigatórios.

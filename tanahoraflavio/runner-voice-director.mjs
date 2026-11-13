@@ -1,3 +1,4 @@
+import {ARCHIVE_SCENES} from './runner-archive-voices.mjs?v=7c025577c1cc';
 // Diretor de falas: cada meme é reservado somente ao personagem/evento correspondente.
 // Nunca narra a partida em voz artificial, nem atribui áudio de uma pessoa a outra.
 export const MEME_SCENES=Object.freeze({
@@ -15,7 +16,7 @@ export function createVoiceDirector({play,random=Math.random}){
   return pool[Math.floor(r*pool.length)];
  };
  function queue(actor,priority,run,kind){
-  const ids=MEME_SCENES[actor]||(kind==='boss'?BOSS_ARCHIVE_SCENES[actor]:null);
+  const ids=MEME_SCENES[actor]||ARCHIVE_SCENES[actor]||(kind==='boss'?BOSS_ARCHIVE_SCENES[actor]:null);
   if(!ids||run.raid)return;
   const next=lastPlayed.get(actor)||0;
   if(run.elapsed<next)return;
@@ -28,7 +29,7 @@ export function createVoiceDirector({play,random=Math.random}){
    if(run.status!=='running')return;
    if(kind==='boss'&&run.boss)queue(run.boss.type,2,run,'boss');
    else if(kind==='actor'&&!run.boss)queue(actor,1,run,'actor');
-   else if(kind==='ally')queue('ze-gotinha',1,run,'ally');
+   else if(kind==='ally')queue(actor||'ze-gotinha',1,run,'ally');
    // Início, escudo, vitórias e metas têm efeitos musicais próprios.
    // Não sorteiam falas de personagens que não estão na cena.
   },

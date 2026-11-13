@@ -1,10 +1,11 @@
 import {createGameSoundtrack} from './runner-soundtrack.mjs?v=eef47a2a323c';
+import {getCastSoundBank} from './runner-cast-sounds.mjs?v=f28c809d2ffb';
 import {getEnemyShotBank} from './runner-shot-sounds.mjs?v=e2aab7660085';
-import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=fa9433a61a03';
+import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=a924d1c62bee';
 // Efeitos locais e recorte de arquivo identificado; nenhuma imitação de voz.
 export function createGameAudio({onVoice=()=>{}}={}) {
  let enabled=true,context=null,nodes=[],primed=false,recording=null,recordingName=null,raidVoice=false,raidPrepared=false,music=null,voicePriority=0,alertUntil=0;
- const shotVariants=new Map();
+ const shotVariants=new Map();let nextPresenceAt=0;const presencePlayed=new Map();
  const preferenceKey='tanahoraflavio.runner.sound.v1';
  try{enabled=window.localStorage?.getItem(preferenceKey)!=='off';}catch{/* Armazenamento é opcional. */}
  const stopRecording=()=>{
@@ -89,9 +90,8 @@ export function createGameAudio({onVoice=()=>{}}={}) {
  };
  // Executado pelo lançamento real do projétil, nunca pela aparição do ator.
  // Ciclo local por timbre: não altera nem consulta a aleatoriedade da corrida.
- const enemyShot=(actor,weapon)=>{
-  if(!enabled||!primed||!context||context.state!=='running')return false;
-  const bank=getEnemyShotBank(actor,weapon);if(!bank)return false;
+ const playBank=(bank,{alert=true}={})=>{
+  if(!enabled||!primed||!context||context.state!=='running'||!bank)return false;
   const variant=shotVariants.get(bank.id)||0,notes=bank.variants[variant];
   // Reserva o padrão inteiro: não emite meia notificação ao esgotar os canais.
   if(nodes.length+notes.length>12)return false;
@@ -112,17 +112,24 @@ export function createGameAudio({onVoice=()=>{}}={}) {
     nodes.push(osc);osc.start(at);osc.stop(at+note.length+.015);
    }
    shotVariants.set(bank.id,(variant+1)%bank.variants.length);
-   alertUntil=Math.max(alertUntil,t+Math.max(...notes.map(n=>n.delay+n.length))+.1);
-   if(recording)recording.volume=.28;
+   if(alert){alertUntil=Math.max(alertUntil,t+Math.max(...notes.map(n=>n.delay+n.length))+.1);
+    if(recording)recording.volume=.28;}
    return true;
   }catch{
    for(const {osc,release} of created){try{osc.stop();}catch{/* Início bloqueado. */}release();}
    return false;
   }
  };
+ const enemyShot=(actor,weapon)=>playBank(getEnemyShotBank(actor,weapon));
+ const actorCue=actor=>{
+  const bank=getCastSoundBank(actor),t=context?.currentTime||0;
+  if(!bank||t<nextPresenceAt||t<(presencePlayed.get(bank.id)||0)||t<alertUntil||recording)return false;
+  if(!playBank(bank,{alert:false}))return false;
+  nextPresenceAt=t+1.2;presencePlayed.set(bank.id,t+7);return true;
+ };
  // Não há sintetizador de voz: só trechos identificados e efeitos originais.
  // Ausência de clipe não é preenchida por uma voz inventada.
- return {get enabled(){return enabled;},prime,stop,effect,enemyShot,voice,
+ return {get enabled(){return enabled;},prime,stop,effect,enemyShot,actorCue,voice,
   background(state={}){
    if(state.active===false){stop();return;}
    if(!enabled||!primed)return;
