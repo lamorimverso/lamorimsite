@@ -11,7 +11,7 @@ test('perseguidores comuns usam o desenho de corrida sem nave',()=>{
  const draw=Function('env','const {run,ctx,WORLD,playerX,threatTimeToContact,prefersReducedMotion,drawFallingThreat,drawManholeThreat,drawProjectile,drawHoverEnemy,drawThreat}=env;'+ui.slice(start,end)+';return obstacle;')({run,ctx,WORLD:core.WORLD,playerX:core.playerX,threatTimeToContact:core.threatTimeToContact,prefersReducedMotion:()=>false,drawFallingThreat(){},drawManholeThreat(){},drawProjectile(){},drawHoverEnemy(){seen.push('ship');},drawThreat(c,item,ground,phase){seen.push({type:item.type,ground,phase});}});
  for(const type of ['pf','janones','army','boulos','dino','lula','xandao','haddad'])draw({type,x:300,width:34,height:44,action:'jump'});
  draw({type:'pf',x:100,width:34,height:44,action:'jump',passed:true});
- assert.equal(seen.length,8,'perseguidor evadido deixa de sobrepor o retorno');assert.ok(seen.every(row=>typeof row==='object'&&row.ground===246&&row.phase>0));
+ assert.equal(seen.length,9,'perseguidor evadido continua correndo até sair da tela');assert.ok(seen.every(row=>typeof row==='object'&&row.ground===246&&row.phase>0));
 });
 test('W pula uma vez por pressionamento usando o handler real',()=>{
  const start=ui.indexOf('  section.addEventListener("keydown", event => {'),end=ui.indexOf('  document.addEventListener("keyup",event=>{',start);

@@ -1,4 +1,4 @@
-import {drawSpriteActor,drawSpriteHead} from './runner-sprites.mjs?v=9a9d2bd998a8';
+import {drawSpriteActor,drawSpriteHead} from './runner-sprites.mjs?v=aa3ca259afdd';
 import {heroShotPose} from './runner-hero-shot.mjs?v=4447edaa9d9a';
 const INK='#292337',SKIN='#efb386';
 function line(c,points,color,width){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.lineCap='round';c.lineJoin='round';c.strokeStyle=color;c.lineWidth=width;c.stroke();}

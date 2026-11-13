@@ -23,7 +23,7 @@ export function createGameAudio({onVoice=()=>{}}={}) {
    if(context?.state==='suspended')context.resume().catch(()=>{});
   }catch{context=null;}
  };
- const voice=(name,{priority=2,loop=false}={})=>{
+ const voice=(name,{priority=2,loop=false,onFailure=()=>{}}={})=>{
   const clip=ARCHIVE_VOICES[name];
   if(!clip||!enabled||!primed||typeof window.Audio!=='function')return false;
   // Não cortar uma fala de prioridade igual com outra chegada no mesmo instante.
@@ -33,7 +33,7 @@ export function createGameAudio({onVoice=()=>{}}={}) {
    const url=new URL(clip.file,import.meta.url);url.searchParams.set('v',clip.sha256.slice(0,12));
    const player=new window.Audio(url.href);recording=player;recordingName=name;voicePriority=priority;player.volume=(context?.currentTime||0)<alertUntil?.28:.68;player.loop=loop===true;player.preload='none';
    onVoice(clip);player.onended=()=>{if(recording===player){recording=null;recordingName=null;voicePriority=0;onVoice(null);}};
-   const failed=()=>{if(recording===player){stopRecording();raidVoice=false;}};
+   const failed=()=>{if(recording===player){stopRecording();raidVoice=false;onFailure();}};
    player.onerror=failed;player.play()?.catch?.(failed);
    return true;
   }catch{stopRecording();return false;}

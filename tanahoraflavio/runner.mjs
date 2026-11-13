@@ -1,12 +1,12 @@
 import {HERO_SHOT_DURATION} from './runner-hero-shot.mjs?v=4447edaa9d9a';
-import {regularEmitterPose,regularCastPresentation} from './runner-cast-pose.mjs?v=26402722b1e5';
+import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=53226bef19e8';
 import {createShotSoundTracker} from './runner-shot-events.mjs?v=a3769f250d68';
 import {bossPresentationFor} from './runner-bosses.mjs?v=0094a5e5951f';
-import {createVoiceDirector} from './runner-voice-director.mjs?v=088899f48fd6';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=cf2e63cd6815";
-import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=e965824b8d85';
-import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=acf55693ecf1";
-import { createGameAudio } from "./runner-audio.mjs?v=3a0ebda941d8";
+import {createVoiceDirector} from './runner-voice-director.mjs?v=362f4456ecfb';
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=726103632b21";
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=d51f847444e1';
+import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=36ba6ded6d2a";
+import { createGameAudio } from "./runner-audio.mjs?v=fb4420a185eb";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=fa9433a61a03";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=c9fb039ac877";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
@@ -647,10 +647,9 @@ function initRunner() {
     ctx.restore();
   }
   function obstacle(item){
-    if(item.passed&&!item.projectile&&!item.bossAttack)return;
     if(item.falling){drawFallingThreat(ctx,item,WORLD.ground);return;}
     if(item.groundHazard){drawManholeThreat(ctx,item,WORLD.ground);return;}
-    if(item.approach==='drop'){
+    if(item.approach==='drop'&&!item.passed&&!item.counted){
       // Alerta visual obrigatório, inclusive para quem reduz movimento.
       const time=Math.max(0,threatTimeToContact(run,item));
       if(time<1.6){
@@ -659,7 +658,7 @@ function initRunner() {
         ctx.ellipse(playerX(run)+17,WORLD.ground+3,16,4,0,0,Math.PI*2);ctx.fill();ctx.restore();
       }
     }
-    if(item.approach==='rear'&&item.x<playerX(run)){
+    if(item.approach==='rear'&&!item.passed&&!item.counted&&item.x<playerX(run)){
       ctx.save();ctx.fillStyle="#a23d50";ctx.font="800 12px system-ui";
       ctx.fillText("→ !",12,WORLD.ground-96);ctx.restore();
     }
@@ -695,7 +694,7 @@ function initRunner() {
     drawSupport();
     if(run.cameo&&!run.boss&&!run.raid){
       const actor=run.cameo.type,shot=run.cameo.shot||run.obstacles.find(o=>o.sourceActor===actor&&!o.passed);
-      const pose=regularEmitterPose(actor,virtualWidth,WORLD.ground),presentation=regularCastPresentation(shot);
+      const pose=regularEmitterExitPose(actor,virtualWidth,WORLD.ground,run.cameo.remaining),presentation=regularCastPresentation(shot);
       drawHoverEnemy(ctx,{type:actor,...pose,...presentation,phase:run.elapsed*10,reducedMotion:prefersReducedMotion()});
     }
     for(const item of run.pickups)pickup(item);

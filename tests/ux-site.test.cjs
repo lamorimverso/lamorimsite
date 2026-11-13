@@ -19,14 +19,18 @@ before(async()=>{
  browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{})});
 });
 after(async()=>{await browser?.close();await new Promise(resolve=>server?.close(resolve));});
-async function open({instrument=false,instrumentAudio=false,instrumentCasting=false,instrumentHero=false,instrumentSprites=false,init,blockEntry=false,blockSupports=false,legacyFirst=false,...options}={}){
+async function open({instrument=false,instrumentAudio=false,instrumentCasting=false,instrumentHero=false,instrumentThreats=false,instrumentSprites=false,init,blockEntry=false,blockSupports=false,legacyFirst=false,...options}={}){
  const context=await browser.newContext(options);
  await context.route(/^https:\/\//,route=>route.abort());
- if(blockSupports)await context.route(url=>/\/assets\/(?:allies-motion-|pursuers-motion-)/.test(url.pathname),route=>route.abort());
+ if(blockSupports)await context.route(url=>/\/assets\/(?:allies-motion-)/.test(url.pathname),route=>route.abort());
  if(init)await context.addInitScript(init);
  if(instrument){
   const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-core.mjs'),'utf8');
   await context.route('**/runner-core.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+'\nconst originalCreateRun=createRun;createRun=(...args)=>{const run=originalCreateRun(...args);globalThis.__testRun=run;return run;};'}));
+ }
+ if(instrumentThreats){
+  const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-art.mjs'),'utf8');
+  await context.route('**/runner-art.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+'\nconst originalThreat=drawThreat;drawThreat=(ctx,item,ground,phase,options)=>{const rows=(globalThis.__threatFrames??=[]);rows.push({id:item.testId||item.type,x:item.x,passed:item.passed,phase});if(rows.length>1500)rows.shift();return originalThreat(ctx,item,ground,phase,options);};'}));
  }
  if(instrumentHero){
   const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-character-art.mjs'),'utf8');
@@ -822,5 +826,24 @@ test('elenco completo possui corpo e animação no Canvas do navegador',async()=
   assert.equal(result.length,32);for(const actor of result)assert.ok(actor.frames>=3,actor.type+' precisa de passada visível');
   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});for(let sheet=0;sheet<4;sheet++)await page.locator('#roster-'+sheet).screenshot({path:path.resolve(__dirname,`../ux-captures/roster-${sheet}.png`)});
   assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+for(const viewport of [{width:900,height:720},{width:390,height:844}])test(`perseguidores e objetos cruzam a tela inteira com Flávio no centro: ${viewport.width}px`,async()=>{
+ const {context,page,errors}=await open({instrument:true,instrumentThreats:true,viewport});
+ try{
+  await begin(page);await page.evaluate(()=>{const r=__testRun;for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
+   r.player.x=r.viewportWidth/2;r.shieldFor=Infinity;r.pickups=[];r.obstacles=[
+    {testId:'front',type:'pf',x:r.player.x-70,width:34,height:44,action:'jump',speed:180,passed:true},
+    {testId:'rear',type:'army',x:r.player.x+130,width:40,height:47,action:'jump',approach:'rear',speed:-180,passed:true},
+    {testId:'prop',type:'case',x:r.player.x-100,width:38,height:34,action:'jump',speed:180,passed:true}];globalThis.__threatFrames=[];
+  });
+  await page.waitForFunction(()=>['front','rear','prop'].every(id=>__threatFrames.some(f=>f.id===id&&f.passed)));
+  await page.waitForFunction(()=>__threatFrames.some(f=>f.id==='rear'&&f.x>__testRun.viewportWidth-75));
+  assert.ok(await page.evaluate(()=>['front','rear','prop'].every(id=>new Set(__threatFrames.filter(f=>f.id===id).map(f=>f.phase)).size>2)),'a animação continua depois da esquiva');
+  assert.ok(await page.evaluate(()=>__testRun.obstacles.some(o=>o.testId==='rear')),'não apaga junto ao Flávio');
+  await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/full-traverse-${viewport.width}.png`)});
+  await page.waitForFunction(()=>__testRun.obstacles.length===0,null,{timeout:5000});
+  assert.equal(await page.evaluate(()=>__testRun.status),'running');assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
