@@ -1,8 +1,9 @@
-import {drawBossonariHead} from './runner-character-art.mjs?v=f9a33d351ab1';
+import {drawCharacterBody,drawCharacterArm} from './runner-body-art.mjs?v=67badae0df52';
+import {drawBossonariHead} from './runner-character-art.mjs?v=f20aef46ef11';
 import {standingEnemyPose} from './runner-cast-pose.mjs?v=9536f7dc0f61';
 export {standingEnemyPose} from './runner-cast-pose.mjs?v=9536f7dc0f61';
 import {drawSpriteHead} from './runner-sprites.mjs?v=aa3ca259afdd';
-import {drawMemeArmy} from './runner-art.mjs?v=c1ff85b89c0a';
+import {drawMemeArmy} from './runner-art.mjs?v=2d614cb73df8';
 
 // Standing bosses: original atlas heads, original articulated Canvas bodies.
 // Coordinates are logical game pixels; y always remains the top of the deck.
@@ -18,8 +19,6 @@ const SUITS={
  nikolas:['#2d405b','#182a41','#cbdbea'],tarcisio:['#364f6b','#203348','#a5cfe1'],damares:['#306b54','#194033','#e3c079'],bia:['#743449','#482235','#e3b065'],
  trump:['#304563','#1b2b46','#d74d55'],milei:['#2d3c5b','#152640','#84bce1'],bolsominion:['#d9b93c','#36653e','#f7ec8c'],jacare:['#4d7c45','#29452f','#c5df63'],flavio:['#644281','#372950','#f4cf70'],boulos:['#68503f','#3c3029','#ce5551'],dino:['#304562','#1c2a42','#eb7874']
 };
-const CLASS_ALIASES={sentinela:'sentinel',artilheiro:'gunner',conjurador:'caster',soberano:'sovereign'};
-function canonicalClass(value){return CLASS_ALIASES[value]||value||'sentinel';}
 function oval(c,x,y,rx,ry,fill,stroke=INK,width=1.6){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke();}}
 function polygon(c,points,fill,stroke=INK,width=1.6){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.closePath();c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke();}}
 function line(c,points,color=INK,width=2){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.lineCap='round';c.lineJoin='round';c.strokeStyle=color;c.lineWidth=width;c.stroke();}
@@ -40,30 +39,6 @@ function drawShip(c,p,accent,preparing,attacking,hurt){
  line(c,[[-35,1],[35,1]],'#edf4d8',2);
  for(const dx of [-38,-19,0,19,38])oval(c,dx,14,3.5,2.3,attacking?'#ffdda0':preparing?accent:'#8ae3e3',INK,1);
  line(c,[[-48,9],[-40,15]],accent,2);line(c,[[40,15],[48,9]],accent,2);
-}
-function drawLeg(c,leg,suit,dark){
- const points=[[leg.hip.x,leg.hip.y],[leg.knee.x,leg.knee.y],[leg.foot.x,-4]];
- line(c,points,INK,13);line(c,points,dark,9);line(c,[[leg.hip.x-2,leg.hip.y+3],[leg.knee.x-2,leg.knee.y],[leg.foot.x-2,-6]],suit,2);
- const x=leg.foot.x;polygon(c,[[x-5,-7],[x+4,-7],[x+5,-3],[x+7,-2],[x+7,0],[x-9,0],[x-9,-3]],'#242738');
- line(c,[[x-7,-1],[x+5,-1]],'#a8a8ab',1);
-}
-function drawArm(c,arm,suit,accent,side,skin){
- const a=arm.shoulder,b=arm.elbow,h=arm.hand;
- line(c,[[a.x,a.y],[b.x,b.y],[h.x,h.y]],INK,12);
- line(c,[[a.x,a.y],[b.x,b.y],[h.x,h.y]],suit,8.5);
- oval(c,b.x,b.y,4.3,4.3,suit,null);
- const dx=h.x-b.x,dy=h.y-b.y,norm=Math.hypot(dx,dy)||1,ux=dx/norm,uy=dy/norm;
- line(c,[[h.x-ux*4-uy*3,h.y-uy*4+ux*3],[h.x-ux*4+uy*3,h.y-uy*4-ux*3]],CREAM,3);
- c.save();c.translate(h.x,h.y);c.rotate(Math.atan2(dy,dx));
- oval(c,0,0,4.7,4,skin,INK,1.2);
- if(arm.open){
-  // Fingers extend from the palm separately; thumb opens on the opposite side.
-  for(let i=0;i<4;i++)line(c,[[1,-3+i*1.7],[5+(i===1?2:0),-4.5+i*2],[8+(i===1?1:0),-5+i*2.8]],skin,2.2);
-  line(c,[[-1,2],[2,6],[5,6.5]],skin,2.6);
- }else line(c,[[0,-2],[3,-2],[3,1]],'#ae7868',.8);
- c.restore();
- // Small class/identity cuff independent from the hand articulation.
- if(side==='right')oval(c,a.x,a.y,2,2,accent,null);
 }
 function drawMagic(c,p,accent,preparing,attacking){
  if(!preparing&&!attacking)return;
@@ -86,7 +61,7 @@ function fallbackHead(c,type,accent){
 
 export function drawHoverEnemy(c,{type='haddad',x=0,y=0,scale=1,phase=0,preparing=false,attacking=false,recovering=false,hurt=false,reducedMotion=false,classId='sentinel',action='jump',progress}={}){
  if(!Number.isFinite(x)||!Number.isFinite(y)||!Number.isFinite(scale)||scale<=0)return;
- const p=standingEnemyPose({phase,preparing,attacking,recovering,hurt,reducedMotion,classId,action,progress}),[suit,dark,accent]=SUITS[type]||['#4d4d70','#292c49','#dbc778'];
+ const p=standingEnemyPose({phase,preparing,attacking,recovering,hurt,reducedMotion,classId,action,progress}),[,,accent]=SUITS[type]||['#4d4d70','#292c49','#dbc778'];
  c.save();c.translate(x,y);c.scale(scale,scale);
  drawShip(c,p,accent,preparing,attacking,hurt);
  if(type==='meme-army'){
@@ -95,7 +70,7 @@ export function drawHoverEnemy(c,{type='haddad',x=0,y=0,scale=1,phase=0,preparin
   oval(c,0,-48,45,57,'#ae83bd20',null);
   // Spectral arms articulate with the same attack cue; the original hat and
   // long-legged silhouette stay intact and do not switch to a running stride.
-  for(const side of ['right','left'])drawArm(c,p.arms[side],'#9860a5',accent,side,'#deb9db');
+  for(const side of ['right','left'])drawCharacterArm(c,p.arms[side],{type:'meme-army',back:side==='right'});
   drawMemeArmy(c,{x:7,y:-8,scale:1.85,phase,reducedMotion,standing:true});
   if(preparing||attacking){
    oval(c,0,-46,50,56,'#be579414',attacking?'#db5475':'#eec66a',2);
@@ -104,26 +79,7 @@ export function drawHoverEnemy(c,{type='haddad',x=0,y=0,scale=1,phase=0,preparin
   if(hurt){line(c,[[-38,-91],[-29,-97]],CREAM,3);line(c,[[30,-100],[39,-94]],CREAM,3);}
   c.restore();return;
  }
- drawLeg(c,p.right,suit,dark);drawLeg(c,p.left,suit,dark);
- const kind=canonicalClass(classId),bodyX=p.lean,bodyY=p.bob;
- if(kind==='sovereign'||type==='xandao')polygon(c,[[bodyX-19,-65+bodyY],[bodyX+18,-65+bodyY],[bodyX+28,-27+bodyY],[bodyX+4,-31+bodyY],[bodyX-26,-27+bodyY]],dark,INK,1.5);
- drawArm(c,p.arms.right,suit,accent,'right',type==='ze-gotinha'?'#f1f5e9':'#e8b58e');
- polygon(c,[[bodyX-17,-64+bodyY],[bodyX-7,-69+bodyY],[bodyX+7,-69+bodyY],[bodyX+18,-62+bodyY],[bodyX+15,-33+bodyY],[bodyX-15,-33+bodyY]],suit);
- polygon(c,[[bodyX-7,-65+bodyY],[bodyX+7,-65+bodyY],[bodyX+5,-35+bodyY],[bodyX-4,-35+bodyY]],CREAM,null);
- polygon(c,[[bodyX-17,-63+bodyY],[bodyX-5,-68+bodyY],[bodyX-1,-52+bodyY],[bodyX-8,-56+bodyY]],dark,INK,1);
- polygon(c,[[bodyX+16,-63+bodyY],[bodyX+5,-68+bodyY],[bodyX+1,-52+bodyY],[bodyX+8,-56+bodyY]],dark,INK,1);
- if(type==='pf'||type==='army'){
-  polygon(c,[[bodyX-15,-61+bodyY],[bodyX+15,-61+bodyY],[bodyX+14,-34+bodyY],[bodyX-14,-34+bodyY]],dark);
-  line(c,[[bodyX,-57+bodyY],[bodyX,-36+bodyY]],suit,2);
-  for(const sx of [-9,9])polygon(c,[[bodyX+sx-4,-47+bodyY],[bodyX+sx+4,-47+bodyY],[bodyX+sx+4,-38+bodyY],[bodyX+sx-4,-38+bodyY]],suit,INK,1);
-  if(type==='pf'){c.font='900 7px system-ui';c.textAlign='center';c.fillStyle=accent;c.fillText('PF',bodyX+1,-51+bodyY);}
- }else if(type==='xandao'){
-  polygon(c,[[bodyX-6,-61+bodyY],[bodyX+6,-61+bodyY],[bodyX+9,-51+bodyY],[bodyX,-53+bodyY],[bodyX-7,-48+bodyY]],CREAM);
-  line(c,[[bodyX-19,-60+bodyY],[bodyX-20,-36+bodyY]],accent,2);
- }else polygon(c,[[bodyX,-63+bodyY],[bodyX+3,-59+bodyY],[bodyX+3,-43+bodyY],[bodyX,-39+bodyY],[bodyX-3,-43+bodyY],[bodyX-2,-59+bodyY]],accent,null);
- oval(c,bodyX+11,-56+bodyY,2,2,accent,null);
- line(c,[[bodyX-14,-34+bodyY],[bodyX+14,-34+bodyY]],'#242637',3);
- drawArm(c,p.arms.left,suit,accent,'left',type==='ze-gotinha'?'#f1f5e9':'#e8b58e');
+ drawCharacterBody(c,p,{type,phase,reducedMotion});
  // Head pivots independently around the neck; only original atlas head pixels.
  c.save();c.translate(p.neck.x,p.neck.y);c.rotate(p.headTilt);
  if(type==='bossonari')drawBossonariHead(c);

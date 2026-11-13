@@ -15,7 +15,7 @@ test('obstáculos altos não têm fundo retangular e continuam alinhados à coli
  for(const type of ['wind','budget-sheets','parachute-cross','handcuffs','receipts','lhand','mandado','hammer','message','barrier']){
   const {ctx,calls}=fakeCanvas();
   assert.doesNotThrow(()=>drawThreat(ctx,{x:200,width:46,height:84,type,action:'crouch'},246,0,{reducedMotion:true}),type);
-  assert.ok(calls.scales.some(s=>s.x===1&&s.y===84/44),type+' deve representar toda a altura do obstáculo');
+  assert.ok(calls.scales.length>0&&calls.scales.every(s=>s.x===s.y),type+' deve construir a altura da arma sem deformar seu desenho');
   assert.ok(calls.rectangles.every(r=>r.width<40||r.height<60),type+' possui painel retangular de fundo');
  }
 });
