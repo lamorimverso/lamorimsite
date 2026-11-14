@@ -29,8 +29,8 @@ test('diretor restringe memes à cena e respeita prioridade e silêncio em perig
  d.update(r,{safe:true});assert.equal(played.length,1);assert.equal(played[0].id,'pessoal-urgente');
  r.elapsed=21;d.event('actor',r,'simone');d.update(r,{safe:true});assert.equal(played.length,1);
  r.elapsed=40;r.raid={phase:'active'};d.event('actor',r,'lula');d.update(r,{safe:true});assert.equal(played.length,1);
- r.raid=null;r.elapsed=50;r.boss={type:'haddad'};d.event('boss',r);d.update(r,{safe:true});
- assert.equal(played.at(-1).id,'haddad');assert.equal(played.at(-1).options.priority,2);
+ r.raid=null;r.elapsed=50;r.boss={type:'lula'};d.event('boss',r);d.update(r,{safe:true});
+ assert.equal(played.at(-1).id,'bora-pra-rua');assert.equal(played.at(-1).options.priority,2);
  r.status='over';r.elapsed=80;d.event('actor',r,'janones');d.update(r,{safe:true});assert.equal(played.length,2);
  d.reset();r.status='running';r.boss=null;r.elapsed=0;d.event('start',r);d.update(r,{safe:true});assert.equal(played.length,2);
 });

@@ -16,9 +16,9 @@ test('soldado recebe o uniforme do cenário ao entrar e o mantém até sair',()=
   const r=core.createRun();core.startRun(r);r.elapsed=400;r.routeDistance=r.distance=core.ROUTE_DISTANCE*4+index*7000+200;
   for(const key of ['nextBossAt','nextRaid','nextPower','nextPassport','nextAllyAt','nextSupportAt'])r[key]=Infinity;
   r.seenGroundActors=core.unlockedCharacters(10,'ground').filter(t=>t!=='army');r.nextObstacle=0;
-  core.advanceRun(r,1/120,()=>.9);
+  core.advanceRun(r,1/120,()=>.99);
   const soldier=r.obstacles.find(o=>o.type==='army');assert.ok(soldier,stage.id);assert.equal(soldier.armyVariant,stage.id);
-  r.nextObstacle=Infinity;r.routeDistance+=7000;core.advanceRun(r,1/120,()=>.9);
+  r.nextObstacle=Infinity;r.routeDistance+=7000;core.advanceRun(r,1/120,()=>.99);
   assert.equal(soldier.armyVariant,stage.id,'a troca de país não troca o uniforme no meio de uma passada');
  }
 });

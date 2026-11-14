@@ -291,3 +291,11 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
 .game-extra>summary{cursor:pointer;min-height:44px;padding:12px;font-weight:600;color:var(--muted)}
 .game-extra .game-settings-content{margin:0;border:0}
 body.game-expanded .game-extra{display:none}
+
+.game-aid-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:46px;margin:7px 0;color:#3b594b;font:600 12px/1.3 system-ui}
+.game-aid-bar[hidden]{display:none}.game-aid-bar>span{flex:1;min-width:0}
+#game-reserve-shield{flex:none;min-height:40px;padding:7px 11px;border:1px solid #8cac9c;border-radius:10px;background:#e6f3e9;color:#254b39;font:800 12px system-ui;touch-action:manipulation}
+#game-reserve-shield:disabled{opacity:.65}#game-reserve-shield:enabled{background:#27764e;color:#fff;border-color:#1c5939;box-shadow:0 2px 0 #174b31}
+#game-reserve-shield:focus-visible{outline:3px solid #e6a52d;outline-offset:2px}
+
+.game-allies-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:9px 20px;padding:8px 18px;font:13px/1.45 system-ui;color:#44554d}.game-allies-list li{padding-left:2px}

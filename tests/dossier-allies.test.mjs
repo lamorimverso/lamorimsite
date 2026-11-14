@@ -18,12 +18,12 @@ test('Milei remove só um obstáculo cenográfico e preserva pessoas e ataques d
 test('Bia tem meta opcional real de três coletas e não concede passaportes artificiais',async()=>{
  const {collectAlly}=await source(),r=isolated();collectAlly(r,'bia');
  for(let i=0;i<3;i++){r.pickups.push({type:'passport',x:137,y:20,speed:0});core.advanceRun(r,dt);}
- core.advanceRun(r,dt);assert.equal(r.passports,3);assert.equal(r.aid?.kind,'magnet');assert.ok(r.aid.remaining<=1.5);
+ core.advanceRun(r,dt);assert.equal(r.passports,3);assert.equal(r.aid?.kind,'magnet');assert.ok(r.aid.remaining<=3.5);
 });
 test('aliados são escolhidos no cenário apropriado sem repetir até usar os elegíveis',async()=>{
  const {ALLIES,allyForStage}=await source(),seen={};
- assert.equal(ALLIES.length,15);assert.equal(new Set(ALLIES.map(a=>a.id)).size,15);
- for(let n=0;n<12;n++){const a=allyForStage(0,seen,()=>.5);assert.ok(!['milei','trump'].includes(a.id));assert.equal(seen[a.id]||0,0);seen[a.id]=1;}
+ assert.equal(ALLIES.length,16);assert.equal(new Set(ALLIES.map(a=>a.id)).size,16);
+ for(let n=0;n<12;n++){const a=allyForStage(0,seen,()=>.5);assert.ok(!['milei','trump','santiago'].includes(a.id));assert.equal(seen[a.id]||0,0);seen[a.id]=1;}
  assert.ok(ALLIES.every(a=>a.label&&a.kind&&a.duration>0));
  const visited=Object.fromEntries(ALLIES.map(a=>[a.id,1]));visited.milei=0;assert.equal(allyForStage(2,visited,()=>0).id,'milei');
 });

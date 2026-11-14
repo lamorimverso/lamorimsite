@@ -1,7 +1,7 @@
 import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=893c0591d1ff';
-import {drawSpecialRunner} from './runner-character-art.mjs?v=a83cbf27d5c5';
-export {drawHeroShot} from './runner-character-art.mjs?v=a83cbf27d5c5';
-import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=ef90058f6d92";
+import {drawSpecialRunner} from './runner-character-art.mjs?v=c9299db98c6b';
+export {drawHeroShot} from './runner-character-art.mjs?v=c9299db98c6b';
+import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=94bad35aaa14";
 // Personagens em atlas WebP; itens e perigos continuam vetoriais em Canvas.
 const INK='#292337',CREAM='#fff6e5';
 function oval(c,x,y,rx,ry,fill,stroke=INK,w=1.8){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=w;c.stroke();}}
@@ -10,7 +10,7 @@ function path(c,points,fill,stroke=INK){c.beginPath();points.forEach(([x,y],i)=>
 function line(c,points,color=INK,width=2){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.strokeStyle=color;c.lineWidth=width;c.lineCap='round';c.lineJoin='round';c.stroke();}
 function text(c,value,x,y,size=7,color=CREAM){c.fillStyle=color;c.font='900 '+size+'px system-ui';c.textAlign='center';c.fillText(value,x,y);}
 
-export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT,CORE_SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=ef90058f6d92";
+export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT,CORE_SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=94bad35aaa14";
 // Figuras vetoriais articuladas preservam a silhueta original do meme.
 // Silhueta original do meme: chapéu vermelho, emblema dourado e pernas longas.
 export function drawMemeArmy(c,{x=0,y=0,phase=0,scale=1,reducedMotion=false,standing=false,running=false}={}){
@@ -334,7 +334,7 @@ export function drawWeaponEffects(c,item,phase=0,reducedMotion=false){
 const ENEMY_WEAPONS=Object.freeze({
  pf:'handcuffs',janones:'message',army:'signal-flare',boulos:'rolling-case',dino:'court-seal',
  xandao:'hammer',haddad:'receipts',lula:'lhand',dilma:'wind',simone:'budget-sheets',
- soraya:'parachute-cross',joice:'microphone','meme-army':'meme-ghost',bossonari:'ivermectina-prop',santiago:'terere-gourd'
+ soraya:'parachute-cross',joice:'microphone','meme-army':'meme-ghost',bossonari:'ivermectina-prop'
 });
 export function enemyWeaponFor(type){return ENEMY_WEAPONS[type]||null;}
 export function drawEnemyActor(c,{type,x=0,y=0,scale=1,phase=0,preparing=false,attacking=false,hurt=false,reducedMotion=false,weapon=null}={}){

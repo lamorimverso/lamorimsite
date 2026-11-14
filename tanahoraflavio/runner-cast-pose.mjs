@@ -1,4 +1,4 @@
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=fb27da4c3c50';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=c040deb109ca';
 // Pure rig shared by rendering and regular projectile launch coordinates.
 const CLASS_ALIASES={sentinela:'sentinel',artilheiro:'gunner',conjurador:'caster',soberano:'sovereign'};
 const canonicalClass=value=>CLASS_ALIASES[value]||value||'sentinel';

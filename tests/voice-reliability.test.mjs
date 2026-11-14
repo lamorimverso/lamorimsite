@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createVoiceDirector} from '../tanahoraflavio/runner-voice-director.mjs';
 import {createGameAudio} from '../tanahoraflavio/runner-audio.mjs';
 
-const bossRun=()=>({status:'running',elapsed:1,raid:null,boss:{type:'haddad'}});
+const bossRun=()=>({status:'running',elapsed:1,raid:null,boss:{type:'lula'}});
 for(const replacement of [null,{type:'lula'},{type:'haddad'}]){
  test('fala pendente não sobrevive à saída/substituição do chefão: '+JSON.stringify(replacement),()=>{
   const played=[],d=createVoiceDirector({play:id=>(played.push(id),true)}),run=bossRun();

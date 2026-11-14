@@ -812,7 +812,7 @@ test('elenco completo possui corpo e animação no Canvas do navegador',async()=
    const enemies=PURSUERS.filter(p=>!['barrier','case'].includes(p.type));
    const actors=[{type:'flavio'},...enemies,...['joice','ze-gotinha','jacare',...ALLIES.map(a=>a.id)].map(type=>({type}))];
    const results=[];
-   for(let sheet=0;sheet<4;sheet++){
+   for(let sheet=0;sheet<Math.ceil(actors.length/8);sheet++){
     const film=document.createElement('canvas');film.id='roster-'+sheet;film.width=800;film.height=1120;const c=film.getContext('2d');c.fillStyle='#e7f1f4';c.fillRect(0,0,800,1120);
     for(let row=0;row<8;row++){
      const actor=actors[sheet*8+row];if(!actor)continue;const hashes=[];
@@ -829,8 +829,8 @@ test('elenco completo possui corpo e animação no Canvas do navegador',async()=
     document.body.append(film);
    }return results;
   });
-  assert.equal(result.length,32);for(const actor of result)assert.ok(actor.frames>=3,actor.type+' precisa de passada visível');
-  await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});for(let sheet=0;sheet<4;sheet++)await page.locator('#roster-'+sheet).screenshot({path:path.resolve(__dirname,`../ux-captures/roster-${sheet}.png`)});
+  assert.equal(result.length,33);for(const actor of result)assert.ok(actor.frames>=3,actor.type+' precisa de passada visível');
+  await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});for(let sheet=0;sheet<Math.ceil(result.length/8);sheet++)await page.locator('#roster-'+sheet).screenshot({path:path.resolve(__dirname,`../ux-captures/roster-${sheet}.png`)});
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
@@ -854,23 +854,37 @@ for(const viewport of [{width:900,height:720},{width:390,height:844}])test(`pers
  }finally{await context.close();}
 });
 
-test('Paraguai aparece entre Argentina e Flórida e Santiago ataca com corpo completo nas duas fases',async()=>{
+test('Paraguai oferece Santiago como aliado ilustrado e mantém Xandão como chefe',async()=>{
  for(const width of [390,1440]){
   const {context,page,errors}=await open({instrument:true,instrumentCasting:true,viewport:{width,height:900}});
   try{
    await begin(page);await page.evaluate(async()=>{const c=await import('./runner-core.mjs'),r=__testRun;r.mode='story';r.routeDistance=c.STORY_OPENING_DISTANCE+3*c.SCENE_DISTANCE+2500;r.nextBossAt=r.nextRaid=r.nextObstacle=r.nextAllyAt=r.nextSupportAt=r.nextPower=r.nextPassport=Infinity;r.obstacles=[];r.pickups=[];});
    await page.waitForFunction(()=>document.getElementById('game-stage-name').textContent.includes('Paraguai'));
    assert.match(await page.locator('#game-phase').textContent(),/Cenário 4 de 6/);
+   const hp=await page.evaluate(()=>{const r=__testRun;r.pickups=[{type:'ally',allyId:'santiago',x:r.player.x+17,y:20,speed:0}];return r.player.hp;});
+   await page.waitForFunction(()=>__testRun.ally?.id==='santiago');
+   assert.equal(await page.evaluate(()=>__testRun.aid.kind),'telegraph');
+   await page.waitForTimeout(150);
+   assert.equal(await page.evaluate(()=>__testRun.player.hp),hp);
+   assert.equal(await page.evaluate(()=>(globalThis.__castPoses||[]).some(p=>p.type==='santiago')),false);
+   const frames=await page.evaluate(async()=>{
+    const art=await import('./runner-art.mjs');await art.loadSprites();const hashes=[];
+    for(let phase=0;phase<4;phase++){
+     const canvas=document.createElement('canvas');canvas.width=200;canvas.height=160;const c=canvas.getContext('2d');
+     if(!art.drawActor(c,{type:'santiago',x:100,y:140,phase,scale:1}))throw Error('Santiago sem corpo');
+     const data=c.getImageData(0,0,200,160).data;let filled=0,hash=0;
+     for(let i=0;i<data.length;i+=4){if(data[i+3]>100)filled++;hash=(Math.imul(hash,31)+data[i]+data[i+1]+data[i+2]+data[i+3])|0;}
+     if(filled<1500)throw Error('Santiago incompleto');hashes.push(hash);
+    }return new Set(hashes).size;
+   });assert.ok(frames>=3,'apoio mantém animação de corpo inteiro');
+   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});await page.locator('#runner-canvas').screenshot({path:path.resolve(__dirname,`../ux-captures/santiago-ally-${width}.png`)});
    await page.evaluate(()=>{const r=__testRun;r.bossesDefeated=15;r.nextBossAt=0;r.bossCooldown=0;r.player.hp=r.player.maxHp;r.shieldFor=0;r.graceFor=0;});
-   await page.waitForFunction(()=>__testRun.boss?.type==='santiago');
-   assert.match(await page.locator('#game-boss-name').textContent(),/Santiago Peña.*Governante 4/);
-   await page.waitForFunction(()=>__castPoses.some(p=>p.type==='santiago'),null,{timeout:5000});
+   await page.waitForFunction(()=>__testRun.boss?.type==='xandao');
+   assert.match(await page.locator('#game-boss-name').textContent(),/Xandão.*Governante 4/);
    await page.waitForFunction(()=>__testRun.boss?.fired>0&&__testRun.player.hp<__testRun.player.maxHp,null,{timeout:7000});
-   assert.equal(await page.evaluate(()=>__testRun.shotsFired),0,'inimigo inicia e causa dano sem esperar tiro');
-   const powers=await page.evaluate(()=>__testRun.obstacles.filter(o=>o.bossAttack).map(o=>o.type));assert.ok(powers.every(p=>['terere-gourd','harp-note'].includes(p)));
-   await page.evaluate(()=>{const r=__testRun;r.shieldFor=Infinity;r.boss.hp=Math.floor(r.boss.maxHp/2);r.boss.phase='recover';r.boss.phaseFor=0;});
-   await page.waitForFunction(()=>__castPoses.some(p=>p.type==='santiago'&&p.enraged));
-   await page.evaluate(()=>{const r=__testRun;r.distance=500000;});await page.waitForTimeout(60);
+   assert.equal(await page.evaluate(()=>__testRun.shotsFired),0,'chefe inicia e causa dano sem esperar tiro');
+   const powers=await page.evaluate(()=>__testRun.obstacles.filter(o=>o.bossAttack).map(o=>o.type));assert.ok(powers.every(p=>['hammer','mandado'].includes(p)));
+   await page.evaluate(()=>{__testRun.distance=500000;});await page.waitForTimeout(60);
    assert.doesNotMatch(await page.locator('#game-difficulty').textContent(),/\/10/);assert.deepEqual(errors,[]);
   }finally{await context.close();}
  }
@@ -900,4 +914,26 @@ test('os17 novos recortes de fala decodificam e contêm áudio real no navegador
   const rows=await page.evaluate(async()=>{const {EXTRA_ARCHIVE_VOICES}=await import('./runner-extra-voices.mjs'),ac=new AudioContext(),rows=[];try{for(const [id,clip] of Object.entries(EXTRA_ARCHIVE_VOICES)){const bytes=await(await fetch(clip.file)).arrayBuffer(),buffer=await ac.decodeAudioData(bytes),pcm=buffer.getChannelData(0);let energy=0,peak=0;for(const value of pcm){energy+=value*value;peak=Math.max(peak,Math.abs(value));}rows.push({id,duration:buffer.duration,rms:Math.sqrt(energy/pcm.length),peak});}return rows;}finally{await ac.close();}});
   assert.equal(rows.length,17);for(const row of rows){assert.ok(row.duration>.5&&row.duration<9,JSON.stringify(row));assert.ok(row.rms>.001&&row.peak<1,JSON.stringify(row));}assert.deepEqual(errors,[]);
  }finally{await context.close();}
+});
+
+test('seis ajudantes liberam escudo guardado, ativável por E e pelo botão no celular',async()=>{
+ for(const width of [390,1440]){
+  const {context,page,errors}=await open({instrument:true,viewport:{width,height:900}});
+  try{
+   await begin(page);await page.evaluate(async()=>{
+    const c=await import('./runner-core.mjs'),r=__testRun;for(const k of ['nextRaid','nextBossAt','nextObstacle','nextPower','nextPassport','nextAllyAt','nextSupportAt'])r[k]=Infinity;r.obstacles=[];
+    for(let i=0;i<6;i++){r.pickups=[{type:'ally',allyId:i===5?'santiago':'jair',x:r.player.x+17,y:20,speed:0}];c.advanceRun(r,1/120);}
+   });
+   const shield=page.locator('#game-reserve-shield');await page.waitForFunction(()=>!document.getElementById('game-reserve-shield').disabled);
+   assert.equal(await page.evaluate(()=>__testRun.shieldFor),0);assert.match(await page.locator('#game-aid-status').textContent(),/Santiago Peña/);
+   await page.locator('#runner-canvas').focus();await page.keyboard.press('e');await page.waitForFunction(()=>__testRun.shieldFor>0&&__testRun.reserveShields===0);
+   await page.evaluate(async()=>{const {collectAlly}=await import('./runner-allies.mjs');for(let i=0;i<6;i++)collectAlly(__testRun,'jair');});
+   await page.waitForFunction(()=>document.getElementById('game-reserve-shield').disabled);
+   assert.equal(await page.evaluate(()=>__testRun.reserveShields),1,'escudo ativo não consome segunda reserva');
+   await page.evaluate(()=>{__testRun.shieldFor=0;});await page.waitForFunction(()=>!document.getElementById('game-reserve-shield').disabled);await shield.click();
+   await page.waitForFunction(()=>__testRun.shieldFor>0&&__testRun.reserveShields===0);
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+   assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ }
 });

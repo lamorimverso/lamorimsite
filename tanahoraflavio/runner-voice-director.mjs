@@ -1,20 +1,21 @@
 import {createVoiceSelector} from './runner-voice-selector.mjs?v=ad3200a88cd4';
-import {EXTRA_ARCHIVE_SCENES} from './runner-extra-voices.mjs?v=dcb3792d1a76';
-import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=e89d6a84511d';
-import {ARCHIVE_SCENES} from './runner-archive-voices.mjs?v=7c025577c1cc';
+import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
 // Diretor de falas: cada meme é reservado somente ao personagem/evento correspondente.
 // Nunca narra a partida em voz artificial, nem atribui áudio de uma pessoa a outra.
 export const MEME_SCENES=Object.freeze({
  janones:Object.freeze(['pessoal-urgente','explode-video']),
  lula:Object.freeze(['bora-pra-rua','picanha','mesmo-mundo','ate-teu-pai','defende-meu-pai','passarinho']),
- haddad:Object.freeze(['haddad']),
+ dino:Object.freeze(['meme-dino-vingadores','meme-dino-capitao-america']),
+ xandao:Object.freeze(['meme-xandao-liberdade-agressao','meme-xandao-democracia-anarquia']),
+ dilma:Object.freeze(['meme-dilma-meta-aberta','meme-dilma-dobrar-meta']),
+ soraya:Object.freeze(['meme-soraya-festa-junina']),
+ joice:Object.freeze(['joice','extra-joice-1','extra-joice-2','extra-joice-3']),
  'ze-gotinha':Object.freeze(['cade-ze-gotinha'])
 });
-const BOSS_ARCHIVE_SCENES=Object.freeze({joice:Object.freeze(['joice'])});
 export function createVoiceDirector({play,random=Math.random,selector=createVoiceSelector({random})}){
  let pending=null,lastId='',lastPlayed=new Map(),nextGlobalAt=0,lastAttempt=null,activeBoss=null;
  function queue(actor,priority,run,kind){
-  const ids=[...new Set([...(MEME_SCENES[actor]||[]),...(ARCHIVE_SCENES[actor]||[]),...(BOSS_ARCHIVE_SCENES[actor]||[]),...(EXTRA_ARCHIVE_SCENES[actor]||[])])];
+  const ids=MEME_SCENES[actor]||[];
   if(!ids.length||run.raid)return;
   const next=lastPlayed.get(actor)||0;
   if(run.elapsed<next)return;
@@ -33,7 +34,7 @@ export function createVoiceDirector({play,random=Math.random,selector=createVoic
   },
   update(run,{safe=false}={}){
    if(run.status!=='running'||run.raid)return;
-   if(!pending&&run.boss===activeBoss&&run.boss&&lastPlayed.has(run.boss.type)&&run.elapsed>=lastPlayed.get(run.boss.type))queue(run.boss.type,2,run,'boss');
+   if(!pending&&(MEME_SCENES[run.boss?.type]?.length||0)>1&&run.boss===activeBoss&&run.boss&&lastPlayed.has(run.boss.type)&&run.elapsed>=lastPlayed.get(run.boss.type))queue(run.boss.type,2,run,'boss');
    if(!pending)return;
    if(run.elapsed>pending.expires){pending=null;return;}
    if(pending.kind==='boss'&&pending.boss!==run.boss){pending=null;return;}

@@ -14,7 +14,6 @@ export const BOSS_PROFILES=Object.freeze({
  xandao:profile(4,'sovereign','Martelos e mandados',['hammer','mandado'],['jump','jump','crouch','move','jump']),
  lula:profile(4,'sovereign','Gestos em L',['lhand'],['jump','crouch','jump','move','crouch']),
  dilma:profile(4,'sovereign','Vendavais',['wind'],['crouch','jump','move','jump','crouch']),
- santiago:profile(4,'sovereign','Tereré e notas de harpa',['terere-gourd','harp-note'],['jump','crouch','move','jump','move','crouch'],'arc'),
  bossonari:profile(4,'sovereign','Frascos cenográficos',['cloroquina-prop','ivermectina-prop'],['jump','crouch','jump','jump','crouch','move']),
  'meme-army':profile(4,'sovereign','Investidas do Fantasma',['meme-ghost'],['crouch','move','jump','move','jump','crouch'])
 });

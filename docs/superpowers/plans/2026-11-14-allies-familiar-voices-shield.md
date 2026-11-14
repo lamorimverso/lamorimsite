@@ -1,0 +1,14 @@
+# Allies, recognizable voices, reserve shield and rear pressure
+
+Continue the user's authorized native implementation/publication workflow. Requests: Santiago Peña supports Flávio in Paraguay; improve ally assignments; boss speech must use famous authentic catchphrases; replace the passport held during firing with an ivermectin prop weapon; six ally pickups unlock one manually activated reserve shield; increase attacks from behind. No design approval questions requested.
+
+- Santiago is a Paraguay-only support, never an enemy. Xandão keeps the fourth combat rank for the Paraguay encounter; six locations and 24 fights remain.
+- Give allies clear visible role/duration feedback, useful distinct effects, and local support priority. Eduardo delays the next raid; Silas improves lateral movement; Renan retrieves one existing passport; Tarcísio brings the next support closer; Bia's collection quest gives a stronger magnet. No fabricated passport counts or automatic reserve activation.
+- Count six valid ally pickups in total, then hold one reserve shield. Button or E activates six seconds of protection during a running game; active protection does not consume another reserve. No stacking inventory; new runs reset the count.
+- Use edited complete-figure sprites for the held ivermectin weapon and an illustrated bottle projectile, without consuming the passport collectibles.
+- Boss voice selection uses recognizable attributed original catchphrases, not arbitrary generic speeches or fabricated/cloned voices. Keep source/context/hash/offset metadata, no-overlap/mute/failure handling and actor-specific variety.
+- Rear attacks begin after the introductory window and rise with distance. Retain clear direction cues, audible warning and schedulable jump/lateral escape paths.
+
+Verification: failing regression tests first; focused model and real browser tests; inspect artwork and mobile layouts; all root/native tests, legal-route seeds and full campaigns; independent review; PR checks and Pages deployment; compare public file hashes before reporting completion.
+
+Validation completed before publication: 537/537 root tests, 27/27 native drawing tests, 20/20 full campaigns, 2,000 evasive seed sequences and natural 100-passport collection across widths/assistance/rotation. Browser checks verify all seven new MP3s decode with bounded peaks, actual E/button shield use, Santiago ally collection and both screen sizes. Independent review found no material issues. The separate rear-pressure review identified and verified two real scheduling fixes: additional opposing-direction space for lateral escape and reservation of high-attack release after the preceding threat. Asset builds, resource versions and diff checks passed. Public audio demo smoke: 19 curated familiar clips, 17 folded archive clips, no JavaScript errors or horizontal overflow at 390/1440.

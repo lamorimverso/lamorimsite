@@ -1,10 +1,10 @@
 import {drawCharacterBody,drawCharacterArm} from './runner-body-art.mjs?v=67badae0df52';
-import {drawBossonariHead} from './runner-character-art.mjs?v=a83cbf27d5c5';
-import {standingEnemyPose} from './runner-cast-pose.mjs?v=ef9cdbeacd92';
-export {standingEnemyPose} from './runner-cast-pose.mjs?v=ef9cdbeacd92';
-import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=ef90058f6d92';
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=fb27da4c3c50';
-import {drawMemeArmy} from './runner-art.mjs?v=35fcedf56da3';
+import {drawBossonariHead} from './runner-character-art.mjs?v=c9299db98c6b';
+import {standingEnemyPose} from './runner-cast-pose.mjs?v=ed1b40296acc';
+export {standingEnemyPose} from './runner-cast-pose.mjs?v=ed1b40296acc';
+import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=94bad35aaa14';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=c040deb109ca';
+import {drawMemeArmy} from './runner-art.mjs?v=3b64eb134ab2';
 
 // Full illustrated combat sprites share the original running artwork style.
 // Coordinates are logical game pixels; y always remains the top of the deck.
