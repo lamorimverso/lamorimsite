@@ -25,9 +25,9 @@
   <link rel="canonical" href="https://lamorimverso.github.io/lamorimsite/tanahoraflavio/">
   <title>Tá na hora, Flávio! · Contagem e minigame</title>
 
-  <link rel="stylesheet" href="game.css?v=441a1e951883">
+  <link rel="stylesheet" href="game.css?v=9255bd5fd2a8">
   <script defer src="page-layout.js?v=d515141f39cb"></script>
-  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=a3c52dae38ce"></script>
+  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=05d3b4f939c2"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -89,7 +89,7 @@
         </div>
         <details class="game-settings" id="game-settings"><summary title="Configurações de comandos"><span aria-hidden="true">⚙</span><span class="sr-only">Comandos</span></summary>
           <div class="game-settings-content">
-            <p class="game-instructions" id="game-instructions"><strong>W / ↑ / Espaço:</strong> pular · <strong>A/D / ←/→:</strong> mover · <strong>S / ↓:</strong> abaixar.<br>No toque, deslize para mover/abaixar ou toque para pular. Use Disparar nos confrontos para lançar ivermectina; segure para repetir. E ativa o escudo de reserva.</p>
+            <p class="game-instructions" id="game-instructions"><strong>W / ↑ / Espaço:</strong> pular · <strong>A/D / ←/→:</strong> mover · <strong>S / ↓:</strong> abaixar.<br>No toque, deslize para mover/abaixar ou toque para pular. Use Disparar durante a corrida e os confrontos; segure para repetir. Vencer chefes libera poderes. Q troca o poder equipado. E ativa o escudo de reserva.</p>
             <div class="game-options"><label for="game-crouch-mode">Abaixar<select id="game-crouch-mode" disabled><option value="hold">Deslizar e segurar</option><option value="toggle">Deslizar para alternar</option></select></label><label for="game-fire-key">Tecla de disparo<select id="game-fire-key" disabled><option value="default">J/Z (padrão)</option><option value="KeyF">F</option><option value="KeyK">K</option><option value="KeyL">L</option><option value="KeyX">X</option><option value="KeyC">C</option></select></label></div>
           </div>
         </details>
@@ -105,6 +105,7 @@
         </div>
           <div class="game-overlay" id="game-overlay"><span class="game-overlay-badge" id="game-overlay-badge">Corrida fictícia</span><img class="game-captured" id="game-captured" src="assets/flavio-captured-v1.webp?v=35a44e31f10f" width="1334" height="1179" alt="Caricatura de Flávio com as mãos algemadas" fetchpriority="low" hidden><strong id="game-overlay-title">Pronto para correr?</strong><p id="game-overlay-copy">Pule ou abaixe para desviar.</p><p class="game-start-hint" id="game-start-hint">Toque: pular · ↓: abaixar · ↔: mover</p></div>
         </div>
+        <div class="game-power-loadout" id="game-power-loadout" hidden><label for="game-weapon-select">Poder · Q</label><select id="game-weapon-select" aria-label="Poder de Flávio"><option value="ivermectina">Arma IVER</option></select><span id="game-weapon-effect"></span></div><p id="game-power-reward" class="game-power-reward" role="status" hidden></p>
         <div class="game-aid-bar" id="game-aid-bar" hidden><span id="game-aid-status">Ajudas 0/6 para o escudo de reserva</span><button type="button" id="game-reserve-shield" disabled aria-label="Usar escudo de reserva, tecla E">Escudo · 0/6</button></div>
         <section class="game-ballot" id="game-ballot" hidden tabindex="-1" aria-label="Urna fictícia da campanha">
           <div class="game-ballot-screen">

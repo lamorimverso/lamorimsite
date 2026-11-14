@@ -1,15 +1,17 @@
+import {heroPowerFor,grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=27e0bb16e2f2';
+export {grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=27e0bb16e2f2';
 import {STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=859ae4e257bd';
 export {STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=859ae4e257bd';
-import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=5f52a1917be6';
+import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=686945c2001a';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=c040deb109ca';
 import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
-import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=8ecaa9d24db1';
+import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=f273e11b16a6';
 import {regularCastMuzzle} from './runner-cast-pose.mjs?v=ed1b40296acc';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=4a007b25adb2';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
-import {BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,planArenaAttack,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=469b171b2f33';
-export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=469b171b2f33';
-export {bossArenaPose} from './runner-bosses.mjs?v=469b171b2f33';
+import {BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,planArenaAttack,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=4d0d9c1a5182';
+export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=4d0d9c1a5182';
+export {bossArenaPose} from './runner-bosses.mjs?v=4d0d9c1a5182';
 // Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
 export const WORLD = Object.freeze({width:900,height:300,ground:246});
 // Envelope de todas as poses no atlas a .95 de escala, incluindo o agachamento.
@@ -197,7 +199,7 @@ export function createRun({assisted=false,seed,mode='endless'}={}) {
  return {status:'ready',mode:mode==='story'?'story':'endless',assisted:assisted===true,elapsed:0,distance:0,routeDistance:0,viewportWidth:WORLD.width,bonus:0,collected:0,passports:0,lives:1,
   randomState:seed===undefined?null:Number(seed)>>>0,
   ballot:{digits:'',message:''},
-  event:'',events:0,player:{x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareAge:0,nextJacareThreat:3,restoreFlashFor:0,jumpBufferedUntil:0,attackHeld:false,attackFor:0,attackCooldown:0,shotFacing:1,hp:5,maxHp:5},obstacles:[],pickups:[],heroShots:[],shotsFired:0,lastHit:null,
+  event:'',events:0,player:{x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareAge:0,nextJacareThreat:3,restoreFlashFor:0,jumpBufferedUntil:0,attackHeld:false,attackFor:0,attackCooldown:0,shotFacing:1,hp:5,maxHp:5},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,shieldFor:0,graceFor:0,reserveShields:0,allyShieldProgress:0,allyHelpCount:0,
   lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,phantomCloud:null,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:null,bossCooldown:0,
@@ -224,6 +226,12 @@ export function resizeRun(run,width){
    const factor=visibleWidth(run)/previous,half=o.width/2,oldContact=o.speed<0?oldRear+3-half:oldFront+half,newContact=o.speed<0?rear+3-half:contactX+half,map=x=>newContact+(x-oldContact)*factor;
    o.x=map(o.x+o.width/2)-o.width/2;o.launchX=map(o.launchX);o.targetX=map(o.targetX);o.speed*=factor;
    o.cast.fromX=map(o.cast.fromX);o.cast.toX=map(o.cast.toX);
+   if(o.launched&&Math.abs(o.speed)<180){
+    const oldSpeed=o.speed;o.speed=Math.sign(o.speed)*180;
+    // Keep the already-travelled tail at the same point while preserving
+    // the minimum clearance speed after a screen rotation.
+    o.cast.toX+=(o.speed-oldSpeed)*Math.max(0,o.cast.flightAge-o.cast.flightFor);
+   }
   }else if(o.falling||o.groundHazard||o.passed||!Number.isFinite(o.speed)||o.speed===0){o.x+=delta;}
   else if(o.speed>0&&o.x>oldFront){
    o.x=project(o.x);o.speed*=ratio;
@@ -354,7 +362,7 @@ export function clearRunInput(run){
  run.player.attackHeld=false;
 }
 export function setAttackRun(run,active){
- run.player.attackHeld=!!active&&run.status==='running'&&!!run.boss&&!run.player.isJacare;
+ run.player.attackHeld=!!active&&run.status==='running'&&!run.player.isJacare;
  return run.player.attackHeld;
 }
 export function heroMuzzleFor(run,facing=1){
@@ -362,32 +370,59 @@ export function heroMuzzleFor(run,facing=1){
  return {x:playerX(run)+PLAYER.width/2+muzzle.x,y:run.player.y-muzzle.y};
 }
 export function attackRun(run){
- const b=run.boss,p=run.player;
- if(run.status!=='running'||!b||p.isJacare||b.phase==='intro'||p.attackCooldown>0||(run.heroShots?.length||0)>=6)return false;
- const pose=bossArenaPose(b,visibleWidth(run));
- p.shotFacing=pose.x<playerX(run)+PLAYER.width/2?-1:1;
- const {x,y}=heroMuzzleFor(run,p.shotFacing);
- const dx=p.shotFacing*Math.max(1,Math.abs(pose.x-x)),dy=pose.platformY+48-y,distance=Math.max(1,Math.hypot(dx,dy));
- (run.heroShots??=[]).push({type:'hero-ivermectina',x,y,previousX:x,previousY:y,vx:dx/distance*760,vy:dy/distance*760,age:0,damage:b.combat?bossCounterWindow(b).damage:undefined});
- p.attackCooldown=.28;p.attackFor=HERO_SHOT_DURATION;run.shotsFired=(run.shotsFired||0)+1;return true;
+ const b=run.boss,p=run.player,power=heroPowerFor(run),level=run.powerLevels?.[run.activePower]||1;
+ if(run.status!=='running'||p.isJacare||b?.phase==='intro'||p.attackCooldown>0||(run.heroShots?.length||0)>=18)return false;
+ const target=b?{x:bossArenaPose(b,visibleWidth(run)).x,y:bossArenaPose(b,visibleWidth(run)).platformY+48}:
+  run.obstacles.filter(o=>!o.passed&&!o.counted&&!o.destroyed&&!o.groundHazard&&(!o.falling||o.age>=o.warningFor))
+   .sort((a,z)=>Math.abs(a.x-playerX(run))-Math.abs(z.x-playerX(run)))[0];
+ const targetX=target?(b?target.x:target.x+target.width/2):visibleWidth(run)-30;
+ p.shotFacing=targetX<playerX(run)+PLAYER.width/2?-1:1;
+ const {x,y}=heroMuzzleFor(run,p.shotFacing),targetY=target?(b?target.y:target.projectile||target.falling?target.y:target.height/2):y;
+ const dx=p.shotFacing*Math.max(1,Math.abs(targetX-x)),dy=targetY-y,distance=Math.max(1,Math.hypot(dx,dy)),angle=Math.atan2(dy,dx);
+ for(let i=0;i<power.shots;i++){
+  const spread=power.behavior==='fan'?(i-1)*power.spread:0,offset=power.behavior==='stack'?(i-1)*18:power.behavior==='double'?(i-.5)*12:0;
+  const vx=Math.cos(angle+spread)*power.speed,vy=Math.sin(angle+spread)*power.speed;
+  (run.heroShots??=[]).push({type:run.activePower==='ivermectina'?'hero-ivermectina':power.projectiles?.[i]||power.projectile,powerId:run.activePower,
+   behavior:power.behavior,x,y:y+offset,originX:x,originY:y+offset,previousX:x,previousY:y+offset,vx,vy,age:0,flightFor:Math.max(.15,distance/power.speed),
+   radius:power.radius,cancels:power.cancels,damage:power.damage*(1+(level-1)*.12)*(b?.combat?bossCounterWindow(b).damage:1)});
+ }
+ p.attackCooldown=power.cooldown*(1-(level-1)*.06);p.attackFor=HERO_SHOT_DURATION;run.shotsFired=(run.shotsFired||0)+1;return true;
+}
+function segmentHitsBox(shot,minX,maxX,minY,maxY,radius=0){
+ const dx=shot.x-shot.previousX,dy=shot.y-shot.previousY;let near=0,far=1;
+ for(const [origin,delta,min,max] of [[shot.previousX,dx,minX-radius,maxX+radius],[shot.previousY,dy,minY-radius,maxY+radius]]){
+  if(Math.abs(delta)<1e-8){if(origin<min||origin>max)return false;}
+  else{const a=(min-origin)/delta,z=(max-origin)/delta;near=Math.max(near,Math.min(a,z));far=Math.min(far,Math.max(a,z));}
+ }return near<=far;
 }
 function advanceHeroShots(run,dt){
  const p=run.player;p.attackCooldown=Math.max(0,(p.attackCooldown||0)-dt);p.attackFor=Math.max(0,(p.attackFor||0)-dt);
  if(p.attackHeld)attackRun(run);
  const b=run.boss,pose=b?bossArenaPose(b,visibleWidth(run)):null;
  run.heroShots=(run.heroShots||[]).filter(shot=>{
-  shot.previousX=shot.x;shot.previousY=shot.y;shot.x+=shot.vx*dt;shot.y+=shot.vy*dt;shot.age+=dt;
-  if(!b||shot.age>2||shot.x<-30||shot.x>visibleWidth(run)+30||shot.y<-30||shot.y>330)return false;
-  // Segmento varrido evita atravessar a hitbox em quadros longos.
-  const dx=shot.x-shot.previousX,dy=shot.y-shot.previousY;
-  let near=0,far=1;
-  for(const [origin,delta,min,max] of [[shot.previousX,dx,pose.x-34,pose.x+34],[shot.previousY,dy,pose.platformY+8,pose.platformY+104]]){
-   if(Math.abs(delta)<1e-8){if(origin<min||origin>max)return true;}
-   else{const a=(min-origin)/delta,z=(max-origin)/delta;near=Math.max(near,Math.min(a,z));far=Math.min(far,Math.max(a,z));}
+  shot.previousX=shot.x;shot.previousY=shot.y;shot.age+=dt;
+  if(shot.behavior==='homing'&&b){const dx=pose.x-shot.x,dy=pose.platformY+48-shot.y,d=Math.max(1,Math.hypot(dx,dy)),k=Math.min(1,dt*4);shot.vx+=(dx/d*540-shot.vx)*k;shot.vy+=(dy/d*540-shot.vy)*k;}
+  if(shot.behavior==='return'&&shot.age>shot.flightFor*1.2&&!shot.returned){shot.vx=-shot.vx;shot.vy=-shot.vy*.5;shot.returned=true;}
+  shot.x+=shot.vx*dt;shot.y+=shot.vy*dt;
+  const progress=Math.min(1,shot.age/(shot.flightFor||1)),envelope=Math.sin(Math.PI*progress);
+  const lift=shot.behavior==='lob'?60*envelope:shot.behavior==='arc'?30*envelope:shot.behavior==='heavy'?18*envelope:
+   shot.behavior==='bounce'?28*Math.abs(Math.sin(progress*Math.PI*3)):shot.behavior==='orbit'?22*Math.sin(progress*Math.PI*4)*envelope:shot.behavior==='gust'?8*Math.sin(progress*Math.PI*5)*envelope:0;
+  if(lift)shot.y=(shot.originY??shot.previousY)+shot.vy*shot.age+lift;
+  if(shot.age>3||shot.x<-40||shot.x>visibleWidth(run)+40||shot.y<-50||shot.y>360)return false;
+  const radius=shot.behavior==='wave'?Math.min(34,shot.radius+shot.age*30):shot.radius||0;
+  for(const o of run.obstacles){
+   if(o.passed||o.counted||o.destroyed||o.groundHazard||(o.projectile&&o.waitFor>0&&!o.launched)||(o.falling&&o.age<o.warningFor)||o.bossAttack&&!(shot.cancels>0))continue;
+   const low=o.projectile||o.falling?o.y-o.height/2:0,high=o.projectile||o.falling?o.y+o.height/2:o.height;
+   if(!segmentHitsBox(shot,o.x,o.x+o.width,low,high,radius))continue;
+   o.hitPoints=(o.hitPoints??(['pf','army','janones','boulos','dino'].includes(o.type)?2:1))-shot.damage;
+   if(o.hitPoints<=0){if(o.bossAttack&&!o.counted&&run.boss&&!run.boss.combat)run.boss.remaining=Math.max(0,run.boss.remaining-1);o.destroyed=true;o.counted=true;o.passed=true;run.defeatedEnemies=(run.defeatedEnemies||0)+1;run.clearedAt={x:o.x+o.width/2,remaining:.25};}
+   if(shot.cancels>0){shot.cancels--;continue;}return false;
   }
-  if(near>far)return true;
+  if(!b||!segmentHitsBox(shot,pose.x-34,pose.x+34,pose.platformY+8,pose.platformY+104,Math.min(12,radius)))return true;
   if(b.phase==='intro')return false;
-  b.hp=Math.max(0,(b.hp??b.total)-(b.combat?(shot.damage??bossCounterWindow(b).damage):b.phase==='recover'?2:1));b.hitFlashFor=.16;
+  const weakness=b.weakness&&shot.powerId===b.weakness?1.65:1;
+  b.hp=Math.max(0,(b.hp??b.total)-(shot.damage??(b.combat?bossCounterWindow(b).damage:b.phase==='recover'?2:1))*weakness);b.hitFlashFor=.16;
+  if(weakness>1)b.weaknessFlashFor=.3;
   return false;
  });
 }
@@ -479,7 +514,7 @@ function beginBoss(run){
   Object.assign(run.boss,encounter,{combat:true,maxHp:encounter.hp,hp:encounter.hp,age:0,phase:'intro',phaseFor:1.1,
    total:encounter.hp,remaining:encounter.hp,fired:0,volleyLeft:0,evaded:0,plannedAttack:arenaPatternFor(encounter,0)});
   run.player.hp=run.player.maxHp;run.heroShots=[];run.pickups=[];
- }else {const profile=bossProfileFor(type);Object.assign(run.boss,{maxHp:conf.attacks*2,hp:conf.attacks*2,age:0,classId:profile.classId,className:BOSS_CLASSES[profile.classId].name,rank:profile.rank,rankName:BOSS_RANKS[profile.rank-1],powerName:profile.powerName,attackTypes:profile.attackTypes});}
+ }else {const profile=bossProfileFor(type);Object.assign(run.boss,{maxHp:conf.attacks*2,hp:conf.attacks*2,age:0,classId:profile.classId,className:BOSS_CLASSES[profile.classId].name,rank:profile.rank,rankName:BOSS_RANKS[profile.rank-1],powerName:profile.powerName,attackTypes:profile.attackTypes,tactic:profile.tactic,weakness:profile.weakness,reward:profile.reward,rematchIndex:Math.floor(Math.max(0,conf.round-1)/BOSS_ROSTER.length)});}
  run.boss.reducedMotion=run.reducedMotion===true;
  run.obstacles=[];run.nextObstacle=Math.max(1.8,run.nextObstacle);
  const final=encounter?.index===STORY_BOSS_COUNT-1;
@@ -487,11 +522,11 @@ function beginBoss(run){
 }
 function chooseBossPattern(boss,rng,pressure){
  if(boss.fired<3)return {...bossAttackFor(boss.type,boss.fired,boss.round-1),approach:'diagonal'};
- const roll=random(rng),profile=bossProfileFor(boss.type);
- let action=roll<(.48+.06*pressure)?'crouch':'jump';
- if(profile?.sequence.includes('move')&&boss.fired%5===3)action='move';
- if(action===boss.lastAction&&boss.actionStreak>=2)action=action==='jump'?'crouch':'jump';
- return {type:bossWeaponFor(boss.type,boss.fired,action),action,approach:action==='move'?'vertical':action==='jump'&&roll<.48?'drop':action==='crouch'&&roll>.65?'sweep':'diagonal'};
+ // Endless encounters also choose from this actor's own authored repertoire.
+ // A small seeded offset varies the order, never the identity or announced lane.
+ const rematchIndex=boss.rematchIndex??Math.floor(Math.max(0,(boss.round||1)-1)/BOSS_ROSTER.length);
+ const phaseTwo=boss.remaining<=boss.total/2;
+ return arenaPatternFor({...boss,rematchIndex,hp:phaseTwo?(boss.maxHp||100)/2:(boss.maxHp||100),maxHp:boss.maxHp||100},boss.fired+Math.floor(random(rng)*2));
 }
 function advanceBoss(run,dt,rng,balance){
  const boss=run.boss;if(!boss)return;
@@ -517,17 +552,17 @@ function advanceBoss(run,dt,rng,balance){
   attack=spawnFallingThreat(run,{bossAttack:true,owner:boss.type,type:attackType});if(!attack){boss.nextAttack=.1;return;}
   if(boss.combat)attack.type=attackType;
  }else{
- const [width,baseHeight]=({hammer:[46,44],mandado:[42,44],
+ const [baseWidth,baseHeight]=({hammer:[46,44],mandado:[42,44],
   lhand:[60,46],receipts:[44,40],stamp:[44,36],message:[44,36],microphone:[46,40],handcuffs:[46,40],barrier:[44,32],wind:[46,44],'budget-sheets':[46,42],'parachute-cross':[46,44],'rolling-case':[40,30],'falling-case':[36,36],'cloroquina-prop':[52,38],'ivermectina-prop':[52,38],'meme-ghost':[52,44],'signal-flare':[38,42],'court-seal':[44,44],'terere-gourd':[44,44],'harp-note':[42,44]})[attackType];
- const height=pattern.action==='crouch'?84:baseHeight;
+ const width=baseWidth*(pattern.widthScale||1),height=pattern.action==='crouch'?84:baseHeight;
  const spriteMuzzle=combatGeometryFor(boss.type,{frame:2,armyVariant:STAGES[boss.stageIndex]?.id,enraged:boss.enraged})?.muzzle;
  const x=Math.max(boss.combat?bossArenaPose(boss,visibleWidth(run)).x+(spriteMuzzle?.x??-48)-width/2:visibleWidth(run)-104,frontContact(run)+60);
  const entry=pattern.approach||'diagonal';
  const fromY=boss.combat?bossArenaPose(boss,visibleWidth(run)).platformY-(spriteMuzzle?.y??-52):entry==='drop'?155:pattern.action==='jump'?77:90;
  const toY=Number.isFinite(pattern.targetY)?pattern.targetY:pattern.action==='jump'?(entry==='drop'?22:PLAYER.height/2):90;
  attack={x,width,height,type:attackType,action:pattern.action,owner:boss.type,bossAttack:true,counted:false,
-  approach:entry,flightStyle:projectileStyle(attackType),...threatMotion(run,x,balance.bossApproach),
-  projectile:true,launchX:x+width/2,targetX:playerX(run)+PLAYER.width/2,
+  approach:entry,flightStyle:projectileStyle(attackType),...threatMotion(run,x,balance.bossApproach/(pattern.projectileSpeedScale||1)),
+  curve:pattern.curve,waveAmplitude:pattern.waveAmplitude,waveCycles:pattern.waveCycles,gust:pattern.gust,signature:pattern.signature,projectile:true,launchX:x+width/2,targetX:playerX(run)+PLAYER.width/2,
   launchY:fromY,targetY:toY,arcHeight:pattern.arcHeight||0,y:fromY};
  run.obstacles.push(attack);
  }
@@ -540,7 +575,7 @@ function advanceBoss(run,dt,rng,balance){
  boss.lastAction=pattern.action;
  boss.plannedFor=boss.fired;
  boss.plannedAttack=boss.combat?boss.volleyPattern:chooseBossPattern(boss,rng,balance.pressure);
- boss.nextAttack+=boss.interval+random(rng)*.22+(boss.type==='janones'&&boss.fired%Math.ceil(boss.total/3)===0?.55:0);
+ boss.nextAttack+=(boss.combat?(pattern.burstGap||boss.interval):boss.interval)+random(rng)*.12+(boss.type==='janones'&&boss.fired%Math.ceil(boss.total/3)===0?.55:0);
  if(boss.combat&&--boss.volleyLeft<=0)boss.phaseFor=Math.max(.24,boss.interval*.55);
  return attack;
 }
@@ -549,7 +584,7 @@ function resolveBossDodges(run){
  for(const o of run.obstacles)if(o.bossAttack&&!o.counted&&(o.falling?o.age>=o.warningFor+o.fallFor:o.x+o.width<playerX(run))){o.counted=true;if(run.boss.combat)run.boss.evaded++;else run.boss.remaining--;}
  const boss=run.boss;
  if(boss.combat?boss.hp>0:!(Number.isFinite(boss.hp)&&boss.hp<=0)&&(boss.fired<boss.total||boss.remaining>0))return;
- run.lastBoss=boss.type;run.boss=null;run.bossesDefeated++;run.bossCooldown=4;
+ grantBossPower(run,boss.type);run.lastBoss=boss.type;run.boss=null;run.bossesDefeated++;run.bossCooldown=4;
  run.heroShots=[];run.player.attackHeld=false;run.obstacles=[];run.player.hp=run.player.maxHp;
  if(run.mode==='story'&&run.bossesDefeated>=STORY_BOSS_COUNT){
   run.status='ballot';run.nextBossAt=Infinity;run.obstacles=[];run.pickups=[];run.phantomCloud=null;
@@ -640,7 +675,9 @@ export function advanceRun(run,seconds,rng){
  if(run.status!=='running'||!Number.isFinite(seconds)||seconds<=0)return;
  if(typeof rng!=='function')rng=run.randomState===null||run.randomState===undefined?Math.random:()=>{run.randomState=nextSeed(run.randomState);return run.randomState/4294967296;};
  const dt=Math.min(seconds,.05);run.elapsed+=dt;
+ if(run.lastPowerReward){run.lastPowerReward.remaining-=dt;if(run.lastPowerReward.remaining<=0)run.lastPowerReward=null;}
  const bounds=playerBounds(run);
+ if(run.boss?.activeGust){const gust=run.boss.activeGust;run.player.x=Math.max(bounds.min,Math.min(bounds.max,playerX(run)+gust.direction*gust.strength*dt));gust.remaining-=dt;if(gust.remaining<=0)run.boss.activeGust=null;}
  const entering=run.boss?.combat&&run.boss.phase==='intro'&&playerX(run)>visibleWidth(run)-245;
  run.player.x=entering?Math.max(visibleWidth(run)-245,playerX(run)-230*dt):Math.max(bounds.min,Math.min(bounds.max,playerX(run)+(run.player.moveHeld||0)*230*(run.aid?.kind==='encourage'?1.2:1)*dt));
  advanceAllies(run,dt);
@@ -689,19 +726,26 @@ export function advanceRun(run,seconds,rng){
   // evita arcos altos involuntários após uma esquiva lateral obrigatória.
   if(obstacle.projectile&&activeDelta>0){
    if(!obstacle.launched&&waiting>0)obstacle.targetX=playerX(run)+PLAYER.width/2;
-   if(!obstacle.launched&&obstacle.bossAttack&&run.boss){run.boss.attackFlashFor=.26;run.boss.lastWeapon=obstacle.type;run.boss.lastReleasedAction=obstacle.action;}
+   if(!obstacle.launched&&obstacle.bossAttack&&run.boss){run.boss.attackFlashFor=.26;run.boss.lastWeapon=obstacle.type;run.boss.lastReleasedAction=obstacle.action;if(obstacle.gust)run.boss.activeGust={...obstacle.gust,remaining:obstacle.gust.duration};}
    obstacle.launched=true;
   }
   obstacle.waitFor=Math.max(0,waiting-dt);
   obstacle.x-=Number.isFinite(obstacle.speed)?obstacle.speed*activeDelta:travel;
-  if(obstacle.projectile){
+  if(obstacle.projectile&&!obstacle.returning){
    const landingX=obstacle.targetX+PLAYER.width/2-6+obstacle.width/2;
    const span=Math.max(1,obstacle.launchX-landingX);
    const progress=Math.max(0,Math.min(1,(obstacle.launchX-(obstacle.x+obstacle.width/2))/span));
    obstacle.y=obstacle.launchY+(obstacle.targetY-obstacle.launchY)*progress+Math.sin(Math.PI*progress)*(obstacle.arcHeight||0);
+   if(obstacle.curve){const envelope=Math.sin(Math.PI*progress)**2,cycle=Math.sin(progress*Math.PI*2*(obstacle.waveCycles||1)),amplitude=obstacle.waveAmplitude||16;
+    obstacle.y+=(obstacle.curve==='bounce'?Math.abs(cycle):cycle)*amplitude*envelope;
+    if(obstacle.action==='crouch')obstacle.y=Math.max(48+obstacle.height/2,obstacle.y);
+    else if(progress>=.72)obstacle.y=Math.min(26,obstacle.y);
+   }
   }
   const left=playerX(run)+(run.player.isJacare?-15:5),right=playerX(run)+(run.player.isJacare?PLAYER.width+17:PLAYER.width-3);
   if(obstacle.speed>0&&obstacle.x+obstacle.width-3<=left||obstacle.speed<0&&obstacle.x+3>=right)obstacle.passed=true;
+  if(obstacle.curve==='boomerang'&&obstacle.passed&&!obstacle.returning&&obstacle.x+obstacle.width<playerX(run)){obstacle.returning=true;obstacle.speed=-Math.abs(obstacle.speed);}
+  if(obstacle.returning&&run.boss){const pose=bossArenaPose(run.boss,visibleWidth(run));obstacle.y+=(pose.platformY+48-obstacle.y)*Math.min(1,dt*2);if(obstacle.x>=pose.x)obstacle.destroyed=true;}
  }
  for(const pickup of run.pickups){
   if(pickup.anchor?.cast&&castDeltas.has(pickup.anchor)){pickup.x+=castDeltas.get(pickup.anchor);pickup.speed=pickup.anchor.speed;pickup.waitFor=pickup.anchor.waitFor;continue;}
@@ -711,7 +755,7 @@ export function advanceRun(run,seconds,rng){
  advanceHeroShots(run,dt);
  resolveBossDodges(run);
  if(run.status!=='running')return;
- run.obstacles=run.obstacles.filter(o=>o.groundHazard?o.age<o.warningFor+o.activeFor:o.falling?o.age<o.warningFor+o.fallFor+.25:retainMovingThreat(o,visibleWidth(run)));
+ run.obstacles=run.obstacles.filter(o=>!o.destroyed&&(o.groundHazard?o.age<o.warningFor+o.activeFor:o.falling?o.age<o.warningFor+o.fallFor+.25:retainMovingThreat(o,visibleWidth(run))));
  run.pickups=run.pickups.filter(p=>p.x>-30);
  // Uma Joice já vencida tem prioridade sobre o próximo marco de chefe.
  advanceRaid(run,dt,rng);

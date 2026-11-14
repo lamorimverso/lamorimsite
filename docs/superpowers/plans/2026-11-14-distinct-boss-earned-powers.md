@@ -1,0 +1,15 @@
+# Distinct bosses, acquired powers and audible entrances
+
+User asks to correct missing enemy entrance sounds, stop every fight feeling the same, give each villain a different power and transfer that power to Flávio after victory (Dilma => wind projectile), and research similar games and boss order. User explicitly confirms the same boss MAY return with DIFFERENT attacks. Continue direct authorized execution and publication, preserving prior Santiago ally, IVER base weapon and manual reserve shield.
+
+Primary references consulted: Capcom Dive Man/weapon acquisition https://news.capcomusa.com/2015/08/06/mmlc-robot-master-list-dive-man/ ; Nintendo Mega Man2 manual https://www.nintendo.co.jp/clv/manuals/en/pdf/CLV-P-NABBE_en.pdf ; Studio MDHR gameplay themes https://studiomdhr.com/what-kind-of-game-is-cuphead/ and https://studiomdhr.com/press-kits/ ; Konami Contra https://www.konami.com/games/contra/og/us/en/ ; designer Mike Stout https://www.gamedeveloper.com/design/boss-battle-design-and-structure . Apply transferable mechanics to existing original characters/art: earned weapons and weakness chain, distinct authored attack rhythms/phases/rematches, and run-and-gun during the route. Preserve 6 locations,24encounters,firstboss22km,ownweaponfamilies andfairwarning/contactwindows.
+
+Implementation steps:
+- Diagnose entrance gating and pending voice expiration. Give all14enemyidentities a reliableoriginalentrance cue, boundedqueue/cancellation and actualshotwarningpriority; retain authentic famous-onlyspeech andnoautoplay/mute/focus lifecycle.
+- Replace universal random posture-based boss selection with actor-owned authored attacks. Halfhealth uses advancedpatterns; every rematch adds an attack absent from both phases of the first fight. Each villain owns motion,rhythm,trajectory,tactic,rewardandweakness.
+- Award/equip the defeated villain's own power, preserve it through the run, upgrade repeatedrewards withoutduplicates, allow selection bydropdown/Q andkeep originalIVER available. Wind mustphysicallydisperseprojectiles; otherpowers use distinctfan/stack/lob/bounce/homing/piercing/impact/return mechanics.
+- Enable shooting duringthe route against actual threats, preserve pickups/meters, leavegroundmarkers requiringmovement. Keep origin/direction,pose,projectileart,soundandcollisionconsistent.
+- Render acquired projectiles using existing completeweaponart, show earnedpower/level/tactic/weakness and actionablecue, retain mobile usability. No fabricatedspeech or unrelatedpowerassignment.
+- Verify targetedTDDregressions,allbosses/rematches/ownership,differentphysicalpowers,progression/reset/weakness,realbrowseraudioandcontrols,fullroot/native suites,legalroutes/campaigns;independentreview,CI,Pages andservedfilehashes beforefinal.
+
+Final local verification: 573/573 root tests passed on the exact runtime tree; 27/27 native drawing tests; 20/20 complete 24-encounter campaigns rerun after the final counter correction. Independent review, real Chromium audio/controls and mobile/landscape checks passed. No material findings remain.

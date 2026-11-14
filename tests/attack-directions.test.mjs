@@ -54,32 +54,23 @@ test('inimigo da retaguarda pode ser pulado e é retirado depois de atravessar o
  assert.ok(!r.obstacles.includes(rear),'o perigo que passou não permanece na memória');
 });
 
-test('chefões improvisam depois da abertura, com aviso do ataque efetivamente programado',()=>{
+test('chefões do Infinito variam ataques próprios com aviso comprometido ao lançamento real',()=>{
  const combos=[];
- for(const type of ['haddad','lula','xandao']){
-  for(const seed of [7,418]){
-   const r=running(612);r.routeDistance=36000;r.nextBossAt=0;r.bossBag=[type];r.shieldFor=Infinity;
-   core.advanceRun(r,dt,seeded(seed));const boss=r.boss;
-   assert.ok(boss);
-   const rng=seeded(seed),attacks=[];
-   for(let i=0;i<boss.total;i++){
-    boss.nextAttack=0;
-    core.advanceRun(r,dt,rng);
-    const o=r.obstacles.at(-1);
-    assert.ok(o?.bossAttack);
-    attacks.push(o.action+'/'+o.approach+'/'+o.type);
-    if(i<boss.total-1){
-     assert.equal(boss.plannedFor,boss.fired);
-     assert.ok(['jump','crouch','move'].includes(boss.plannedAttack.action));
-    }
-   }
-   assert.ok(attacks.some(a=>a.startsWith('jump/'))&&attacks.some(a=>a.startsWith('crouch/')));
-   assert.ok(new Set(attacks.slice(3).map(s=>s.split('/')[1])).size>=2,
-     type+' deve variar a origem dos ataques após a apresentação');
-   combos.push(attacks.join('|'));
+ for(const type of ['haddad','lula','xandao'])for(const seed of [7,418]){
+  const r=running(612),rng=seeded(seed);r.routeDistance=36000;r.nextBossAt=0;r.bossBag=[type];r.shieldFor=Infinity;
+  core.advanceRun(r,dt,rng);const boss=r.boss;assert.ok(boss);const attacks=[];let count=0;
+  // Observe the real flight/recovery time rather than scheduling a dozen
+  // projectiles in the same frame and hitting the five-threat queue limit.
+  for(let frame=0;frame<120*90&&r.boss===boss;frame++){
+   core.advanceRun(r,dt,rng);
+   if(boss.fired>count){count=boss.fired;const o=r.obstacles.at(-1);assert.ok(o?.bossAttack);attacks.push(o.action+'/'+o.approach+'/'+o.type);assert.equal(boss.plannedFor,boss.fired);}
   }
+  assert.ok(r.boss!==boss,'o encontro termina por evasão ou dano');
+  assert.equal(attacks.length,boss.total);assert.ok(attacks.some(a=>a.startsWith('jump/'))&&attacks.some(a=>a.startsWith('crouch/')));
+  assert.ok(new Set(attacks.slice(3).map(s=>s.split('/')[1])).size>=2,type+' varia a origem dos ataques próprios');
+  combos.push(attacks.join('|'));
  }
- assert.ok(new Set(combos).size>=5,'sequência distinta por chefe e semente');
+ assert.ok(new Set(combos).size>=5,'variação limitada ao repertório de cada identidade e semente');
 });
 
 test('comandos repetidos não evitam os dois tipos de ataques após o aumento de pressão',()=>{

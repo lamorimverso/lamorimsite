@@ -1,3 +1,6 @@
+import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=893c0591d1ff';
+import {drawCombatSprite} from './runner-sprites.mjs?v=94bad35aaa14';
+import {HERO_POWERS} from './runner-earned-powers.mjs?v=27e0bb16e2f2';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=c040deb109ca';
 // Essential action timing shared by the hero renderer and physical launch.
 export const HERO_SHOT_DURATION=.22;
@@ -17,6 +20,14 @@ export function heroShotPose({age=0,crouching=false,airborne=false,facing=1}={})
 
 /** Complete bottle projectile; its proportions stay fixed while following the shot. */
 export function drawHeroProjectile(c,shot,ground=230){
+ if(shot.powerId&&shot.powerId!=='ivermectina'){
+  const power=HERO_POWERS[shot.powerId],size=shot.behavior==='gust'?46:shot.behavior==='wave'?Math.min(56,24+shot.age*44):shot.behavior==='heavy'?30:24;
+  c.save();c.translate(shot.x,ground-shot.y);c.rotate(Math.atan2(-shot.vy,shot.vx));
+  c.strokeStyle=power?.color||'#d7bff0';c.globalAlpha*=.65;c.lineWidth=3;c.beginPath();c.moveTo(-18,0);c.lineTo(-5,0);c.stroke();c.globalAlpha/=.65;
+  if(shot.type==='meme-ghost')drawCombatSprite(c,{type:'meme-army',x:0,y:14,scale:.28,frame:2,facing:1});
+  else{c.rotate(Math.PI/2);c.translate(0,size/2);drawCompleteWeapon(c,{type:shot.type,width:size,height:size,phase:shot.age*35});}
+  c.restore();return;
+ }
  c.save();c.translate(shot.x,ground-shot.y);c.rotate(Math.atan2(-shot.vy,shot.vx));
  c.strokeStyle='#b395df';c.lineWidth=3;c.lineCap='round';c.beginPath();c.moveTo(-19,0);c.lineTo(-10,0);c.stroke();
  c.fillStyle='#fff8ec';c.strokeStyle='#473356';c.lineWidth=1.2;

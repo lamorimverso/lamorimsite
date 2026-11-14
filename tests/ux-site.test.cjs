@@ -685,8 +685,8 @@ test('disparo fica visível, respeita a tecla configurada, cancela troca mantida
   await page.locator('#game-fire-key').selectOption('KeyF');
   await begin(page);
   assert.equal(await page.locator('#game-attack').isVisible(),true);
-  assert.equal(await page.locator('#game-attack').isDisabled(),true);
-  assert.match(await page.locator('#game-attack').getAttribute('title'),/confrontos/);
+  assert.equal(await page.locator('#game-attack').isEnabled(),true,'a corrida também permite disparar');
+  assert.match(await page.locator('#game-attack').getAttribute('title'),/Disparar.*Arma IVER/);
   await page.evaluate(()=>{const r=__testRun;r.nextRaid=r.nextObstacle=r.nextPower=r.nextPassport=Infinity;r.routeDistance=r.distance=21998;r.obstacles=[];r.pickups=[];r.shieldFor=Infinity;});
   await page.waitForFunction(()=>__testRun.boss?.phase==='charge');
   assert.equal(await page.locator('#game-attack').isEnabled(),true);
@@ -934,6 +934,33 @@ test('seis ajudantes liberam escudo guardado, ativável por E e pelo botão no c
    await page.waitForFunction(()=>__testRun.shieldFor>0&&__testRun.reserveShields===0);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
    assert.deepEqual(errors,[]);
+  }finally{await context.close();}
+ }
+});
+
+test('vitória sobre Dilma libera vento, seletor e Q; Flávio atira também fora da arena',async()=>{
+ for(const width of [390,1440]){
+  const {context,page,errors}=await open({instrument:true,viewport:{width,height:900}});
+  try{
+   await begin(page);await page.evaluate(async()=>{
+    const {storyBossAt}=await import('./runner-bosses.mjs'),r=__testRun;
+    for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
+    r.mode='story';r.bossesDefeated=11;r.boss={...storyBossAt(11),combat:true,hp:0,maxHp:50,total:50,remaining:0,fired:0,nextAttack:100};
+   });
+   await page.waitForFunction(()=>__testRun.activePower==='dilma');
+   assert.match(await page.locator('#game-power-reward').textContent(),/PODER CONQUISTADO.*Vendaval/);
+   assert.equal(await page.locator('#game-weapon-select option').count(),2);
+   assert.equal(await page.locator('#game-attack').isEnabled(),true);
+   await page.locator('#runner-canvas').focus();await page.keyboard.down('j');
+   await page.waitForFunction(()=>__testRun.heroShots.some(s=>s.powerId==='dilma'&&s.type==='wind'));await page.keyboard.up('j');
+   const art=await page.evaluate(async()=>{
+    const {drawHeroProjectile}=await import('./runner-hero-shot.mjs');const hashes=[];
+    for(const powerId of ['ivermectina','dilma']){const c=document.createElement('canvas');c.width=140;c.height=120;const x=c.getContext('2d');drawHeroProjectile(x,{powerId,type:powerId==='dilma'?'wind':'hero-ivermectina',behavior:powerId==='dilma'?'gust':'bolt',x:70,y:50,vx:500,vy:0,age:.2},100);const data=x.getImageData(0,0,140,120).data;let filled=0,hash=0;for(let i=0;i<data.length;i+=4){if(data[i+3]>100)filled++;hash=(Math.imul(hash,31)+data[i]+data[i+1]+data[i+2]+data[i+3])|0;}hashes.push({filled,hash});}return hashes;
+   });assert.notEqual(art[0].hash,art[1].hash);assert.ok(art[1].filled>300,'vento é desenhado como uma rajada completa');
+   await page.locator('#game-weapon-select').selectOption('ivermectina');assert.equal(await page.evaluate(()=>__testRun.activePower),'ivermectina');
+   await page.locator('#runner-canvas').focus();await page.keyboard.press('q');assert.equal(await page.evaluate(()=>__testRun.activePower),'dilma');
+   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/earned-wind-${width}.png`)});
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(errors,[]);
   }finally{await context.close();}
  }
 });
