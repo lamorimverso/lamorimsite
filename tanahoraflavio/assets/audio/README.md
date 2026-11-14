@@ -187,3 +187,7 @@ Créditos: Rádio Senado / Agência Senado; Câmara dos Deputados. Consultar os 
 Cobertura: 10 dos 13 tipos de chefão têm alguma fala/meme de arquivo. PF, Bossonari e Fantasma possuem efeitos não verbais próprios. Os 32 personagens/formas têm bancos de três efeitos de presença, incluindo herói, jacaré e aliados. **Isso não significa 32 vozes:** os 15 aliados, Flávio, jacaré e personagens ficcionais continuam sem fala própria integrada. A fala associada ao Zé Gotinha continua corretamente atribuída a Lula. Um aliado diferente jamais aciona a fala do Zé Gotinha.
 
 O volume da música abaixa sob voz/alerta. Presenças são discretas e não interrompem gravações ou avisos. Mute, gesto inicial, foco, limite de canais, expiração, prioridade e anti-repetição continuam obrigatórios.
+
+## Bordões de 14/11/2026
+
+Sete recortes originais de Dilma Rousseff, Soraya Thronicke, Flávio Dino e Alexandre de Moraes têm fonte, contexto e hashes em `runner-famous-voices.mjs`. [Documentação dos bordões](../../docs/ajudantes-escudo-ivermectina-2026-11-14.md). As lutas usam o catálogo conhecido; os arquivos de discurso genérico permanecem no acervo para consulta. Sem voz sintética ou clonagem.

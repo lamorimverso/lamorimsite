@@ -48,25 +48,27 @@
     },
     {
       "name": "combatD",
-      "file": "combat-original-d-v1",
+      "file": "combat-ivermectina-d-v2",
       "actors": [
         "meme-army",
         "army",
         "flavio",
         "ze-gotinha"
       ],
-      "sourceGeneration": "3e5de6ce-0c5a-4395-8df6-533d693252ab"
+      "sourceGeneration": "1aaee20a-0758-4171-9189-c69b8f9fcd3e",
+      "muzzleStrategy": "ivermectina"
     },
     {
       "name": "combatE",
-      "file": "combat-original-e-v1",
+      "file": "combat-ivermectina-e-v2",
       "actors": [
         "army-run",
         "bossonari-run",
         "flavio-air-shot",
         "flavio-slide-shot"
       ],
-      "sourceGeneration": "00599027-6d06-4dc3-a0e2-b4e9a1d25b0a"
+      "sourceGeneration": "601e8220-7523-4d9d-9170-b2443e37d900",
+      "muzzleStrategy": "ivermectina"
     },
     {
       "name": "combatF",

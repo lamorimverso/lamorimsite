@@ -1,8 +1,10 @@
+import {FAMOUS_VOICES} from './runner-famous-voices.mjs?v=e8a4d930508d';
 import {EXTRA_ARCHIVE_VOICES} from './runner-extra-voices.mjs?v=dcb3792d1a76';
 import {MEME_VOICES} from './runner-meme-data.mjs?v=7d02847aff0a';
 import {NEW_ARCHIVE_VOICES} from './runner-archive-voices.mjs?v=7c025577c1cc';
 export const ARCHIVE_VOICES=Object.freeze({
  ...MEME_VOICES,
+ ...FAMOUS_VOICES,
  ...NEW_ARCHIVE_VOICES,
  ...EXTRA_ARCHIVE_VOICES,
  joice:Object.freeze({

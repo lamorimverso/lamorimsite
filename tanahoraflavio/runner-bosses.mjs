@@ -1,5 +1,5 @@
 import {STAGES} from './runner-route-data.mjs?v=859ae4e257bd';
-import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=ad8596a8668a';
+import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=5f52a1917be6';
 // Encontros ficcionais: quatro classes por cenário, sem mudar identidades.
 export const STORY_ENCOUNTERS=STAGES.length*4;
 export const STORY_OPENING_DISTANCE=20800;
@@ -13,7 +13,7 @@ const cast=[
  [['pf','Blitz da PF'],['janones','Janones'],['haddad','Haddad · Taxad'],['xandao','Xandão']],
  [['army','Patrulha do Rio'],['joice','Joice'],['simone','Simone Tebet'],['lula','Lula']],
  [['pf','PF · Interceptor'],['soraya','Soraya'],['dino','Dino'],['dilma','Dilma']],
- [['army','Patrulha paraguaia'],['janones','Janones · Comando'],['haddad','Taxad · Auditor'],['santiago','Santiago Peña']],
+ [['army','Patrulha paraguaia'],['janones','Janones · Comando'],['haddad','Taxad · Auditor'],['xandao','Xandão · Fronteira']],
  [['pf','PF · Patrulha'],['joice','Joice · Comando'],['simone','Simone · Orçamento'],['bossonari','Bossonari']],
  [['army','Guarda da Casa Branca'],['boulos','Boulos'],['dino','Dino · Tribunal'],['meme-army','Fantasma do Comunismo']]
 ];

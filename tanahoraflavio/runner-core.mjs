@@ -1,15 +1,15 @@
 import {STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=859ae4e257bd';
 export {STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=859ae4e257bd';
-import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=ad8596a8668a';
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=fb27da4c3c50';
+import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=5f52a1917be6';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=c040deb109ca';
 import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
-import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=82acbd3c19d6';
-import {regularCastMuzzle} from './runner-cast-pose.mjs?v=ef9cdbeacd92';
-import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=5bdfc0ff6fb7';
-import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=e89d6a84511d';
-import {BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,planArenaAttack,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=bd83e2f8c95b';
-export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=bd83e2f8c95b';
-export {bossArenaPose} from './runner-bosses.mjs?v=bd83e2f8c95b';
+import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=8ecaa9d24db1';
+import {regularCastMuzzle} from './runner-cast-pose.mjs?v=ed1b40296acc';
+import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=4a007b25adb2';
+import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
+import {BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,planArenaAttack,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=469b171b2f33';
+export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=469b171b2f33';
+export {bossArenaPose} from './runner-bosses.mjs?v=469b171b2f33';
 // Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
 export const WORLD = Object.freeze({width:900,height:300,ground:246});
 // Envelope de todas as poses no atlas a .95 de escala, incluindo o agachamento.
@@ -48,7 +48,7 @@ const BOSS_GOALS = Object.freeze({
  haddad:{attacks:9,goalKind:'papers'},
  lula:{attacks:10,goalKind:'patterns'},
  xandao:{attacks:12,goalKind:'hammer-mandado'},janones:{attacks:9,goalKind:'urgent'},pf:{attacks:8,goalKind:'blitz'},
- army:{attacks:8,goalKind:'flares'},santiago:{attacks:14,goalKind:'paraguay'},bossonari:{attacks:14,goalKind:'phantoms'}
+ army:{attacks:8,goalKind:'flares'},bossonari:{attacks:14,goalKind:'phantoms'}
 });
 export const PICKUPS = Object.freeze([
  Object.freeze({type:'passport',name:'Passaporte',value:10,purpose:'100 passaportes = +1 vida'}),
@@ -103,7 +103,7 @@ export function createSeededRandom(seed=0){
  let state=Number(seed)>>>0;
  return ()=>{state=nextSeed(state);return state/4294967296;};
 }
-const foeFor = type => PURSUERS.find(p=>p.type===type)||(type==='santiago'?{type:'santiago',name:'Santiago Peña',short:'Peña',width:40,height:49,color:'#b95169'}:null);
+const foeFor = type => PURSUERS.find(p=>p.type===type)||null;
 // Mantém stageAt em escala de 20 unidades por cenário, mas o percurso real
 // é SCENE_DISTANCE metros. Assim o cenário exige 7 km de fuga, não 20 s fixos.
 export const campaignRouteDistance = run => Math.max(0,run.routeDistance-(run.mode==='story'?STORY_OPENING_DISTANCE:0));
@@ -143,13 +143,15 @@ export function difficultyAt(distance,elapsed=0) {
 }
 // Uma onda mais rápida nunca alcança a anterior e forma um par impossível.
 function threatSpeed(run,x,seconds,visibleX=x){
- if(run.aid?.kind==='telegraph')seconds+=.24;
+ if(run.aid?.kind==='telegraph')seconds+=run.aid.warningBonus??.24;
  const contactX=frontContact(run),rearContact=playerX(run)+5;
  const pending=run.obstacles.filter(o=>!o.passed&&(o.cast||o.x>contactX)&&o.speed>0)
   .map(o=>threatReservation(run,o));
+ // Opposite directions need room for one body-width of lateral escape
+ // after a ground marker; that movement closes their two contact times.
  const rear=run.obstacles.filter(o=>!o.passed&&!o.counted&&o.approach==='rear'&&o.speed<0)
   .map(o=>threatReservation(run,o))
-  .filter(t=>t>0);
+  .filter(t=>t>0).map(t=>t+.4);
  const speed=Math.max(1,visibleX-contactX)/seconds*assistance(run);
  const drops=run.obstacles.filter(o=>o.falling||o.groundHazard).map(o=>threatReservation(run,o)).filter(t=>t>0);
  const nextContact=Math.max((x-contactX)/speed,...pending.concat(rear,drops).map(t=>t+REACTION_GAP));
@@ -184,7 +186,7 @@ export function pursuitAt(seconds,rng=()=>.5,level=10,seen=[],last=null) {
 // Retaguarda usa a mesma janela de leitura, sem disputar o contato com um perigo frontal.
 function rearMotion(run,x,width){
  const contactX=frontContact(run),rearContact=playerX(run)+5;
- const front=run.obstacles.filter(o=>!o.passed&&(o.cast||o.x>contactX)&&o.speed>0).map(o=>threatReservation(run,o));
+ const front=run.obstacles.filter(o=>!o.passed&&(o.cast||o.x>contactX)&&o.speed>0).map(o=>threatReservation(run,o)+.4);
  const rear=run.obstacles.filter(o=>!o.passed&&!o.counted&&o.approach==='rear'&&o.speed<0).map(o=>threatReservation(run,o));
  const drops=run.obstacles.filter(o=>o.falling||o.groundHazard).map(o=>threatReservation(run,o));
  const seconds=Math.max(run.assisted?1.22:1.06,...front.concat(rear,drops).filter(t=>t>0).map(t=>t+REACTION_GAP));
@@ -196,7 +198,7 @@ export function createRun({assisted=false,seed,mode='endless'}={}) {
   randomState:seed===undefined?null:Number(seed)>>>0,
   ballot:{digits:'',message:''},
   event:'',events:0,player:{x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareAge:0,nextJacareThreat:3,restoreFlashFor:0,jumpBufferedUntil:0,attackHeld:false,attackFor:0,attackCooldown:0,shotFacing:1,hp:5,maxHp:5},obstacles:[],pickups:[],heroShots:[],shotsFired:0,lastHit:null,
-  nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,shieldFor:0,graceFor:0,
+  nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,shieldFor:0,graceFor:0,reserveShields:0,allyShieldProgress:0,allyHelpCount:0,
   lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,phantomCloud:null,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:null,bossCooldown:0,
   raid:null,nextRaid:null,raids:0,lastFact:-1,cameo:null,overheadCount:0,lastOverheadActor:null,
@@ -334,6 +336,11 @@ export function spawnManholeThreat(run,{rng=Math.random}={}){
  const item={x,width,height:18,type:'manhole',action:'move',approach:'ground',groundHazard:true,age:0,warningFor,activeFor:1.1,y:0,speed:0};
  run.obstacles.push(item);return item;
 }
+export function activateReserveShield(run){
+ if(run.status!=='running'||!(run.reserveShields>0)||run.shieldFor>0)return false;
+ run.reserveShields--;run.shieldFor=6;
+ announce(run,'Escudo de reserva ativado! Proteção por 6 segundos.');return true;
+}
 export function jumpRun(run){
  if(run.status!=='running')return false;
  // Durante a transformação a tecla de salto não interrompe a forma de jacaré.
@@ -361,7 +368,7 @@ export function attackRun(run){
  p.shotFacing=pose.x<playerX(run)+PLAYER.width/2?-1:1;
  const {x,y}=heroMuzzleFor(run,p.shotFacing);
  const dx=p.shotFacing*Math.max(1,Math.abs(pose.x-x)),dy=pose.platformY+48-y,distance=Math.max(1,Math.hypot(dx,dy));
- (run.heroShots??=[]).push({x,y,previousX:x,previousY:y,vx:dx/distance*760,vy:dy/distance*760,age:0,damage:b.combat?bossCounterWindow(b).damage:undefined});
+ (run.heroShots??=[]).push({type:'hero-ivermectina',x,y,previousX:x,previousY:y,vx:dx/distance*760,vy:dy/distance*760,age:0,damage:b.combat?bossCounterWindow(b).damage:undefined});
  p.attackCooldown=.28;p.attackFor=HERO_SHOT_DURATION;run.shotsFired=(run.shotsFired||0)+1;return true;
 }
 function advanceHeroShots(run,dt){
@@ -421,13 +428,13 @@ export function attackCueFor(attack){
  const action=attack.action==='move'?'move':attack.action==='crouch'?'crouch':'jump';
  const verb=action==='move'?'Saia do alvo':action==='crouch'?'Abaixe':'Pule';
  return {label,action,verb,short:(action==='move'?'↔ ':action==='crouch'?'↓ ':'↑ ')+verb+' · '+label,
-  instruction:verb+' para escapar de '+label+'.'};
+  instruction:(attack.approach==='rear'?'Por trás! ':'')+verb+' para escapar de '+label+'.'};
 }
 
 export function bossAtRound(round,type) {
  const safe=Math.max(0,Math.floor(Number.isFinite(round)?round:0)),level=Math.floor(safe/BOSS_ROSTER.length)+1;
  const foe=foeFor(type||BOSS_ROSTER[safe%BOSS_ROSTER.length]),goal=BOSS_GOALS[foe.type],attacks=goal.attacks+(foe.type==='bossonari'?0:2*Math.min(2,level-1));
- const noun=({haddad:'papéis',lula:'gestos em L',xandao:'martelos e mandados',janones:'mensagens em três blocos',pf:'bloqueios da blitz',bossonari:'frascos cenográficos',army:'sinalizadores',santiago:'tererés e notas de harpa'})[foe.type];
+ const noun=({haddad:'papéis',lula:'gestos em L',xandao:'martelos e mandados',janones:'mensagens em três blocos',pf:'bloqueios da blitz',bossonari:'frascos cenográficos',army:'sinalizadores'})[foe.type];
  return {foe,level,supreme:foe.type==='lula',round:safe+1,goalKind:goal.goalKind,attacks,
   objective:'Desvie de '+attacks+' '+noun+'. '+({
     haddad:'Pule os papéis baixos e abaixe dos recibos altos.',
@@ -435,7 +442,7 @@ export function bossAtRound(round,type) {
     xandao:'Pule os martelos baixos e abaixe dos mandados altos.',
     janones:'Mensagens urgentes: alterne salto e agachamento.',
     pf:'Blitz: pule barreiras, abaixe das algemas e saia dos alvos marcados.',
-    army:'Pule ou abaixe dos sinalizadores e leia o aviso da patrulha.',santiago:'Desvie do tereré e das notas de harpa e saia dos alvos marcados.',bossonari:'Pule ou abaixe dos frascos cenográficos de Bossonari.'
+    army:'Pule ou abaixe dos sinalizadores e leia o aviso da patrulha.',bossonari:'Pule ou abaixe dos frascos cenográficos de Bossonari.'
    }[foe.type]||'Leia o próximo aviso antes de reagir.'),
   interval:foe.type==='bossonari'?1.18:Math.max(1.04,1.32-.08*BOSS_ROSTER.indexOf(foe.type)-.04*(level-1))};
 }
@@ -455,7 +462,7 @@ export function bossAttackFor(type,fired,round=0) {
 function nextBossDistance(count){return 22000+count*7000;}
 function takeBoss(run){
  // O bag explícito mantém a seleção determinística usada por integrações/testes.
- if(run.bossBag.length)return run.bossBag.pop();
+ while(run.bossBag.length){const type=run.bossBag.pop();if(BOSS_GOALS[type])return type;}
  if(run.mode==='story'&&run.bossesDefeated===BOSS_ROSTER.length)return 'bossonari';
  return BOSS_ROSTER[run.bossesDefeated%BOSS_ROSTER.length];
 }
@@ -587,9 +594,11 @@ function rewardForObstacle(run,obstacle,balance,rng){
 function regularShot(run,type,actor,approach){
  const width=46,muzzle=regularCastMuzzle(actor,visibleWidth(run),WORLD.ground,run.elapsed*10);
  const reserved=run.obstacles.filter(o=>!o.passed&&!o.counted).map(o=>threatReservation(run,o)).filter(t=>Number.isFinite(t)&&t>0);
- const eta=Math.max(1.08,approach/assistance(run),...reserved.map(t=>t+REACTION_GAP));
- // A nearby emitter holds its wind-up longer so a preceding jump can land.
- const flightFor=Math.min(.6,.24+Math.abs(muzzle.x-(playerX(run)+17))/900),waitFor=eta-flightFor;
+ const flightFor=Math.min(.6,.24+Math.abs(muzzle.x-(playerX(run)+17))/900);
+ // A nearby emitter can hit as soon as it releases. Reserve that release,
+ // rather than only the end of flight, after the preceding evasive action.
+ const eta=Math.max(1.08,approach/assistance(run),...reserved.map(t=>t+REACTION_GAP+flightFor));
+ const waitFor=eta-flightFor;
  return {x:muzzle.x-width/2,y:muzzle.y,width,height:72,type,action:'crouch',sourceActor:actor,projectile:true,
   approach:'overhead',flightStyle:projectileStyle(type),launchX:muzzle.x,launchY:muzzle.y,targetX:playerX(run)+17,targetY:84,speed:180,waitFor,
   cast:{windupFor:waitFor,flightFor,flightAge:0,fromX:muzzle.x,fromY:muzzle.y,toX:playerX(run)+17}};
@@ -633,7 +642,7 @@ export function advanceRun(run,seconds,rng){
  const dt=Math.min(seconds,.05);run.elapsed+=dt;
  const bounds=playerBounds(run);
  const entering=run.boss?.combat&&run.boss.phase==='intro'&&playerX(run)>visibleWidth(run)-245;
- run.player.x=entering?Math.max(visibleWidth(run)-245,playerX(run)-230*dt):Math.max(bounds.min,Math.min(bounds.max,playerX(run)+(run.player.moveHeld||0)*230*dt));
+ run.player.x=entering?Math.max(visibleWidth(run)-245,playerX(run)-230*dt):Math.max(bounds.min,Math.min(bounds.max,playerX(run)+(run.player.moveHeld||0)*230*(run.aid?.kind==='encourage'?1.2:1)*dt));
  advanceAllies(run,dt);
  if(run.player.isJacare){
   run.player.jacareAge=Math.min(JACARE_DURATION_SECONDS,run.player.jacareAge+dt);
@@ -757,10 +766,11 @@ export function advanceRun(run,seconds,rng){
     const foe=run.supportAvailable===false&&['boulos','dino'].includes(selected.type)?foeFor('pf'):selected;
     const roll=random(rng);
     const activeStyles=run.elapsed>=12&&!raidActive;
-    const rear=activeStyles&&balance.pressure>.24&&roll<.18;
-    const falling=activeStyles&&balance.pressure>.12&&roll>=.18&&roll<.42;
-    const rolling=activeStyles&&roll>=.42&&roll<.62;
-    const popcorn=activeStyles&&roll>=.62&&roll<.76;
+    const rearChance=.28+.14*balance.pressure;
+    const rear=activeStyles&&run.elapsed>=18&&roll<rearChance;
+    const falling=activeStyles&&balance.pressure>.12&&roll>=rearChance&&roll<rearChance+.20;
+    const rolling=activeStyles&&roll>=rearChance+.20&&roll<rearChance+.36;
+    const popcorn=activeStyles&&roll>=rearChance+.36&&roll<rearChance+.50;
     if(rear){
      // O aviso de retaguarda surge antes da entrada física do perseguidor.
      // A velocidade precisa atravessar toda a hitbox durante a janela de salto.

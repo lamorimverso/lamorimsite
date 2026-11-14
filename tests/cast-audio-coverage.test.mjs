@@ -4,15 +4,15 @@ import * as sounds from '../tanahoraflavio/runner-cast-sounds.mjs';
 import {ALLIES} from '../tanahoraflavio/runner-allies.mjs';
 import {createGameAudio} from '../tanahoraflavio/runner-audio.mjs';
 const actors=['flavio','jacare','ze-gotinha','army','haddad','lula','pf','xandao','janones','joice','dilma','simone','soraya','boulos','dino','bossonari','meme-army',...ALLIES.map(a=>a.id)];
-test('32 personagens têm identidade sonora própria, três variações e volume limitado',()=>{
- assert.equal(new Set(actors).size,32);
+test('33 personagens têm identidade sonora própria, três variações e volume limitado',()=>{
+ assert.equal(new Set(actors).size,33);assert.equal(new Set(sounds.SOUND_CAST).size,sounds.SOUND_CAST.length);
  const signatures=new Set();
  for(const actor of actors){const b=sounds.getCastSoundBank(actor);assert.ok(b,actor);assert.equal(b.variants.length,3);
   const variants=b.variants.map(v=>JSON.stringify(v));assert.equal(new Set(variants).size,3,actor);
   for(const variant of b.variants)for(const n of variant){assert.ok(n.volume>0&&n.volume<=.04);assert.ok(n.length>0&&n.length<=.25);}
   signatures.add(JSON.stringify(b.variants));
  }
- assert.equal(signatures.size,32);assert.equal(sounds.getCastSoundBank('missing'),null);
+ assert.equal(signatures.size,33);assert.equal(sounds.getCastSoundBank('missing'),null);
 });
 test('presença tem orçamento, intervalo global e mute sem roubar o alerta de perigo',()=>{
  const old=globalThis.window,notes=[],param=()=>({setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){},setTargetAtTime(){},cancelScheduledValues(){}});

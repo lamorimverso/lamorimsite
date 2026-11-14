@@ -1,7 +1,7 @@
 // Atlas e recortes gerados dos desenhos escolhidos, preservando os PNGs fontes.
 import {definitions} from './runner-sprite-data.mjs?v=4a931cb52b80';
-import {combatDefinitions} from './runner-combat-sprite-data.mjs?v=d5c24efff5c6';
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=fb27da4c3c50';
+import {combatDefinitions} from './runner-combat-sprite-data.mjs?v=22b4ef6e9140';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=c040deb109ca';
 export const spriteDefinitions={...definitions,...combatDefinitions};
 const sheets=new Map();let activeAttempt=null;
 const actorGroups={flavio:[0,1,2,3,4,5,6,7],xandao:[0,1,2],haddad:[4,5,6],lula:[8,9,10],pf:[3,13],janones:[7,14],army:[11,15],joice:[12]};
@@ -74,6 +74,9 @@ export function portraitCropFor(frame){
  return {x:frame.x,y:frame.y,width:frame.width,height:frame.height*.76};
 }
 export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,airborne=false,falling=false,landing=false,attacking=false,preparing=false,hurt=false,alpha=1,facing}={}){
+ // Santiago is a friendly support. Use complete neutral poses on the ground,
+ // with a small breathing motion; neither charging nor firing frames are used.
+ if(type==='santiago')return drawCombatSprite(context,{type,x,y:y-Math.sin(phase*Math.PI/2)*.8*scale,scale,frame:Math.floor(Math.max(0,phase))%2?3:0,alpha,facing:facing??1});
  let selected=spriteFrameFor(type,{phase,airborne,falling,landing,attacking,preparing,hurt});
  if(!selected)return false;
  let sheet=sheets.get(selected.sheet);

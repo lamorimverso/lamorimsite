@@ -34,8 +34,8 @@ test('navegador reproduz voz real e música sem coletas; mute e perda de foco si
   assert.equal(await page.evaluate(()=>!!window.__musicContext),false,'não liga áudio antes de jogar');
   await page.locator('#game-start').click();
   // A nova política não toca políticos aleatórios na largada: teste um chefe real.
-  await page.evaluate(()=>{const r=__audioRun;r.nextObstacle=r.nextRaid=Infinity;r.nextBossAt=0;r.bossesDefeated=2;r.bossBag=[];r.graceFor=30;});
-  await page.waitForFunction(()=>window.__tracks.some(p=>(p.src.includes('haddad-direction-v1.mp3')||p.src.includes('extra-haddad-'))&&!p.paused&&p.currentTime>0));
+  await page.evaluate(()=>{const r=__audioRun;r.nextObstacle=r.nextRaid=Infinity;r.nextBossAt=0;r.bossesDefeated=7;r.bossBag=[];r.graceFor=30;});
+  await page.waitForFunction(()=>window.__tracks.some(p=>['meme-bora-pra-rua','meme-picanha','meme-mesmo-mundo','meme-ate-teu-pai','meme-defende-meu-pai','meme-passarinho'].some(id=>p.src.includes(id))&&!p.paused&&p.currentTime>0));
   assert.equal(await page.locator('#game-voice-note').isVisible(),true);
   await page.waitForTimeout(700);assert.ok(await rms(page)>.0005,'trilha tem sinal sonoro real fora das coletas');
   await page.locator('#game-sound').click();assert.equal(await page.locator('#game-voice-note').isVisible(),false);assert.equal(await page.evaluate(()=>__tracks.every(p=>p.paused)),true);assert.ok(await rms(page,{tail:true})<.00001);
@@ -82,5 +82,18 @@ test('12 novos recortes de arquivo decodificam, têm sinal e mantêm margem de v
   assert.equal(clips.length,12);
   for(const clip of clips){assert.equal(clip.status,200);assert.ok(clip.duration>1&&clip.duration<9,clip.id);assert.ok(clip.peak>.05&&clip.peak<.8,clip.id+' pico '+clip.peak);assert.ok(clip.rms>.02,clip.id+' sem sinal');}
   console.log('Arquivo: '+clips.length+' recortes; maior pico '+Math.max(...clips.map(c=>c.peak)).toFixed(3));
+ }finally{await context.close();}
+});
+
+test('bordões famosos novos decodificam com sinal e volume normalizado',async()=>{
+ const {context,page}=await open();try{
+  const clips=await page.evaluate(async()=>{
+   const {FAMOUS_VOICES}=await import('./runner-famous-voices.mjs'),ctx=new AudioContext(),rows=[];
+   for(const [id,clip] of Object.entries(FAMOUS_VOICES)){
+    const response=await fetch(clip.file),buffer=await ctx.decodeAudioData(await response.arrayBuffer()),samples=buffer.getChannelData(0);let peak=0,sum=0;
+    for(const x of samples){peak=Math.max(peak,Math.abs(x));sum+=x*x;}
+    rows.push({id,status:response.status,duration:buffer.duration,peak,rms:Math.sqrt(sum/samples.length)});
+   }await ctx.close();return rows;
+  });assert.ok(clips.length>=7);for(const row of clips){assert.equal(row.status,200);assert.ok(row.duration>1&&row.duration<8,row.id);assert.ok(row.peak>.05&&row.peak<.71,row.id);assert.ok(row.rms>.02,row.id);}
  }finally{await context.close();}
 });

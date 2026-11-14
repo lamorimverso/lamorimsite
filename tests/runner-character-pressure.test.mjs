@@ -50,8 +50,8 @@ test('somente inimigos com gravação atribuída agendam fala, sem locução inv
  assert.equal(events.length,1);assert.equal(events.at(-1).id,'pessoal-urgente');
  run.elapsed=5;director.event('actor',run,'janones');director.update(run,{safe:true});
  assert.equal(events.length,1,'sem spam do mesmo meme');
- run.elapsed=25;director.event('actor',run,'simone');director.update(run,{safe:true});
- assert.equal(events.length,2,'Simone agora tem gravação de arquivo própria');assert.match(events.at(-1).id,/^archive-simone-/);
+ run.elapsed=25;director.event('actor',run,'dilma');director.update(run,{safe:true});
+ assert.equal(events.length,2,'Dilma usa bordão famoso próprio');assert.match(events.at(-1).id,/^meme-dilma-/);
  run.elapsed=35;director.event('actor',run,'lula');director.update(run,{safe:true});
  assert.ok(['bora-pra-rua','picanha','mesmo-mundo','ate-teu-pai'].includes(events.at(-1).id));
 });
@@ -59,16 +59,14 @@ test('somente inimigos com gravação atribuída agendam fala, sem locução inv
 test('voz de meme pertence ao personagem e referência do Zé Gotinha é atribuída a Lula',async()=>{
  const {MEME_SCENES}=await import('../tanahoraflavio/runner-voice-director.mjs');
  const {ARCHIVE_VOICES}=await import('../tanahoraflavio/runner-voice-data.mjs');
- const speakers={janones:/Janones/,lula:/Lula da Silva/,haddad:/Haddad/,'ze-gotinha':/Lula da Silva/};
+ const speakers={janones:/Janones/,lula:/Lula da Silva/,haddad:/Haddad/,dilma:/Dilma/,soraya:/Soraya/,joice:/Joice/,dino:/Dino/,xandao:/Moraes/,simone:/Tebet/,boulos:/Boulos/,'ze-gotinha':/Lula da Silva/};
  for(const [actor,clips] of Object.entries(MEME_SCENES)){
   for(const id of clips){
    assert.ok(ARCHIVE_VOICES[id],`sem arquivo para ${actor} / ${id}`);
    assert.match(ARCHIVE_VOICES[id].speaker,speakers[actor],`atribuição incorreta: ${actor} / ${id}`);
   }
  }
- assert.ok(!('simone' in MEME_SCENES));
- assert.ok(!('soraya' in MEME_SCENES));
- assert.ok(!('xandao' in MEME_SCENES));
+ assert.ok(!('santiago' in MEME_SCENES),'aliado não entra nas falas de chefões');
 });
 test('Lula inclui os recortes de passarinho e imitação, sem atribuí-los a Eduardo',()=>{
  const ids=[],d=createVoiceDirector({random:()=>.999,play:id=>{ids.push(id);return true;}});

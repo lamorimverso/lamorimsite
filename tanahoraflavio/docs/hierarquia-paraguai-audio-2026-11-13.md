@@ -1,5 +1,7 @@
 # Hierarquia, Paraguai, ataques e sons
 
+Atualização: [Santiago aliado, funções dos ajudantes, escudo de reserva, arma IVER e bordões famosos](ajudantes-escudo-ivermectina-2026-11-14.md).
+
 A História agora percorre seis cenários de 7 km e tem 24 confrontos. O primeiro continua aos 22 km. Cada local apresenta quatro patentes de combate do jogo: Patrulha 1, Líder 2, Comandante 3 e Governante 4. São níveis ficcionais de dificuldade; o personagem conserva classe e poderes quando reaparece em outro cenário ou no Infinito.
 
 | Cenário | Patrulha · 1 | Líder · 2 | Comandante · 3 | Governante · 4 |
@@ -7,7 +9,7 @@ A História agora percorre seis cenários de 7 km e tem 24 confrontos. O primeir
 | Brasília | Blitz da PF | Janones | Haddad · Taxad | Xandão |
 | Rio | Patrulha do Rio | Joice | Simone Tebet | Lula |
 | Argentina | PF · Interceptor | Soraya | Dino | Dilma |
-| Paraguai | Patrulha paraguaia | Janones · Comando | Taxad · Auditor | Santiago Peña |
+| Paraguai | Patrulha paraguaia | Janones · Comando | Taxad · Auditor | Xandão · Fronteira |
 | Flórida | PF · Patrulha | Joice · Comando | Simone · Orçamento | Bossonari |
 | Casa Branca | Guarda da Casa Branca | Boulos | Dino · Tribunal | Fantasma do Comunismo |
 
@@ -31,11 +33,10 @@ Ataques em trajetória baixa, alta e em queda mantêm a família de armas do per
 | xandao | 4 | Martelos e mandados |
 | lula | 4 | Gestos em L |
 | dilma | 4 | Vendavais |
-| santiago | 4 | Tereré e notas de harpa |
 | bossonari | 4 | Frascos cenográficos |
 | meme-army | 4 | Investidas do Fantasma |
 
-O Paraguai entra depois da Argentina e antes da Flórida, com Assunção, o Palácio de López, uma patrulha local e Santiago Peña. O novo chefe possui corpo inteiro ilustrado, quatro poses de combate e quatro poses adicionais para a segunda fase. O tereré e a harpa são poderes cenográficos do jogo. Os soldados têm seis uniformes regionais e poses de combate adequadas ao local.
+O Paraguai entra depois da Argentina e antes da Flórida, com Assunção, o Palácio de López, uma patrulha local e Santiago Peña. Santiago é aliado de Flávio: aparece no chão com poses neutras de corpo inteiro e dá seis segundos de apoio que ampliam a antecedência dos perigos. Ele não é chefe, não lança projéteis e não causa dano ao jogador. Xandão ocupa o confronto de nível 4 desse trecho. Os soldados têm seis uniformes regionais e poses de combate adequadas ao local.
 
 Os oito atlas de combate contêm 128 quadros completos. Os PNGs gerados foram preservados e o jogo carrega WebP sem perdas. Referência visual de Santiago: [retrato de 2026 na Wikipédia](https://en.wikipedia.org/wiki/Santiago_Pe%C3%B1a); a arte foi redesenhada no estilo dos sprites de Flávio.
 
@@ -81,7 +82,7 @@ PF, soldados, Santiago e as entidades ficcionais usam efeitos não verbais próp
 - Testes de hierarquia e exclusividade de armas nas 24 lutas, inclusive quedas marcadas, e identidade consistente no Infinito.
 - 24 chefes atacando, causando dano e derrotando jogador parado sem ele disparar.
 - 2.000 sequências de evasão e 20 campanhas completas, cada uma com 24 confrontos.
-- Testes reais de navegador para Paraguai/Santiago, duas fases, dano autônomo e comandos sonoros em celular/computador; os 17 novos MP3 decodificam e contêm sinal audível.
+- Testes reais de navegador para Santiago como aliado no Paraguai, corpo inteiro animado, apoio sem dano, Xandão como chefe e comandos sonoros em celular/computador; os 17 novos MP3 decodificam e contêm sinal audível.
 - Inspeção nativa de sprites inteiros, recortes, direções, uniformes, efeitos reduzidos e proporções das 23 famílias de armas.
 - Revisão independente corrigiu a seleção compartilhada de Joice e o indicador de risco.
 

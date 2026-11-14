@@ -1,9 +1,9 @@
 import {createVoiceSelector} from './runner-voice-selector.mjs?v=ad3200a88cd4';
 import {getMovementSoundBank} from './runner-movement-audio.mjs?v=3b96b07ed6e3';
 import {createGameSoundtrack} from './runner-soundtrack.mjs?v=eef47a2a323c';
-import {getCastSoundBank} from './runner-cast-sounds.mjs?v=98d14d07de0c';
+import {getCastSoundBank} from './runner-cast-sounds.mjs?v=9638174cbd26';
 import {getEnemyShotBank} from './runner-shot-sounds.mjs?v=fd84e4e83e32';
-import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=e89d6a84511d';
+import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
 // Efeitos locais e recorte de arquivo identificado; nenhuma imitação de voz.
 export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelector()}={}) {
  let enabled=true,context=null,nodes=[],primed=false,recording=null,recordingName=null,raidVoice=false,raidPrepared=false,music=null,voicePriority=0,alertUntil=0;
@@ -77,12 +77,12 @@ export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelecto
    papers:[870,460,.13,'triangle',.068],
    metal:[1050,330,.17,'square',.058],
    magic:[480,940,.19,'sine',.072],
-   drop:[660,220,.22,'square',.075],ally:[700,1100,.14,'sine',.065]
+   rear:[980,360,.18,'triangle',.07],drop:[660,220,.22,'square',.075],ally:[700,1100,.14,'sine',.065]
   };
   const spec=sounds[name];if(!spec||nodes.length>=12)return;
   try{
    const [start,end,length,wave,volume]=spec,t=context.currentTime;
-   if(['high','low','drop','attack','boss','hit','wind','papers','metal','magic'].includes(name)){
+   if(['high','low','rear','drop','attack','boss','hit','wind','papers','metal','magic'].includes(name)){
     alertUntil=Math.max(alertUntil,t+length+.1);if(recording)recording.volume=.28;
    }
    const osc=context.createOscillator(),gain=context.createGain();
