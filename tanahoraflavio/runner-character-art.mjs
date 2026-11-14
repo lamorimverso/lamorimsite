@@ -1,6 +1,6 @@
 import {soldierVariantFor} from './runner-soldier-variants.mjs?v=4bf435291c82';
 import {drawSpriteActor,drawCombatSprite} from './runner-sprites.mjs?v=94bad35aaa14';
-import {heroShotPose} from './runner-hero-shot.mjs?v=8ecaa9d24db1';
+import {heroShotPose} from './runner-hero-shot.mjs?v=f273e11b16a6';
 const INK='#292337';
 function line(c,points,color,width){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.lineCap='round';c.lineJoin='round';c.strokeStyle=color;c.lineWidth=width;c.stroke();}
 function oval(c,x,y,rx,ry,fill,stroke=INK,width=1.5){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke();}}

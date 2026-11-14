@@ -299,3 +299,17 @@ body.game-expanded .game-extra{display:none}
 #game-reserve-shield:focus-visible{outline:3px solid #e6a52d;outline-offset:2px}
 
 .game-allies-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:9px 20px;padding:8px 18px;font:13px/1.45 system-ui;color:#44554d}.game-allies-list li{padding-left:2px}
+
+.game-power-loadout{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0;color:#51425f;font:700 12px/1.3 system-ui}.game-power-loadout[hidden],.game-power-reward[hidden]{display:none}
+.game-power-loadout select{flex:1;min-width:0;max-width:100%;min-height:38px;border:1px solid #b8a1cc;border-radius:9px;padding:5px;background:#faf6ff;color:#49325e;font:700 12px system-ui}.game-power-loadout span{flex-basis:100%;font-weight:500}
+.game-power-reward{margin:7px 0;padding:9px 12px;border:1px solid #b99bd1;border-radius:10px;background:#f3e9fd;color:#633886;font:800 12px/1.4 system-ui}
+
+@media(orientation:landscape) and (max-height:500px){
+ .is-expanded .game-power-loadout{flex-wrap:nowrap;gap:7px;margin:2px 0;min-height:32px;flex-shrink:0}
+ .is-expanded .game-power-loadout select{min-height:32px;max-width:230px}
+ .is-expanded .game-power-loadout span{flex-basis:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .is-expanded .game-aid-bar{min-height:36px;margin:2px 0;font-size:11px}
+ .is-expanded #game-reserve-shield{min-height:34px;padding:5px 9px}
+ .is-expanded .game-power-reward{display:none}
+ .is-expanded #runner-canvas{max-height:calc(100dvh - 210px)}
+}

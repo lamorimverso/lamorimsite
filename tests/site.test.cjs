@@ -530,7 +530,7 @@ test('movimento reduzido retira animações decorativas sem paralisar a corrida'
   } finally { await context.close(); }
 });
 
-test('Flávio não atira, e o botão Abaixar permite desviar no celular',async()=>{
+test('Flávio pode correr e o botão Abaixar permite desviar no celular',async()=>{
  const {context,page,errors}=await openWithRun({viewport:{width:390,height:844}});
  try{
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();

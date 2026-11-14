@@ -9,6 +9,11 @@ export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelecto
  let enabled=true,context=null,nodes=[],primed=false,recording=null,recordingName=null,raidVoice=false,raidPrepared=false,music=null,voicePriority=0,alertUntil=0;
  const raidLines=['joice','extra-joice-1','extra-joice-2','extra-joice-3'];let raidChoice=null;
  const shotVariants=new Map();let nextPresenceAt=0;const presencePlayed=new Map();
+ const entranceNodes=new Map();let pendingEntrance=null;
+ const cancelEntrance=()=>{
+  pendingEntrance=null;
+  for(const [node,release] of entranceNodes){try{node.stop();}catch{/* Nota já encerrada. */}release();}
+ };
  const preferenceKey='tanahoraflavio.runner.sound.v1';
  try{enabled=window.localStorage?.getItem(preferenceKey)!=='off';}catch{/* Armazenamento é opcional. */}
  const stopRecording=()=>{
@@ -16,6 +21,7 @@ export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelecto
   recording=null;recordingName=null;voicePriority=0;onVoice(null);
  };
  const stop=()=>{
+  cancelEntrance();
   raidVoice=false;raidPrepared=false;raidChoice=null;alertUntil=0;
   stopRecording();music?.stop();
   for(const node of nodes){try{node.stop();}catch{/* Nó já encerrado. */}}nodes=[];
@@ -27,11 +33,11 @@ export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelecto
    if(context?.state==='suspended')context.resume().catch(()=>{});
   }catch{context=null;}
  };
- const voice=(name,{priority=2,loop=false,onFailure=()=>{}}={})=>{
+ const voice=(name,{priority=2,loop=false,replace=false,onFailure=()=>{}}={})=>{
   const clip=ARCHIVE_VOICES[name];
   if(!clip||!enabled||!primed||typeof window.Audio!=='function')return false;
   // Não cortar uma fala de prioridade igual com outra chegada no mesmo instante.
-  if(recording&&priority<=voicePriority)return false;
+  if(recording&&(priority<voicePriority||priority===voicePriority&&!replace))return false;
   stopRecording();
   try{
    const url=new URL(clip.file,import.meta.url);url.searchParams.set('v',clip.sha256.slice(0,12));
@@ -60,7 +66,7 @@ export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelecto
  };
  // Efeitos curtos e originais: gerados no navegador, sem arquivos musicais.
  // Tocar apenas após o gesto inicial, respeitando Som ligado/desligado.
- const effect=name=>{
+ const effect=(name,{alert=true}={})=>{
   if(!enabled||!context||context.state!=='running')return;
   const sounds={
    jump:[420,660,.105,'sine',.065],
@@ -82,7 +88,7 @@ export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelecto
   const spec=sounds[name];if(!spec||nodes.length>=12)return;
   try{
    const [start,end,length,wave,volume]=spec,t=context.currentTime;
-   if(['high','low','rear','drop','attack','boss','hit','wind','papers','metal','magic'].includes(name)){
+   if(alert&&['high','low','rear','drop','attack','boss','hit','wind','papers','metal','magic'].includes(name)){
     alertUntil=Math.max(alertUntil,t+length+.1);if(recording)recording.volume=.28;
    }
    const osc=context.createOscillator(),gain=context.createGain();
@@ -96,9 +102,11 @@ export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelecto
    osc.onended=()=>{osc.disconnect();gain.disconnect();nodes=nodes.filter(n=>n!==osc);};
   }catch{/* Efeitos não podem interromper o jogo. */}
  };
+ // Disparos do jogador são feedback da ação, nunca aviso de perigo inimigo.
+ const heroShot=(name='magic')=>effect(name,{alert:false});
  // Executado pelo lançamento real do projétil, nunca pela aparição do ator.
  // Ciclo local por timbre: não altera nem consulta a aleatoriedade da corrida.
- const playBank=(bank,{alert=true}={})=>{
+ const playBank=(bank,{alert=true,entrance=false}={})=>{
   if(!enabled||!primed||!context||context.state!=='running'||!bank)return false;
   const variant=shotVariants.get(bank.id)||0,notes=bank.variants[variant];
   // Reserva o padrão inteiro: não emite meia notificação ao esgotar os canais.
@@ -107,7 +115,7 @@ export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelecto
   try{
    for(const note of notes){
     const osc=context.createOscillator();let gain;
-    const release=()=>{try{osc.disconnect();gain?.disconnect();}catch{/* Já desconectado. */}nodes=nodes.filter(n=>n!==osc);};
+    const release=()=>{try{osc.disconnect();gain?.disconnect();}catch{/* Já desconectado. */}nodes=nodes.filter(n=>n!==osc);entranceNodes.delete(osc);};
     // Registrar antes de configurar garante limpeza também se a API falhar.
     created.push({osc,release});gain=context.createGain();
     const at=t+note.delay;
@@ -117,7 +125,7 @@ export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelecto
     gain.gain.linearRampToValueAtTime(note.volume,at+note.attack);
     gain.gain.exponentialRampToValueAtTime(.001,at+note.length);
     osc.connect(gain);gain.connect(context.destination);osc.onended=release;
-    nodes.push(osc);osc.start(at);osc.stop(at+note.length+.015);
+    nodes.push(osc);if(entrance)entranceNodes.set(osc,release);osc.start(at);osc.stop(at+note.length+.015);
    }
    shotVariants.set(bank.id,(variant+1)%bank.variants.length);
    if(alert){alertUntil=Math.max(alertUntil,t+Math.max(...notes.map(n=>n.delay+n.length))+.1);
@@ -128,7 +136,32 @@ export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelecto
    return false;
   }
  };
- const enemyShot=(actor,weapon)=>playBank(getEnemyShotBank(actor,weapon));
+ const enemyShot=(actor,weapon)=>{
+  const bank=getEnemyShotBank(actor,weapon);if(!bank)return false;
+  // O lançamento real tem precedência sobre o som de chegada, inclusive no
+  // orçamento de canais. A chegada ainda pendente aguarda o fim desse aviso.
+  for(const [node,release] of entranceNodes){try{node.stop();}catch{/* Já encerrado. */}release();}
+  return playBank(bank);
+ };
+ const flushEntrance=()=>{
+  if(!pendingEntrance)return;
+  if(!enabled||!primed||!context||context.state!=='running'||context.currentTime>pendingEntrance.expires){pendingEntrance=null;return;}
+  const {bank}=pendingEntrance,t=context.currentTime;
+  const notes=bank.variants[shotVariants.get(bank.id)||0];
+  if(t<alertUntil||nodes.length+notes.length>12)return;
+  pendingEntrance.attempts++;
+  if(playBank(bank,{alert:false,entrance:true})||pendingEntrance.attempts>=3)pendingEntrance=null;
+ };
+ const enemyEntrance=actor=>{
+  cancelEntrance();
+  const cast=getCastSoundBank(actor);
+  if(!cast||!enabled||!primed||!context||context.state!=='running')return false;
+  // Identidade original de cada personagem, mais clara que a presença discreta;
+  // não é disparo nem substitui a gravação. Histórico separado das presenças.
+  const bank={id:'entrance-'+cast.id,variants:cast.variants.map(notes=>notes.map(note=>({...note,volume:note.volume*2})))};
+  pendingEntrance={bank,expires:context.currentTime+1.5,attempts:0};
+  flushEntrance();return true;
+ };
  const actorCue=actor=>{
   const bank=getCastSoundBank(actor),t=context?.currentTime||0;
   if(!bank||t<nextPresenceAt||t<(presencePlayed.get(bank.id)||0)||t<alertUntil||recording)return false;
@@ -137,13 +170,14 @@ export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelecto
  };
  // Não há sintetizador de voz: só trechos identificados e efeitos originais.
  // Ausência de clipe não é preenchida por uma voz inventada.
- return {get enabled(){return enabled;},prime,stop,effect,enemyShot,actorCue,voice,voiceSelector,movement:name=>playBank(getMovementSoundBank(name),{alert:false}),
+ return {get enabled(){return enabled;},prime,stop,effect,heroShot,enemyShot,enemyEntrance,actorCue,voice,voiceSelector,movement:name=>playBank(getMovementSoundBank(name),{alert:false}),
   background(state={}){
    if(state.active===false){stop();return;}
    if(!enabled||!primed)return;
+   flushEntrance();
    const alert=(context?.currentTime||0)<alertUntil;
    if(recording)recording.volume=alert?.28:.68;
-   music?.update({...state,ducked:!!recording||alert});
+   music?.update({...state,ducked:!!recording||alert||entranceNodes.size>0});
   },
   toggle(){enabled=!enabled;try{window.localStorage?.setItem(preferenceKey,enabled?'on':'off');}catch{/* A escolha vale nesta sessão. */}if(!enabled)stop();else prime();return enabled;},
   event(phase,fact){

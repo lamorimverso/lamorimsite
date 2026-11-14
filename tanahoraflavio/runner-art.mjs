@@ -1,6 +1,6 @@
 import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=893c0591d1ff';
-import {drawSpecialRunner} from './runner-character-art.mjs?v=c9299db98c6b';
-export {drawHeroShot} from './runner-character-art.mjs?v=c9299db98c6b';
+import {drawSpecialRunner} from './runner-character-art.mjs?v=d687ddebbd3d';
+export {drawHeroShot} from './runner-character-art.mjs?v=d687ddebbd3d';
 import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=94bad35aaa14";
 // Personagens em atlas WebP; itens e perigos continuam vetoriais em Canvas.
 const INK='#292337',CREAM='#fff6e5';

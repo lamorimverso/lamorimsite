@@ -47,3 +47,5 @@ Cada arquivo registra fonte, contexto, autoria, recorte, hash e normalização. 
 Os testes cobrem coleta real dos ajudantes, escudo por botão e teclado, expiração e reinício, efeitos distintos dos apoios, origem e direção dos tiros, recortes completos e áudio real decodificado em navegador. Também são verificadas 2.000 sequências com comandos legais, coleta natural de cem passaportes, rotações de tela e campanhas completas de 24 confrontos. Os PNGs originais foram preservados; os novos atlas usam WebP sem perdas.
 
 Resultado desta revisão: **537 testes gerais e 27 testes nativos aprovados**, sem falhas, além de **20 campanhas completas**. Revisão independente sem achados materiais e demonstrador de áudio conferido em 390 e 1440 pixels.
+
+Continuação: [combates diferentes, poderes conquistados e referências de jogabilidade](combates-poderes-progressao-2026-11-14.md).

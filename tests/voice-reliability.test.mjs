@@ -60,3 +60,35 @@ test('callback de erro antigo não altera canal prioritário nem altera retorno 
  tracks[0].reject(new Error('superseded'));await Promise.resolve();assert.equal(failures,0);
  assert.equal(audio.voice('haddad',{priority:2}),false);assert.notEqual(tracks[1].paused,true);
 }));
+
+test('chegada de novo chefão não expira atrás do cooldown da fala anterior',()=>{
+ const played=[],d=createVoiceDirector({random:()=>0,play:(id,options)=>(played.push({id,options}),true)});
+ const run={status:'running',elapsed:20,raid:null,boss:{type:'joice'}};
+ d.event('boss',run);d.update(run,{safe:true});assert.equal(played.length,1);
+ run.elapsed=21;run.boss={type:'lula'};d.event('boss',run);d.update(run,{safe:true});
+ assert.equal(played.length,2);assert.equal(played[1].id,'bora-pra-rua');
+});
+
+test('chefão novo pode substituir gravação do chefe anterior sem cortar voz prioritária',()=>withAudio(async({audio,d,tracks,run})=>{
+ d.event('boss',run);d.update(run,{safe:true});tracks[0].resolve();await Promise.resolve();
+ run.boss={type:'dino'};run.elapsed=2;d.event('boss',run);d.update(run,{safe:true});
+ assert.equal(tracks.length,2);assert.equal(tracks[0].paused,true);
+ assert.match(tracks[1].src,/dino/);tracks[1].resolve();await Promise.resolve();
+ audio.event('warning');assert.equal(tracks.length,3);
+ run.boss={type:'xandao'};run.elapsed=3;d.event('boss',run);d.update(run,{safe:true});
+ assert.equal(tracks.length,3,'perseguição da Joice mantém prioridade');
+}));
+
+test('troca para chefe sem bordão remove fala pendente da cena anterior',()=>{
+ const played=[],d=createVoiceDirector({play:id=>(played.push(id),true)}),run=bossRun();
+ run.boss=null;d.event('actor',run,'janones');run.boss={type:'haddad'};d.event('boss',run);
+ run.boss=null;run.elapsed=2;d.update(run,{safe:true});assert.deepEqual(played,[]);
+});
+
+test('erro tardio do chefe antigo não desfaz cooldown da cena atual sem bordão',()=>{
+ const played=[],d=createVoiceDirector({random:()=>0,play:(id,options)=>(played.push({id,options}),true)}),run=bossRun();
+ d.event('boss',run);d.update(run,{safe:true});
+ run.elapsed=2;run.boss={type:'haddad'};d.event('boss',run);played[0].options.onFailure();
+ run.elapsed=3;run.boss={type:'lula'};d.event('boss',run);d.update(run,{safe:true});
+ assert.equal(played.length,2);assert.equal(played[1].id,'picanha','falha de uma cena antiga não desfaz histórico de seleção');
+});

@@ -65,7 +65,7 @@ for(const [type,total,goalKind,types,actions,objective] of [
   for(let i=0;i<120*30&&run.boss;i++){
    advance(run);
    for(const attack of run.obstacles)if(attack.bossAttack&&!attacks.includes(attack))attacks.push(attack);
-   const passed=attacks.filter(attack=>attack.falling?attack.counted:attack.x+attack.width<core.PLAYER.x).length;
+   const passed=attacks.filter(attack=>attack.counted).length;
    if(run.boss)assert.equal(run.boss.remaining,total-passed,'o aviso acompanha desvios, não disparos');
   }
   assert.equal(run.boss,null);
@@ -80,7 +80,7 @@ for(const [type,total,goalKind,types,actions,objective] of [
   assert.ok(attacks.some(attack=>attack.action==='crouch'));
   assert.ok(attacks.some(attack=>attack.approach==='drop'||attack.approach==='sweep')||
     new Set(attacks.map(attack=>attack.action)).size>1,'não apresenta um único padrão');
-  assert.ok(attacks.every(attack=>attack.falling?attack.age>=attack.warningFor+attack.fallFor:attack.x+attack.width<core.PLAYER.x),'o último ataque precisa passar inteiro');
+  assert.ok(attacks.every(attack=>attack.counted),'cada ataque precisa concluir sua evasão antes da vitória, inclusive os que retornam');
   for(const round of [0,5,30]){
    const config=core.bossAtRound(round,type);
    assert.equal(config.attacks,total+2*Math.min(2,Math.floor(round/5)),'voltas completas aumentam a meta até quatro ataques extras');
