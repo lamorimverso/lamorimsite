@@ -3,7 +3,7 @@ import {createControlSettings} from './runner-control-settings.mjs?v=4f1a7c34883
 import {createGamepadDriver} from './runner-gamepad.mjs?v=b3315cc72b13';
 import {HERO_POWERS,heroPowerFor,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=27e0bb16e2f2';
 import {updateCombatHUD} from './runner-combat-hud.mjs?v=105e8d20d358';
-import {createMovementSoundDirector} from './runner-movement-audio.mjs?v=3b96b07ed6e3';
+import {createMovementSoundDirector} from './runner-movement-audio.mjs?v=6411ef96c0d1';
 import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=f273e11b16a6';
 import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=ed1b40296acc';
 import {createShotSoundTracker} from './runner-shot-events.mjs?v=a3769f250d68';
@@ -13,7 +13,7 @@ import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE
 import {bossCounterWindow} from './runner-bosses.mjs?v=4d0d9c1a5182';
 import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=a750937a6c76';
 import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=40174ceffa76";
-import { createGameAudio } from "./runner-audio.mjs?v=501606e818db";
+import { createGameAudio } from "./runner-audio.mjs?v=2a8c89ab71ed";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=d5e017561fd6";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=5bf1abd1a18b";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
