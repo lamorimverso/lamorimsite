@@ -26,9 +26,9 @@
   <title>Tá na hora, Flávio! · Contagem e minigame</title>
 
   <link rel="stylesheet" href="control-settings.css?v=1c20042497ae">
-  <link rel="stylesheet" href="game.css?v=22d82bae5292">
+  <link rel="stylesheet" href="game.css?v=6a58725ed7a9">
   <script defer src="page-layout.js?v=ffb00bd14e77"></script>
-  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=38f2326c248e"></script>
+  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=bc4a3b3e6034"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -97,6 +97,14 @@
               <label for="game-effects">Efeitos visuais<select id="game-effects" disabled><option value="system">Padrão do aparelho</option><option value="reduce">Reduzidos</option></select></label>
               <label class="assist-option" for="game-assist"><input id="game-assist" type="checkbox" disabled>Ritmo mais tranquilo</label>
             </div>
+            <section class="story-extras" aria-labelledby="game-practice-title">
+              <h3 id="game-practice-title">Desafios opcionais</h3>
+              <div id="game-practice" aria-label="Escolher subchefe opcional"></div>
+              <p class="game-options-note">Cada desafio começa uma partida separada no respectivo mapa.</p>
+            </section>
+            <section class="game-itinerary" aria-labelledby="game-itinerary-heading"><h3 id="game-itinerary-heading">Rota e chefões</h3>
+              <ol class="game-route" id="game-route" aria-label="Rota da corrida"></ol>
+            </section>
             <p class="game-options-note">O ritmo tranquilo vale na próxima tentativa. <a href="assets/audio/README.md" target="_blank" rel="noopener noreferrer">Créditos dos áudios</a></p>
             <div class="game-options-note" id="game-support-status" hidden>Os personagens de apoio não carregaram. A corrida continua disponível. <button type="button" id="game-support-retry" disabled>Carregar apoios</button></div>
           </div>
@@ -105,6 +113,7 @@
           <p id="game-voice-note" class="game-voice-note sr-only" role="status" aria-live="polite" hidden></p>
           <div id="game-jacare-progress" class="game-jacare-progress" role="timer" aria-label="Jacaré: 10 segundos restantes" hidden><span id="game-jacare-seconds" aria-hidden="true">10 s</span></div>
                             <canvas id="runner-canvas" width="900" height="300" tabindex="0" role="img" aria-label="Pista do jogo Corre, Flávio!" aria-describedby="game-instructions">Seu navegador não oferece Canvas. A contagem regressiva continua disponível acima.</canvas>
+          <div id="game-battle-cue" class="game-battle-cue" hidden><small id="game-battle-attack"></small><strong id="game-battle-action"></strong></div>
           <div class="game-combat-hud" id="game-combat-hud" hidden>
             <div class="combat-player">
               <div class="combat-columns">
@@ -126,7 +135,7 @@
           <div class="power-chip"><span class="sr-only">Vantagem ativa: </span><strong id="game-power">Sem efeito ativo</strong></div>
           <div class="ammo-chip" hidden><span class="sr-only">Munição especial: </span><strong id="game-ammo">Sem arma</strong></div>
         </div>
-          <div class="game-overlay" id="game-overlay"><span class="game-overlay-badge" id="game-overlay-badge">Corrida fictícia</span><img class="game-captured" id="game-captured" src="assets/flavio-captured-v1.webp?v=35a44e31f10f" width="1334" height="1179" alt="Caricatura de Flávio com as mãos algemadas" fetchpriority="low" hidden><strong id="game-overlay-title">Pronto para correr?</strong><p id="game-overlay-copy">Pule ou abaixe para desviar.</p><p class="game-start-hint" id="game-start-hint">Toque: pular · ↓: abaixar · ↔: mover</p></div>
+          <div class="game-overlay" id="game-overlay"><span class="game-overlay-badge" id="game-overlay-badge">Corrida fictícia</span><img class="game-captured" id="game-captured" src="assets/flavio-captured-v1.webp?v=35a44e31f10f" width="1334" height="1179" alt="Caricatura de Flávio com as mãos algemadas" fetchpriority="low" hidden><strong id="game-overlay-title">Pronto para correr?</strong><p id="game-overlay-copy">Pule ou abaixe para desviar.</p><p class="game-start-hint sr-only" id="game-start-hint">Toque: pular · ↓: abaixar · ↔: mover</p></div>
         </div>
         <section class="game-ballot" id="game-ballot" hidden tabindex="-1" aria-label="Urna fictícia da campanha">
           <div class="game-ballot-screen">
@@ -177,15 +186,6 @@
         </div>
 
         <p class="game-status sr-only" id="game-status" role="status" aria-live="polite">Tudo pronto. A corrida começa quando você quiser.</p>
-        <details class="game-itinerary"><summary>Destinos</summary>
-        <ol class="game-route" aria-label="Rota da corrida">
-          <li class="is-current" data-stage="0" aria-current="step"><span class="route-number">01</span><span>Brasília <small>Congresso Nacional</small></span></li>
-          <li data-stage="1"><span class="route-number">02</span><span>Rio <small>Cristo Redentor e Pão de Açúcar</small></span></li>
-          <li data-stage="2"><span class="route-number">03</span><span>Argentina <small>Obelisco de Buenos Aires</small></span></li>
-          <li data-stage="3"><span class="route-number">04</span><span>Paraguai <small>Palácio de López, Assunção</small></span></li>
-          <li data-stage="4"><span class="route-number">05</span><span>Flórida <small>Miami Beach</small></span></li>
-          <li data-stage="5"><span class="route-number">06</span><span>Casa Branca <small>Washington, EUA</small></span></li>
-        </ol></details>
         <p class="game-record">Recorde: <strong id="game-best">0000</strong> metros</p>
         <noscript>Habilite o JavaScript para jogar.</noscript>
       </section>

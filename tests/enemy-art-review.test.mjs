@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as art from '../tanahoraflavio/runner-art.mjs';
 import * as core from '../tanahoraflavio/runner-core.mjs';
+import {nextStoryBossDistance,storyBossAt} from '../tanahoraflavio/runner-bosses.mjs';
 import {pilotCounter} from '../tools/story-pilot.mjs';
 function canvas(){const calls=[];return {calls,save(){},restore(){},translate(...x){calls.push(['translate',...x]);},scale(...x){calls.push(['scale',...x]);},rotate(...x){calls.push(['rotate',...x]);},beginPath(){},closePath(){},moveTo(){},lineTo(){},bezierCurveTo(){},quadraticCurveTo(){},ellipse(){},fill(){},stroke(){},roundRect(){},fillText(s){calls.push(['text',s]);}}}
 test('todos os personagens possuem uma identidade de arma definida',()=>{
@@ -13,13 +14,13 @@ test('gesto L acompanha a largura física e fantasma final tem silhueta própria
  const ghost=canvas();art.drawComunismoGhostBoss(ghost,{preparing:true,reducedMotion:true});
  assert.ok(ghost.calls.some(v=>v[0]==='text'&&v[1]==='FANTASMA DO COMUNISMO'));
  assert.equal(core.bossAtRound(5,'bossonari').attacks,14);
- assert.match(core.bossAtRound(5,'bossonari').foe.name,/Fantasma do Comunismo/);
+ assert.match(core.bossAtRound(5,'bossonari').foe.name,/Bossonari/);
 });
 
-test('Bossonari lança frascos e o fantasma final possui ataques próprios',()=>{
- for(const [index,expected] of [[19,['cloroquina-prop','ivermectina-prop']],[23,['meme-ghost']]]){
+test('Fantasma e Lula possuem ataques próprios e somente o último abre a urna',()=>{
+ for(const [index,expected] of [[13,['meme-ghost']],[16,['lhand']]]){
   const r=core.createRun({mode:'story'});core.startRun(r);r.bossesDefeated=index;
-  r.distance=r.routeDistance=index===23?62100:55100;r.nextBossAt=0;r.shieldFor=Infinity;
+  r.distance=r.routeDistance=nextStoryBossDistance(index);r.nextBossAt=0;r.shieldFor=Infinity;
   for(const k of ['nextObstacle','nextRaid','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
   const seen=new Set();
   for(let i=0;i<120*20&&r.status==='running';i++){
@@ -29,6 +30,6 @@ test('Bossonari lança frascos e o fantasma final possui ataques próprios',()=>
   for(const type of expected)assert.ok(seen.has(type),type);
   assert.equal(r.status,'running','sobreviver não encerra a luta');
   for(let i=0;i<120*110&&r.boss;i++){pilotCounter(r);core.advanceRun(r,1/120,()=>.5);}
-  assert.equal(r.status,index===23?'ballot':'running');
+  assert.equal(r.status,storyBossAt(index).role==='final-boss'?'ballot':'running');
  }
 });

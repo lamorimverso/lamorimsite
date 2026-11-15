@@ -1,4 +1,4 @@
-import {ALLIES} from './runner-allies.mjs?v=260a67b845c4';
+import {ALLIES} from './runner-allies.mjs?v=17aae58c9bc9';
 // Original nonverbal cues. These are sound effects, never a substitute for a
 // person's voice. The whole cast has three quiet presence variants.
 export const SOUND_CAST=Object.freeze([...new Set(['flavio','jacare','ze-gotinha','army','haddad','lula','pf','xandao','janones','joice','dilma','simone','soraya','boulos','dino','bossonari','meme-army','santiago',...ALLIES.map(a=>a.id)])]);

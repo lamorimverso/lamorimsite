@@ -15,7 +15,15 @@ export const HERO_POWERS=Object.freeze({
  lula:p('L perseguidor','lhand','homing',.65,540,1.8,{color:'#e65e56',description:'O gesto em L acompanha o alvo'}),
  dilma:p('Vendaval da Dilma','wind','gust',.75,580,1.65,{radius:24,cancels:3,color:'#52bdcc',description:'Rajada de vento que dispersa projéteis'}),
  bossonari:p('Fórmula dupla','ivermectina-prop','double',.55,740,1,{shots:2,projectiles:['cloroquina-prop','ivermectina-prop'],color:'#80ad7e',description:'Dois frascos em trajetórias próximas'}),
- 'meme-army':p('Eco do Fantasma','meme-ghost','ghost',1.05,430,2.7,{radius:20,cancels:4,color:'#dd808e',description:'Eco amplo que atravessa ataques'})
+ 'meme-army':p('Eco do Fantasma','meme-ghost','ghost',1.05,430,2.7,{radius:20,cancels:4,color:'#dd808e',description:'Eco amplo que atravessa ataques'}),
+ 'ana-elisa':p('Trinca de painéis','network-panel','stack',.72,615,.78,{shots:3,radius:7,color:'#43b4a6',description:'Três painéis paralelos em alturas diferentes'}),
+ rick:p('Pulso de sinal','signal-pulse','wave',.66,510,1.7,{radius:11,cancels:2,color:'#efb564',description:'Pulso crescente que intercepta projéteis'}),
+ sofia:p('Seta direta','arrow-panel','pierce',.43,860,1.14,{cancels:2,color:'#9eb3ff',description:'Painel de seta veloz que atravessa ameaças'}),
+ guilherme:p('Jardineira quicante','garden-box','bounce',.73,545,2.3,{radius:10,cancels:1,color:'#b0bc62',description:'Jardineira que quica ao longo da pista'}),
+ erika:p('Refletores duplos','stage-spotlight','double',.62,680,1.05,{shots:2,radius:8,color:'#f39ac9',description:'Dois refletores avançam lado a lado'}),
+ jones:p('Réplica de retorno','debate-card','return',.59,645,1.55,{cancels:1,color:'#e89576',description:'Carta do debate faz a ida e depois retorna'}),
+ maestro:p('Batuta em órbita','baton-wave','orbit',.76,560,2.1,{radius:10,cancels:1,color:'#dfad60',description:'Onda da batuta em espiral'}),
+ capita:p('Rajada da capitã','wind-flag','gust',.77,590,1.7,{radius:19,cancels:3,color:'#75bdf0',description:'Bandeira de vento dispersa projéteis'})
 });
 export const heroPowerFor=run=>HERO_POWERS[run.activePower]||HERO_POWERS.ivermectina;
 export function grantBossPower(run,id){

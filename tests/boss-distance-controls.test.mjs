@@ -8,16 +8,19 @@ function near(distance){const r=core.createRun({mode:'story'});core.startRun(r);
 test('primeiro chefão aguarda 22 km de rota, sem entrada antecipada em 1,2 km',()=>{
  const r=near(1199);for(let i=0;i<20;i++)core.advanceRun(r,1/120,()=>.5);assert.equal(r.boss,null);assert.equal(r.nextBossAt,22000);
  const late=near(21999);core.advanceRun(late,1/120,()=>.5);assert.equal(late.boss?.index,0);assert.equal(late.routeDistance,22000);
- assert.equal(bosses.nextStoryBossDistance(3),27100);assert.equal(bosses.nextStoryBossDistance(4),29000);
+ assert.equal(late.boss.type,'ana-elisa');
+ assert.equal(bosses.nextStoryBossDistance(1),26100);assert.equal(bosses.nextStoryBossDistance(2),30000);
 });
-test('coordenada da campanha preserva quatro encontros no cenário correto depois da abertura',()=>{
- assert.equal(typeof core.campaignRouteDistance,'function');
- for(let i=0;i<20;i++){
-  const r=near(bosses.nextStoryBossDistance(i)),b=bosses.storyBossAt(i);
-  const stage=core.stageAt(core.campaignRouteDistance(r)/7000*20);assert.equal(stage.index,b.stageIndex);
+test('os 17 encontros começam no cenário correto depois da abertura',()=>{
+ const mapIds=['brasilia','brasilia','rio','rio','sao-paulo','sao-paulo','argentina','argentina','paraguai','paraguai','florida','florida','casa-branca','casa-branca','brasilia-final','brasilia-final','brasilia-final'];
+ for(const [index,stageId] of mapIds.entries()){
+  const target=bosses.nextStoryBossDistance(index),r=near(target-1);
+  r.bossesDefeated=index;r.nextBossAt=target;
+  core.advanceRun(r,1/120,()=>.5);
+  assert.equal(r.routeDistance,target);assert.equal(r.boss?.index,index);assert.equal(core.routeStageFor(r).id,stageId);assert.equal(r.boss.stageId,stageId);
  }
  assert.equal(core.campaignRouteDistance(near(10000)),0);
- const r=core.createRun();r.routeDistance=24000;assert.equal(core.campaignRouteDistance(r),24000);
+ const r=core.createRun();r.routeDistance=24000;assert.equal(core.campaignRouteDistance(r),24000);assert.equal(core.routeStageFor(r).id,'paraguai');
 });
 test('abertura de Brasília move o fundo e não salta na entrada da campanha',()=>{
  const a=journeySceneryGeometry({routeDistance:10000,openingDistance:20800}),b=journeySceneryGeometry({routeDistance:10100,openingDistance:20800});

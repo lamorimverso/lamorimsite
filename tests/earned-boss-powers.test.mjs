@@ -1,10 +1,10 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
-import {storyBossAt} from '../tanahoraflavio/runner-bosses.mjs';
+import {legacyBossAt,optionalStoryBossAt,storyBossAt,STORY_ENCOUNTERS} from '../tanahoraflavio/runner-bosses.mjs';
 const make=()=>{const r=core.createRun();core.startRun(r);for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;return r;};
 const step=(r,t)=>{for(let i=0;i<t*120&&r.status==='running';i++)core.advanceRun(r,1/120,()=>.5);};
 test('vencer Dilma concede e equipa vento; a revanche melhora o mesmo poder sem duplicar o inventário',()=>{
- const r=make();r.mode='story';r.bossesDefeated=11;r.boss={...storyBossAt(11),combat:true,hp:0,maxHp:50,total:50,remaining:0,fired:0,nextAttack:100};
+ const r=make();r.mode='story';r.bossesDefeated=11;r.boss={...legacyBossAt(11),combat:true,hp:0,maxHp:50,total:50,remaining:0,fired:0,nextAttack:100};
  core.advanceRun(r,1/120);assert.ok(r.ownedPowers?.includes('dilma'));assert.equal(r.activePower,'dilma');assert.equal(r.powerLevels.dilma,1);assert.equal(r.lastPowerReward.id,'dilma');
  assert.equal(typeof core.grantBossPower,'function');core.grantBossPower(r,'dilma');assert.equal(r.powerLevels.dilma,2);assert.equal(r.ownedPowers.filter(id=>id==='dilma').length,1);
  assert.equal(core.grantBossPower(r,'santiago'),false);assert.deepEqual(core.createRun().ownedPowers,['ivermectina']);
@@ -30,7 +30,7 @@ test('rajada de Janones, planilha de Simone e selo de Dino têm comportamento f�
 
 test('ordem das primeiras lutas forma uma cadeia: o poder ganho é a fraqueza do próximo vilão novo',async()=>{
  const {bossProfileFor}=await import('../tanahoraflavio/runner-boss-profiles.mjs');
- const order=[...new Set(Array.from({length:24},(_,i)=>storyBossAt(i).type))];
+ const order=[...new Set(Array.from({length:24},(_,i)=>legacyBossAt(i).type))];
  for(let i=1;i<order.length;i++)assert.equal(bossProfileFor(order[i]).weakness,order[i-1],order[i]);
 });
 test('projétil alto já lançado mantém velocidade de saída e posição contínua após girar a tela',()=>{
@@ -41,4 +41,29 @@ test('projétil alto já lançado mantém velocidade de saída e posição cont�
 
 test('Lula no Infinito conclui a luta quando seus bumerangues foram evitados',()=>{
  const r=make();r.nextBossAt=0;r.bossBag=['lula'];r.shieldFor=Infinity;step(r,90);assert.ok(r.bossesDefeated>=1,'retorno visual não prende a contagem de ataques do chefe');
+});
+
+
+test('vencer cada novo duelo equipa sua técnica própria e o disparo usa a física correspondente',()=>{
+ const specs={
+  'ana-elisa':['network-panel','stack',3],rick:['signal-pulse','wave',1],sofia:['arrow-panel','pierce',1],
+  guilherme:['garden-box','bounce',1],erika:['stage-spotlight','double',2],jones:['debate-card','return',1],
+  maestro:['baton-wave','orbit',1],capita:['wind-flag','gust',1]
+ };
+ const campaign=Array.from({length:STORY_ENCOUNTERS},(_,i)=>storyBossAt(i));
+ for(const [id,[projectile,behavior,count]] of Object.entries(specs)){
+  const r=make(),b=campaign.find(row=>row.type===id)||optionalStoryBossAt(id);
+  r.boss={...b,combat:true,phase:'recover',phaseFor:1,hp:0,maxHp:b.hp,total:b.hp,remaining:0,fired:0,nextAttack:100};
+  core.advanceRun(r,1/120);
+  assert.equal(r.activePower,id);assert.equal(r.lastPowerReward.id,id);
+  assert.equal(r.powerLevels[id],1);assert.ok(r.ownedPowers.includes(id));
+  assert.equal(core.attackRun(r),true);assert.equal(r.heroShots.length,count);
+  assert.ok(r.heroShots.every(shot=>shot.type===projectile&&shot.behavior===behavior&&shot.powerId===id));
+ }
+});
+
+test('as travessias não entregam armamento nem alteram a arma equipada',()=>{
+ const r=make();
+ for(const id of ['fiscal','povo','renato-freitas'])assert.equal(core.grantBossPower(r,id),false,id);
+ assert.deepEqual(r.ownedPowers,['ivermectina']);assert.equal(r.activePower,'ivermectina');
 });

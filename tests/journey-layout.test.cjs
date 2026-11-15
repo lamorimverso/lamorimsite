@@ -224,7 +224,7 @@ for(const viewport of [{width:320,height:568},{width:844,height:390}])test(`derr
  }finally{await context.close();}
 });
 
-for(const width of [320,1440])test(`placar ${width}px agrupa cada rótulo acima de seu valor e centraliza as três colunas`,async()=>{
+for(const width of [320,1440])test(`placar ${width}px agrupa os rótulos e adapta posição ao cabeçalho`,async()=>{
  const {context,page,errors}=await open({width,height:900});
  try{
   const metrics=await page.locator('.game-scoreboard>div').evaluateAll(nodes=>nodes.map(e=>{
@@ -232,7 +232,7 @@ for(const width of [320,1440])test(`placar ${width}px agrupa cada rótulo acima 
    return {label:{x:label.x,width:label.width,bottom:label.bottom},value:{x:value.x,width:value.width,y:value.y}};
   }));
   for(const m of metrics){assert.ok(Math.abs(m.label.x+m.label.width/2-m.value.x-m.value.width/2)<2,'rótulo e valor alinhados');assert.ok(m.label.bottom<=m.value.y+1,'rótulo acima do valor');}
-  const board=await page.locator('.game-scoreboard').boundingBox(),card=await page.locator('#game').boundingBox();assert.ok(board.width<=540);assert.ok(Math.abs(board.x+board.width/2-card.x-card.width/2)<2);assert.deepEqual(errors,[]);
+  const board=await page.locator('.game-scoreboard').boundingBox(),card=await page.locator('#game').boundingBox();assert.ok(board.width<=540);if(width<760)assert.ok(Math.abs(board.x+board.width/2-card.x-card.width/2)<2);else assert.ok(board.x>card.x+card.width/2);assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
 test('Joice permanece na fase ativa e o cenário muda de vermelho escuro a normal suavemente',async()=>{
@@ -285,7 +285,7 @@ test('labels do seletor são apenas Modo História e Modo Infinito',async()=>{
  try{
   const options=page.locator('#game-mode-chooser label');
   assert.deepEqual((await options.allTextContents()).map(s=>s.trim()),['Modo Infinito','Modo História']);
-  assert.equal(await page.locator('#game-mode-story').isChecked(),true,'abre na campanha dos quatro chefes por cenário');
+  assert.equal(await page.locator('#game-mode-story').isChecked(),true,'abre na campanha hierárquica');
   await page.locator('#game-mode-story').check();
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
   assert.equal(await page.locator('#game').getAttribute('data-run-mode'),'story');

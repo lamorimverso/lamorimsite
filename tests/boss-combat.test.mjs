@@ -13,19 +13,18 @@ function scene(index=0){
  r.bossesDefeated=index;r.distance=r.routeDistance=bosses.nextStoryBossDistance(index);r.nextBossAt=0;r.shieldFor=Infinity;
  core.advanceRun(r,dt,()=>.5);return r;
 }
-test('campanha possui quatro encontros por cenário, classes e dificuldade crescente',()=>{
+test('campanha exige um subchefe e um chefe por mapa, com travessia extra antes do final',()=>{
  const rows=Array.from({length:core.STORY_BOSS_COUNT},(_,i)=>bosses.storyBossAt(i));
- for(let stage=0;stage<core.STAGES.length;stage++){
-  const group=rows.filter(b=>b.stageIndex===stage);assert.equal(group.length,4);
-  assert.equal(new Set(group.map(b=>b.classId)).size,4);
-  assert.ok(group.every((b,i)=>b.rank===i+1&&b.hp>0));
+ assert.equal(rows.length,17);
+ for(let stage=0;stage<core.STORY_STAGES.length;stage++){
+  const group=rows.filter(b=>b.stageIndex===stage);
+  assert.deepEqual(group.map(b=>b.role),stage===7?['traversal','subboss','final-boss']:['subboss','map-boss']);
   assert.ok(group.every((b,i)=>i===0||b.hp>group[i-1].hp));
  }
- assert.equal(rows.at(-1).type,'meme-army');assert.match(rows.at(-1).name,/Fantasma do Comunismo/);
+ assert.deepEqual(rows.slice(13).map(b=>b.type),['meme-army','povo','janones','lula']);
+ assert.deepEqual(rows.filter(b=>b.traversal).map(b=>b.type),['fiscal','povo']);
+ assert.ok(rows.every(b=>b.type!=='bossonari'));
  assert.equal(bosses.storyBossAt(core.STORY_BOSS_COUNT),null);
- assert.equal(bosses.nextStoryBossDistance(0),22000);
- assert.equal(bosses.nextStoryBossDistance(3),27100);
- assert.equal(bosses.nextStoryBossDistance(4),29000);
 });
 test('sobreviver aos ataques não derrota um chefão da História',()=>{
  const r=scene();const distance=r.routeDistance;
@@ -50,6 +49,7 @@ test('atirar e esquivar vence encontros e a urna só abre depois do último',()=
   const r=scene(index);r.shieldFor=0;
   for(let i=0;i<120*100&&r.status==='running'&&r.bossesDefeated===index;i++){pilotCounter(r);core.advanceRun(r,dt,()=>.5);}
   assert.equal(r.bossesDefeated,index+1,'encontro '+index);
+  if(index===8||index===14){assert.equal(r.shotsFired,0);assert.deepEqual(r.ownedPowers,['ivermectina']);}
   assert.equal(r.boss,null);assert.equal(r.heroShots.length,0);
   assert.equal(r.status,index===core.STORY_BOSS_COUNT-1?'ballot':'running');
  }
@@ -74,17 +74,20 @@ test('limpar comandos e reiniciar não mantém o disparo automático',()=>{
  assert.equal(r.heroShots.length,0);
  const fresh=core.createRun({mode:'story'});assert.equal(fresh.player.attackHeld,false);assert.deepEqual(fresh.heroShots,[]);
 });
-test('artilheiro dispara rajadas e conjurador inclui queda com alvo marcado',()=>{
- const counts=[];
- for(const index of [0,1,2]){
-  const r=scene(index);let drop=false;
-  for(let i=0;i<120*28;i++){core.advanceRun(r,dt,()=>.5);drop ||=r.obstacles.some(o=>o.falling);}
-  counts.push(r.boss.fired);
-  if(index===2)assert.equal(drop,true,'classe conjuradora precisa exigir reposicionamento');
+test('Rick dispara seis pulsos em rajada e Erika inclui queda com alvo marcado',()=>{
+ const r=scene(2);let maxShotsInVolley=0;
+ for(let i=0;i<120*18;i++){
+  core.advanceRun(r,dt,()=>.5);
+  maxShotsInVolley=Math.max(maxShotsInVolley,r.boss.volleyShots?.length||0);
  }
- assert.ok(counts[1]>counts[0],'artilheiro deve ter rajadas distintas da sentinela');
+ assert.equal(maxShotsInVolley,6);
+ const e=scene(5);let markedDrop=false;
+ for(let i=0;i<120*18;i++){
+  core.advanceRun(e,dt,()=>.5);markedDrop ||= e.obstacles.some(o=>o.falling&&o.type==='stage-spotlight'&&o.warningFor>0);
+ }
+ assert.equal(markedDrop,true,'refletor de Erika precisa exigir reposicionamento');
 });
-test('anúncios da História usam a identidade e o objetivo real dos 24 encontros',()=>{
+test('anúncios da História usam a identidade e o objetivo real dos 17 encontros',()=>{
  for(let index=0;index<core.STORY_BOSS_COUNT;index++){
   const r=scene(index);
   assert.ok(r.event.includes(r.boss.name),'identidade '+index+': '+r.event);

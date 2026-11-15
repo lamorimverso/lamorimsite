@@ -12,7 +12,7 @@ async function artwork(t){
 const opaque=data=>data.reduce((n,v,i)=>n+(i%4===3&&v>80?1:0),0);
 test('cada perseguidor de solo possui corpo visível e quatro passadas distintas',{skip:!canvas},async t=>{
  const art=await artwork(t),missing=[],still=[];
- for(const {type,width,height} of PURSUERS.filter(p=>!['barrier','case'].includes(p.type))){
+ for(const {type,width,height} of PURSUERS.filter(p=>!['barrier','case','arrow-panel','meme-ghost'].includes(p.type))){
   const legs=[];
   for(let phase=0;phase<4;phase++){
    const c=canvas.createCanvas(260,180).getContext('2d');art.drawThreat(c,{type,x:110,width,height,action:'jump'},150,phase,{reducedMotion:true});
@@ -42,10 +42,10 @@ test('todos os apoios e as duas formas do herói possuem desenhos animados próp
   }assert.ok(new Set(poses).size>=3,type+' não fica preso em um quadro');
  }
 });
-test('os24 encontros desenham cabeça e corpo e articulam carga e soltura',{skip:!canvas},async t=>{
- await artwork(t);const {storyBossAt}=await import('../runner-bosses.mjs'),{drawHoverEnemy}=await import('../runner-boss-art.mjs');
+test('os 24 encontros históricos desenham cabeça e corpo e articulam carga e soltura',{skip:!canvas},async t=>{
+ await artwork(t);const {legacyBossAt}=await import('../runner-bosses.mjs'),{drawHoverEnemy}=await import('../runner-boss-art.mjs');
  for(let i=0;i<24;i++){
-  const boss=storyBossAt(i),poses=[];for(const flags of [{preparing:true,progress:.8},{attacking:true,progress:.7},{recovering:true,progress:.5}]){
+  const boss=legacyBossAt(i),poses=[];for(const flags of [{preparing:true,progress:.8},{attacking:true,progress:.7},{recovering:true,progress:.5}]){
    const c=canvas.createCanvas(260,210).getContext('2d');drawHoverEnemy(c,{type:boss.type,classId:boss.classId,x:130,y:160,phase:2,...flags});
    assert.ok(opaque(c.getImageData(65,38,125,65).data)>150,boss.id+' cabeça visível');
    const data=c.getImageData(30,30,200,132).data;assert.ok(opaque(data)>500,boss.id+' corpo completo');poses.push(data);

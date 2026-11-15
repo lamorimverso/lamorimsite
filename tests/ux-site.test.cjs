@@ -459,10 +459,10 @@ test('HUD do chefão fica no canto direito da pista sem deslocar pista ou contro
  }
 });
 
-for(const initialSearch of ['', '?ui=20261111-run-controls', '?ui=20261115-custom-controls'])test('HTML antigo no cache se atualiza sem travar a inicialização '+initialSearch,async()=>{
+for(const initialSearch of ['', '?ui=20261111-run-controls', '?ui=20261115-custom-controls', '?ui=20261115-wide-game'])test('HTML antigo no cache se atualiza sem travar a inicialização '+initialSearch,async()=>{
  const {context,page,errors}=await open({legacyFirst:true,initialSearch});
  try{
-  await page.waitForURL(url=>url.searchParams.get('ui')==='20261115-wide-game', {timeout:4000});
+  await page.waitForURL(url=>url.searchParams.get('ui')==='20261115-campaign-hierarchy', {timeout:4000});
   await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
   assert.equal(await page.locator('#game-settings').count(),1);
   assert.match(await page.locator('#days').textContent(),/^\d+$/);
@@ -478,15 +478,10 @@ test('seletor oferece dois modos jogáveis, finaliza História e permite reinici
   await begin(page);
   assert.equal(await page.evaluate(()=>__testRun.mode),'story');
   assert.equal(await page.locator('#game-mode-chooser').isVisible(),false);
-  await page.evaluate(()=>{
-   const r=__testRun;
-   r.bossesDefeated=23;
-   r.nextRaid=r.nextObstacle=r.nextBossAt=Infinity;
-   r.shieldFor=Infinity;
-   r.boss={type:'bossonari',name:'Bossonari',color:'#7a4f8d',total:1,remaining:1,
-    fired:1,nextAttack:100,attackFlashFor:0,hitFlashFor:0,plannedFor:1,
-    plannedAttack:{type:'cloroquina-prop',action:'jump'},goalKind:'phantoms',objective:'Desvie do frasco'};
-   r.obstacles=[{x:-100,width:38,height:38,type:'cloroquina-prop',action:'jump',bossAttack:true,counted:false,speed:250,y:23}];
+  await page.evaluate(async()=>{
+   const r=__testRun,{storyBossAt,STORY_ENCOUNTERS}=await import('./runner-bosses.mjs');
+   r.bossesDefeated=STORY_ENCOUNTERS-1;r.nextRaid=r.nextObstacle=r.nextBossAt=Infinity;r.shieldFor=Infinity;
+   const boss=storyBossAt(r.bossesDefeated);r.boss={...boss,combat:true,hp:0,maxHp:boss.hp,phase:'recover',phaseFor:3};
   });
   await page.locator('#game-ballot').waitFor({state:'visible'});
   await page.locator('[data-urna-digit="1"]').click();
@@ -535,10 +530,10 @@ test('urna 22 mostra prisão e recomeça História automaticamente',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
  try{
   await page.locator('#game-mode-story').check();await begin(page);
-  await page.evaluate(()=>{
-   const r=__testRun;r.bossesDefeated=23;r.nextRaid=r.nextObstacle=r.nextBossAt=Infinity;r.shieldFor=Infinity;
-   r.boss={type:'bossonari',name:'Bossonari',color:'#7a4f8d',total:1,remaining:1,fired:1,nextAttack:100,attackFlashFor:0,hitFlashFor:0,plannedFor:1,plannedAttack:{type:'cloroquina-prop',action:'jump'},goalKind:'phantoms',objective:'Desvie'};
-   r.obstacles=[{x:-100,width:38,height:38,type:'cloroquina-prop',action:'jump',bossAttack:true,counted:false,speed:250,y:23}];
+  await page.evaluate(async()=>{
+   const r=__testRun,{storyBossAt,STORY_ENCOUNTERS}=await import('./runner-bosses.mjs');
+   r.bossesDefeated=STORY_ENCOUNTERS-1;r.nextRaid=r.nextObstacle=r.nextBossAt=Infinity;r.shieldFor=Infinity;
+   const boss=storyBossAt(r.bossesDefeated);r.boss={...boss,combat:true,hp:0,maxHp:boss.hp,phase:'recover',phaseFor:3};
   });
   await page.locator('#game-ballot').waitFor({state:'visible'});
   await page.keyboard.press('9');await page.keyboard.press('9');await page.keyboard.press('Enter');
@@ -553,7 +548,7 @@ test('urna 22 mostra prisão e recomeça História automaticamente',async()=>{
  }finally{await context.close();}
 });
 
-test('chefão final atravessa a arena e lança sua própria investida em celular e desktop',async()=>{
+test('chefão da Casa Branca atravessa a arena e lança sua própria investida em celular e desktop',async()=>{
  for(const viewport of [{width:390,height:844},{width:900,height:720}]){
   const {context,page,errors}=await open({instrument:true,viewport,init:()=>{
    const samples=[];globalThis.__bossSteps=samples;
@@ -566,7 +561,7 @@ test('chefão final atravessa a arena e lança sua própria investida em celular
   try{
    await page.locator('#game-mode-story').check();await begin(page);
    await page.evaluate(()=>{
-    const r=__testRun;r.bossesDefeated=23;r.distance=r.routeDistance=62100;r.nextRaid=r.nextObstacle=Infinity;
+    const r=__testRun;r.bossesDefeated=13;r.distance=r.routeDistance=68100;r.nextRaid=r.nextObstacle=Infinity;
     r.nextBossAt=0;r.shieldFor=Infinity;
    });
    await page.waitForFunction(()=>document.getElementById('game').dataset.boss==='meme-army');
@@ -587,7 +582,7 @@ for(const viewport of [{width:390,height:844},{width:1440,height:900}])test(`are
    r.routeDistance=22000;r.nextBossAt=0;r.obstacles=[];r.pickups=[];
   });
   await page.waitForFunction(()=>__testRun.boss?.combat===true);
-  assert.match(await page.locator('#game-boss-name').textContent(),/Sentinela.*Patrulha/);
+  assert.match(await page.locator('#game-boss-name').textContent(),/Ana Elisa.*Subchefe/);
   assert.match(await page.locator('#game-power').textContent(),/Energia 5\/5/);
   assert.equal(await page.locator('#game-attack').isVisible(),true);
   assert.equal((await page.locator('#game-attack').textContent()).trim(),'','tiro na arena usa apenas um ícone');
@@ -650,7 +645,7 @@ test('campanha abre sem trocar o modo e alcança a primeira arena da História',
   assert.equal(await page.evaluate(()=>__testRun.mode),'story');
   await page.evaluate(()=>{const r=__testRun;r.routeDistance=21998;r.obstacles=[];r.pickups=[];r.nextRaid=Infinity;r.shieldFor=Infinity;});
   await page.waitForFunction(()=>__testRun.boss?.combat===true);
-  assert.match(await page.locator('#game-boss-name').textContent(),/PF.*Sentinela.*Patrulha/);
+  assert.match(await page.locator('#game-boss-name').textContent(),/Ana Elisa.*Subchefe/);
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
@@ -890,13 +885,13 @@ for(const viewport of [{width:900,height:720},{width:390,height:844}])test(`pers
  }finally{await context.close();}
 });
 
-test('Paraguai oferece Santiago como aliado ilustrado e mantém Xandão como chefe',async()=>{
+test('Paraguai oferece Santiago como aliado ilustrado e Haddad como chefe',async()=>{
  for(const width of [390,1440]){
   const {context,page,errors}=await open({instrument:true,instrumentCasting:true,viewport:{width,height:900}});
   try{
-   await begin(page);await page.evaluate(async()=>{const c=await import('./runner-core.mjs'),r=__testRun;r.mode='story';r.routeDistance=c.STORY_OPENING_DISTANCE+3*c.SCENE_DISTANCE+2500;r.nextBossAt=r.nextRaid=r.nextObstacle=r.nextAllyAt=r.nextSupportAt=r.nextPower=r.nextPassport=Infinity;r.obstacles=[];r.pickups=[];});
+   await begin(page);await page.evaluate(async()=>{const c=await import('./runner-core.mjs'),r=__testRun;r.mode='story';r.routeDistance=c.STORY_OPENING_DISTANCE+4*c.SCENE_DISTANCE+2500;r.nextBossAt=r.nextRaid=r.nextObstacle=r.nextAllyAt=r.nextSupportAt=r.nextPower=r.nextPassport=Infinity;r.obstacles=[];r.pickups=[];});
    await page.waitForFunction(()=>document.getElementById('game-stage-name').textContent.includes('Paraguai'));
-   assert.match(await page.locator('#game-phase').textContent(),/Cenário 4 de 6/);
+   assert.match(await page.locator('#game-phase').textContent(),/Cenário 5 de 8/);
    const hp=await page.evaluate(()=>{const r=__testRun;r.pickups=[{type:'ally',allyId:'santiago',x:r.player.x+17,y:20,speed:0}];return r.player.hp;});
    await page.waitForFunction(()=>__testRun.ally?.id==='santiago');
    assert.equal(await page.evaluate(()=>__testRun.aid.kind),'telegraph');
@@ -914,12 +909,12 @@ test('Paraguai oferece Santiago como aliado ilustrado e mantém Xandão como che
     }return new Set(hashes).size;
    });assert.ok(frames>=3,'apoio mantém animação de corpo inteiro');
    await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});await page.locator('#runner-canvas').screenshot({path:path.resolve(__dirname,`../ux-captures/santiago-ally-${width}.png`)});
-   await page.evaluate(()=>{const r=__testRun;r.bossesDefeated=15;r.nextBossAt=0;r.bossCooldown=0;r.player.hp=r.player.maxHp;r.shieldFor=0;r.graceFor=0;});
-   await page.waitForFunction(()=>__testRun.boss?.type==='xandao');
-   assert.match(await page.locator('#game-boss-name').textContent(),/Xandão.*Governante 4/);
+   await page.evaluate(()=>{const r=__testRun;r.bossesDefeated=9;r.nextBossAt=0;r.bossCooldown=0;r.player.hp=r.player.maxHp;r.shieldFor=0;r.graceFor=0;});
+   await page.waitForFunction(()=>__testRun.boss?.type==='haddad');
+   assert.match(await page.locator('#game-boss-name').textContent(),/Haddad.*Chefe da fase/);
    await page.waitForFunction(()=>__testRun.boss?.fired>0&&__testRun.player.hp<__testRun.player.maxHp,null,{timeout:7000});
    assert.equal(await page.evaluate(()=>__testRun.shotsFired),0,'chefe inicia e causa dano sem esperar tiro');
-   const powers=await page.evaluate(()=>__testRun.obstacles.filter(o=>o.bossAttack).map(o=>o.type));assert.ok(powers.every(p=>['hammer','mandado'].includes(p)));
+   const powers=await page.evaluate(()=>__testRun.obstacles.filter(o=>o.bossAttack).map(o=>o.type));assert.ok(powers.every(p=>['receipts','stamp'].includes(p)));
    await page.evaluate(()=>{__testRun.distance=500000;});await page.waitForTimeout(60);
    assert.doesNotMatch(await page.locator('#game-difficulty').textContent(),/\/10/);assert.deepEqual(errors,[]);
   }finally{await context.close();}
@@ -981,7 +976,7 @@ test('vitória sobre Dilma libera vento e botão T, e Flávio atira também fora
    await begin(page);await page.evaluate(async()=>{
     const {storyBossAt}=await import('./runner-bosses.mjs'),r=__testRun;
     for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
-    r.mode='story';r.bossesDefeated=11;r.boss={...storyBossAt(11),combat:true,hp:0,maxHp:50,total:50,remaining:0,fired:0,nextAttack:100};
+    r.mode='story';r.bossesDefeated=7;r.boss={...storyBossAt(7),combat:true,hp:0,maxHp:50,total:50,remaining:0,fired:0,nextAttack:100};
    });
    await page.waitForFunction(()=>__testRun.activePower==='dilma');
    assert.match(await page.locator('#game-power-reward').textContent(),/PODER CONQUISTADO.*Vendaval/);
@@ -1043,7 +1038,7 @@ test('aviso de arma conquistada não cobre os controles compactos no celular',as
  const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
  try{
   await begin(page);await page.evaluate(async()=>{
-   const r=__testRun,{storyBossAt}=await import('./runner-bosses.mjs'),{grantBossPower}=await import('./runner-earned-powers.mjs');
+   const r=__testRun,{legacyBossAt}=await import('./runner-bosses.mjs'),{grantBossPower}=await import('./runner-earned-powers.mjs');
    for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
    r.obstacles=[];r.pickups=[];r.reserveShields=1;grantBossPower(r,'dilma');
    const b=storyBossAt(0);r.boss={...b,combat:true,maxHp:b.hp,age:0,phase:'recover',phaseFor:100,nextAttack:100};
@@ -1081,9 +1076,9 @@ test('HUD desenha retratos e ícones de todas as 14 identidades e mantém o nome
   await begin(page);const portraits=new Set();
   for(const index of [0,1,2,3,4,5,6,7,9,10,11,19,21,23]){
    const type=await page.evaluate(async index=>{
-    const r=__testRun,{storyBossAt}=await import('./runner-bosses.mjs'),{grantBossPower}=await import('./runner-earned-powers.mjs');
+    const r=__testRun,{legacyBossAt}=await import('./runner-bosses.mjs'),{grantBossPower}=await import('./runner-earned-powers.mjs');
     for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
-    r.obstacles=[];r.pickups=[];const b=storyBossAt(index);grantBossPower(r,b.type);r.boss={...b,combat:true,hp:b.hp,maxHp:b.hp,total:b.hp,remaining:b.hp,fired:0,age:0,phase:'recover',phaseFor:100,nextAttack:100};return b.type;
+    r.obstacles=[];r.pickups=[];const b=legacyBossAt(index);grantBossPower(r,b.type);r.boss={...b,combat:true,hp:b.hp,maxHp:b.hp,total:b.hp,remaining:b.hp,fired:0,age:0,phase:'recover',phaseFor:100,nextAttack:100};return b.type;
    },index);
    await page.waitForFunction(type=>document.getElementById('game').dataset.boss===type&&document.getElementById('game').dataset.heroPower===type,type);
    const pixels=await page.evaluate(()=>['game-hero-portrait','game-boss-portrait','game-weapon-icon'].map(id=>{
@@ -1222,7 +1217,7 @@ test('controle inicia a corrida e conclui a urna sem reiniciar ao segurar Start'
   await page.evaluate(()=>window.__pads=[{connected:true,id:'Controle de teste',index:0,axes:[0,0],buttons:Array.from({length:18},()=>({pressed:false,value:0}))}]);
   await page.waitForFunction(()=>document.getElementById('game-controller-status').textContent.includes('Controle de teste'));
   await button(9,true);await page.waitForFunction(()=>__testRun.status==='running');await button(9,false);
-  await page.evaluate(async()=>{const r=__testRun,{storyBossAt}=await import('./runner-bosses.mjs');for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;r.obstacles=[];r.pickups=[];r.mode='story';r.bossesDefeated=23;r.boss={...storyBossAt(23),combat:true,hp:0,maxHp:64,total:64,remaining:0,fired:0,nextAttack:100};});
+  await page.evaluate(async()=>{const r=__testRun,{storyBossAt}=await import('./runner-bosses.mjs');for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;r.obstacles=[];r.pickups=[];r.mode='story';r.bossesDefeated=16;r.boss={...storyBossAt(16),combat:true,hp:0,maxHp:64,total:64,remaining:0,fired:0,nextAttack:100};});
   await page.waitForFunction(()=>document.getElementById('game-ballot').hidden===false);await page.waitForTimeout(100);
   await button(0,true);await page.waitForFunction(()=>__testRun.ballot.digits==='1');await button(0,false);await page.waitForTimeout(100);
   await button(15,true);await page.waitForFunction(()=>document.activeElement?.dataset.urnaDigit==='2');await button(15,false);await page.waitForTimeout(100);
@@ -1318,5 +1313,56 @@ for(const viewport of [{width:568,height:320},{width:844,height:390}])test(`engr
   await page.locator('[data-bind-action=jump][data-bind-device=keyboard]').click();await page.keyboard.press('Escape');
   assert.equal(await page.locator('#game-expand').count(),0);assert.equal(await page.locator('#game-settings').evaluate(e=>e.open),true);
   assert.match(await page.locator('#game-control-status').textContent(),/cancelada/);assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('rota de São Paulo, Brasília final e Infinito mantêm o destino correto',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
+ try{
+  await begin(page);
+  for(const [index,id] of [[2,'sao-paulo'],[7,'brasilia-final']]){
+   await page.evaluate(async index=>{
+    const r=__testRun,{STORY_OPENING_DISTANCE,SCENE_DISTANCE}=await import('./runner-core.mjs');
+    Object.assign(r,{routeDistance:STORY_OPENING_DISTANCE+index*SCENE_DISTANCE+100,nextBossAt:Infinity,nextRaid:Infinity,nextObstacle:Infinity});
+   },index);
+   await page.waitForFunction(id=>document.querySelector('#game-route [aria-current="step"]')?.dataset.stage===id,id);
+   assert.equal(await page.locator('#game-route li').count(),8);
+  }
+  await page.evaluate(()=>{__testRun.mode='endless';__testRun.routeDistance=15000;});
+  await page.waitForFunction(()=>document.querySelector('#game-route [aria-current="step"]')?.dataset.stage==='argentina');
+  assert.equal(await page.locator('#game-route li').count(),6);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('Povo Brasileiro é travessia sem mira, disparo ou barra de vida',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
+ try{
+  await begin(page);
+  await page.evaluate(async()=>{
+   const r=__testRun,{nextStoryBossDistance}=await import('./runner-bosses.mjs'),distance=nextStoryBossDistance(14);
+   Object.assign(r,{routeDistance:distance,distance,bossesDefeated:14,nextBossAt:distance,nextRaid:Infinity,nextObstacle:Infinity});
+  });
+  await page.waitForFunction(()=>document.getElementById('game').dataset.boss==='povo');
+  assert.equal(await page.locator('#game-attack').isVisible(),false);
+  assert.equal(await page.locator('#game-boss-health').isVisible(),false);
+  assert.match(await page.locator('#game-battle-attack').textContent(),/Povo Brasileiro/);
+  await page.keyboard.press('j');assert.equal(await page.evaluate(()=>__testRun.shotsFired),0);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('desafio opcional de Sofia começa no mapa paulista sem abrir urna',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
+ try{
+  await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
+  await page.locator('#game-settings summary').click();
+  await page.getByRole('button',{name:'Sofia Favero · São Paulo',exact:true}).click();
+  await page.waitForFunction(()=>__testRun.boss?.type==='sofia');
+  assert.match(await page.locator('#game-stage-name').textContent(),/São Paulo/);
+  await page.evaluate(()=>{__testRun.boss.hp=0;});
+  await page.getByText('Desafio concluído!',{exact:true}).waitFor();
+  assert.equal(await page.locator('#game-ballot').isVisible(),false);
+  assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });

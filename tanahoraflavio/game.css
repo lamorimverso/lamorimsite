@@ -315,3 +315,36 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
 
 @media(max-width:380px){.game-combat-hud[data-combat="true"] .combat-player{gap:4px}.game-combat-hud[data-combat="true"] .game-aid-bar,.game-combat-hud[data-combat="true"] #game-reserve-shield{width:45px}}
 @media(max-width:600px){.game-combat-hud .game-power-reward{top:54px;left:8px;right:8px;max-width:calc(100% - 16px)}}
+
+/* Campanha ampliada: a pista permanece em foco e cada aviso ocupa uma linha. */
+.story-extras h3{font-size:12px;margin:0 0 6px}
+#game-practice{display:flex;flex-wrap:wrap;gap:6px}
+#game-practice button{padding:6px 9px;min-height:36px;color:var(--dark);background:#faf8fc;border:1px solid var(--line);border-radius:7px;font:inherit;font-size:11px;cursor:pointer}
+.story-extras .game-options-note{margin:6px 0 0}
+.game-card[data-run-state="running"] .story-extras{display:none}
+.game-battle-cue{position:absolute;z-index:4;left:50%;top:9px;transform:translateX(-50%);width:max-content;max-width:40%;padding:4px 9px;border:1px solid #dfb87e;border-radius:8px;background:#fff8edae;color:#633c20;line-height:1.17;text-align:center;pointer-events:none}
+.game-battle-cue[hidden]{display:none}
+.game-battle-cue small,.game-battle-cue strong{display:block;white-space:normal}
+.game-battle-cue small{font-size:10px;font-weight:650}
+.game-battle-cue strong{font-size:12px;margin-top:2px}
+.game-battle-cue[data-opening="true"]{border-color:#91bd9f;background:#f1f8ec;color:#23503b}
+.game-card[data-traversal="true"] .game-battle-cue{max-width:65%;background:#f5f7fb;border-color:#a8aec5;color:#343753}
+.game-card[data-traversal="true"] .game-combat-hud{visibility:hidden}
+@media(min-width:760px) and (min-height:601px){
+ .game-card .game-heading{margin-bottom:0}
+ .game-card .game-topline{margin:0}
+ .game-card .game-scoreboard{position:absolute;top:22px;right:116px;width:256px;margin:0;padding:0;gap:5px}
+ .game-card .game-scoreboard>div{gap:2px}
+ .game-card .game-stage-header{justify-content:flex-start;gap:8px;margin-bottom:10px;height:22px;min-height:22px}
+ .game-card .game-stage-header>div:first-child{flex:0 1 auto}
+ .game-card #game-difficulty{display:none}
+ .game-card .game-controls{max-width:none;grid-template-columns:minmax(0,265px) minmax(0,235px);justify-content:space-between}
+ .game-card .game-controls #game-start{grid-column:2;grid-row:1}
+}
+#game-settings .game-itinerary{display:block}
+.game-itinerary h3{margin:0;font-size:12px}
+#game-route{padding-left:18px;margin:6px 0 0;columns:2;column-gap:16px;font-size:11px}
+#game-route li{color:var(--muted);padding:2px 0 5px;break-inside:avoid}
+#game-route li small{display:block;font-size:10px}
+#game-route li.is-current{color:var(--purple)}
+@media(max-width:500px){#game-route{columns:1}}

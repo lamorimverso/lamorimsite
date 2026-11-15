@@ -1,15 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
-import {bossCounterWindow,storyBossAt,arenaPatternFor} from '../tanahoraflavio/runner-bosses.mjs';
+import {bossCounterWindow,storyBossAt,legacyBossAt,arenaPatternFor} from '../tanahoraflavio/runner-bosses.mjs';
 import {combatGeometryFor} from '../tanahoraflavio/runner-combat-geometry.mjs';
 
 const frame=1/120;
-function scene(index,width=480){
+function scene(type,width=480){
  const r=core.createRun({mode:'story',seed:32});core.startRun(r);core.resizeRun(r,width);
  for(const k of ['nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
- r.bossesDefeated=index;r.distance=r.routeDistance=22000;r.nextBossAt=0;r.shieldFor=Infinity;
- core.advanceRun(r,frame);return r;
+ const index=Array.from({length:core.STORY_BOSS_COUNT},(_,i)=>storyBossAt(i)).findIndex(b=>b.type===type);
+ r.bossesDefeated=Math.max(0,index);r.distance=r.routeDistance=22000;r.nextBossAt=0;r.shieldFor=Infinity;
+ core.advanceRun(r,frame);
+ // The retired Blitz remains a narrow regression fixture for guard collision.
+ if(type==='pf'){
+  const fixture=legacyBossAt(0);
+  Object.assign(r.boss,fixture,{maxHp:fixture.hp,plannedAttack:arenaPatternFor(fixture,0)});
+ }
+ return r;
 }
 function until(run,predicate,max=120*26){
  for(let i=0;i<max&&!predicate();i++)core.advanceRun(run,frame);
@@ -17,7 +24,7 @@ function until(run,predicate,max=120*26){
 }
 
 test('Blitz opens after actually clearing the barrier, not after tanking it behind a shield',()=>{
- const cleared=scene(0),shielded=scene(0);
+ const cleared=scene('pf'),shielded=scene('pf');
  for(const r of [cleared,shielded]){
   until(r,()=>r.obstacles.some(o=>o.launched&&core.threatTimeToContact(r,o)<=.165));
   if(r===cleared)assert.equal(core.jumpRun(r),true);
@@ -33,7 +40,7 @@ test('Blitz opens after actually clearing the barrier, not after tanking it behi
 });
 
 test('a Janones opening waits for all three messages to clear',()=>{
- const r=scene(1);
+ const r=scene('janones');
  until(r,()=>r.boss.fired===1);
  for(let i=1;i<=3;i++){
   until(r,()=>r.obstacles.some(o=>o.launched&&!o.passed&&core.threatTimeToContact(r,o)<=.165));
@@ -46,7 +53,7 @@ test('a Janones opening waits for all three messages to clear',()=>{
 });
 
 test('Lula cannot be countered before the L comes back',()=>{
- const r=scene(7);
+ const r=scene('lula');
  until(r,()=>r.obstacles.some(o=>o.launched&&core.threatTimeToContact(r,o)<=.165));
  assert.equal(core.jumpRun(r),true);
  until(r,()=>r.obstacles.some(o=>o.returning));
@@ -58,7 +65,7 @@ test('Lula cannot be countered before the L comes back',()=>{
 
 test('story traversal spans a visible arc, and at the rightmost player position its release comes from the muzzle with time to react',()=>{
  for(const width of [480,900]){
-  const r=scene(3,width);const minimum=core.playerBounds(r).min;
+  const r=scene('xandao',width);const minimum=core.playerBounds(r).min;
   core.moveRun(r,1);
   const positions=[];let launched;
   for(let tick=0;tick<120*15;tick++){
@@ -83,7 +90,7 @@ test('story traversal spans a visible arc, and at the rightmost player position 
 test('all 24 encounters teach a counter to their own attacks in both phases',()=>{
  const tactics=new Set();
  for(let index=0;index<24;index++){
-  const b=storyBossAt(index);tactics.add(b.tactic);
+  const b=legacyBossAt(index);tactics.add(b.tactic);
   for(const hp of [100,48]){
    const patterns=Array.from({length:12},(_,i)=>arenaPatternFor({...b,maxHp:100,hp},i));
    assert.ok(patterns.some(p=>p.counterHint),b.name+' needs a readable counter in this phase');
@@ -94,7 +101,7 @@ test('all 24 encounters teach a counter to their own attacks in both phases',()=
 });
 
 test('a rematch at low health has a quicker windup and shorter reaction budget than the same pattern on the opening patrol',()=>{
- const first=storyBossAt(0),later=storyBossAt(8);let fresh,late;
+ const first=legacyBossAt(0),later=legacyBossAt(8);let fresh,late;
  for(let i=0;i<12;i++){
   const a=arenaPatternFor({...first,maxHp:100,hp:100},i);
   for(let j=0;j<12;j++){
@@ -112,7 +119,7 @@ test('a rematch at low health has a quicker windup and shorter reaction budget t
 
 test('losing the current volley on rotation neither shortens its warning nor stalls combat',()=>{
  for(const [from,to] of [[480,900],[900,480]]){
-  const r=scene(23,from);core.moveRun(r,1);
+  const r=scene('meme-army',from);core.moveRun(r,1);
   until(r,()=>r.obstacles.some(o=>o.launched));const shot=r.obstacles.find(o=>o.launched);
   const before=core.threatTimeToContact(r,shot);core.resizeRun(r,to);
   assert.ok(Math.abs(core.threatTimeToContact(r,shot)-before)<.015);
@@ -122,7 +129,7 @@ test('losing the current volley on rotation neither shortens its warning nor sta
 });
 
 test('late low attacks stay low at both ends of the mobile arena despite early forward movement',()=>{
- const r=scene(3);core.moveRun(r,-1);
+ const r=scene('xandao');core.moveRun(r,-1);
  until(r,()=>r.obstacles.some(o=>o.launched));const shot=r.obstacles.find(o=>o.launched);
  core.moveRun(r,1);
  until(r,()=>core.threatTimeToContact(r,shot)<=.02);

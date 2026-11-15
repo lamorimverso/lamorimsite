@@ -10,3 +10,12 @@ export const STAGES=Object.freeze([
  {id:'casa-branca',name:'Casa Branca',short:'Casa Branca',country:'Estados Unidos',sky:'#e7eafa',ink:'#596d8c',accent:'#7777a9',ground:'#c9dcb9'}
 ].map((stage,index)=>Object.freeze({...stage,index})));
 export const ROUTE_DISTANCE=SCENE_DISTANCE*STAGES.length;
+
+const [brasilia,rio,argentina,paraguai,florida,casaBranca]=STAGES;
+export const STORY_STAGES=Object.freeze([
+ brasilia,rio,
+ {id:'sao-paulo',name:'São Paulo',short:'São Paulo',country:'Brasil',sky:'#e9e7f5',ink:'#655b82',accent:'#936575',ground:'#d7e2df'},
+ argentina,paraguai,florida,casaBranca,
+ {...brasilia,id:'brasilia-final',name:'Retorno a Brasília',short:'Brasília · Final'}
+].map((stage,index)=>Object.freeze({...stage,index,legacyIndex:STAGES.find(s=>s.id===stage.id)?.index??0})));
+export const STORY_STAGE_IDS=Object.freeze(STORY_STAGES.map(s=>s.id));

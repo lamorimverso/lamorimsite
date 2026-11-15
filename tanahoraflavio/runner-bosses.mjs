@@ -1,8 +1,8 @@
-import {STAGES} from './runner-route-data.mjs?v=859ae4e257bd';
-import {bossMechanicFor} from './runner-boss-mechanics.mjs?v=7504f540d837';
-import {BOSS_RANKS,bossProfileFor} from './runner-boss-profiles.mjs?v=9b99f75feafd';
+import {STAGES,STORY_STAGES,SCENE_DISTANCE} from './runner-route-data.mjs?v=01fa5c1830b5';
+import {bossMechanicFor} from './runner-boss-mechanics.mjs?v=898bb602bd64';
+import {BOSS_RANKS,bossProfileFor} from './runner-boss-profiles.mjs?v=7ae5c3b53107';
 // Encontros ficcionais: quatro classes por cenário, sem mudar identidades.
-export const STORY_ENCOUNTERS=STAGES.length*4;
+
 export const STORY_OPENING_DISTANCE=20800;
 export const BOSS_ARENA_RESERVE=326;
 export const BOSS_CLASSES=Object.freeze({
@@ -11,7 +11,7 @@ export const BOSS_CLASSES=Object.freeze({
  caster:Object.freeze({name:'Conjurador',color:'#bc8af0',telegraph:.90,recover:1.2,burst:2}),
  sovereign:Object.freeze({name:'Soberano',color:'#ee7588',telegraph:.76,recover:1.05,burst:3})
 });
-const cast=[
+const historicalCast=[
  [['pf','Blitz da PF'],['janones','Janones'],['haddad','Haddad · Taxad'],['xandao','Xandão']],
  [['army','Patrulha do Rio'],['joice','Joice'],['simone','Simone Tebet'],['lula','Lula']],
  [['pf','PF · Interceptor'],['soraya','Soraya'],['dino','Dino'],['dilma','Dilma']],
@@ -19,10 +19,10 @@ const cast=[
  [['pf','PF · Patrulha'],['joice','Joice · Comando'],['simone','Simone · Orçamento'],['bossonari','Bossonari']],
  [['army','Guarda da Casa Branca'],['boulos','Boulos'],['dino','Dino · Tribunal'],['meme-army','Fantasma do Comunismo']]
 ];
-export function storyBossAt(index){
- if(!Number.isInteger(index)||index<0||index>=STORY_ENCOUNTERS)return null;
- const prior=cast.flat().slice(0,index);
- const stageIndex=Math.floor(index/4),slot=index%4,[type,name]=cast[stageIndex][slot],profile=bossProfileFor(type),classId=profile.classId,group=BOSS_CLASSES[classId];
+export function legacyBossAt(index){
+ if(!Number.isInteger(index)||index<0||index>=STAGES.length*4)return null;
+ const prior=historicalCast.flat().slice(0,index);
+ const stageIndex=Math.floor(index/4),slot=index%4,[type,name]=historicalCast[stageIndex][slot],profile=bossProfileFor(type),classId=profile.classId,group=BOSS_CLASSES[classId];
  return {id:'stage-'+stageIndex+'-boss-'+slot,index,stageIndex,slot,type,name,classId,className:group.name,
   rank:profile.rank,rankName:BOSS_RANKS[profile.rank-1],powerName:profile.powerName,
   rematchIndex:prior.filter(([actor])=>actor===type).length,tactic:profile.tactic,reward:profile.reward,weakness:profile.weakness,hp:18+stageIndex*8+slot*2,
@@ -30,8 +30,51 @@ export function storyBossAt(index){
   recover:Math.max(.8,group.recover-stageIndex*.04),interval:Math.max(.68,1.04-slot*.055-stageIndex*.035),
   attackTypes:profile.attackTypes,objective:'Nível '+profile.rank+' · '+profile.powerName+'. '+profile.tactic};
 }
+const mandatory=[
+ [['ana-elisa','Ana Elisa'],['xandao','Xandão']],
+ [['rick','Rick Azevedo'],['joice','Joice']],
+ [['guilherme','Guilherme Cortez'],['erika','Erika Hilton']],
+ [['soraya','Soraya'],['dilma','Dilma']],
+ [['fiscal','Fiscal da Ponte'],['haddad','Haddad · Taxad']],
+ [['boulos','Boulos'],['simone','Simone Tebet']],
+ [['dino','Dino'],['meme-army','Fantasma do Comunismo']],
+ [['janones','Janones'],['lula','Presidente Lula']]
+];
+const optional=[
+ ['renato-freitas','Renato Freitas',0],['jones','Jones Manoel',0],['maestro','Maestro da Maré',1],
+ ['sofia','Sofia Favero',2],['capita','Capitã dos Ventos',3]
+];
+const encounters=mandatory.flatMap((pair,stageIndex)=>[
+ ...(stageIndex===7?[{type:'povo',name:'O Povo Brasileiro',stageIndex,role:'traversal',distance:650}]:[]),
+ ...pair.map(([type,name],slot)=>({type,name,stageIndex,slot,role:slot===0?'subboss':stageIndex===7?'final-boss':'map-boss',
+ distance:slot===0?(stageIndex===0?1200:2200):5300}))
+]);
+export const STORY_ENCOUNTERS=encounters.length;
+export const STORY_OPTIONAL_IDS=Object.freeze(optional.map(([id])=>id));
+function campaignBoss(entry,index=-1){
+ const {type,name,stageIndex,role,slot=0,distance}=entry;
+ const profile=bossProfileFor(type);
+ if(!profile)return null;
+ const group=BOSS_CLASSES[profile.classId],traversal=['fiscal','renato-freitas','povo'].includes(type);
+ const hp=traversal?1:role==='final-boss'?64:role==='map-boss'?24+stageIndex*5:16+stageIndex*3;
+ return {id:role==='optional'?'optional-'+type:'campaign-'+type,index,stageIndex,stageId:STORY_STAGES[stageIndex].id,slot,type,name,role,traversal,distance,
+  classId:profile.classId,className:group.name,rank:profile.rank,rankName:BOSS_RANKS[profile.rank-1],
+  powerName:profile.powerName,rematchIndex:0,tactic:profile.tactic,reward:profile.reward,weakness:profile.weakness,hp,
+  color:group.color,burst:group.burst,telegraph:group.telegraph,recover:group.recover,interval:1.03,
+  attackTypes:profile.attackTypes,objective:profile.tactic};
+}
+export function storyBossAt(index){
+ return Number.isInteger(index)&&encounters[index]?campaignBoss(encounters[index],index):null;
+}
+export function optionalStoryBossAt(id){
+ const entry=optional.find(row=>row[0]===id);
+ return entry?campaignBoss({type:entry[0],name:entry[1],stageIndex:entry[2],role:'optional',distance:3400}):null;
+}
 export function nextStoryBossDistance(index){
- const b=storyBossAt(index);return b?STORY_OPENING_DISTANCE+b.stageIndex*7000+[1200,2900,4600,6300][b.slot]:Infinity;
+ const b=encounters[index];return Number.isInteger(index)&&b?STORY_OPENING_DISTANCE+b.stageIndex*SCENE_DISTANCE+b.distance:Infinity;
+}
+export function bossRoleLabel(boss){
+ return boss?.type==='povo'?'Ato 2 · Travessia':({subboss:'Subchefe','map-boss':'Chefe da fase','final-boss':'Chefão do jogo',optional:'Desafio opcional'})[boss?.role]||'Chefão';
 }
 export function arenaPatternFor(boss,fired=0){
  const pattern=bossMechanicFor(boss,fired),profile=bossProfileFor(boss?.type);

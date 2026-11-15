@@ -3,7 +3,7 @@ export const ROUTE_AMMO=6;
 export const BOSS_AMMO=12;
 export const RELOAD_DELAY=1;
 export const RELOAD_INTERVAL=.45;
-export const ammoCapacityFor=run=>run.boss?BOSS_AMMO:ROUTE_AMMO;
+export const ammoCapacityFor=run=>run.boss&&!run.boss.traversal?BOSS_AMMO:ROUTE_AMMO;
 export function addAmmo(run,amount=3){
  const before=run.ammo??ROUTE_AMMO;run.ammo=Math.min(ammoCapacityFor(run),before+amount);return run.ammo-before;
 }
@@ -13,7 +13,7 @@ export function addShieldPart(run){
 }
 export function advanceAmmo(run,dt){
  run.ammo=Math.min(run.ammo??ROUTE_AMMO,ammoCapacityFor(run));
- if(!run.boss||run.player.attackHeld||run.player.isJacare){run.ammoIdleFor=0;run.ammoReloadFor=0;return;}
+ if(!run.boss||run.boss.traversal||run.player.attackHeld||run.player.isJacare){run.ammoIdleFor=0;run.ammoReloadFor=0;return;}
  const before=run.ammoIdleFor||0;run.ammoIdleFor=before+dt;
  if(run.ammo>=BOSS_AMMO){run.ammoReloadFor=0;return;}
  const reloadTime=Math.max(0,run.ammoIdleFor-RELOAD_DELAY)-Math.max(0,before-RELOAD_DELAY);

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
 import * as art from '../tanahoraflavio/runner-art.mjs';
+import {nextStoryBossDistance} from '../tanahoraflavio/runner-bosses.mjs';
 import {pilotCounter} from '../tools/story-pilot.mjs';
 
 const DT=1/120;
@@ -15,9 +16,9 @@ test('Infinito permanece padrão, História é opção explícita, entradas inv�
  assert.equal(core.createRun().mode,'endless');
  assert.equal(core.createRun({mode:'story'}).mode,'story');
  assert.equal(core.createRun({mode:'invalid'}).mode,'endless');
- assert.equal(core.STORY_BOSS_COUNT,24);
+ assert.equal(core.STORY_BOSS_COUNT,17);
 });
-test('chefão dos chefões apresenta 14 ataques de medicamentos fictícios com duas formas de esquiva',()=>{
+test('catálogo histórico de Bossonari conserva seus ataques, sem aparecer no Infinito',()=>{
  const boss=core.bossAtRound(5,'bossonari');
  assert.equal(boss.foe.type,'bossonari');
  assert.equal(boss.attacks,14);
@@ -27,24 +28,26 @@ test('chefão dos chefões apresenta 14 ataques de medicamentos fictícios com d
  assert.ok(moves.some(m=>m.type==='ivermectina-prop'));
  assert.ok(moves.some(m=>m.action==='jump')&&moves.some(m=>m.action==='crouch'));
  assert.ok(moves.every(m=>!('medicinalEffect' in m)));
+ const r=isolated();r.nextBossAt=0;r.bossBag=['bossonari'];core.advanceRun(r,DT,()=>.5);
+ assert.ok(r.boss);assert.notEqual(r.boss.type,'bossonari');
 });
-test('História conclui somente depois de derrotar o último chefão',()=>{
+test('História conclui somente depois de derrotar Lula no retorno a Brasília',()=>{
  const r=isolated('story');
- r.distance=r.routeDistance=62100;r.bossesDefeated=23;r.nextBossAt=0;r.shieldFor=Infinity;
+ r.bossesDefeated=16;r.distance=r.routeDistance=r.nextBossAt=nextStoryBossDistance(16);r.shieldFor=Infinity;
  const seen=new Set();
  for(let i=0;i<120*110&&r.status==='running';i++){
   pilotCounter(r);
   core.advanceRun(r,DT,()=>.5);
   if(r.boss)seen.add(r.boss.type);
  }
- assert.deepEqual([...seen],['meme-army']);
+ assert.deepEqual([...seen],['lula']);
  assert.equal(r.status,'ballot');
- assert.equal(r.bossesDefeated,24);
+ assert.equal(r.bossesDefeated,17);
  assert.equal(core.ballotDigit(r,'1'),true);
  assert.equal(core.ballotDigit(r,'3'),true);
  assert.equal(core.ballotConfirm(r),'won');
  assert.equal(r.status,'won');
- assert.equal(r.lastBoss,'meme-army');
+ assert.equal(r.lastBoss,'lula');
  assert.equal(r.nextBossAt,Infinity);
  assert.ok(r.event.includes('HISTÓRIA CONCLUÍDA'));
  const before=structuredClone(r);

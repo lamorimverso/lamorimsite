@@ -1,7 +1,8 @@
-import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=893c0591d1ff';
-import {drawSpecialRunner} from './runner-character-art.mjs?v=d687ddebbd3d';
-export {drawHeroShot} from './runner-character-art.mjs?v=d687ddebbd3d';
+import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=d4e471a4d682';
+import {drawSpecialRunner} from './runner-character-art.mjs?v=cbbe7c478d86';
+export {drawHeroShot} from './runner-character-art.mjs?v=cbbe7c478d86';
 import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=94bad35aaa14";
+import {CAMPAIGN_PROP_COLORS,drawCampaignProp} from './runner-campaign-art.mjs?v=b9520dc88107';
 // Personagens em atlas WebP; itens e perigos continuam vetoriais em Canvas.
 const INK='#292337',CREAM='#fff6e5';
 function oval(c,x,y,rx,ry,fill,stroke=INK,w=1.8){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=w;c.stroke();}}
@@ -212,6 +213,17 @@ export function manholeThreatGeometry(item,ground=246){
 }
 export function drawManholeThreat(c,item,ground=246){
  const g=manholeThreatGeometry(item,ground);c.save();
+ if(Object.hasOwn(CAMPAIGN_PROP_COLORS,item.type)){
+  const base=item.type==='crowd-lane'?ground+5:ground;
+  c.save();c.globalAlpha*=g.open?1:.65;
+  drawCampaignProp(c,{type:item.type,x:g.centerX,y:base,width:g.width,height:item.type==='crowd-lane'?13:item.height||28,reducedMotion:true});
+  c.restore();
+  if(!g.open){
+   line(c,[[item.x,ground+12],[item.x+g.width*g.progress,ground+12]],'#bb6841',3);
+   text(c,'↔',g.centerX,ground-27,20,'#8b3b3d');
+  }
+  c.restore();return;
+ }
  // A fixed floor marker becomes the opening; it never chases the runner.
  oval(c,g.centerX,ground+1,g.width/2,7,g.open?'#252438':'#9ba6a5','#655548',2);
  if(g.open){
@@ -276,7 +288,7 @@ const WEAPON_FX=Object.freeze({
  receipts:'#e8c26f','paper-gate':'#e8c26f',stamp:'#ffb269',message:'#ec7e9d',
  hammer:'#a4afda',mandado:'#f4dca9',lhand:'#efc086','meme-ghost':'#e3b8dd',
  'cloroquina-prop':'#dab0ed','ivermectina-prop':'#9ee3f0',barrier:'#f3ca71',
- popcorn:'#f7e6a4',case:'#cf9bd7','rolling-case':'#cf9bd7'
+ popcorn:'#f7e6a4',case:'#cf9bd7','rolling-case':'#cf9bd7',...CAMPAIGN_PROP_COLORS,'ze-gotinha-rival':'#73a9b8'
 });
 export function drawWeaponEffects(c,item,phase=0,reducedMotion=false){
  const color=WEAPON_FX[item?.type];
@@ -413,14 +425,21 @@ export function drawThreat(c,item,ground,phase,{reducedMotion=false,weaponEffect
   if(item.height>60)drawMemeArmy(c,{y:-item.height*.44,phase:phase+2,reducedMotion,scale:.64});
   drawMemeArmy(c,{phase,reducedMotion,scale:.78});
  }else{
-  const movement=enemyMotionFor(item.type,reducedMotion?0:phase,x);
+  const runner=Object.hasOwn(STORY_RUNNER_ART,item.type)?STORY_RUNNER_ART[item.type]:null;
+  const type=runner?.type??item.type;
+  const movement=enemyMotionFor(type,reducedMotion?0:phase,x);
   c.translate(0,movement.bob);c.rotate(movement.lean);
   // Perseguidores de solo usam as poses de corrida do atlas. O emissor
   // suspenso continua independente e não transporta o projétil no corpo.
   const facing=item.approach==='rear'?1:-1;
   if(item.type==='meme-army'){c.save();if(facing>0)c.scale(-1,1);drawMemeArmy(c,{y:-6,scale:1.55,phase,reducedMotion,running:true});c.restore();}
-  else if(!drawSpecialRunner(c,{type:item.type,scale:.95,phase,facing,armyVariant:item.armyVariant}))drawActor(c,{type:item.type,x:0,y:0,scale:.95,phase,facing});
+  else if(!drawSpecialRunner(c,{type,scale:runner?.scale??.95,phase,facing,armyVariant:runner?.region??item.armyVariant}))drawActor(c,{type,x:0,y:0,scale:runner?.scale??.95,phase,facing});
  }
  if(weaponEffects)drawWeaponEffects(c,item,phase,reducedMotion);
  c.restore();
 }
+const STORY_RUNNER_ART=Object.freeze({
+ 'orla-runner':{type:'army',region:'rio',scale:.59},'paulista-runner':{type:'pf',scale:.61},
+ 'route-scout':{type:'army',region:'argentina',scale:.59},'terminal-guard':{type:'army',region:'florida',scale:.59},
+ 'lula-runner':{type:'lula',scale:.65},'ze-gotinha-rival':{type:'ze-gotinha',scale:.44}
+});

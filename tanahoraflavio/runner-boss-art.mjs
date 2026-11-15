@@ -1,10 +1,12 @@
 import {drawCharacterBody,drawCharacterArm} from './runner-body-art.mjs?v=67badae0df52';
-import {drawBossonariHead} from './runner-character-art.mjs?v=d687ddebbd3d';
+import {drawBossonariHead} from './runner-character-art.mjs?v=cbbe7c478d86';
 import {standingEnemyPose} from './runner-cast-pose.mjs?v=ed1b40296acc';
 export {standingEnemyPose} from './runner-cast-pose.mjs?v=ed1b40296acc';
 import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=94bad35aaa14';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=c040deb109ca';
-import {drawMemeArmy} from './runner-art.mjs?v=40174ceffa76';
+import {drawMemeArmy} from './runner-art.mjs?v=8113d5b47b32';
+
+import {campaignAccentFor,drawCampaignBoss,drawCampaignCrowd} from './runner-campaign-art.mjs?v=b9520dc88107';
 
 // Full illustrated combat sprites share the original running artwork style.
 // Coordinates are logical game pixels; y always remains the top of the deck.
@@ -62,9 +64,15 @@ function fallbackHead(c,type,accent){
 
 export function drawHoverEnemy(c,{type='haddad',x=0,y=0,scale=1,phase=0,preparing=false,attacking=false,recovering=false,hurt=false,reducedMotion=false,classId='sentinel',action='jump',progress,armyVariant,enraged=false}={}){
  if(!Number.isFinite(x)||!Number.isFinite(y)||!Number.isFinite(scale)||scale<=0)return;
- const p=standingEnemyPose({phase,preparing,attacking,recovering,hurt,reducedMotion,classId,action,progress}),[,,accent]=SUITS[type]||['#4d4d70','#292c49','#dbc778'];
+ if(type==='povo'){drawCampaignCrowd(c,{x,y,scale,phase,reducedMotion});return;}
+ const p=standingEnemyPose({phase,preparing,attacking,recovering,hurt,reducedMotion,classId,action,progress}),accent=campaignAccentFor(type)??SUITS[type]?.[2]??'#dbc778';
  c.save();c.translate(x,y);c.scale(scale,scale);
  drawShip(c,p,accent,preparing,attacking,hurt);
+ if(drawCampaignBoss(c,{type,pose:p})){
+  drawMagic(c,p,accent,preparing&&!hurt,attacking&&!hurt);
+  if(hurt)line(c,[[22,-105],[30,-110]],CREAM,3);
+  c.restore();return;
+ }
  const spriteOptions={phase,preparing,attacking,recovering,hurt,reducedMotion,progress,armyVariant,enraged};
  if(drawCombatSprite(c,{type,...spriteOptions})){
   const hand=combatGeometryFor(type,spriteOptions).muzzle;
