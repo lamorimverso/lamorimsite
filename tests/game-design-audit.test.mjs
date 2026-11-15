@@ -42,6 +42,6 @@ test('HUD do Infinito apresenta energia restante quando Flávio pode atirar',()=
  const r=arena('endless',0,900);r.boss.hp--;
  const nodes=new Map(),$=id=>{if(!nodes.has(id))nodes.set(id,{style:{setProperty(){}},setAttribute(){}});return nodes.get(id);};
  const start=ui.indexOf('    if(run.boss){'),end=ui.indexOf('    const liveAttack=',start);
- Function('env','const {run,$,section,bossCue,attackCueFor}=env;'+ui.slice(start,end))({run:r,$,section:{dataset:{}},bossCue:()=>r.boss.plannedAttack,attackCueFor:core.attackCueFor});
+ Function('env','const {run,$,section,bossCue,attackCueFor,updateCombatHUD,spritesReady}=env;'+ui.slice(start,end))({run:r,$,section:{dataset:{}},bossCue:()=>r.boss.plannedAttack,attackCueFor:core.attackCueFor,updateCombatHUD(){},spritesReady:false});
  assert.match($('game-boss-weapon').textContent,/PV 17\/18/,'acertos precisam de feedback de vida visível');
 });

@@ -292,24 +292,44 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
 .game-extra .game-settings-content{margin:0;border:0}
 body.game-expanded .game-extra{display:none}
 
-.game-aid-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:46px;margin:7px 0;color:#3b594b;font:600 12px/1.3 system-ui}
-.game-aid-bar[hidden]{display:none}.game-aid-bar>span{flex:1;min-width:0}
-#game-reserve-shield{flex:none;min-height:40px;padding:7px 11px;border:1px solid #8cac9c;border-radius:10px;background:#e6f3e9;color:#254b39;font:800 12px system-ui;touch-action:manipulation}
-#game-reserve-shield:disabled{opacity:.65}#game-reserve-shield:enabled{background:#27764e;color:#fff;border-color:#1c5939;box-shadow:0 2px 0 #174b31}
-#game-reserve-shield:focus-visible{outline:3px solid #e6a52d;outline-offset:2px}
-
 .game-allies-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:9px 20px;padding:8px 18px;font:13px/1.45 system-ui;color:#44554d}.game-allies-list li{padding-left:2px}
 
-.game-power-loadout{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0;color:#51425f;font:700 12px/1.3 system-ui}.game-power-loadout[hidden],.game-power-reward[hidden]{display:none}
-.game-power-loadout select{flex:1;min-width:0;max-width:100%;min-height:38px;border:1px solid #b8a1cc;border-radius:9px;padding:5px;background:#faf6ff;color:#49325e;font:700 12px system-ui}.game-power-loadout span{flex-basis:100%;font-weight:500}
-.game-power-reward{margin:7px 0;padding:9px 12px;border:1px solid #b99bd1;border-radius:10px;background:#f3e9fd;color:#633886;font:800 12px/1.4 system-ui}
+/* Meters live in the playfield corners, with native touch/keyboard controls. */
+.game-combat-hud{--meter-height:clamp(38px,7vw,58px);position:absolute;inset:0;z-index:4;pointer-events:none;color:#fff5d8;font:800 9px/1 system-ui;text-shadow:0 1px 2px #101d33}
+.game-combat-hud[hidden]{display:none}
+.combat-player{position:absolute;top:9px;left:9px;width:62px}
+.combat-columns{display:grid;grid-template-columns:26px 30px;gap:6px;align-items:start}
+.combat-column{display:flex;flex-direction:column;align-items:center;gap:4px}
+.combat-caption{font-size:8px;letter-spacing:.04em;color:#fff9dc;text-shadow:1px 1px #1b2942,-1px -1px #1b2942,1px -1px #1b2942,-1px 1px #1b2942}
+.combat-meter,.game-combat-hud .game-boss-health{--meter-color:#f5d45f;position:relative;width:10px;height:var(--meter-height);padding:0;border:2px solid #26324b;border-radius:3px;background:#17263b;box-shadow:0 0 0 1px #e9e8d5,2px 3px 0 #15243955;overflow:hidden}
+.combat-meter>span,.game-combat-hud .game-boss-health>span{display:block;position:absolute;inset:auto 0 0;height:var(--meter-fill,100%);width:auto!important;background:repeating-linear-gradient(to top,var(--meter-color) 0 4px,#162a3f 4px 6px);border-radius:1px}
+.combat-portrait{display:block;width:25px;height:25px;object-fit:contain;filter:drop-shadow(0 1px 0 #1c2c40);pointer-events:none}
+.game-combat-hud .game-power-loadout{position:relative;display:block;width:32px;height:30px;margin:0;border:1px solid #e3d88b;border-radius:5px;background:#1c324fe8;box-shadow:0 2px 0 #15243c;pointer-events:auto}
+.game-power-loadout[hidden]{display:none!important}
+#game-weapon-icon{display:block;width:30px;height:28px}
+.game-combat-hud .game-power-loadout select{position:absolute;inset:-5px;width:42px;height:40px;min-height:0;margin:0;padding:0;opacity:0;cursor:pointer;font:14px system-ui;touch-action:manipulation}
+.game-power-loadout:focus-within{outline:2px solid #fff2a4;outline-offset:3px}
+#game-weapon-level{position:absolute;right:-3px;bottom:-2px;min-width:12px;padding:2px 3px;background:#e4c566;color:#24344b;text-shadow:none;border-radius:3px;font-size:8px}
+.game-combat-hud .game-aid-bar{position:absolute;left:70px;top:0;width:38px;margin:0;min-height:0;display:block}.game-aid-bar::before{content:"ESCUDO";display:block;margin-bottom:4px;font-size:8px;color:#fff9dc;text-shadow:1px 1px #1b2942,-1px -1px #1b2942;text-align:center}
+.game-aid-bar[hidden]{display:none!important}
+.game-combat-hud #game-reserve-shield{position:relative;display:flex;align-items:center;justify-content:center;gap:4px;width:38px;min-height:39px;padding:3px 2px 7px;flex-direction:column;gap:0;border:1px solid #a0c9bc;border-radius:6px;background:#18384ce8;color:#eafbf0;font:800 10px system-ui;box-shadow:0 2px 0 #15263c;pointer-events:auto;touch-action:manipulation}
+#game-reserve-shield svg{width:17px;height:19px;fill:#4f8c80;stroke:#e2fff3;stroke-width:1.6;stroke-linejoin:round}
+.game-combat-hud #game-reserve-shield:disabled{opacity:.85;cursor:default}
+.game-combat-hud #game-reserve-shield[data-ready="true"]{border-color:#f8df82;background:#276047;color:#fff4bd;box-shadow:0 0 7px #f4e3a766}
+.game-combat-hud #game-reserve-shield[data-active="true"]{border-color:#b4f4ff;background:#245871}
+#game-reserve-shield:focus-visible{outline:3px solid #ffe197;outline-offset:2px}
+.combat-shield-track{position:absolute;left:5px;right:5px;bottom:3px;height:3px;background:#0e2032}
+.combat-shield-track>span{display:block;height:100%;background:repeating-linear-gradient(to right,#9ae4b9 0 calc(16.666% - 2px),transparent calc(16.666% - 2px) 16.666%)}
+.game-combat-hud .game-boss{position:absolute;top:9px;right:9px;display:flex;flex-direction:column;align-items:center;gap:4px;width:40px;min-height:0;padding:0;margin:0;border:0;border-radius:0;background:none;pointer-events:none}
+.game-combat-hud .game-boss[hidden]{display:none}
+.game-combat-hud .game-boss-health{--meter-color:var(--boss-accent,#ed7a82);margin:0}
+.combat-tag{max-width:55px;font-size:8px;letter-spacing:.03em;color:#fff2ce;text-shadow:1px 1px #172a43,-1px -1px #172a43,1px -1px #172a43,-1px 1px #172a43}
+.game-combat-hud .game-power-reward{position:absolute;top:10px;left:118px;right:55px;width:fit-content;max-width:calc(100% - 173px);margin:0 auto;padding:6px 9px;border:1px solid #e3cd83;border-radius:6px;background:#20324de8;color:#fff2b6;font:800 10px/1.35 system-ui;text-align:center;pointer-events:none}
+.game-power-reward[hidden]{display:none}
+.game-combat-hud .sr-only,.game-viewport .game-hud.sr-only{width:1px;height:1px;min-height:0;margin:-1px;padding:0;border:0;overflow:hidden}
+@media(orientation:landscape) and (max-height:500px){.is-expanded #runner-canvas{max-height:calc(100dvh - 135px)}}
+@media(max-width:380px){.game-combat-hud{--meter-height:32px}.combat-player{left:7px;top:8px}.game-combat-hud .game-boss{right:5px;top:8px}.game-combat-hud .game-power-reward{font-size:9px;padding:5px}}
 
-@media(orientation:landscape) and (max-height:500px){
- .is-expanded .game-power-loadout{flex-wrap:nowrap;gap:7px;margin:2px 0;min-height:32px;flex-shrink:0}
- .is-expanded .game-power-loadout select{min-height:32px;max-width:230px}
- .is-expanded .game-power-loadout span{flex-basis:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
- .is-expanded .game-aid-bar{min-height:36px;margin:2px 0;font-size:11px}
- .is-expanded #game-reserve-shield{min-height:34px;padding:5px 9px}
- .is-expanded .game-power-reward{display:none}
- .is-expanded #runner-canvas{max-height:calc(100dvh - 210px)}
-}
+@media(max-width:380px){.game-combat-hud .game-power-loadout{height:26px}.combat-portrait{width:22px;height:22px}#game-weapon-icon{height:24px}}
+
+.game-attack{width:118px;max-width:calc(50% - 16px);min-width:100px;padding:10px 11px;white-space:nowrap}

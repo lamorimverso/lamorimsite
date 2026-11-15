@@ -11,14 +11,13 @@ function triggerBoss(r,type='xandao',rng=()=>.5){
  core.advanceRun(r,1/120,rng);
  assert.ok(r.boss,'chefão deve aparecer pelo percurso');
 }
-test('Escudo das Américas protege de obstáculo sem gastar a vida',()=>{
- const r=running();collide(r);collect(r,'shield');
- assert.equal(r.status,'running');assert.equal(r.lives,1);assert.equal(r.shieldFor,6);
+test('uma parte não protege; seis partes guardam proteção manual',()=>{
+ const r=running();for(let i=0;i<6;i++)collect(r,'shield');assert.equal(r.shieldFor,0);assert.equal(r.reserveShields,1);
+ assert.equal(core.activateReserveShield(r),true);collide(r);core.advanceRun(r,1/120);assert.equal(r.status,'running');assert.equal(r.lives,1);assert.ok(r.shieldFor>5.9);
 });
-test('o escudo termina depois de 6 segundos',()=>{
- const r=running();collect(r,'shield');r.obstacles=[];r.nextObstacle=100;
- step(r,6.1);assert.equal(r.shieldFor,0);collide(r);
- core.advanceRun(r,1/120);assert.equal(r.status,'over');
+test('o escudo conquistado termina depois de 6 segundos',()=>{
+ const r=running();for(let i=0;i<6;i++)collect(r,'shield');core.activateReserveShield(r);r.obstacles=[];r.nextObstacle=100;
+ step(r,6.1);assert.equal(r.shieldFor,0);collide(r);core.advanceRun(r,1/120);assert.equal(r.status,'over');
 });
 test('100 passaportes ainda concedem uma vida e protegem no mesmo frame',()=>{
  const r=running();r.passports=99;collide(r);collect(r,'passport');
