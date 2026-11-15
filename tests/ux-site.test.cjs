@@ -1308,6 +1308,7 @@ test('configurações bloqueiam teclas e controles da pista sem gastar supriment
 for(const viewport of [{width:568,height:320},{width:844,height:390}])test(`engrenagem ampliada cabe em paisagem e Esc cancela a captura: ${viewport.width}px`,async()=>{
  const {context,page,errors}=await open({viewport});
  try{
+  await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
   await page.locator('#game-settings summary').click();
   assert.equal(await page.locator('#game-control-bindings tbody tr').count(),8);
   await page.waitForFunction(()=>{
