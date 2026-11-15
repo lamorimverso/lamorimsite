@@ -5,7 +5,7 @@
   const game=document.getElementById('game');
   const motion=window.matchMedia?.('(prefers-reduced-motion: reduce)');
   const shortScreen=window.matchMedia?.('(min-width:480px) and (orientation:landscape) and (max-height:600px)');
-  let pending=0,gameReduced=false;
+  let pending=0,gameReduced=false,started=false;
   function geometry(){
     const compact=parseFloat(getComputedStyle(shell).getPropertyValue('--hero-compact-height'))||266;
     return {origin:shell.getBoundingClientRect().top+window.scrollY,range:Math.max(1,shell.offsetHeight-compact)};
@@ -27,6 +27,10 @@
   if('ResizeObserver' in window)new ResizeObserver(schedule).observe(shell);
   game?.addEventListener('runner:motion',event=>{gameReduced=event.detail?.reducedMotion===true;schedule();});
   game?.addEventListener('runner:start',()=>{
+    // A retry keeps the view the player chose. Only the first start needs
+    // to bring the arena out from below the countdown.
+    if(started){update();return;}
+    started=true;
     const {origin,range}=geometry();
     const controls=game.querySelector('.game-viewport')?.getBoundingClientRect();
     const target=shortScreen?.matches?game.getBoundingClientRect().top+window.scrollY:Math.max(origin+range,controls?controls.bottom+window.scrollY-innerHeight+12:0);
