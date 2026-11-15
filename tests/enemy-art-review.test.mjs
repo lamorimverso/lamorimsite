@@ -28,7 +28,7 @@ test('Bossonari lança frascos e o fantasma final possui ataques próprios',()=>
   for(const type of expected)assert.ok(seen.has(type),type);
   assert.equal(r.status,'running','sobreviver não encerra a luta');
   core.setAttackRun(r,true);
-  for(let i=0;i<120*40&&r.boss;i++)core.advanceRun(r,1/120,()=>.5);
+  for(let i=0;i<120*60&&r.boss;i++){core.setAttackRun(r,r.player.attackHeld?r.ammo>0:r.ammo>=12);core.advanceRun(r,1/120,()=>.5);}
   assert.equal(r.status,index===23?'ballot':'running');
  }
 });

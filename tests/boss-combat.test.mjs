@@ -47,7 +47,7 @@ test('disparo real possui intervalo e acerta o chefe sem dano durante sua entrad
 test('atirar e esquivar vence encontros e a urna só abre depois do último',()=>{
  for(let index=0;index<core.STORY_BOSS_COUNT;index++){
   const r=scene(index);core.setAttackRun(r,true);
-  for(let i=0;i<120*60&&r.bossesDefeated===index;i++)core.advanceRun(r,dt,()=>.5);
+  for(let i=0;i<120*60&&r.bossesDefeated===index;i++){core.setAttackRun(r,r.player.attackHeld?r.ammo>0:r.ammo>=12);core.advanceRun(r,dt,()=>.5);}
   assert.equal(r.bossesDefeated,index+1,'encontro '+index);
   assert.equal(r.boss,null);assert.equal(r.heroShots.length,0);
   assert.equal(r.status,index===core.STORY_BOSS_COUNT-1?'ballot':'running');

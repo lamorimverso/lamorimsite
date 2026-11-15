@@ -1,20 +1,21 @@
 import {HERO_POWERS,heroPowerFor,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=27e0bb16e2f2';
+import {updateCombatHUD} from './runner-combat-hud.mjs?v=0d7532fc386d';
 import {createMovementSoundDirector} from './runner-movement-audio.mjs?v=3b96b07ed6e3';
 import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=f273e11b16a6';
 import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=ed1b40296acc';
 import {createShotSoundTracker} from './runner-shot-events.mjs?v=a3769f250d68';
 import {bossPresentationFor} from './runner-bosses.mjs?v=4d0d9c1a5182';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=07a0c7ae2dee";
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=84c8b0a7312f";
 import {bossCounterWindow} from './runner-bosses.mjs?v=4d0d9c1a5182';
 import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=a750937a6c76';
 import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=40174ceffa76";
-import { createGameAudio } from "./runner-audio.mjs?v=bc8107198997";
+import { createGameAudio } from "./runner-audio.mjs?v=501606e818db";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=d5e017561fd6";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=5bf1abd1a18b";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
 
-import {ALLIES,allyById} from './runner-allies.mjs?v=4a007b25adb2';
+import {ALLIES,allyById} from './runner-allies.mjs?v=260a67b845c4';
 import {createPressGate,createHeldSources,fireBindingFor} from './runner-input.mjs?v=bbf7f3e16548';
 
 function initRunner() {
@@ -23,10 +24,10 @@ function initRunner() {
   if (!canvas || !section) return;
   // Uma aba pode ter conservado o HTML anterior enquanto os módulos já
   // mudaram. Atualizar a página uma vez evita inicializar sobre IDs antigos.
-  if(!$("game-weapon-select")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-options-panel")||!$("game-help")||!$("game-fire-key")||!$("game-attack")||!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-expand-label")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
+  if(!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-select")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-options-panel")||!$("game-help")||!$("game-fire-key")||!$("game-attack")||!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-expand-label")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
     const url=new URL(location.href);
-    if(url.searchParams.get("ui")!=="20261111-run-controls"){
-      url.searchParams.set("ui","20261111-run-controls");location.replace(url.href);
+    if(url.searchParams.get("ui")!=="20261115-combat-hud"){
+      url.searchParams.set("ui","20261115-combat-hud");location.replace(url.href);
     }else{
       const button=$("game-start"),note=$("game-loading-note");
       if(button){button.disabled=false;button.textContent="Recarregar jogo";button.addEventListener("click",()=>location.reload(),{once:true});}
@@ -131,7 +132,6 @@ function initRunner() {
     $("game-aid-bar").hidden=run.status!=="running";
     const reserve=$("game-reserve-shield"),ally=allyById(run.aid?.id);
     reserve.disabled=run.status!=="running"||!run.reserveShields||run.shieldFor>0;
-    reserve.textContent=run.reserveShields?(run.shieldFor>0?"Escudo guardado":"Usar escudo · E"):"Escudo · "+run.allyShieldProgress+"/6";
     $("game-aid-status").textContent=ally?ally.name+" · "+run.aid.label+" · "+Math.ceil(run.aid.remaining)+" s":run.reserveShields?"Escudo de reserva pronto. Use quando precisar.":"Ajudas "+run.allyShieldProgress+"/6 para guardar um escudo";
     $("game-passports").textContent=String(run.passports);
     $("game-passport-next").textContent=String(100-run.passports%100);
@@ -155,7 +155,7 @@ function initRunner() {
     const power=run.shieldFor>0?"shield":run.graceFor>0?"recovery":"none";
     section.dataset.power=run.player.isJacare?"jacare":power;section.dataset.ammo="none";
     const remainingJacareSeconds=Math.max(0,Math.ceil(JACARE_DURATION_SECONDS-run.player.jacareAge));
-    $("game-power").textContent=run.player.isJacare?"Jacaré · "+remainingJacareSeconds+" s":run.boss?.combat?"Energia "+run.player.hp+"/"+run.player.maxHp+(power==='shield'?" · Escudo":""):power==="shield"?"Escudo das Américas · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo";
+    $("game-power").textContent=run.player.isJacare?"Jacaré · "+remainingJacareSeconds+" s":run.boss?.combat?"Energia "+run.player.hp+"/"+run.player.maxHp+(power==='shield'?" · Escudo":""):power==="shield"?"Escudo de reserva · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo";
     const recovery=$("game-jacare-progress");
     if(recovery){
       recovery.hidden=run.status!=="running"||!run.player.isJacare;
@@ -165,9 +165,11 @@ function initRunner() {
     $("game-ammo").parentElement.hidden=!run.boss;
     const fireLabel=fireBindingFor(preferences.fireKey).label;
     $("game-ammo").textContent=run.boss?fireLabel+" · Disparar":"Sem arma";
-    $("game-attack").disabled=run.player.isJacare;
-    $("game-attack").title=run.player.isJacare?"Disparo indisponível durante a transformação":"Disparar: "+fireLabel+" · "+weapon.name;
-    $("game-attack").setAttribute("aria-label","Disparar: segure para repetir; tecla "+fireLabel+"; "+weapon.name);
+    $("game-attack").disabled=run.player.isJacare||!run.boss&&run.ammo===0;
+    $("game-attack").textContent=run.ammo>0?"◎ Disparar":run.boss?(run.player.attackHeld?"Solte":"Recarga"):"Vazio";
+    const ammoHint=run.ammo===0?(run.boss?"Solte o disparo para recarregar durante a luta":"Sem munição. Colete ajudantes para repor tiros"):"";
+    $("game-attack").title=ammoHint||(run.player.isJacare?"Disparo indisponível durante a transformação":"Disparar: "+fireLabel+" · "+weapon.name);
+    $("game-attack").setAttribute("aria-label","Disparar: segure para repetir; tecla "+fireLabel+"; "+weapon.name+(ammoHint?"; "+ammoHint:""));
     $("game-attack").hidden=run.status!=="running";
 
     $("game-boss").hidden=run.status!=="running"||!run.boss;section.dataset.boss=run.boss?.type||"none";
@@ -196,6 +198,7 @@ function initRunner() {
       }
       $("game-boss").style.setProperty("--boss-accent",b.color);
     }
+    updateCombatHUD(run,{spritesReady});
     const liveAttack=run.obstacles.filter(o=>!o.passed&&!o.counted)
       .sort((a,b)=>threatTimeToContact(run,a)-threatTimeToContact(run,b))[0];
     const liveCue=attackCueFor(liveAttack);
@@ -267,7 +270,7 @@ function initRunner() {
       if(run.status==="running"){
         if(run.events>lastEvents)message=run.event;
         else if(lastCollected!==run.collected)message="Passaporte coletado. Faltam "+(100-run.passports%100)+" para uma vida.";
-        else if(lastPower==="shield"&&power!=="shield")message="O Escudo das Américas terminou. Volte a desviar!";
+        else if(lastPower==="shield"&&power!=="shield")message="O escudo de reserva terminou. Volte a desviar!";
         if(lastStage>=0&&lastStage!==stage.index){message="Chegamos a "+stage.name+"! A corrida continua.";audio.effect("stage");}
       }
       $("game-status").textContent=message;

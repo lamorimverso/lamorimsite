@@ -201,9 +201,11 @@ test('invisibilidade congela com aba oculta e retoma sem intervenção', async (
       const run=globalThis.__testRun;
       run.nextObstacle=run.nextPickup=run.nextPassport=1000;
       run.obstacles=[];
-      run.pickups.push({x:136,y:35,type:'shield',value:0});
+      run.reserveShields=1;
+      document.getElementById('game-reserve-shield').disabled=false;
+      document.getElementById('game-reserve-shield').click();
     });
-    await page.waitForFunction(()=>/Escudo das Américas/.test(document.getElementById('game-power').textContent));
+    await page.waitForFunction(()=>/Escudo de reserva/.test(document.getElementById('game-power').textContent));
     await page.evaluate(()=>{
       Object.defineProperty(document,'hidden',{configurable:true,value:true});
       document.dispatchEvent(new Event('visibilitychange'));
@@ -400,8 +402,9 @@ test("HUD do chefe surge pela distância e some ao vencer sem poluir a pista", a
     await page.waitForFunction(()=>document.getElementById('game-boss').hidden===false);
     assert.match(await page.locator('#game-boss-name').textContent(),/(Xandão|Haddad|Lula).*rodada 1/);
     const total=({xandao:'12',haddad:'9',lula:'10'})[await page.locator('#game').getAttribute('data-boss')];
-    assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuenow'),'0');
-    assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuemax'),total);
+    assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuenow'),String(Number(total)*2));
+    assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuemax'),String(Number(total)*2));
+    assert.match(await page.locator('#game-boss-health').getAttribute('aria-label'),/Vida/);
     assert.match(await page.locator('.game-boss-heading span').textContent(),/CHEFÃO/);
     assert.equal(await page.locator('.game-help').count(),0);
     assert.equal(await page.locator('#runner-canvas').isVisible(),true);
@@ -431,14 +434,14 @@ test('os três chefões possuem HUD próprio e a pista permanece utilizável',as
  }finally{await context.close();}
 });
 
-test('Escudo das Américas protege por tempo e expiração não guarda um impacto extra',async()=>{
+test('escudo conquistado protege por tempo e expiração não guarda um impacto extra',async()=>{
  const {context,page,errors}=await openWithRun();
  try{
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
-  await page.evaluate(()=>{const r=globalThis.__testRun;r.nextObstacle=1000;r.obstacles=[{x:125,width:34,height:44,type:'pf'}];r.pickups=[{x:136,y:35,type:'shield',value:0}];});
+  await page.evaluate(()=>{const r=globalThis.__testRun;r.nextObstacle=1000;r.obstacles=[{x:125,width:34,height:44,type:'pf'}];r.reserveShields=1;document.getElementById('game-reserve-shield').disabled=false;document.getElementById('game-reserve-shield').click();});
   await page.waitForFunction(()=>document.getElementById('game').dataset.power==='shield');
   assert.equal(await page.locator('#game-lives').textContent(),'1');
-  assert.match(await page.locator('#game-power').textContent(),/Escudo das Américas/);
+  assert.match(await page.locator('#game-power').textContent(),/Escudo de reserva/);
   await page.evaluate(()=>{const r=globalThis.__testRun;r.shieldFor=0;r.graceFor=0;r.obstacles=[{x:125,width:34,height:44,type:'pf'}];});
   await page.waitForFunction(()=>document.getElementById('game').dataset.runState==='over');
   assert.equal(await page.locator('#game-lives').textContent(),'0');assert.deepEqual(errors,[]);

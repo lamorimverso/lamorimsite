@@ -1,4 +1,5 @@
-// Papéis ficcionais de apoio: sem arma do protagonista e sem proteção acumulada.
+import {addAmmo,addShieldPart} from './runner-supplies.mjs?v=ffd49bde7244';
+// Papéis ficcionais de apoio: munição, partes de escudo e vantagens temporárias.
 export const ALLIES=Object.freeze([
  {id:'vorcaro',name:'Vorcaro',kind:'magnet',label:'Crédito Relâmpago · ímã de passaportes',duration:3},
  {id:'jair',name:'Jair Bolsonaro',kind:'route',label:'Rota indicada',duration:4},
@@ -30,10 +31,8 @@ export function collectAlly(run,id){
  run.ally={id,remaining:2.8};run.aid={id,kind:ally.kind,label:ally.label,remaining:ally.duration,warningBonus:ally.warningBonus,startPassports:run.passports};
  run.lastAllyId=id;run.allyVisits??={};run.allyVisits[id]=(run.allyVisits[id]||0)+1;
  run.allyHelpCount=(run.allyHelpCount||0)+1;
- if(!(run.reserveShields>0)){
-  run.allyShieldProgress=(run.allyShieldProgress||0)+1;
-  if(run.allyShieldProgress>=6){run.reserveShields=1;run.allyShieldProgress=0;}
- }
+ addShieldPart(run);const ammoAdded=addAmmo(run);
+ run.lastSupply={ammo:ammoAdded,shieldParts:1,remaining:2.8};
  if(ally.kind==='event'&&!run.raid&&Number.isFinite(run.nextRaid))run.nextRaid+=4;
  if(ally.kind==='destination'&&Number.isFinite(run.nextSupportAt))run.nextSupportAt=Math.max(run.routeDistance+1500,run.nextSupportAt-7000);
  if(id==='vorcaro')run.creditCooldown=24;
@@ -47,7 +46,7 @@ export function collectAlly(run,id){
 }
 export function advanceAllies(run,dt){
  run.creditCooldown=Math.max(0,(run.creditCooldown||0)-dt);
- for(const field of ['ally','aid','clearedAt'])if(run[field]){run[field].remaining-=dt;if(run[field].remaining<=0)run[field]=null;}
+ for(const field of ['ally','aid','clearedAt','lastSupply'])if(run[field]){run[field].remaining-=dt;if(run[field].remaining<=0)run[field]=null;}
  const aid=run.aid;if(!aid)return;
  if(aid.kind==='quest'&&run.passports>=aid.goal){run.aid={...aid,kind:'magnet',label:'Meta cumprida · ímã por 3,5 s',remaining:3.5};return;}
  if(aid.kind==='clear'){

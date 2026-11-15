@@ -1,3 +1,4 @@
+import {ROUTE_AMMO,advanceAmmo,addShieldPart} from './runner-supplies.mjs?v=ffd49bde7244';
 import {heroPowerFor,grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=27e0bb16e2f2';
 export {grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=27e0bb16e2f2';
 import {STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=859ae4e257bd';
@@ -7,7 +8,7 @@ import {combatGeometryFor} from './runner-combat-geometry.mjs?v=c040deb109ca';
 import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
 import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=f273e11b16a6';
 import {regularCastMuzzle} from './runner-cast-pose.mjs?v=ed1b40296acc';
-import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=4a007b25adb2';
+import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=260a67b845c4';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
 import {BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,planArenaAttack,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=4d0d9c1a5182';
 export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=4d0d9c1a5182';
@@ -54,10 +55,10 @@ const BOSS_GOALS = Object.freeze({
 });
 export const PICKUPS = Object.freeze([
  Object.freeze({type:'passport',name:'Passaporte',value:10,purpose:'100 passaportes = +1 vida'}),
- Object.freeze({type:'shield',name:'Escudo das Américas',value:0,purpose:'Proteção por 6 segundos'}),
+ Object.freeze({type:'shield',name:'Parte de escudo',value:0,purpose:'6 partes = 1 escudo de reserva'}),
  Object.freeze({type:'ze-gotinha',name:'Zé Gotinha',value:0,purpose:'Transforma Flávio em jacaré fictício por 10 segundos; proteção inicial de 3 segundos'})
 ]);
-// O protagonista não possui armas; chefões atacam e o jogador só desvia.
+// Chefões atacam por iniciativa própria; Flávio dispara, desvia e gerencia suprimentos.
 // Texto de roteiro ficcional, sem atribuir gravações/falas autênticas à personagem.
 export const RAID_FACTS = Object.freeze([
  {title:'Denúncia · 2020',text:'Em 2020, o MP-RJ apresentou denúncia contra Flávio no caso das rachadinhas.',source:'MP-RJ · 04/11/2020',url:'https://www.mprj.mp.br/web/guest/visualizar?noticiaId=96203'},
@@ -199,7 +200,7 @@ export function createRun({assisted=false,seed,mode='endless'}={}) {
  return {status:'ready',mode:mode==='story'?'story':'endless',assisted:assisted===true,elapsed:0,distance:0,routeDistance:0,viewportWidth:WORLD.width,bonus:0,collected:0,passports:0,lives:1,
   randomState:seed===undefined?null:Number(seed)>>>0,
   ballot:{digits:'',message:''},
-  event:'',events:0,player:{x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareAge:0,nextJacareThreat:3,restoreFlashFor:0,jumpBufferedUntil:0,attackHeld:false,attackFor:0,attackCooldown:0,shotFacing:1,hp:5,maxHp:5},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
+  event:'',events:0,player:{x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareAge:0,nextJacareThreat:3,restoreFlashFor:0,jumpBufferedUntil:0,attackHeld:false,attackFor:0,attackCooldown:0,shotFacing:1,hp:5,maxHp:5},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ammo:ROUTE_AMMO,ammoIdleFor:0,ammoReloadFor:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,shieldFor:0,graceFor:0,reserveShields:0,allyShieldProgress:0,allyHelpCount:0,
   lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,phantomCloud:null,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:null,bossCooldown:0,
@@ -371,7 +372,7 @@ export function heroMuzzleFor(run,facing=1){
 }
 export function attackRun(run){
  const b=run.boss,p=run.player,power=heroPowerFor(run),level=run.powerLevels?.[run.activePower]||1;
- if(run.status!=='running'||p.isJacare||b?.phase==='intro'||p.attackCooldown>0||(run.heroShots?.length||0)>=18)return false;
+ if(run.status!=='running'||!(run.ammo>0)||p.isJacare||b?.phase==='intro'||p.attackCooldown>0||(run.heroShots?.length||0)>=18)return false;
  const target=b?{x:bossArenaPose(b,visibleWidth(run)).x,y:bossArenaPose(b,visibleWidth(run)).platformY+48}:
   run.obstacles.filter(o=>!o.passed&&!o.counted&&!o.destroyed&&!o.groundHazard&&(!o.falling||o.age>=o.warningFor))
    .sort((a,z)=>Math.abs(a.x-playerX(run))-Math.abs(z.x-playerX(run)))[0];
@@ -386,6 +387,7 @@ export function attackRun(run){
    behavior:power.behavior,x,y:y+offset,originX:x,originY:y+offset,previousX:x,previousY:y+offset,vx,vy,age:0,flightFor:Math.max(.15,distance/power.speed),
    radius:power.radius,cancels:power.cancels,damage:power.damage*(1+(level-1)*.12)*(b?.combat?bossCounterWindow(b).damage:1)});
  }
+ run.ammo--;run.ammoIdleFor=0;run.ammoReloadFor=0;
  p.attackCooldown=power.cooldown*(1-(level-1)*.06);p.attackFor=HERO_SHOT_DURATION;run.shotsFired=(run.shotsFired||0)+1;return true;
 }
 function segmentHitsBox(shot,minX,maxX,minY,maxY,radius=0){
@@ -397,6 +399,7 @@ function segmentHitsBox(shot,minX,maxX,minY,maxY,radius=0){
 }
 function advanceHeroShots(run,dt){
  const p=run.player;p.attackCooldown=Math.max(0,(p.attackCooldown||0)-dt);p.attackFor=Math.max(0,(p.attackFor||0)-dt);
+ advanceAmmo(run,dt);
  if(p.attackHeld)attackRun(run);
  const b=run.boss,pose=b?bossArenaPose(b,visibleWidth(run)):null;
  run.heroShots=(run.heroShots||[]).filter(shot=>{
@@ -584,7 +587,7 @@ function resolveBossDodges(run){
  for(const o of run.obstacles)if(o.bossAttack&&!o.counted&&(o.falling?o.age>=o.warningFor+o.fallFor:o.x+o.width<playerX(run))){o.counted=true;if(run.boss.combat)run.boss.evaded++;else run.boss.remaining--;}
  const boss=run.boss;
  if(boss.combat?boss.hp>0:!(Number.isFinite(boss.hp)&&boss.hp<=0)&&(boss.fired<boss.total||boss.remaining>0))return;
- grantBossPower(run,boss.type);run.lastBoss=boss.type;run.boss=null;run.bossesDefeated++;run.bossCooldown=4;
+ grantBossPower(run,boss.type);run.lastBoss=boss.type;run.boss=null;run.ammo=Math.min(ROUTE_AMMO,run.ammo);run.bossesDefeated++;run.bossCooldown=4;
  run.heroShots=[];run.player.attackHeld=false;run.obstacles=[];run.player.hp=run.player.maxHp;
  if(run.mode==='story'&&run.bossesDefeated>=STORY_BOSS_COUNT){
   run.status='ballot';run.nextBossAt=Infinity;run.obstacles=[];run.pickups=[];run.phantomCloud=null;
@@ -875,7 +878,7 @@ export function advanceRun(run,seconds,rng){
     run.player.crouching=false;run.player.crouchHeld=false;run.player.jumpBufferedUntil=0;
     announce(run,'Zé Gotinha: jacaré por 10 segundos! Continue correndo e desvie lateralmente de ampolas cenográficas da Pfizer espalhadas pela pista. Vacinas não causam essa transformação.');
    }
-   if(p.type==='shield'){run.shieldFor=6;announce(run,'Escudo das Américas! Proteção por 6 segundos.');}
+   if(p.type==='shield'){addShieldPart(run);announce(run,run.allyShieldProgress?'Parte de escudo: '+run.allyShieldProgress+'/6.':'Escudo de reserva guardado! Use E ou o botão quando precisar.');}
    if(p.type==='passport'&&++run.passports%100===0){run.lives++;announce(run,'100 passaportes! Uma vida extra; total: '+run.lives+'.');}
   }return !hit;
  });

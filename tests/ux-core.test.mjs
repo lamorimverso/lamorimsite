@@ -186,6 +186,7 @@ export function legalPilot(seed,{width=900,assisted=false,limit=340,resize=false
   core.crouchRun(run,crouch);
   const jumpAhead=danger?.approach==='rear'?.22:(danger ? .35-(danger.width+20)/(2*speed) : 0);
   if(danger&&action==='jump'&&until<=jumpAhead&&until>-.1&&core.jumpRun(run))jumps++;
+  if(run.reserveShields&&run.shieldFor<=0)core.activateReserveShield(run);
   core.advanceRun(run,DT,rng);peak=Math.max(peak,run.player.y);
   if(run.shieldFor>0)shieldFrames++;
  }
@@ -201,7 +202,7 @@ test('piloto legal coleta cem passaportes em 150–330 s sem imunidade ou telepo
   assert.equal(run.lives,2);assert.equal(run.lastHit,null,'coletas naturais sem consumo de vida');
   assert.ok(jumps>20&&crouches>0,'usa as duas ações em encontros reais');
   assert.ok(peak>95&&peak<110,'respeita o alcance físico do salto');
-  assert.ok(shieldFrames>0&&shieldFrames/run.elapsed/120<.3,'apenas escudos coletados e temporários');
+  assert.ok(shieldFrames>0&&shieldFrames/run.elapsed/120<.3,'apenas escudos conquistados e ativados pelo piloto');
   assert.ok(run.bossesDefeated>=3,'a economia inclui os chefões da rota');
  }
 });

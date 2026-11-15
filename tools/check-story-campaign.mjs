@@ -33,7 +33,7 @@ for(const width of [480,900])for(let seed=1;seed<=10;seed++){
    candidates.sort((a,b)=>Math.abs(a-r.player.x)-Math.abs(b-r.player.x));
    const target=candidates[0]??r.player.x;core.moveRun(r,Math.abs(target-r.player.x)<2?0:Math.sign(target-r.player.x));
   }
-  core.setAttackRun(r,true);core.advanceRun(r,1/120);
+  core.setAttackRun(r,!!r.boss&&(r.player.attackHeld?r.ammo>0:r.ammo>=12));if(r.reserveShields&&r.shieldFor<=0)core.activateReserveShield(r);core.advanceRun(r,1/120);
   if(r.rehearsedBoss)rehearsals.add(r.rehearsedBoss);
   if(r.player.isJacare&&!prior)transforms++;prior=r.player.isJacare;
  }

@@ -19,7 +19,7 @@ before(async()=>{
  browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{})});
 });
 after(async()=>{await browser?.close();await new Promise(resolve=>server?.close(resolve));});
-async function open({instrument=false,instrumentAudio=false,instrumentCasting=false,instrumentHero=false,instrumentThreats=false,instrumentSprites=false,init,blockEntry=false,blockSupports=false,legacyFirst=false,...options}={}){
+async function open({instrument=false,instrumentAudio=false,instrumentCasting=false,instrumentHero=false,instrumentThreats=false,instrumentSprites=false,init,blockEntry=false,blockSupports=false,legacyFirst=false,initialSearch='',...options}={}){
  const context=await browser.newContext(options);
  await context.route(/^https:\/\//,route=>route.abort());
  if(blockSupports)await context.route(url=>/\/assets\/(?:allies-motion-)/.test(url.pathname),route=>route.abort());
@@ -59,7 +59,7 @@ async function open({instrument=false,instrumentAudio=false,instrumentCasting=fa
   });
  }
  const page=await context.newPage(),errors=[];page.setDefaultTimeout(2500);page.on('pageerror',e=>errors.push(e.message));
- await page.goto(base,{waitUntil:legacyFirst?'commit':'load'});
+ await page.goto(base+initialSearch,{waitUntil:legacyFirst?'commit':'load'});
  return {context,page,errors};
 }
 async function begin(page){
@@ -410,7 +410,7 @@ test('ajustes e início continuam funcionando com armazenamento bloqueado',async
  }finally{await context.close();}
 });
 
-test('HUD do chefão fica fora da pista e não desloca pista ou controles',async()=>{
+test('HUD do chefão fica no canto direito da pista sem deslocar pista ou controles',async()=>{
  for(const viewport of [{width:320,height:568},{width:844,height:390}]){
   const {context,page,errors}=await open({instrument:true,viewport});
   try{
@@ -421,7 +421,9 @@ test('HUD do chefão fica fora da pista e não desloca pista ou controles',async
    await page.waitForFunction(()=>document.getElementById('game').dataset.boss==='lula');
    const canvas=await page.locator('#runner-canvas').boundingBox(),hud=await page.locator('#game-boss').boundingBox();
    const overlaps=canvas.x<hud.x+hud.width&&hud.x<canvas.x+canvas.width&&canvas.y<hud.y+hud.height&&hud.y<canvas.y+canvas.height;
-   assert.equal(overlaps,false,`HUD não pode cobrir herói ou projéteis em ${viewport.width}px`);
+   assert.equal(overlaps,true,`HUD fica dentro da pista em ${viewport.width}px`);
+   assert.ok(hud.x>=canvas.x+canvas.width*.8,'chefe fica no canto direito');
+   assert.ok(hud.x+hud.width<=canvas.x+canvas.width&&hud.y>=canvas.y&&hud.y+hud.height<=canvas.y+canvas.height,'painel inteiro cabe na pista');
    const controls=await page.locator('#runner-canvas').boundingBox();
    assert.ok(Math.abs(beforeCanvas.y-canvas.y)<1,'entrada do chefe não desloca a pista');
    assert.ok(Math.abs(beforeControls.y-controls.y)<1,'entrada do chefe não desloca os comandos');
@@ -447,10 +449,10 @@ test('HUD do chefão fica fora da pista e não desloca pista ou controles',async
  }
 });
 
-test('HTML antigo no cache se atualiza sem travar a inicialização',async()=>{
- const {context,page,errors}=await open({legacyFirst:true});
+for(const initialSearch of ['', '?ui=20261111-run-controls'])test('HTML antigo no cache se atualiza sem travar a inicialização '+initialSearch,async()=>{
+ const {context,page,errors}=await open({legacyFirst:true,initialSearch});
  try{
-  await page.waitForURL(url=>url.searchParams.get('ui')==='20261111-run-controls', {timeout:4000});
+  await page.waitForURL(url=>url.searchParams.get('ui')==='20261115-combat-hud', {timeout:4000});
   await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
   assert.equal(await page.locator('#game-settings').count(),1);
   assert.match(await page.locator('#days').textContent(),/^\d+$/);
@@ -963,4 +965,107 @@ test('vitória sobre Dilma libera vento, seletor e Q; Flávio atira também fora
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(errors,[]);
   }finally{await context.close();}
  }
+});
+
+for(const viewport of [{width:320,height:568},{width:390,height:844},{width:1440,height:900},{width:844,height:390}])test(`barras verticais e controles ficam dentro da pista: ${viewport.width}px`,async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport});
+ try{
+  if(viewport.width===844)await page.locator('#game-expand').click();
+  await begin(page);await page.evaluate(async()=>{
+   const r=__testRun,{storyBossAt}=await import('./runner-bosses.mjs');
+   for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
+   r.obstacles=[];r.pickups=[];r.player.hp=3;r.allyShieldProgress=4;r.ammo=12;
+   r.boss={...storyBossAt(0),combat:true,hp:9,maxHp:18,total:18,remaining:18,fired:0,age:0,phase:'recover',phaseFor:100,nextAttack:100};
+  });
+  await page.waitForFunction(()=>document.getElementById('game-hero-health')?.getAttribute('aria-valuenow')==='3');
+  const track=await page.locator('#runner-canvas').boundingBox();
+  for(const id of ['game-hero-health','game-power-loadout','game-reserve-shield','game-boss-health']){
+   const box=await page.locator('#'+id).boundingBox();assert.ok(box,`${id} visível`);
+   assert.ok(box.x>=track.x&&box.x+box.width<=track.x+track.width&&box.y>=track.y&&box.y+box.height<=track.y+track.height,`${id} dentro da pista: ${JSON.stringify(box)}`);
+  }
+  for(const id of ['game-hero-health','game-power-charge','game-boss-health']){
+   const box=await page.locator('#'+id).boundingBox();assert.ok(box.height>box.width*3,`${id} é vertical`);
+  }
+  assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuenow'),'9');
+  assert.equal(await page.locator('#game-hero-health').getAttribute('aria-valuemax'),'5');
+  assert.match(await page.locator('#game-reserve-shield').getAttribute('aria-label'),/4\/6/);
+  assert.equal(await page.locator('#game-reserve-shield').isEnabled(),false);
+  assert.equal(await page.locator('#game').evaluate(e=>[...e.querySelectorAll('#game-power-loadout,#game-aid-bar,#game-boss')].every(n=>n.closest('.game-viewport'))),true);
+  await page.locator('#runner-canvas').focus();await page.keyboard.down('j');
+  await page.waitForFunction(()=>Number(document.getElementById('game-power-charge').getAttribute('aria-valuenow'))<12);
+  await page.keyboard.up('j');await page.waitForFunction(()=>document.getElementById('game-power-charge').getAttribute('aria-valuenow')==='12');
+  await page.evaluate(()=>{__testRun.reserveShields=1;});await page.waitForFunction(()=>!document.getElementById('game-reserve-shield').disabled);
+  await page.locator('#game-reserve-shield').click();await page.waitForFunction(()=>__testRun.shieldFor>0&&__testRun.reserveShields===0);
+  assert.equal(await page.evaluate(()=>__testRun.player.y),0,'tocar no escudo não pula');
+  await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/vertical-hud-${viewport.width}.png`)});
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('HUD desenha retratos e ícones de todas as 14 identidades e mantém o nome do poder acessível',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
+ try{
+  await begin(page);const portraits=new Set();
+  for(const index of [0,1,2,3,4,5,6,7,9,10,11,19,21,23]){
+   const type=await page.evaluate(async index=>{
+    const r=__testRun,{storyBossAt}=await import('./runner-bosses.mjs'),{grantBossPower}=await import('./runner-earned-powers.mjs');
+    for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
+    r.obstacles=[];r.pickups=[];const b=storyBossAt(index);grantBossPower(r,b.type);r.boss={...b,combat:true,hp:b.hp,maxHp:b.hp,total:b.hp,remaining:b.hp,fired:0,age:0,phase:'recover',phaseFor:100,nextAttack:100};return b.type;
+   },index);
+   await page.waitForFunction(type=>document.getElementById('game').dataset.boss===type&&document.getElementById('game-weapon-select').value===type,type);
+   const pixels=await page.evaluate(()=>['game-hero-portrait','game-boss-portrait','game-weapon-icon'].map(id=>{
+    const canvas=document.getElementById(id),data=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;let filled=0,hash=0;for(let i=0;i<data.length;i++){hash=(Math.imul(hash,31)+data[i])|0;if(i%4===3&&data[i]>80)filled++;}return {id,filled,hash};
+   }));
+   for(const row of pixels)assert.ok(row.filled>70,`${type}: ${row.id} tem arte visível (${row.filled})`);
+   const portrait=pixels.find(row=>row.id==='game-boss-portrait');assert.equal(portraits.has(portrait.hash),false,`${type}: retrato muda para a identidade atual`);portraits.add(portrait.hash);
+   assert.ok((await page.locator('#game-weapon-select').getAttribute('title')).length>10);
+  }
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+for(const width of [320,390])test(`HUD deixa o corpo livre ao mover até a borda esquerda: ${width}px`,async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width,height:844}});
+ try{
+  await begin(page);await page.evaluate(()=>{for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])__testRun[k]=Infinity;__testRun.obstacles=[];__testRun.pickups=[];});
+  await page.locator('#runner-canvas').focus();await page.keyboard.down('ArrowLeft');await page.waitForFunction(()=>__testRun.player.x<=26.1);await page.keyboard.up('ArrowLeft');
+  const track=await page.locator('#runner-canvas').boundingBox(),headTop=track.y+track.height*(246-100)/300;
+  for(const id of ['game-hero-portrait','game-power-loadout','game-reserve-shield']){
+   const box=await page.locator('#'+id).boundingBox();assert.ok(box.y+box.height<=headTop,`${id} não cobre o corpo na borda esquerda: ${JSON.stringify(box)}; cabeça em ${headTop}`);
+  }
+  await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/hud-clear-left-${width}.png`)});assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('munição escassa e escudos acumulados funcionam pelos controles reais sem cobrir a pista',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
+ try{
+  await begin(page);await page.evaluate(()=>{for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])__testRun[k]=Infinity;__testRun.obstacles=[];__testRun.pickups=[];});
+  await page.locator('#runner-canvas').focus();await page.keyboard.down('j');await page.waitForFunction(()=>__testRun.ammo===0);await page.keyboard.up('j');
+  assert.equal(await page.locator('#game-attack').isDisabled(),true);assert.equal(await page.locator('#game-power-charge').getAttribute('aria-valuenow'),'0');
+  await page.waitForTimeout(1300);assert.equal(await page.evaluate(()=>__testRun.ammo),0,'corrida não recarrega sozinha');
+  await page.evaluate(async()=>{const c=await import('./runner-core.mjs'),r=__testRun;for(let i=0;i<14;i++){r.pickups=[{type:'ally',allyId:'jair',x:r.player.x+17,y:20,speed:0}];c.advanceRun(r,1/120);}});
+  await page.waitForFunction(()=>document.getElementById('game-shield-count').textContent==='×2');assert.equal(await page.evaluate(()=>__testRun.shieldFor),0);assert.equal(await page.evaluate(()=>__testRun.ammo),6);
+  await page.locator('#game-reserve-shield').click();assert.equal(await page.evaluate(()=>__testRun.reserveShields),1);assert.equal(await page.evaluate(()=>__testRun.player.y),0);
+  await page.evaluate(async()=>{const r=__testRun,{storyBossAt}=await import('./runner-bosses.mjs');r.boss={...storyBossAt(0),combat:true,hp:18,maxHp:18,total:18,remaining:18,fired:0,age:0,phase:'recover',phaseFor:100,nextAttack:100};r.ammo=0;r.ammoIdleFor=0;r.ammoReloadFor=0;});
+  await page.locator('#runner-canvas').focus();await page.keyboard.down('j');await page.waitForTimeout(1300);assert.equal(await page.evaluate(()=>__testRun.ammo),0,'segurar vazio impede recarga');
+  assert.match(await page.locator('#game-attack').textContent(),/Solte/);await page.keyboard.up('j');
+  await page.waitForFunction(()=>__testRun.ammo>0);assert.equal(await page.locator('#game-power-charge').getAttribute('aria-valuemax'),'12');
+  await page.locator('#game').screenshot({path:path.resolve(__dirname,'../ux-captures/hud-ammo-shields-390.png')});assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('botão com munição vazia mantém tamanho compacto e deixa Flávio livre em 320px',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:320,height:844}});
+ try{
+  await begin(page);await page.evaluate(async()=>{const r=__testRun,{storyBossAt}=await import('./runner-bosses.mjs');for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;r.obstacles=[];r.pickups=[];r.boss={...storyBossAt(0),combat:true,hp:18,maxHp:18,total:18,remaining:18,fired:0,age:0,phase:'recover',phaseFor:100,nextAttack:100};r.ammo=0;});
+  await page.locator('#runner-canvas').focus();await page.keyboard.down('j');
+  await page.waitForFunction(()=>document.getElementById('game-attack').textContent.includes('Solte'));
+  for(const state of ['held','released']){
+   if(state==='released'){await page.keyboard.up('j');await page.waitForFunction(()=>!document.getElementById('game-attack').textContent.includes('Solte'));}
+   const track=await page.locator('#runner-canvas').boundingBox(),button=await page.locator('#game-attack').boundingBox();
+   assert.ok(button.width<=120,`${state}: botão compacto, ${button.width}px`);assert.ok(button.x>=track.x+track.width*.5,`${state}: botão continua do lado direito`);
+  }
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
 });

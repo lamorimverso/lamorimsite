@@ -4,16 +4,16 @@ import * as core from '../tanahoraflavio/runner-core.mjs';
 import {collectAlly,advanceAllies} from '../tanahoraflavio/runner-allies.mjs';
 const make=()=>{const r=core.createRun();core.startRun(r);for(const k of ['nextRaid','nextBossAt','nextObstacle','nextPower','nextPassport','nextAllyAt','nextSupportAt'])r[k]=Infinity;return r;};
 const step=(r,t)=>{for(let i=0;i<t*120;i++)core.advanceRun(r,1/120,()=>.5);};
-test('seis coletas reais de ajudantes guardam um escudo manual, sem ativá-lo ou empilhá-lo',()=>{
+test('seis coletas reais de ajudantes guardam um escudo manual, sem ativá-lo e preservando reservas acumuladas',()=>{
  const r=make();
  for(let n=1;n<=6;n++){r.pickups=[{type:'ally',allyId:'jair',x:r.player.x+17,y:20,speed:0}];core.advanceRun(r,1/120);assert.equal(r.reserveShields,n===6?1:0);assert.equal(r.shieldFor,0);}
  assert.equal(r.allyShieldProgress,0);
- for(let i=0;i<7;i++)collectAlly(r,'jair');assert.equal(r.reserveShields,1);assert.equal(r.allyShieldProgress,0);
- assert.equal(core.activateReserveShield(r),true);assert.equal(r.reserveShields,0);assert.equal(r.shieldFor,6);
+ for(let i=0;i<7;i++)collectAlly(r,'jair');assert.equal(r.reserveShields,2);assert.equal(r.allyShieldProgress,1);
+ assert.equal(core.activateReserveShield(r),true);assert.equal(r.reserveShields,1);assert.equal(r.shieldFor,6);
  assert.equal(core.activateReserveShield(r),false);assert.equal(r.shieldFor,6);
- for(let i=0;i<6;i++)collectAlly(r,'jair');assert.equal(r.reserveShields,1);
+ for(let i=0;i<6;i++)collectAlly(r,'jair');assert.equal(r.reserveShields,2);
  assert.equal(core.activateReserveShield(r),false,'escudo em uso preserva a reserva');
- step(r,6.1);assert.equal(core.activateReserveShield(r),true);assert.equal(r.reserveShields,0);
+ step(r,6.1);assert.equal(core.activateReserveShield(r),true);assert.equal(r.reserveShields,1);
  assert.equal(core.createRun().reserveShields,0,'nova corrida reinicia a reserva');
 });
 test('reserva protege de dano real, respeita pausa e pode ser usada no ar',()=>{

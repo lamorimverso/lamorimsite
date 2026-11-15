@@ -32,7 +32,7 @@ test('História conclui somente depois de derrotar o último chefão',()=>{
  r.distance=r.routeDistance=62100;r.bossesDefeated=23;r.nextBossAt=0;r.shieldFor=Infinity;
  const seen=new Set();
  for(let i=0;i<120*42&&r.status==='running';i++){
-  if(r.boss)core.setAttackRun(r,true);
+  if(r.boss)core.setAttackRun(r,r.player.attackHeld?r.ammo>0:r.ammo>=12);
   core.advanceRun(r,DT,()=>.5);
   if(r.boss)seen.add(r.boss.type);
  }
