@@ -38,24 +38,22 @@ const boxes=page=>page.evaluate(()=>{
  const r=selector=>{const x=document.querySelector(selector).getBoundingClientRect();return {x:x.x,y:x.y,width:x.width,height:x.height,right:x.right,bottom:x.bottom};};
  return {portrait:r('.progress-ring'),counter:r('.counter'),share:r('#share'),hero:r('.hero'),game:r('#game'),scroll:scrollY,digit:parseFloat(getComputedStyle(document.getElementById('days')).fontSize),overflow:document.documentElement.scrollWidth>innerWidth};
 });
-test('prints: nota de foro removida e botão alterna expandido/recolhido sem reiniciar a corrida',async()=>{
- const {context,page,errors}=await open({width:390,height:844},{instrument:true});
+test('o jogo abre ampliado sem ocupar a contagem nem expor Expandir e Recolher',async()=>{
+ const {context,page,errors}=await open({width:1440,height:900},{instrument:true});
  try{
-  assert.equal(await page.locator('.compact-legal').count(),0,'retira exatamente a nota do print 1');
-  assert.equal(await page.getByRole('link',{name:'Entenda a regra do STF'}).count(),0);
-  const button=page.locator('#game-expand');
-  assert.match(await button.textContent(),/Expandir/);
+  const initial=await boxes(page);
+  assert.ok(initial.game.width>=1100,'pista ampliada antes de começar');
+  assert.ok(initial.game.y>initial.hero.bottom,'a contagem continua disponível no fluxo da página');
+  assert.equal(await page.locator('#game-expand').count(),0);
+  assert.equal(await page.getByRole('button',{name:/ampliar|expandir|recolher/i}).count(),0);
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
   await page.evaluate(()=>{__journeyRun.nextObstacle=__journeyRun.nextRaid=__journeyRun.nextBossAt=Infinity;});
   const before=await page.evaluate(()=>__journeyRun.distance);
-  await button.click();
-  assert.equal(await button.getAttribute('aria-expanded'),'true');assert.match(await button.textContent(),/Recolher/);
-  assert.equal(await page.locator('#game').evaluate(e=>e.classList.contains('is-expanded')),true);
   await page.keyboard.press('Escape');
-  assert.equal(await button.getAttribute('aria-expanded'),'false');assert.match(await button.textContent(),/Expandir/);
+  await page.waitForFunction(value=>__journeyRun.distance>value,before);
   assert.equal(await page.evaluate(()=>__journeyRun.status),'running');
-  assert.ok(await page.evaluate(()=>__journeyRun.distance)>before,'mesma partida continua durante a troca');
-  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(errors,[]);
+  assert.equal((await boxes(page)).game.width,initial.game.width);
+  assert.equal((await boxes(page)).overflow,false);assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
 test('pista sem botões/barra continua aceitando toque, deslize e cancelamento',async()=>{
@@ -211,7 +209,6 @@ test('Joice surge na pista e o fundo realmente se desloca durante a corrida',asy
 for(const viewport of [{width:320,height:568},{width:844,height:390}])test(`derrota ${viewport.width}px mostra algemas e legenda abaixo, com nova tentativa acessível`,async()=>{
  const {context,page,errors}=await open(viewport,{instrument:true});
  try{
-  if(viewport.width>600)await page.locator('#game-expand').click();
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
   await page.evaluate(()=>{const r=__journeyRun;r.nextObstacle=r.nextBossAt=r.nextRaid=Infinity;r.obstacles=[{x:125,width:34,height:44,type:'pf',action:'jump',speed:0}];});
   await page.getByRole('button',{name:'Tentar de novo',exact:true}).waitFor();
@@ -259,7 +256,7 @@ test('Joice permanece na fase ativa e o cenário muda de vermelho escuro a norma
 test('placar no modo paisagem fica inteiro acima da pista durante derrota',async()=>{
  const {context,page}=await open({width:844,height:390},{instrument:true});
  try{
-  await page.locator('#game-expand').click();await page.locator('#game-start').click();
+  await page.locator('#game-start').click();
   await page.evaluate(()=>{const r=__journeyRun;r.nextObstacle=r.nextBossAt=r.nextRaid=Infinity;r.obstacles=[{x:125,width:34,height:44,type:'pf',action:'jump',speed:0}];});await page.getByRole('button',{name:'Tentar de novo',exact:true}).waitFor();
   const board=await page.locator('.game-scoreboard').boundingBox(),track=await page.locator('.game-viewport').boundingBox();assert.ok(board.y>=0&&board.y+board.height<track.y-2,'nenhum valor cortado pela borda da pista');
  }finally{await context.close();}
@@ -269,7 +266,7 @@ for(const assisted of [false,true])test(`resize real900→480 preserva reação 
  const {context,page,errors}=await open({width:1440,height:1000},{instrument:true});
  try{
   if(assisted){await page.locator('#game-settings summary').click();await page.locator('#game-assist').check();}
-  await page.locator('#game-expand').click();await page.locator('#game-start').click();await page.waitForFunction(()=>__journeyRun.viewportWidth===900);
+  await page.locator('#game-start').click();await page.waitForFunction(()=>__journeyRun.viewportWidth===900);
   await page.evaluate(async()=>{const r=__journeyRun;Object.assign(r,{elapsed:200,distance:90000,routeDistance:90000,nextObstacle:0,nextBossAt:Infinity,nextRaid:Infinity,nextAllyAt:Infinity,nextPower:Infinity,nextPassport:Infinity,shieldFor:0,graceFor:0,boss:null,raid:null,obstacles:[],pickups:[],__resizeWatch:{}});const {advanceRun}=await import('./runner-core.mjs');advanceRun(r,1/120,()=>.9);r.nextObstacle=Infinity;});
   await page.setViewportSize({width:390,height:844});await page.waitForFunction(()=>__journeyRun.viewportWidth===480);await page.waitForFunction(()=>__journeyRun.status==='over');
   const watch=await page.evaluate(()=>__journeyRun.__resizeWatch);assert.ok(Math.abs(watch.etaAfter-watch.etaBefore)<.025,'resize preserva o prazo que restava: '+JSON.stringify(watch));const delta=watch.hit-watch.visible;assert.ok(delta>=(assisted ? .95/.82 : .95)-.025,'não perde reação ao mudar de orientação: '+delta);assert.deepEqual(errors,[]);

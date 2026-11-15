@@ -27,10 +27,10 @@ function initRunner() {
   if (!canvas || !section) return;
   // Uma aba pode ter conservado o HTML anterior enquanto os módulos já
   // mudaram. Atualizar a página uma vez evita inicializar sobre IDs antigos.
-  if(!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-cycle")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-effects")||!$("game-assist")||$("game-options-panel")||!$("game-attack")||!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-expand-label")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
+  if(!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-cycle")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-effects")||!$("game-assist")||$("game-options-panel")||!$("game-attack")||!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||$("game-expand")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
     const url=new URL(location.href);
-    if(url.searchParams.get("ui")!=="20261115-boss-controls"){
-      url.searchParams.set("ui","20261115-boss-controls");location.replace(url.href);
+    if(url.searchParams.get("ui")!=="20261115-wide-game"){
+      url.searchParams.set("ui","20261115-wide-game");location.replace(url.href);
     }else{
       const button=$("game-start"),note=$("game-loading-note");
       if(button){button.disabled=false;button.textContent="Recarregar jogo";button.addEventListener("click",()=>location.reload(),{once:true});}
@@ -133,7 +133,7 @@ function initRunner() {
     cycle.hidden=run.status!=="running"||(run.ownedPowers?.length||1)<2;
     cycle.disabled=controlsOpen()||cycle.hidden;
     const switchLabel="Trocar arma · "+labels.power;
-    cycle.title=switchLabel;cycle.setAttribute("aria-label",switchLabel);$("game-weapon-effect").textContent=run.lastPowerReward&&section.classList.contains('is-expanded')&&innerHeight<500?'Conquistado: '+run.lastPowerReward.name:weapon.description;
+    cycle.title=switchLabel;cycle.setAttribute("aria-label",switchLabel);$("game-weapon-effect").textContent=run.lastPowerReward&&innerWidth>=601&&innerHeight<=500?'Conquistado: '+run.lastPowerReward.name:weapon.description;
     const reward=$("game-power-reward");reward.hidden=!run.lastPowerReward||run.status!=="running";
     if(run.lastPowerReward)reward.textContent=(run.lastPowerReward.isNew?'PODER CONQUISTADO · ':'PODER MELHORADO · ')+run.lastPowerReward.name+' · nível '+run.lastPowerReward.level;
     section.dataset.heroPower=run.activePower;
@@ -479,19 +479,6 @@ function initRunner() {
   $("game-crouch-mode").addEventListener("change",()=>{crouchSources.clear();crouch(false);preferences.crouchMode=$("game-crouch-mode").value;savePreferences();});
   $("game-effects").addEventListener("change",()=>{preferences.effects=$("game-effects").value;savePreferences();updateUI();draw();});
   $("game-assist").addEventListener("change",()=>{preferences.assisted=$("game-assist").checked;savePreferences();});
-  let expanded=false;
-  function setExpanded(active){
-    expanded=!!active;section.classList.toggle("is-expanded",expanded);document.body.classList.toggle("game-expanded",expanded);
-    $("game-expand").setAttribute("aria-pressed",String(expanded));
-    $("game-expand").setAttribute("aria-expanded",String(expanded));
-    $("game-expand-icon").textContent=expanded?"⤡":"⤢";
-    $("game-expand-label").textContent=expanded?"Recolher":"Expandir";
-    $("game-expand").setAttribute("aria-label",expanded?"Recolher jogo":"Ampliar jogo");
-    $("game-expand").title=expanded?"Recolher jogo":"Ampliar jogo";
-    resize();resumeFromGesture();
-  }
-  $("game-expand").addEventListener("click",()=>setExpanded(!expanded));
-  document.addEventListener("keydown",event=>{if(!event.defaultPrevented&&event.code==="Escape"&&expanded){event.preventDefault();setExpanded(false);canvas.focus({preventScroll:true});}});
   // Mouse usa eventos por botão para permitir dois comandos físicos juntos.
   canvas.addEventListener('mousedown',event=>{
     if(controlsOpen()||event.sourceCapabilities?.firesTouchEvents)return;
@@ -844,7 +831,7 @@ function initRunner() {
   window.addEventListener('gamepaddisconnected',()=>gamepadDriver.poll());
   window.addEventListener('pagehide',()=>{clearInterval(controllerTimer);controllerTimer=null;gamepadDriver.reset();controlSettings.cancelCapture();});
   window.addEventListener('pageshow',()=>{if(controllerTimer===null)controllerTimer=setInterval(pollControllerOutsideGame,80);gamepadDriver.reset();syncActivity();});
-  for(const id of ["game-sound","game-expand","game-crouch-mode","game-effects","game-assist"])$(id).disabled=false;
+  for(const id of ["game-sound","game-crouch-mode","game-effects","game-assist"])$(id).disabled=false;
   updateUI();resize();draw();prepareSprites();
 }
 
