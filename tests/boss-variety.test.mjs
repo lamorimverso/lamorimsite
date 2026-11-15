@@ -24,15 +24,23 @@ test('contra-ataque recompensa oportunidades diferentes por classe',()=>{
  assert.equal(bosses.bossCounterWindow({classId:'sovereign',phase:'recover',phaseFor:1,recover:1.05}).damage,3);
 });
 
-test('disparar antes de a abertura fechar garante o bônus mesmo após o tempo de voo',async()=>{
+test('a abertura reforça só o próximo projétil devolvido, mesmo depois de acabar o aviso',async()=>{
  const core=await import('../tanahoraflavio/runner-core.mjs');
- const r=core.createRun({mode:'story'});core.startRun(r);r.nextBossAt=0;r.shieldFor=Infinity;
- r.nextObstacle=r.nextRaid=r.nextPower=r.nextPassport=r.nextAllyAt=r.nextSupportAt=Infinity;core.advanceRun(r,1/120,()=>.5);
- const opening=r.boss.plannedAttack.counter;
- Object.assign(r.boss,{phase:'recover',phaseFor:.105,recover:opening.window+.1,earnedCounter:opening,hp:100,maxHp:100});
- assert.equal(bosses.bossCounterWindow(r.boss).damage,opening.damage);assert.equal(core.attackRun(r),true);
- for(let i=0;i<30;i++)core.advanceRun(r,1/120,()=>.5);
- assert.equal(bosses.bossCounterWindow(r.boss).label,null);assert.equal(r.boss.hp,100);
- for(let i=0;i<240&&r.heroShots.length;i++)core.advanceRun(r,1/120,()=>.5);
- assert.equal(r.boss.hp,100-opening.damage);
+ function ready(earned){
+  const r=core.createRun({mode:'story',seed:17});core.startRun(r);core.resizeRun(r,480);r.nextBossAt=0;r.bossesDefeated=1;r.shieldFor=Infinity;
+  r.nextObstacle=r.nextRaid=r.nextPower=r.nextPassport=r.nextAllyAt=r.nextSupportAt=Infinity;core.advanceRun(r,1/120);
+  const b=r.boss,opening=b.plannedAttack.counter;
+  Object.assign(b,{phase:'recover',phaseFor:.12,recover:opening.window+opening.delay+.1,earnedCounter:opening,hp:100,maxHp:100});
+  if(earned)b.counterReady=opening;
+  for(let i=0;i<28;i++)core.advanceRun(r,1/120);
+  assert.equal(bosses.bossCounterWindow(b).label,null);
+  const x=r.player.x+122,y=52;
+  r.obstacles=[{type:'hammer',owner:b.type,bossAttack:true,projectile:true,launched:true,x,width:40,height:40,speed:80,launchX:x+20,launchY:y,targetX:r.player.x+17,targetY:y,y}];
+  assert.equal(core.attackRun(r),true);
+  for(let i=0;i<180&&b.hp===100;i++)core.advanceRun(r,1/120);
+  return {lost:100-b.hp,charge:b.counterReady};
+ }
+ const plain=ready(false),boosted=ready(true);
+ assert.ok(plain.lost>0);assert.ok(boosted.lost>plain.lost);
+ assert.equal(boosted.charge,null,'a mesma abertura não se aplica a múltiplas devoluções');
 });

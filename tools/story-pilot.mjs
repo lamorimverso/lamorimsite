@@ -1,6 +1,5 @@
 // Test/check pilot using only public movement and firing commands.
 import * as core from '../tanahoraflavio/runner-core.mjs';
-import {bossCounterWindow} from '../tanahoraflavio/runner-bosses.mjs';
 export function pilotDodge(r){
  const local=r.obstacles.find(o=>(o.falling||o.groundHazard)&&o.age<o.warningFor+(o.fallFor??o.activeFor));
  let evade=0;
@@ -25,5 +24,6 @@ export function pilotDodge(r){
 export function pilotCounter(r){
  pilotDodge(r);
  const boss=r.boss;
- core.setAttackRun(r,!!boss&&r.ammo>0&&!!bossCounterWindow(boss).label);
+ const incoming=r.obstacles.find(o=>core.isHostileProjectile(o)&&!o.returning&&core.threatTimeToContact(r,o)>.22);
+ core.setAttackRun(r,!!boss&&!boss.traversal&&r.ammo>0&&!!incoming);
 }
