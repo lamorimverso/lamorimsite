@@ -68,6 +68,38 @@ test('arranjo chiptune renderiza sinal contínuo sem saturação na emenda do lo
  }finally{await context.close();}
 });
 
+test('saltos seguidos soam curtos e variados, diminuem de volume e recuperam após uma pausa',async()=>{
+ const {context,page,errors}=await open();try{
+  const takeoffs=await page.evaluate(async()=>{
+   const {createGameAudio}=await import('./runner-audio.mjs');
+   const rate=24000,times=[.05,.75,1.45,2.15,3.5],offline=new OfflineAudioContext(1,4*rate,rate);
+   const LiveContext=window.AudioContext;let clock=0;
+   window.AudioContext=class{constructor(){return {get currentTime(){return clock;},state:'running',destination:offline.destination,createGain:()=>offline.createGain(),createOscillator:()=>offline.createOscillator()};}};
+   try{
+    const audio=createGameAudio();audio.prime();
+    for(const time of times){clock=time;audio.movement('jump');}
+    const samples=(await offline.startRendering()).getChannelData(0);
+    return times.map(time=>{
+     const start=Math.round(time*rate),split=start+Math.round(.135*rate),end=start+Math.round(.26*rate);
+     let peak=0,squared=0,tail=0,crossings=0;
+     for(let i=start;i<split;i++){
+      const v=samples[i];peak=Math.max(peak,Math.abs(v));squared+=v*v;
+      if(i>start&&v>0&&samples[i-1]<=0)crossings++;
+     }
+     for(let i=split;i<end;i++)tail=Math.max(tail,Math.abs(samples[i]));
+     return {peak,rms:Math.sqrt(squared/(split-start)),tail,crossings};
+    });
+   }finally{window.AudioContext=LiveContext;}
+  });
+  for(const {peak,rms,tail} of takeoffs){assert.ok(peak>.02&&peak<.085,`som audível e moderado: ${peak}`);assert.ok(rms>.0045,`energia de cada salto: ${rms}`);assert.ok(tail<.001,`som sem cauda longa: ${tail}`);}
+  assert.equal(new Set(takeoffs.slice(0,4).map(x=>x.crossings)).size,4,'quatro contornos de frequência distintos');
+  assert.ok(takeoffs[1].rms<takeoffs[0].rms*.90);
+  assert.ok(takeoffs[3].rms<takeoffs[0].rms*.69);
+  assert.ok(Math.abs(takeoffs[4].rms-takeoffs[0].rms)<.001,'uma pausa restaura a intensidade sem criar som extra');
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
 test('12 novos recortes de arquivo decodificam, têm sinal e mantêm margem de volume',async()=>{
  const {context,page}=await open();try{
   const clips=await page.evaluate(async()=>{

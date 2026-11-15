@@ -1,5 +1,5 @@
 import {createVoiceSelector} from './runner-voice-selector.mjs?v=ad3200a88cd4';
-import {getMovementSoundBank} from './runner-movement-audio.mjs?v=3b96b07ed6e3';
+import {getMovementSoundBank} from './runner-movement-audio.mjs?v=6411ef96c0d1';
 import {createGameSoundtrack} from './runner-soundtrack.mjs?v=eef47a2a323c';
 import {getCastSoundBank} from './runner-cast-sounds.mjs?v=2182548e7b3b';
 import {getEnemyShotBank} from './runner-shot-sounds.mjs?v=fd84e4e83e32';
@@ -8,7 +8,7 @@ import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
 export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelector()}={}) {
  let enabled=true,context=null,nodes=[],primed=false,recording=null,recordingName=null,raidVoice=false,raidPrepared=false,music=null,voicePriority=0,alertUntil=0;
  const raidLines=['joice','extra-joice-1','extra-joice-2','extra-joice-3'];let raidChoice=null;
- const shotVariants=new Map();let nextPresenceAt=0;const presencePlayed=new Map();
+ const shotVariants=new Map();let lastJumpAt=-Infinity,jumpStreak=0,nextPresenceAt=0;const presencePlayed=new Map();
  const entranceNodes=new Map();let pendingEntrance=null;
  const cancelEntrance=()=>{
   pendingEntrance=null;
@@ -23,6 +23,7 @@ export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelecto
  const stop=()=>{
   cancelEntrance();
   raidVoice=false;raidPrepared=false;raidChoice=null;alertUntil=0;
+  lastJumpAt=-Infinity;jumpStreak=0;
   stopRecording();music?.stop();
   for(const node of nodes){try{node.stop();}catch{/* Nó já encerrado. */}}nodes=[];
  };
@@ -69,7 +70,6 @@ export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelecto
  const effect=(name,{alert=true}={})=>{
   if(!enabled||!context||context.state!=='running')return;
   const sounds={
-   jump:[420,660,.105,'sine',.065],
    attack:[240,115,.16,'sawtooth',.085],
    hit:[125,44,.24,'triangle',.12],
    pickup:[660,880,.1,'sine',.07],
@@ -106,7 +106,7 @@ export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelecto
  const heroShot=(name='magic')=>effect(name,{alert:false});
  // Executado pelo lançamento real do projétil, nunca pela aparição do ator.
  // Ciclo local por timbre: não altera nem consulta a aleatoriedade da corrida.
- const playBank=(bank,{alert=true,entrance=false}={})=>{
+ const playBank=(bank,{alert=true,entrance=false,volumeScale=1}={})=>{
   if(!enabled||!primed||!context||context.state!=='running'||!bank)return false;
   const variant=shotVariants.get(bank.id)||0,notes=bank.variants[variant];
   // Reserva o padrão inteiro: não emite meia notificação ao esgotar os canais.
@@ -122,7 +122,7 @@ export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelecto
     osc.type=note.wave;osc.frequency.setValueAtTime(note.start,at);
     osc.frequency.exponentialRampToValueAtTime(note.end,at+note.length);
     gain.gain.setValueAtTime(.001,at);
-    gain.gain.linearRampToValueAtTime(note.volume,at+note.attack);
+    gain.gain.linearRampToValueAtTime(note.volume*volumeScale,at+note.attack);
     gain.gain.exponentialRampToValueAtTime(.001,at+note.length);
     osc.connect(gain);gain.connect(context.destination);osc.onended=release;
     nodes.push(osc);if(entrance)entranceNodes.set(osc,release);osc.start(at);osc.stop(at+note.length+.015);
@@ -135,6 +135,15 @@ export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelecto
    for(const {osc,release} of created){try{osc.stop();}catch{/* Início bloqueado. */}release();}
    return false;
   }
+ };
+ const movement=name=>{
+  const bank=getMovementSoundBank(name);
+  if(name!=='jump')return playBank(bank,{alert:false});
+  const now=context?.currentTime??0;
+  // Pulos em sequência ainda têm retorno, mas deixam de competir com os perigos.
+  const streak=now-lastJumpAt<1?Math.min(jumpStreak+1,3):0;
+  if(!playBank(bank,{alert:false,volumeScale:[1,.77,.65,.57][streak]}))return false;
+  lastJumpAt=now;jumpStreak=streak;return true;
  };
  const enemyShot=(actor,weapon)=>{
   const bank=getEnemyShotBank(actor,weapon);if(!bank)return false;
@@ -170,7 +179,7 @@ export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelecto
  };
  // Não há sintetizador de voz: só trechos identificados e efeitos originais.
  // Ausência de clipe não é preenchida por uma voz inventada.
- return {get enabled(){return enabled;},prime,stop,effect,heroShot,enemyShot,enemyEntrance,actorCue,voice,voiceSelector,movement:name=>playBank(getMovementSoundBank(name),{alert:false}),
+ return {get enabled(){return enabled;},prime,stop,effect,heroShot,enemyShot,enemyEntrance,actorCue,voice,voiceSelector,movement,
   background(state={}){
    if(state.active===false){stop();return;}
    if(!enabled||!primed)return;

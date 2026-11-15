@@ -9,9 +9,9 @@ test('pulo, pouso, avanço, parada e slide soam por transição, sem repetir ao 
  r.player.crouching=true;r.elapsed=1.6;d.update(r);assert.equal(sounds.at(-1),'slide');const count=sounds.length;d.update(r);assert.equal(sounds.length,count);
  r.status='paused';r.player.crouching=false;d.update(r);assert.equal(sounds.length,count);
 });
-test('padrões de movimento têm três variantes distintas e timbres próprios',async()=>{
+test('padrões de movimento têm variantes distintas e timbres próprios',async()=>{
  const {getMovementSoundBank}=await import('../tanahoraflavio/runner-movement-audio.mjs');
  const ids=['jump','land','run-start','run-back','brake','slide','slide-stop','slide-drag'];
- const signatures=ids.map(id=>{const bank=getMovementSoundBank(id);assert.equal(bank.variants.length,3);assert.equal(new Set(bank.variants.map(v=>JSON.stringify(v))).size,3);return JSON.stringify(bank.variants);});
+ const signatures=ids.map(id=>{const bank=getMovementSoundBank(id);assert.equal(bank.variants.length,id==='jump'?4:3);assert.equal(new Set(bank.variants.map(v=>JSON.stringify(v))).size,bank.variants.length);return JSON.stringify(bank.variants);});
  assert.equal(new Set(signatures).size,ids.length);
 });
