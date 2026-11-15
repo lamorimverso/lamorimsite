@@ -253,12 +253,19 @@ test('Joice permanece na fase ativa e o cenário muda de vermelho escuro a norma
  }finally{await context.close();}
 });
 
-test('placar no modo paisagem fica inteiro acima da pista durante derrota',async()=>{
- const {context,page}=await open({width:844,height:390},{instrument:true});
+for(const viewport of [{width:568,height:320},{width:601,height:350},{width:844,height:390},{width:1920,height:501}])test(`placar e nova tentativa cabem em paisagem: ${viewport.width}×${viewport.height}`,async()=>{
+ const {context,page}=await open(viewport,{instrument:true});
  try{
   await page.locator('#game-start').click();
+  const boardInView=()=>page.evaluate(()=>{
+   const board=document.querySelector('.game-scoreboard').getBoundingClientRect(),track=document.querySelector('.game-viewport').getBoundingClientRect();
+   const sound=document.querySelector('#game-sound').getBoundingClientRect(),gear=document.querySelector('#game-settings summary').getBoundingClientRect();
+   return [board,sound,gear].every(rect=>rect.top>=0&&rect.bottom<=track.top-2);
+  });
+  assert.ok(await boardInView(),'placar e comandos acima da pista na largada');
   await page.evaluate(()=>{const r=__journeyRun;r.nextObstacle=r.nextBossAt=r.nextRaid=Infinity;r.obstacles=[{x:125,width:34,height:44,type:'pf',action:'jump',speed:0}];});await page.getByRole('button',{name:'Tentar de novo',exact:true}).waitFor();
-  const board=await page.locator('.game-scoreboard').boundingBox(),track=await page.locator('.game-viewport').boundingBox();assert.ok(board.y>=0&&board.y+board.height<track.y-2,'nenhum valor cortado pela borda da pista');
+  assert.ok(await boardInView(),'placar e comandos não somem ao exibir derrota');
+  const retry=await page.locator('#game-start').boundingBox();assert.ok(retry.y>=0&&retry.y+retry.height<=viewport.height,'nova tentativa visível junto do placar');
  }finally{await context.close();}
 });
 

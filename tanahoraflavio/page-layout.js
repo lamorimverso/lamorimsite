@@ -4,7 +4,7 @@
   if(!shell)return;
   const game=document.getElementById('game');
   const motion=window.matchMedia?.('(prefers-reduced-motion: reduce)');
-  const shortScreen=window.matchMedia?.('(min-width:601px) and (max-height:500px)');
+  const shortScreen=window.matchMedia?.('(min-width:480px) and (orientation:landscape) and (max-height:600px)');
   let pending=0,gameReduced=false;
   function geometry(){
     const compact=parseFloat(getComputedStyle(shell).getPropertyValue('--hero-compact-height'))||266;

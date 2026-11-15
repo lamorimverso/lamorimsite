@@ -100,6 +100,7 @@ function initRunner() {
   const pad = number => String(number).padStart(2, "0");
   // A preferência pode mudar enquanto o jogo está aberto.
   const motionPreference = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+  const compactLandscape = window.matchMedia?.("(min-width:480px) and (orientation:landscape) and (max-height:600px)");
   const prefersReducedMotion = () => preferences.effects==="reduce"||motionPreference?.matches === true;
   function bossCue(){
     if(!run.boss)return null;
@@ -133,7 +134,7 @@ function initRunner() {
     cycle.hidden=run.status!=="running"||(run.ownedPowers?.length||1)<2;
     cycle.disabled=controlsOpen()||cycle.hidden;
     const switchLabel="Trocar arma · "+labels.power;
-    cycle.title=switchLabel;cycle.setAttribute("aria-label",switchLabel);$("game-weapon-effect").textContent=run.lastPowerReward&&innerWidth>=601&&innerHeight<=500?'Conquistado: '+run.lastPowerReward.name:weapon.description;
+    cycle.title=switchLabel;cycle.setAttribute("aria-label",switchLabel);$("game-weapon-effect").textContent=run.lastPowerReward&&compactLandscape?.matches?'Conquistado: '+run.lastPowerReward.name:weapon.description;
     const reward=$("game-power-reward");reward.hidden=!run.lastPowerReward||run.status!=="running";
     if(run.lastPowerReward)reward.textContent=(run.lastPowerReward.isNew?'PODER CONQUISTADO · ':'PODER MELHORADO · ')+run.lastPowerReward.name+' · nível '+run.lastPowerReward.level;
     section.dataset.heroPower=run.activePower;

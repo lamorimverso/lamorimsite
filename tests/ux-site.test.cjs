@@ -1305,8 +1305,8 @@ test('configurações bloqueiam teclas e controles da pista sem gastar supriment
  }finally{await context.close();}
 });
 
-test('engrenagem ampliada cabe em paisagem e Esc cancela a captura sem fechar o jogo',async()=>{
- const {context,page,errors}=await open({viewport:{width:844,height:390}});
+for(const viewport of [{width:568,height:320},{width:844,height:390}])test(`engrenagem ampliada cabe em paisagem e Esc cancela a captura: ${viewport.width}px`,async()=>{
+ const {context,page,errors}=await open({viewport});
  try{
   await page.locator('#game-settings summary').click();
   assert.equal(await page.locator('#game-control-bindings tbody tr').count(),8);
