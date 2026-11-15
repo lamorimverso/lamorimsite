@@ -12,7 +12,7 @@ a{color:var(--dark);text-underline-offset:3px}
 .skip-link{position:fixed;z-index:30;top:8px;left:8px;padding:12px;background:#fff;border:2px solid var(--purple);border-radius:8px;transform:translateY(-150%)}
 .skip-link:focus{transform:none}
 #conteudo:focus{outline:none}
-.wrap{max-width:936px;padding:0 18px 24px;margin:0 auto}
+.wrap{max-width:1156px;padding:0 18px 24px;margin:0 auto}
 .hero-shell{--hero-progress:0;--hero-expanded-height:600px;--hero-compact-height:266px;--portrait-large:220px;--portrait-small:108px;--compact-offset:128px;--digit-large:clamp(42px,9vw,64px);--digit-small:clamp(23px,5.5vw,35px);height:var(--hero-expanded-height)}
 .hero{--side:clamp(0,calc(var(--hero-progress)*2),1);--lift:clamp(0,calc((var(--hero-progress) - .5)*2),1);--portrait-size:calc(var(--portrait-large) + (var(--portrait-small) - var(--portrait-large))*var(--side));position:sticky;top:0;width:100%;max-width:540px;height:calc(var(--hero-expanded-height) - (var(--hero-expanded-height) - var(--hero-compact-height))*var(--hero-progress));margin:auto;text-align:center;border-bottom:1px solid var(--line)}
 .hero-intro{position:absolute;top:calc(38px - 12px*var(--hero-progress));left:0;width:100%}
@@ -45,14 +45,12 @@ body.finished .counter{display:none}
 .game-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .game-heading h2{font-size:clamp(20px,4vw,24px);letter-spacing:-.045em;line-height:1.15;margin:0;font-weight:760}
 .game-actions{display:flex;align-items:center;gap:4px;padding-right:44px;flex-shrink:0}
-.game-sound,.game-expand{width:40px;min-height:44px;border:0;border-radius:8px;background:#fff;color:var(--muted);font-weight:600}
+.game-sound{width:40px;min-height:44px;border:0;border-radius:8px;background:#fff;color:var(--muted);font-weight:600}
 .game-sound{padding:10px}
 .game-sound svg{width:19px;height:19px;display:block;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .sound-off-mark,.game-sound[aria-pressed="false"] .sound-waves{display:none}
 .game-sound[aria-pressed="false"] .sound-off-mark{display:block}
-.game-expand{width:auto;min-width:88px;padding:0 8px;display:inline-flex;align-items:center;justify-content:center;gap:5px;font-size:11px;line-height:1;border:1px solid var(--line)}
-#game-expand-icon{font-size:21px}
-.game-sound:hover,.game-expand:hover{background:var(--pale)}
+.game-sound:hover{background:var(--pale)}
 .game-topline{margin:0 0 8px}
 .game-scoreboard{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;gap:0;max-width:540px;margin:4px auto 12px;padding:8px 0}
 .game-scoreboard>div{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:0;text-align:center}
@@ -135,35 +133,20 @@ body.finished .counter{display:none}
 .game-raid a{display:block;font-size:10px;line-height:1.4;color:#554365}
 footer{max-width:540px;margin:12px auto 0;color:var(--muted);font-size:10px;line-height:1.6}
 footer{text-align:center;padding:8px 0 15px}
-body.game-expanded{overflow:hidden}
-.game-card.is-expanded{position:fixed;inset:0;z-index:20;background:#fff;padding:12px max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));height:100dvh;min-height:0;overflow:auto;display:flex;flex-direction:column;max-width:1120px;margin:auto}
-.is-expanded .game-heading{margin-bottom:6px;flex-shrink:0}
-.is-expanded .game-topline{margin-bottom:6px;flex-shrink:0}
-.is-expanded .game-scoreboard{margin-bottom:2px}
-.is-expanded .game-stage-header{margin-top:2px}
-.is-expanded .game-actions{padding-right:0}
-.is-expanded .game-settings{display:none}
-.is-expanded .game-viewport{flex-shrink:0;width:100%}
-.is-expanded #runner-canvas{max-height:calc(100dvh - 265px);object-fit:contain}
-.is-expanded .game-record{display:none}
-.is-expanded .game-boss{padding:5px 10px}
-.is-expanded .game-boss-health{margin-top:3px}
-.is-expanded .game-boss-weapon{margin-top:3px}
 @keyframes arrival{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
-@media(min-width:601px){.is-expanded .game-boss{display:grid;grid-template-columns:auto minmax(40px,1fr) auto;align-items:center;gap:10px;min-height:36px}.is-expanded .game-boss-health,.is-expanded .game-boss-weapon{margin:0}}
-@media(min-width:601px) and (max-height:500px){
- .game-card.is-expanded{padding:8px 12px}
- .is-expanded .game-heading{min-height:44px}
- .is-expanded .game-topline{position:absolute;top:10px;left:208px;right:164px;margin:0}
- .is-expanded .game-scoreboard{margin:0;padding:0;gap:8px}
- .is-expanded .game-scoreboard>div{gap:2px}
- .is-expanded .game-scoreboard span{font-size:9px}
- .is-expanded .game-scoreboard strong{font-size:16px}
- .is-expanded .game-stage-header{display:none}
- .is-expanded #runner-canvas{max-height:calc(100dvh - 198px)}
- .is-expanded .route-meter{margin-top:4px}
- .is-expanded .game-controls{margin-top:6px}
- .is-expanded .game-controls button{min-height:44px;padding:8px}
+/* The larger playfield stays in the document, including on first load. */
+@media(min-width:480px) and (orientation:landscape) and (max-height:600px){
+ .game-card{min-height:100svh}
+ .game-card .game-heading{min-height:44px;margin-bottom:6px}
+ .game-card .game-topline{position:absolute;top:16px;left:clamp(166px,18%,208px);right:clamp(98px,11%,120px);margin:0}
+ .game-card .game-scoreboard{margin:0 auto;padding:0;gap:8px}
+ .game-card .game-scoreboard>div{gap:2px}
+ .game-card .game-scoreboard span{font-size:9px}
+ .game-card .game-scoreboard strong{font-size:16px}
+ .game-card .game-stage-header{display:none}
+ .game-card #runner-canvas{max-height:max(150px,calc(100dvh - 135px));object-fit:contain}
+ .game-card .game-controls{margin-top:6px}
+ .game-card .game-controls button{min-height:44px;padding:8px}
 }
 @media(max-width:600px){.game-options{grid-template-columns:1fr}.game-heading{gap:8px}.game-raid{grid-template-columns:27px minmax(0,1fr);gap:5px;padding:6px}#game-joice-portrait{width:27px;height:35px}.game-raid strong{font-size:10px}.game-raid p{font-size:10px}.game-raid a{font-size:9px}}
 @media(max-width:600px){.hero h1{font-size:calc(34px - 2px*var(--hero-progress))}}
@@ -203,8 +186,8 @@ body{background:radial-gradient(ellipse at 50% 210px,#f2eef9 0,#faf9fc 44%,#fff 
 
 /* Preserva a coluna única e o fundo branco esperado no layout responsivo. */
 body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px,#f2eef9 0,#faf9fc 44%,#fff 88%)}
-.game-card{box-sizing:border-box;width:100%;max-width:900px;margin:4px auto 0}
-@media(max-width:600px){.game-card{margin:2px auto 0}}
+.game-card{box-sizing:border-box;width:100%;max-width:1120px;margin:4px auto 0}
+@media(max-width:600px){.game-card{width:calc(100% + 12px);margin:2px -6px 0}}
 
 /* A progressão passa a ser observável sem criar mais um painel. */
 #game-difficulty{display:block;color:#655575;font-size:10px;line-height:1.5}
@@ -243,11 +226,11 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
 .game-card[data-run-state="won"] .game-overlay strong{color:#315f48}
 
 /* Paisagem baixa: escolher modo não aumenta a altura nem desloca o placar. */
-@media(min-width:601px) and (max-height:500px){
- .game-card.is-expanded .game-controls{grid-template-columns:minmax(0,1fr) minmax(0,1fr);max-width:100%;width:100%;gap:8px;flex-shrink:0}
- .game-card.is-expanded .game-mode-chooser{grid-column:1;grid-row:1;align-self:stretch}
- .game-card.is-expanded .game-mode-chooser label{box-sizing:border-box;min-height:44px;padding:6px 7px;font-size:11px}
- .game-card.is-expanded .game-controls #game-start{grid-column:2;grid-row:1;min-height:44px}
+@media(min-width:480px) and (orientation:landscape) and (max-height:600px){
+ .game-card .game-controls{grid-template-columns:minmax(0,1fr) minmax(0,1fr);max-width:100%;width:100%;gap:8px;flex-shrink:0}
+ .game-card .game-mode-chooser{grid-column:1;grid-row:1;align-self:stretch}
+ .game-card .game-mode-chooser label{box-sizing:border-box;min-height:44px;padding:6px 7px;font-size:11px}
+ .game-card .game-controls #game-start{grid-column:2;grid-row:1;min-height:44px}
 }
 
 /* Urna cenográfica: etapa separada da corrida, com teclado acessível. */
@@ -321,14 +304,14 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
 .game-combat-hud .game-power-reward{position:absolute;top:10px;left:154px;right:52px;width:fit-content;max-width:calc(100% - 206px);margin:0 auto;padding:6px 8px;border:1px solid #ffffff40;border-radius:9px;background:#21384cdd;color:#f8edc9;font:700 10px/1.35 system-ui;text-align:center;pointer-events:none}
 .game-power-reward[hidden]{display:none}
 .game-combat-hud .sr-only,.game-viewport .game-hud.sr-only{width:1px;height:1px;min-height:0;margin:-1px;padding:0;border:0;overflow:hidden}
-@media(orientation:landscape) and (max-height:500px){.is-expanded #runner-canvas{max-height:calc(100dvh - 135px)}}
 @media(max-width:380px){.game-combat-hud{--meter-height:32px}.combat-player{left:7px;top:8px}.game-combat-hud .game-boss{right:5px;top:8px}.game-combat-hud .game-power-reward{font-size:9px;padding:5px}}
-/* Commands stay inside a bounded gear panel, including expanded play. */
+/* Commands remain reachable on short displays. */
 #game-settings>.game-settings-content{max-height:min(68dvh,390px);overflow-y:auto;overscroll-behavior:contain;padding:12px;gap:10px}
 #game-settings .game-instructions{font-size:11px;line-height:1.45}
-.is-expanded .game-settings{display:block}
-.is-expanded .game-actions{padding-right:44px}
-.is-expanded #game-settings>.game-settings-content{position:absolute;top:54px;left:12px;right:12px;z-index:12;max-height:calc(100dvh - 72px);margin:0;background:#fff;box-shadow:0 12px 32px #18223b22}
+@media(min-width:480px) and (orientation:landscape) and (max-height:600px){
+ #game-settings>.game-settings-content{position:absolute;top:63px;left:12px;right:12px;z-index:12;max-height:calc(100dvh - 82px);margin:0;background:#fff;box-shadow:0 12px 32px #18223b22}
+ .game-card:is([data-run-state="over"],[data-run-state="prison"]) #runner-canvas{min-height:clamp(175px,calc(100dvh - 145px),270px)}
+}
 
 @media(max-width:380px){.game-combat-hud[data-combat="true"] .combat-player{gap:4px}.game-combat-hud[data-combat="true"] .game-aid-bar,.game-combat-hud[data-combat="true"] #game-reserve-shield{width:45px}}
 @media(max-width:600px){.game-combat-hud .game-power-reward{top:54px;left:8px;right:8px;max-width:calc(100% - 16px)}}

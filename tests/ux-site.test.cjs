@@ -371,11 +371,10 @@ test('derrota preserva a frase e explica a evasão do ataque recebido',async()=>
  }finally{await context.close();}
 });
 
-test('ampliar mantém controles na tela e Escape recolhe sem pausar',async()=>{
+test('pista abre ampla em paisagem e Escape não recolhe nem pausa',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:844,height:390},hasTouch:true,isMobile:true});
  try{
-  await page.locator('#game-expand').click();
-  assert.equal(await page.locator('#game-expand').getAttribute('aria-pressed'),'true');
+  assert.equal(await page.locator('#game-expand').count(),0);
   await begin(page);
   const track=await page.locator('#runner-canvas').boundingBox();
   assert.ok(track.height>=175,`ampliação em paisagem mantém uma pista legível: ${track.height}px`);
@@ -383,7 +382,7 @@ test('ampliar mantém controles na tela e Escape recolhe sem pausar',async()=>{
    const r=await page.locator('#'+id).boundingBox();assert.ok(r.y>=0&&r.y+r.height<=391,`${id} cabe no modo ampliado: ${JSON.stringify(r)}`);
   }
   await page.locator('#runner-canvas').press('Escape');
-  assert.equal(await page.locator('#game-expand').getAttribute('aria-pressed'),'false');
+  assert.equal((await page.locator('#runner-canvas').boundingBox()).width,track.width);
   assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
@@ -404,7 +403,7 @@ test('falha de módulo oferece recarregar em vez de carregar eternamente',async(
 test('controles aguardam a inicialização antes de aceitar mudanças',async()=>{
  const {context,page,errors}=await open({blockEntry:true});
  try{
-  for(const id of ['game-sound','game-expand','game-crouch-mode','game-effects','game-assist']){
+  for(const id of ['game-sound','game-crouch-mode','game-effects','game-assist']){
    assert.equal(await page.locator('#'+id).isEnabled(),false,`${id} não aceita ação que seria perdida antes do módulo`);
   }
   assert.deepEqual(errors,[]);
@@ -426,7 +425,6 @@ test('HUD do chefão fica no canto direito da pista sem deslocar pista ou contro
  for(const viewport of [{width:320,height:568},{width:844,height:390}]){
   const {context,page,errors}=await open({instrument:true,viewport});
   try{
-   if(viewport.width===844)await page.locator('#game-expand').click();
    await page.locator('#game-mode-infinite').check();await begin(page);
    const beforeCanvas=await page.locator('#runner-canvas').boundingBox(),beforeControls=await page.locator('#runner-canvas').boundingBox();
    await page.evaluate(()=>{__testRun.nextBossAt=0;__testRun.bossBag=['lula'];__testRun.nextRaid=1000;});
@@ -464,7 +462,7 @@ test('HUD do chefão fica no canto direito da pista sem deslocar pista ou contro
 for(const initialSearch of ['', '?ui=20261111-run-controls', '?ui=20261115-custom-controls'])test('HTML antigo no cache se atualiza sem travar a inicialização '+initialSearch,async()=>{
  const {context,page,errors}=await open({legacyFirst:true,initialSearch});
  try{
-  await page.waitForURL(url=>url.searchParams.get('ui')==='20261115-boss-controls', {timeout:4000});
+  await page.waitForURL(url=>url.searchParams.get('ui')==='20261115-wide-game', {timeout:4000});
   await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
   assert.equal(await page.locator('#game-settings').count(),1);
   assert.match(await page.locator('#days').textContent(),/^\d+$/);
@@ -1008,7 +1006,6 @@ test('vitória sobre Dilma libera vento e botão T, e Flávio atira também fora
 for(const viewport of [{width:320,height:568},{width:390,height:844},{width:1440,height:900},{width:844,height:390}])test(`indicadores compactos e controles ficam dentro da pista: ${viewport.width}px`,async()=>{
  const {context,page,errors}=await open({instrument:true,viewport});
  try{
-  if(viewport.width===844)await page.locator('#game-expand').click();
   await begin(page);await page.evaluate(async()=>{
    const r=__testRun,{storyBossAt}=await import('./runner-bosses.mjs');
    for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
@@ -1150,7 +1147,6 @@ test('botão com munição vazia mantém tamanho compacto e deixa Flávio livre 
 for(const viewport of [{width:320,height:844},{width:390,height:844},{width:844,height:390}])test(`HUD limpo esconde vida na corrida e mostra só no chefe: ${viewport.width}px`,async()=>{
  const {context,page,errors}=await open({instrument:true,viewport});
  try{
-  if(viewport.width===844)await page.locator('#game-expand').click();
   await begin(page);await page.evaluate(()=>{const r=__testRun;for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;r.obstacles=[];r.pickups=[];r.ammo=4;r.allyShieldProgress=3;});
   await page.waitForFunction(()=>document.getElementById('game-weapon-level').textContent==='4/6');
   assert.equal(await page.locator('#game-hero-health').isVisible(),false,'vida não aparece durante a corrida');
@@ -1309,14 +1305,18 @@ test('configurações bloqueiam teclas e controles da pista sem gastar supriment
  }finally{await context.close();}
 });
 
-test('engrenagem ampliada cabe em paisagem e Esc cancela a captura sem fechar o jogo',async()=>{
- const {context,page,errors}=await open({viewport:{width:844,height:390}});
+for(const viewport of [{width:568,height:320},{width:844,height:390}])test(`engrenagem ampliada cabe em paisagem e Esc cancela a captura: ${viewport.width}px`,async()=>{
+ const {context,page,errors}=await open({viewport});
  try{
-  await page.locator('#game-expand').click();await page.locator('#game-settings summary').click();
+  await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
+  await page.locator('#game-settings summary').click();
   assert.equal(await page.locator('#game-control-bindings tbody tr').count(),8);
-  const panel=await page.locator('#game-settings>.game-settings-content').boundingBox();assert.ok(panel.y>=0&&panel.y+panel.height<=391,'comandos cabem na tela ampliada');
+  await page.waitForFunction(()=>{
+   const panel=document.querySelector('#game-settings>.game-settings-content').getBoundingClientRect();
+   return panel.height>0&&panel.top>=0&&panel.bottom<=innerHeight+1;
+  });
   await page.locator('[data-bind-action=jump][data-bind-device=keyboard]').click();await page.keyboard.press('Escape');
-  assert.equal(await page.locator('#game-expand').getAttribute('aria-pressed'),'true');assert.equal(await page.locator('#game-settings').evaluate(e=>e.open),true);
+  assert.equal(await page.locator('#game-expand').count(),0);assert.equal(await page.locator('#game-settings').evaluate(e=>e.open),true);
   assert.match(await page.locator('#game-control-status').textContent(),/cancelada/);assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });

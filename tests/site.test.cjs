@@ -308,7 +308,7 @@ test('desktop replica a coluna única do celular sem excesso de texto exposto', 
       assert.equal(geometry.overflow,false,`overflow na largura ${width}`);
       assert.equal(await page.locator('#titulo').isVisible(),true,`título do site visível em ${width}px`);
       assert.ok(geometry.hero.width <= 540,`hero não deve virar grade desktop em ${width}: ${geometry.hero.width}`);
-      assert.ok(geometry.game.width<=900 && geometry.game.width>=geometry.hero.width,`largura útil da pista: ${width}`);
+      assert.ok(geometry.game.width<=1120 && geometry.game.width>=geometry.hero.width,`largura útil da pista: ${width}`);
       assert.ok(Math.abs((geometry.hero.x+geometry.hero.width/2)-(geometry.game.x+geometry.game.width/2))<3,`colunas desalinhadas: ${width}`);
       assert.ok(geometry.photoRight<=geometry.counterX+1 || geometry.photoBottom<=geometry.counterY+1,`retrato não deve cobrir a contagem: ${width}`);
       assert.ok(geometry.viewportWidth >= 240 && geometry.viewportHeight >= 150,`pista legível em ${width}: ${JSON.stringify({w:geometry.viewportWidth,h:geometry.viewportHeight})}`);
