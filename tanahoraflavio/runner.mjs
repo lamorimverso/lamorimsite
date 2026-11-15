@@ -142,8 +142,7 @@ function initRunner() {
   function updateUI() {
     run.reducedMotion=prefersReducedMotion();
     if(run.boss)run.boss.reducedMotion=run.reducedMotion;
-    const routeRun=run.status==="ready"?{...run,mode:selectedMode()}:run;
-    const stage=routeStageFor(routeRun),stages=routeStagesFor(routeRun),score=scoreFor(run),difficulty=difficultyAt(run.distance,run.elapsed);
+    const stage=routeStageFor(run),stages=routeStagesFor(run),score=scoreFor(run),difficulty=difficultyAt(run.distance,run.elapsed);
     const transition=routeTransitionFor(run),banner=$("game-transition");
     // Destinations remain accessible; the scenery itself communicates transitions.
     banner.hidden=true;
@@ -483,7 +482,7 @@ function initRunner() {
     moveRun(run,Number(right)-Number(left)||(pointer?.direction||0));
   }
   $("game-start").addEventListener("click",()=>begin());
-  $("game-mode-chooser").addEventListener("change",()=>{if(run.status==="ready")updateUI();});
+  $("game-mode-chooser").addEventListener("change",()=>{if(run.status==="ready"){run.mode=selectedMode();updateUI();draw();}});
   for(const id of STORY_OPTIONAL_IDS){
     const b=optionalStoryBossAt(id),button=document.createElement('button');
     if(!b)continue;

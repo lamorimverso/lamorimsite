@@ -1323,6 +1323,8 @@ test('rota de São Paulo, Brasília final e Infinito mantêm o destino correto',
   assert.equal(await page.locator('#game-route li').count(),8,'rota acompanha a História já selecionada na abertura');
   await page.locator('#game-mode-infinite').check();
   assert.equal(await page.locator('#game-route li').count(),6,'rota acompanha o modo Infinito antes da largada');
+  assert.equal(await page.locator('#game').getAttribute('data-run-mode'),'endless');
+  assert.doesNotMatch(await page.locator('#game-stage-time').textContent(),/História/);
   await page.locator('#game-mode-story').check();
   await begin(page);
   for(const [index,id] of [[2,'sao-paulo'],[7,'brasilia-final']]){
