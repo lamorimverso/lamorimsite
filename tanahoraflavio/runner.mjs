@@ -18,7 +18,7 @@ import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=d5e017561fd6";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=5bf1abd1a18b";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
 
-import {ALLIES,allyById} from './runner-allies.mjs?v=260a67b845c4';
+import {allyById} from './runner-allies.mjs?v=260a67b845c4';
 import {createPressGate,createHeldSources} from './runner-input.mjs?v=bbf7f3e16548';
 
 function initRunner() {
@@ -27,10 +27,10 @@ function initRunner() {
   if (!canvas || !section) return;
   // Uma aba pode ter conservado o HTML anterior enquanto os módulos já
   // mudaram. Atualizar a página uma vez evita inicializar sobre IDs antigos.
-  if(!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-select")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-options-panel")||!$("game-help")||!$("game-attack")||!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-expand-label")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
+  if(!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-select")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-effects")||!$("game-assist")||$("game-options-panel")||!$("game-attack")||!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-expand-label")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
     const url=new URL(location.href);
-    if(url.searchParams.get("ui")!=="20261115-custom-controls"){
-      url.searchParams.set("ui","20261115-custom-controls");location.replace(url.href);
+    if(url.searchParams.get("ui")!=="20261115-clean-game"){
+      url.searchParams.set("ui","20261115-clean-game");location.replace(url.href);
     }else{
       const button=$("game-start"),note=$("game-loading-note");
       if(button){button.disabled=false;button.textContent="Recarregar jogo";button.addEventListener("click",()=>location.reload(),{once:true});}
@@ -74,6 +74,7 @@ function initRunner() {
   let run=createRun({assisted:preferences.assisted}),frameId=0;
   run.supportAvailable=false;
   const trackPointers=new Map(),moveKeys=new Set(),jumpKeys=createPressGate(),crouchSources=createHeldSources(),attackSources=createHeldSources();
+  const attackButton=$("game-attack"),firePointers=new Set();
   const frameClock=createFrameClock(performance.now());
   let spritesReady=false,spritesFailed=false,loadedSprites=0,loadingSprites=false,landingUntil=0;
   let supportReady=false,supportLoading=false,supportFailed=false;
@@ -172,12 +173,21 @@ function initRunner() {
     $("game-weapon-select").disabled=controlsOpen()||run.status!=="running";
     const fireLabel=controlLabels().fire;
     $("game-ammo").textContent=run.boss?fireLabel+" · Disparar":"Sem arma";
-    $("game-attack").disabled=controlsOpen()||run.player.isJacare||!run.boss&&run.ammo===0;
-    $("game-attack").textContent=run.ammo>0?"◎ Disparar":run.boss?(run.player.attackHeld?"Solte":"Recarga"):"Vazio";
+    attackButton.disabled=controlsOpen()||run.player.isJacare||!run.boss&&run.ammo===0;
+    attackButton.textContent=run.ammo>0?"◎ Disparar":run.boss?(run.player.attackHeld?"Solte":"Recarga"):"Vazio";
     const ammoHint=run.ammo===0?(run.boss?"Solte o disparo para recarregar durante a luta":"Sem munição. Colete ajudantes para repor tiros"):"";
-    $("game-attack").title=ammoHint||(run.player.isJacare?"Disparo indisponível durante a transformação":"Disparar: "+fireLabel+" · "+weapon.name);
-    $("game-attack").setAttribute("aria-label","Disparar: segure para repetir; tecla "+fireLabel+"; "+weapon.name+(ammoHint?"; "+ammoHint:""));
-    $("game-attack").hidden=run.status!=="running";
+    attackButton.title=ammoHint||(run.player.isJacare?"Disparo indisponível durante a transformação":"Disparar: "+fireLabel+" · "+weapon.name);
+    attackButton.setAttribute("aria-label","Disparar: segure para repetir; tecla "+fireLabel+"; "+weapon.name+(ammoHint?"; "+ammoHint:""));
+    const hideAttack=run.status!=="running"||!run.boss;
+    if(hideAttack&&!attackButton.hidden){
+      for(const id of firePointers){
+        attackSources.set('pointer:'+id,false);
+        if(attackButton.hasPointerCapture(id))attackButton.releasePointerCapture(id);
+      }
+      firePointers.clear();
+      if(run.status==="running"&&document.activeElement===attackButton)canvas.focus({preventScroll:true});
+    }
+    attackButton.hidden=hideAttack;
 
     $("game-boss").hidden=run.status!=="running"||!run.boss;section.dataset.boss=run.boss?.type||"none";
     if(run.boss){
@@ -218,8 +228,7 @@ function initRunner() {
       (attackCueFor(bossCue())?.instruction||"Observe o próximo ataque."):
       run.status==="running"&&liveCue&&threatTimeToContact(run,liveAttack)<2?
       liveCue.instruction:"Faltam "+(100-run.passports%100)+" passaportes para +1 vida";
-    // Exibir apenas durante perigo próximo; o CSS anterior ocultava
-    // completamente este objetivo mesmo com instrução válida.
+    // Mantém a instrução de perigo disponível para tecnologias assistivas.
     const dangerVisible=!!(liveCue&&threatTimeToContact(run,liveAttack)<2);
     $("game-objective").hidden=run.status!=="running"||!!run.raid||!banner.hidden||
       (!run.boss&&!dangerVisible);
@@ -380,15 +389,11 @@ function initRunner() {
     shotSounds.reset();lastHeroShotHeard=0;
     run=createRun({assisted:preferences.assisted,mode:$("game-mode-story").checked?"story":"endless"});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);movementSounds.reset(run);landingUntil=0;
     if(!supportReady)prepareSupport();
-    $("game-settings").open=false;$("game-options-panel").open=false;$("game-help").open=false;
+    $("game-settings").open=false;
     crouchPose=0;lastPoseFrame=performance.now();
     lastCollected=0;lastPower="";lastStatus="";lastEvents=0;lastLives=1;
     resetFrameClock(frameClock,performance.now());
     updateUI();section.dispatchEvent(new Event("runner:start"));draw();resumeFromGesture();syncActivity();canvas.focus({preventScroll:true});
-  }
-  const allyGuide=$("game-allies-list");
-  if(allyGuide)for(const ally of ALLIES){
-    const item=document.createElement('li');item.textContent=ally.name+' · '+ally.label+' · '+ally.duration+' s'+(ally.stages?' · '+ally.stages.map(i=>STAGES[i].short).join(' / '):'');allyGuide.append(item);
   }
   function heroShotSound(){
     if(run.shotsFired<=lastHeroShotHeard)return;lastHeroShotHeard=run.shotsFired;
@@ -419,13 +424,16 @@ function initRunner() {
     attackSources.set(source,active);setAttackRun(run,attackSources.active);
     if(active){resumeFromGesture();if(attackRun(run))heroShotSound();draw();}
   }
-  $("game-attack").addEventListener('pointerdown',event=>{
-    if(event.button!==0)return;event.preventDefault();canvas.focus({preventScroll:true});
-    fire('pointer:'+event.pointerId,true);
-    try{$('game-attack').setPointerCapture(event.pointerId);}catch{}
+  attackButton.addEventListener('pointerdown',event=>{
+    if(event.button!==0||attackButton.hidden||attackButton.disabled)return;
+    event.preventDefault();canvas.focus({preventScroll:true});
+    firePointers.add(event.pointerId);fire('pointer:'+event.pointerId,true);
+    try{attackButton.setPointerCapture(event.pointerId);}catch{}
   });
-  for(const type of ['pointerup','pointercancel','lostpointercapture'])$('game-attack').addEventListener(type,event=>fire('pointer:'+event.pointerId,false));
-  $('game-attack').addEventListener('click',event=>{if(controlsOpen())return;if(event.detail===0){if(attackRun(run))heroShotSound();draw();}});
+  for(const type of ['pointerup','pointercancel','lostpointercapture'])attackButton.addEventListener(type,event=>{
+    if(firePointers.delete(event.pointerId))fire('pointer:'+event.pointerId,false);
+  });
+  attackButton.addEventListener('click',event=>{if(controlsOpen()||attackButton.hidden)return;if(event.detail===0){if(attackRun(run))heroShotSound();draw();}});
   function updateMovement(){
     if(controlsOpen()){moveRun(run,0);return;}
     const actions=[...moveKeys].map(code=>keyboardActionFor(preferences.controls,code));

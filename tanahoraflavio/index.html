@@ -26,9 +26,9 @@
   <title>Tá na hora, Flávio! · Contagem e minigame</title>
 
   <link rel="stylesheet" href="control-settings.css?v=4c3d536e01fd">
-  <link rel="stylesheet" href="game.css?v=e0d40522f726">
+  <link rel="stylesheet" href="game.css?v=e54341fd4f60">
   <script defer src="page-layout.js?v=d515141f39cb"></script>
-  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=cd454f2884d0"></script>
+  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=dcbad8d96448"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -92,7 +92,13 @@
           <div class="game-settings-content">
             <p class="game-instructions" id="game-instructions">Configure teclado e controle abaixo. No toque: toque para pular; deslize para mover ou abaixar. A corrida fica parada enquanto você ajusta os comandos.</p>
             <div id="game-control-bindings"></div>
-            <div class="game-options"><label for="game-crouch-mode">Abaixar<select id="game-crouch-mode" disabled><option value="hold">Deslizar e segurar</option><option value="toggle">Deslizar para alternar</option></select></label></div>
+            <div class="game-options">
+              <label for="game-crouch-mode">Abaixar<select id="game-crouch-mode" disabled><option value="hold">Deslizar e segurar</option><option value="toggle">Deslizar para alternar</option></select></label>
+              <label for="game-effects">Efeitos visuais<select id="game-effects" disabled><option value="system">Padrão do aparelho</option><option value="reduce">Reduzidos</option></select></label>
+              <label class="assist-option" for="game-assist"><input id="game-assist" type="checkbox" disabled>Ritmo mais tranquilo</label>
+            </div>
+            <p class="game-options-note">O ritmo tranquilo vale na próxima tentativa. <a href="assets/audio/README.md" target="_blank" rel="noopener noreferrer">Créditos dos áudios</a></p>
+            <div class="game-options-note" id="game-support-status" hidden>Os personagens de apoio não carregaram. A corrida continua disponível. <button type="button" id="game-support-retry" disabled>Carregar apoios</button></div>
           </div>
         </details>
         <div class="game-viewport">
@@ -167,7 +173,7 @@
             <strong id="game-transition-name">Rio de Janeiro</strong>
             <div class="game-transition-track"><span id="game-transition-progress"></span></div>
           </div>
-<p class="game-objective" id="game-objective">100 passaportes = +1 vida</p>
+<p class="sr-only" id="game-objective" hidden></p>
         </div>
 
         <p class="game-status sr-only" id="game-status" role="status" aria-live="polite">Tudo pronto. A corrida começa quando você quiser.</p>
@@ -183,16 +189,6 @@
         <p class="game-record">Recorde: <strong id="game-best">0000</strong> metros</p>
         <noscript>Habilite o JavaScript para jogar.</noscript>
       </section>
-      <details class="game-extra game-allies-guide"><summary>Ajudantes e funções</summary><ul id="game-allies-list" class="game-allies-list"></ul></details>
-      <details class="game-extra" id="game-options-panel"><summary>Opções de jogo</summary><div class="game-settings-content"><div class="game-options"><label for="game-effects">Efeitos visuais<select id="game-effects" disabled><option value="system">Padrão do aparelho</option><option value="reduce">Reduzidos</option></select></label><label class="assist-option" for="game-assist"><input id="game-assist" type="checkbox" disabled>Ritmo mais tranquilo</label></div><p class="game-options-note">O ritmo tranquilo vale na próxima tentativa. Os efeitos podem ser alterados a qualquer momento.</p><div class="game-options-note" id="game-support-status" hidden>Os personagens de apoio não carregaram. A corrida continua disponível. <button type="button" id="game-support-retry" disabled>Carregar apoios</button></div></div></details>
-        <details class="game-extra" id="game-help"><summary>Como jogar e créditos</summary><div class="game-settings-content"><p class="game-options-note">Toque na pista ou deslize para cima para pular. Deslize para baixo e segure para abaixar; solte para levantar. No teclado, os padrões são W/Espaço/↑ e ↓/S; A/D ou ←/→ movem na pista. No toque, deslize para o lado e segure para deslocar; solte para parar. Outro dedo pode pular enquanto o primeiro abaixa. O primeiro chefão é liberado após 22 km de rota. Nos confrontos, J/Z (padrão) ou o botão Disparar lançam energia; segure para repetir. Observe os avisos e atire durante a recuperação do chefe. São quatro chefões por cenário no Modo História. A pista continua em movimento durante a arena, dentro do mesmo ambiente. A cada 100 passaportes, você ganha uma vida. Cada 6 partes coletadas guardam um escudo; as reservas acumulam. E ou o botão do escudo ativa uma reserva por 6 segundos. A corrida começa com 6 tiros e não recarrega sozinha. Ajudantes repõem 3 tiros e uma parte de escudo. Todos os comandos de teclado e controle podem ser alterados na engrenagem. No controle, use analógico/direcional para mover e os botões configurados para cada ação. Na urna: direcional para escolher, A/× para pressionar, B/○ para corrigir e Start para confirmar. Nos chefes, o limite é 12 tiros: solte o disparo por 1 segundo para começar a recarregar.</p>
-<p class="game-options-note">O ritmo tranquilo reduz a velocidade da corrida e dos perigos na próxima tentativa. Na engrenagem, escolha qualquer ação e pressione a nova tecla ou comando do controle. As escolhas ficam salvas neste navegador. O botão Disparar funciona na corrida e nos confrontos, respeitando a munição. Você pode restaurar os padrões e ajustar os efeitos e a forma de abaixar.</p>
-<p class="game-options-note">O Modo História começa com uma corrida de abertura em Brasília; o primeiro chefão é liberado aos 22 km. A campanha mantém 24 confrontos: quatro em Brasília, quatro no Rio, quatro na Argentina, quatro no Paraguai, quatro na Flórida e quatro na Casa Branca. Cada grupo apresenta Sentinela, Artilheiro, Conjurador e Soberano, com dificuldade Patrulha, Tático, Elite e Chefe de cenário. Os inimigos ficam em pé em plataformas voadoras e alternam entrada, preparação, ataque e recuperação. Reduza a energia do chefão com a tecla escolhida ou o botão Disparar; a recuperação aumenta o dano. O último confronto é com o Fantasma do Comunismo, seguido da urna fictícia. O Infinito preserva a sequência de perseguição e também permite disparar contra os chefes. Personagens, cargos de combate e armas são elementos de sátira.</p>
-<p class="game-options-note">Perigos baixos pedem salto; os altos pedem abaixar. Dilma traz o vento, Simone as planilhas soltas e Soraya as cruzes com paraquedas. O Exército de Memes do Lula aparece flutuando e lança ataques altos. A pipoca é um obstáculo baixo. Zé Gotinha desencadeia uma transformação satírica em jacaré durante 10 segundos, sem interromper a corrida. Enquanto estiver como jacaré, desvie lateralmente de duas ou três ampolas cenográficas da Pfizer que aparecem espalhadas e caem em momentos diferentes usando A/D, ←/→ ou deslizando para o lado. Não é preciso apertar ↑ para voltar: o retorno a Flávio é automático após 10 segundos. A coleta limpa perigos comuns e oferece proteção inicial de 3 segundos. Taxad lança recibos de TAXA; Simone faz referência ao adesivo Gostosas do Lula e Soraya ao meme do padre de festa junina. Vacinas não transformam pessoas em jacarés, e cloroquina não reverte vacinação nem trata Covid-19.</p>
-<p class="game-options-note">Participações fictícias de apoio são verdes e aparecem espaçadas: Vorcaro atrai passaportes por 3 segundos; Milei abre um obstáculo cenográfico na Argentina; Trump alonga avisos na Flórida/Casa Branca; Santiago Peña é aliado no Paraguai. Eduardo adia a perseguição, Silas melhora a esquiva lateral, Renan busca um passaporte e Tarcísio aproxima o próximo apoio. A cada seis ajudas, você guarda um escudo de 6 segundos para usar pelo botão ou pela tecla E. Outros aliados destacam perigos, coletas, destinos e objetivos temporários. Nenhum entrega arma ao corredor. Na queda, saia da faixa marcada no chão com movimento lateral; o alvo não acompanha você.</p>
-<p class="game-options-note">O fundo é instrumental em 8 bits, sem canto. A melodia mantém o andamento e a percussão ganha intensidade na perseguição; o volume abaixa durante as vozes. Os memes curtos identificados de Lula e Janones vêm da <a href="https://cadeflavio.run/" target="_blank" rel="noopener noreferrer">referência Cadê o Flávio?</a>; são ativados por personagens e eventos correspondentes, sem narração artificial nem sorteios fora de contexto. “Defende meu pai” é Lula imitando Eduardo; “Cadê o Zé Gotinha?” também é Lula. Há também recortes oficiais identificados de Soraya, Dilma, Dino, Simone, Moraes e Boulos. Cada personagem tem efeitos próprios; efeitos não verbais são diferentes de vozes. Contextos e créditos em <a href="assets/audio/README.md" target="_blank" rel="noopener noreferrer">fontes dos áudios</a>. São gravações de arquivo e edições de memes, sem novas falas atribuídas às pessoas.</p>
-<p class="game-options-note">Fala de arquivo: “Mas a direção é correta.” — Haddad, <a href="https://radiogov.ebc.com.br/programas/bom-dia-ministro-2/curtas-ministro-preve-resultado-fiscal-melhor-que-nos-dois-governos-passados" target="_blank" rel="noopener noreferrer">Bom Dia, Ministro · Rádio Gov/EBC · 07/10/2025</a>, sobre negociações econômicas. A gravação original não se refere ao jogo. O recorte toca na chegada de Haddad e respeita o botão de som.</p>
-<p class="game-options-note">Joice aparece de surpresa e mistura ondas da PF e algemas por dez segundos, depois de um aviso curto. O áudio “toc, toc, toc” vem do <a href="https://www.camara.leg.br/evento-legislativo/65858" target="_blank" rel="noopener noreferrer">plenário da Câmara dos Deputados · 22/06/2022</a>, sobre Milton Ribeiro; não foi dito sobre Flávio. O recorte contínuo de 12,70 s vai das batidas iniciais até “É a Polícia Federal”. Áudio de arquivo da Câmara dos Deputados sob <a href="https://www.camara.leg.br/tv/termos-de-uso/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. Toca uma vez por evento e respeita o botão de som.</p></div></details>
 
     </main>
     <footer>Projeto independente de humor.</footer>
