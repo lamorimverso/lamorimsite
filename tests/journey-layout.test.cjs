@@ -206,7 +206,7 @@ test('Joice surge na pista e o fundo realmente se desloca durante a corrida',asy
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
-for(const viewport of [{width:320,height:568},{width:568,height:320},{width:844,height:390},{width:1440,height:900}])test(`derrota ${viewport.width}px mostra algemas e legenda abaixo, com nova tentativa acessível`,async()=>{
+for(const viewport of [{width:320,height:568},{width:390,height:844},{width:568,height:320},{width:844,height:390},{width:1440,height:900}])test(`derrota ${viewport.width}px mostra algemas e legenda abaixo, com nova tentativa acessível`,async()=>{
  const {context,page,errors}=await open(viewport,{instrument:true});
  try{
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();

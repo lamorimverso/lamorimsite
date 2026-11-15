@@ -369,3 +369,7 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
  #game-result-actions .game-controls{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
  #game-result-actions #game-start{grid-column:2;grid-row:1}
 }
+@media(max-width:479px){
+ .game-card[data-run-state="over"] .game-captured{max-height:82px}
+ .game-card[data-run-state="over"] .game-overlay{padding-block:9px}
+}
