@@ -1,0 +1,19 @@
+#game-control-bindings.control-bindings{min-width:0;max-width:100%;color:var(--ink,#22232b);font-size:12px;line-height:1.4}
+#game-control-bindings .control-bindings-intro,#game-control-bindings .control-bindings-device{margin:0 0 8px;overflow-wrap:anywhere}
+#game-control-bindings .control-bindings-device{color:var(--muted,#62636d);font-size:11px}
+#game-control-bindings .control-bindings-scroll{max-height:260px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;border:1px solid var(--line,#e5e5eb);border-radius:8px;scrollbar-gutter:stable}
+#game-control-bindings .control-bindings-table{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;font-size:11px}
+#game-control-bindings .control-bindings-table th,#game-control-bindings .control-bindings-table td{padding:5px 4px;text-align:left;vertical-align:middle;overflow-wrap:anywhere;border-bottom:1px solid var(--line,#e5e5eb)}
+#game-control-bindings .control-bindings-table th:first-child{width:28%;padding-left:7px}
+#game-control-bindings .control-bindings-table thead th{position:sticky;top:0;z-index:1;background:var(--pale,#f7f5fa);color:var(--muted,#62636d);font-weight:650;font-size:10px}
+#game-control-bindings .control-bindings-table tbody th{font-weight:600}
+#game-control-bindings .control-bindings-table tbody tr:last-child>*{border-bottom:0}
+#game-control-bindings button{min-height:36px;border:1px solid #d9d3e4;border-radius:6px;background:#fff;color:var(--dark,#35285c);font:inherit;line-height:1.3;padding:6px 8px;white-space:normal;overflow-wrap:anywhere;touch-action:manipulation}
+#game-control-bindings .control-binding{display:block;width:100%;min-width:0;padding:6px 4px;font-size:11px}
+#game-control-bindings button:hover{background:#f7f5fa;border-color:#b8a9ce}
+#game-control-bindings button:focus-visible,#game-control-bindings .control-bindings-scroll:focus-visible{outline:3px solid #7257a2;outline-offset:2px}
+#game-control-bindings .control-binding[aria-pressed="true"]{border-color:var(--purple,#55419a);background:#f0ebfa;color:#35285c;box-shadow:inset 0 0 0 1px var(--purple,#55419a)}
+#game-control-bindings .control-bindings-status{min-height:2.8em;margin:8px 0;color:var(--muted,#62636d);font-size:11px;overflow-wrap:anywhere}
+#game-control-bindings .control-bindings-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+#game-control-bindings .control-bindings-actions button{font-size:11px}
+#game-control-bindings .control-bindings-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}

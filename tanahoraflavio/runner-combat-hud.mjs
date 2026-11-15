@@ -23,25 +23,27 @@ function portrait(canvas,type,ready){
  context.clearRect(0,0,canvas.width,canvas.height);
  context.drawImage(source,left,top,width,height,(canvas.width-width*scale)/2,(canvas.height-height*scale)/2,width*scale,height*scale);artKeys.set(canvas,type);
 }
-export function updateCombatHUD(run,{spritesReady=false}={}){
+export function updateCombatHUD(run,{spritesReady=false,controlLabels={power:'Q',shield:'E'}}={}){
  const $=id=>document.getElementById(id),active=run.status==='running',weapon=heroPowerFor(run);
  $('game-combat-hud').hidden=!active;
  if(!active)return;
+ const combat=!!run.boss;$('game-combat-hud').dataset.combat=String(combat);
  const life=$('game-hero-health'),charge=$('game-power-charge'),level=run.powerLevels?.[run.activePower]||1;
+ life.parentElement.hidden=!combat;charge.hidden=!combat;
  meter(life,run.player.hp,run.player.maxHp,run.player.hp+' de '+run.player.maxHp+' pontos de vida');
  const capacity=ammoCapacityFor(run),ammo=run.ammo??6;
  charge.setAttribute('aria-label','Munição de '+weapon.name);
  meter(charge,ammo,capacity,ammo+' de '+capacity+' tiros · '+(run.boss?(run.player.attackHeld?'Solte o disparo para recarregar':'Recarrega ao parar de atirar'):'Reponha munição com ajudantes'));
  charge.style.setProperty('--meter-color',weapon.color);
- const select=$('game-weapon-select');select.title=weapon.name+' · nível '+level+' · '+weapon.description+' · Q troca o poder';
+ const select=$('game-weapon-select');select.setAttribute('aria-label','Poder de Flávio, '+ammo+' de '+capacity+' tiros');select.title=weapon.name+' · nível '+level+' · '+weapon.description+' · '+controlLabels.power+' troca o poder';
  $('game-power-loadout').title=select.title;$('game-weapon-level').textContent=ammo+'/'+capacity;
  const reserve=$('game-reserve-shield'),ready=run.reserveShields>0,guarded=run.shieldFor>0;
- const shieldText=ready?(guarded?'Escudo guardado; aguarde a proteção atual terminar':run.reserveShields+' escudos prontos; usar com E ou toque'):'Escudo: '+run.allyShieldProgress+'/6 ajudas';
+ const shieldText=ready?(guarded?'Escudo guardado; aguarde a proteção atual terminar':run.reserveShields+' escudos prontos; usar com '+controlLabels.shield+' ou toque'):'Escudo: '+run.allyShieldProgress+'/6 ajudas';
  reserve.setAttribute('aria-label',shieldText);reserve.setAttribute('aria-describedby','game-aid-status');reserve.title=shieldText+' · '+run.reserveShields+' reservas · '+run.allyShieldProgress+'/6 partes';
  reserve.dataset.ready=String(ready);reserve.dataset.active=String(guarded);
  $('game-shield-count').textContent=ready?'×'+run.reserveShields:guarded?Math.ceil(run.shieldFor)+'s':run.allyShieldProgress+'/6';
  $('game-shield-progress').style.width=(100*run.allyShieldProgress/6)+'%';
- portrait($('game-hero-portrait'),'flavio',spritesReady);
+ if(combat)portrait($('game-hero-portrait'),'flavio',spritesReady);
  const icon=$('game-weapon-icon');
  if(spritesReady&&artKeys.get(icon)!==run.activePower){
   const context=icon.getContext('2d');if(context){context.clearRect(0,0,64,64);context.save();context.translate(32,32);
