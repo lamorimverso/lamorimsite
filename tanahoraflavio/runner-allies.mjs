@@ -1,4 +1,4 @@
-import {addAmmo,addShieldPart} from './runner-supplies.mjs?v=ffd49bde7244';
+import {addAmmo,addShieldPart} from './runner-supplies.mjs?v=44c67e8a5802';
 // Papéis ficcionais de apoio: munição, partes de escudo e vantagens temporárias.
 export const ALLIES=Object.freeze([
  {id:'vorcaro',name:'Vorcaro',kind:'magnet',label:'Crédito Relâmpago · ímã de passaportes',duration:3},

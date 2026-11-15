@@ -1,24 +1,26 @@
 import {normalizeControls,keyboardActionFor,mouseActionFor,keyLabel} from './runner-control-map.mjs?v=568387e3f764';
 import {createControlSettings} from './runner-control-settings.mjs?v=25524a717d9e';
 import {createGamepadDriver} from './runner-gamepad.mjs?v=18383546c2cd';
-import {HERO_POWERS,heroPowerFor,cycleHeroPower} from './runner-earned-powers.mjs?v=27e0bb16e2f2';
-import {updateCombatHUD} from './runner-combat-hud.mjs?v=805b48034621';
+import {HERO_POWERS,heroPowerFor,cycleHeroPower} from './runner-earned-powers.mjs?v=432ca45a76e4';
+import {updateCombatHUD} from './runner-combat-hud.mjs?v=ea66877d6640';
 import {createMovementSoundDirector} from './runner-movement-audio.mjs?v=6411ef96c0d1';
-import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=f273e11b16a6';
+import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=6dc2d2659b41';
 import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=ed1b40296acc';
 import {createShotSoundTracker} from './runner-shot-events.mjs?v=a3769f250d68';
-import {bossPresentationFor} from './runner-bosses.mjs?v=8b294a2e8e86';
+import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=78e27523ed63';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=1312bb379148";
-import {bossCounterWindow} from './runner-bosses.mjs?v=8b294a2e8e86';
-import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=dddd6a6cbe3c';
-import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=40174ceffa76";
-import { createGameAudio } from "./runner-audio.mjs?v=2a8c89ab71ed";
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=67afc2bc5754";
+import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=01fa5c1830b5';
+import {drawCampaignCrowd} from './runner-campaign-art.mjs?v=b9520dc88107';
+import {bossCounterWindow} from './runner-bosses.mjs?v=78e27523ed63';
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=3e6fb93bfef5';
+import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=8113d5b47b32";
+import { createGameAudio } from "./runner-audio.mjs?v=3d359f7e85fe";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=d5e017561fd6";
-import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=5bf1abd1a18b";
+import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=527b9c811649";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
 
-import {allyById} from './runner-allies.mjs?v=260a67b845c4';
+import {allyById} from './runner-allies.mjs?v=17aae58c9bc9';
 import {createPressGate,createHeldSources} from './runner-input.mjs?v=bbf7f3e16548';
 
 function initRunner() {
@@ -27,10 +29,10 @@ function initRunner() {
   if (!canvas || !section) return;
   // Uma aba pode ter conservado o HTML anterior enquanto os módulos já
   // mudaram. Atualizar a página uma vez evita inicializar sobre IDs antigos.
-  if(!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-cycle")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-effects")||!$("game-assist")||$("game-options-panel")||!$("game-attack")||!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||$("game-expand")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
+  if(!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-cycle")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-effects")||!$("game-assist")||$("game-options-panel")||!$("game-attack")||!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-battle-cue")||!$("game-practice")||!$("game-route")||$("game-expand")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
     const url=new URL(location.href);
-    if(url.searchParams.get("ui")!=="20261115-wide-game"){
-      url.searchParams.set("ui","20261115-wide-game");location.replace(url.href);
+    if(url.searchParams.get("ui")!=="20261115-campaign-hierarchy"){
+      url.searchParams.set("ui","20261115-campaign-hierarchy");location.replace(url.href);
     }else{
       const button=$("game-start"),note=$("game-loading-note");
       if(button){button.disabled=false;button.textContent="Recarregar jogo";button.addEventListener("click",()=>location.reload(),{once:true});}
@@ -96,7 +98,6 @@ function initRunner() {
   $("game-sound").setAttribute("aria-pressed",String(audio.enabled));
   let lastRaidKey="",lastPageMotion=null,lastHeroShotHeard=0;
   const campaignPhases=["Convenções","Campanha","1º turno","Travessia do Paraguai","Reta final","Diplomação"];
-  const routeSeconds=()=>campaignRouteDistance(run)/SCENE_DISTANCE*SCENE_SECONDS;
   const pad = number => String(number).padStart(2, "0");
   // A preferência pode mudar enquanto o jogo está aberto.
   const motionPreference = window.matchMedia?.("(prefers-reduced-motion: reduce)");
@@ -115,18 +116,40 @@ function initRunner() {
     return (names[hit.type]||"Perigo")+" baixo: sincronize o salto para desviar.";
   }
 
+  let renderedRoute=null;
+  const campaignRows=Array.from({length:STORY_BOSS_COUNT},(_,i)=>storyBossAt(i));
+  function updateItinerary(stages,active){
+    const route=$('game-route');
+    if(renderedRoute!==stages){
+      renderedRoute=stages;
+      route.replaceChildren(...stages.map(stage=>{
+        const item=document.createElement('li');item.dataset.stage=stage.id;
+        const label=document.createElement('strong');label.textContent=stage.name;item.append(label);
+        if(stages!==STAGES){
+          const line=campaignRows.filter(row=>row.stageId===stage.id).map(row=>bossRoleLabel(row)+' · '+row.name).join(' / ');
+          const cast=document.createElement('small');cast.textContent=line;item.append(cast);
+        }
+        return item;
+      }));
+    }
+    for(const [i,stop] of [...route.children].entries()){
+      stop.classList.toggle('is-current',i===active.index);
+      stop.classList.toggle('is-done',i<active.index);
+      if(i===active.index)stop.setAttribute('aria-current','step');else stop.removeAttribute('aria-current');
+    }
+  }
   function updateUI() {
     run.reducedMotion=prefersReducedMotion();
     if(run.boss)run.boss.reducedMotion=run.reducedMotion;
-    const clock=routeSeconds(),stage=stageAt(clock),score=scoreFor(run),difficulty=difficultyAt(run.distance,run.elapsed);
-    const transition=stageTransitionAt(clock),banner=$("game-transition");
+    const stage=routeStageFor(run),stages=routeStagesFor(run),score=scoreFor(run),difficulty=difficultyAt(run.distance,run.elapsed);
+    const transition=routeTransitionFor(run),banner=$("game-transition");
     // Destinations remain accessible; the scenery itself communicates transitions.
     banner.hidden=true;
     if(transition.active){
       $("game-transition-name").textContent=transition.to.name;
       $("game-transition-progress").style.width=Math.round(transition.progress*100)+"%";
     }
-    if((run.status==="over"||run.status==="won")&&score>best){best=score;try{localStorage.setItem(recordKey,String(best));}catch{}}
+    if(!run.practice&&(run.status==="over"||run.status==="won")&&score>best){best=score;try{localStorage.setItem(recordKey,String(best));}catch{}}
     $("game-score").textContent=String(score).padStart(4,"0");
     $("game-lives").textContent=String(run.lives);
     const weapon=heroPowerFor(run),cycle=$("game-weapon-cycle"),labels=controlLabels();
@@ -145,13 +168,13 @@ function initRunner() {
     $("game-passports").textContent=String(run.passports);
     $("game-passport-next").textContent=String(100-run.passports%100);
     $("game-passport-progress").style.width=run.passports%100+"%";
-    const lap=Math.floor(campaignRouteDistance(run)/(SCENE_DISTANCE*STAGES.length))+1;
+    const lap=Math.floor(campaignRouteDistance(run)/(SCENE_DISTANCE*stages.length))+1;
 
-    $("game-phase").textContent="Cenário "+(stage.index+1)+" de "+STAGES.length+" · "+(run.mode==="story"?"História "+Math.min(run.bossesDefeated,STORY_BOSS_COUNT)+"/"+STORY_BOSS_COUNT:"Volta "+lap);
+    $("game-phase").textContent="Cenário "+(stage.index+1)+" de "+stages.length+" · "+(run.mode==="story"?"História "+Math.min(run.bossesDefeated,STORY_BOSS_COUNT)+"/"+STORY_BOSS_COUNT:"Volta "+lap);
     $("game-stage-name").textContent=stage.name;
     const cast=characterProgressAt(run);
     $("game-difficulty").textContent="Risco "+difficulty.level+" · "+cast.available+"/"+cast.total+" rivais";
-    $("game-stage-time").textContent=run.status==="ballot"?"Etapa final · Urna":run.status==="prison"?"Prisão fictícia":run.status==="won"?"História concluída!":run.status==="over"?"Fim da corrida":run.boss?.combat?"Confronto "+(run.boss.slot+1)+"/4 · "+run.boss.rankName:run.boss?run.boss.remaining+" ataques para escapar do chefão":run.raid?"Perseguição especial":run.mode==="story"?"Chefões "+run.bossesDefeated+"/"+STORY_BOSS_COUNT:campaignPhases[stage.index];
+    $("game-stage-time").textContent=run.status==="ballot"?"Etapa final · Urna":run.status==="prison"?"Prisão fictícia":run.status==="won"?"História concluída!":run.status==="over"?"Fim da corrida":run.boss?.combat?bossRoleLabel(run.boss)+" · "+run.boss.name:run.boss?run.boss.remaining+" ataques para escapar do chefão":run.raid?"Perseguição especial":run.mode==="story"?"História "+run.bossesDefeated+"/"+STORY_BOSS_COUNT:campaignPhases[stage.index];
     $("game-best").textContent=best.toLocaleString("pt-BR");
     $("game-time").textContent=pad(Math.floor(run.elapsed/60))+":"+pad(Math.floor(run.elapsed%60));
     section.dataset.runState=run.status;section.dataset.runMode=run.mode;
@@ -174,12 +197,12 @@ function initRunner() {
     $("game-ammo").parentElement.hidden=!run.boss;
     const fireLabel=labels.fire;
     $("game-ammo").textContent=run.boss?fireLabel+" · Disparar":"Sem arma";
-    attackButton.disabled=controlsOpen()||run.player.isJacare||!run.boss&&run.ammo===0;
+    attackButton.disabled=controlsOpen()||run.boss?.traversal||run.player.isJacare||!run.boss&&run.ammo===0;
     attackButton.dataset.ammo=run.ammo>0?"ready":run.player.attackHeld?"held":"reload";
     const ammoHint=run.ammo===0?(run.boss?(run.player.attackHeld?"Solte o disparo para recarregar":"Recarregando munição"):"Sem munição. Colete ajudantes para repor tiros"):"";
     attackButton.title=ammoHint||(run.player.isJacare?"Disparo indisponível durante a transformação":"Disparar: "+fireLabel+" · "+weapon.name);
     attackButton.setAttribute("aria-label","Disparar: segure para repetir; tecla "+fireLabel+"; "+weapon.name+(ammoHint?"; "+ammoHint:""));
-    const hideAttack=run.status!=="running"||!run.boss;
+    const hideAttack=run.status!=="running"||!run.boss||run.boss.traversal;
     if(hideAttack&&!attackButton.hidden){
       for(const id of firePointers){
         attackSources.set('pointer:'+id,false);
@@ -190,12 +213,12 @@ function initRunner() {
     }
     attackButton.hidden=hideAttack;
 
-    $("game-boss").hidden=run.status!=="running"||!run.boss;section.dataset.boss=run.boss?.type||"none";
+    $("game-boss").hidden=run.status!=="running"||!run.boss||run.boss.traversal;section.dataset.traversal=String(!!run.boss?.traversal);section.dataset.boss=run.boss?.type||"none";
     if(run.boss){
       const b=run.boss;
       section.dataset.bossPhase=b.phase||'attack';
       if(b.combat){
-       $("game-boss-name").textContent=b.name+" · "+b.className+" · "+b.rankName+" "+b.rank;
+       $("game-boss-name").textContent=b.name+" · "+bossRoleLabel(b);
        $("game-boss-health").setAttribute("aria-valuemax",String(b.maxHp));
        $("game-boss-health").setAttribute("aria-valuenow",String(b.hp));
        $("game-boss-health").setAttribute("aria-label","Energia de "+b.name);
@@ -220,6 +243,16 @@ function initRunner() {
     const liveAttack=run.obstacles.filter(o=>!o.passed&&!o.counted)
       .sort((a,b)=>threatTimeToContact(run,a)-threatTimeToContact(run,b))[0];
     const liveCue=attackCueFor(liveAttack);
+    const b=run.boss,combatCue=b?.combat&&(b.phase==='charge'?b.plannedAttack:b.phase==='attack'&&liveAttack?.bossAttack?liveAttack:null);
+    const opening=b?.combat&&!b.traversal&&bossCounterWindow(b).label;
+    const cue=$("game-battle-cue");
+    cue.hidden=run.status!=="running"||!b?.role||(!opening&&!combatCue&&!b.traversal);
+    cue.dataset.opening=String(!!opening);
+    if(!cue.hidden){
+      $("game-battle-attack").textContent=opening?'Guarda aberta':b.traversal?b.name:(attackCueFor(combatCue)?.label||b.powerName);
+      $("game-battle-action").textContent=opening?'Contra-ataque':combatCue?.action==='jump'?'Pule':combatCue?.action==='crouch'?'Abaixe':combatCue?.action==='move'?'Desvie para o lado':'Atravesse a passagem';
+    }
+
     const cameoAttack=run.cameo?run.obstacles.find(o=>o.sourceActor===run.cameo.type&&!o.passed):null;
     $("game-threat").textContent=run.raid?.phase==="active"?"PF em operação":
       liveAttack?.approach==="rear"?"⚠ Por trás · "+(liveCue?.label||"Inimigo"):
@@ -248,6 +281,7 @@ function initRunner() {
       lastRaidKey="";
     }
     $("game-start").disabled=!spritesReady&&!spritesFailed;
+    for(const button of $("game-practice").children)button.disabled=!spritesReady;
     $("game-start").textContent=!spritesReady?(spritesFailed?"Tentar carregar desenhos":"Carregando desenhos · "+loadedSprites+"/"+CORE_SPRITE_SHEET_COUNT):run.status==="ready"?"Começar corrida":run.status==="won"?"Jogar novamente":run.status==="over"?"Tentar de novo":"Recomeçar corrida";
     $("game-loading-note").hidden=spritesReady;
     $("game-loading-note").classList.toggle("sr-only",!spritesFailed);
@@ -271,8 +305,8 @@ function initRunner() {
     }
     $("game-start-hint").hidden=run.status!=="ready";
     if(run.status==="won"){
-      $("game-overlay-title").textContent="História concluída!";
-      $("game-overlay-copy").textContent="Código 13 confirmado! Você concluiu a etapa final da campanha. "+score.toLocaleString("pt-BR")+" m percorridos.";
+      $("game-overlay-title").textContent=run.practice?"Desafio concluído!":"História concluída!";
+      $("game-overlay-copy").textContent=run.practice?"Você superou o desafio de "+run.practice.name+".":"Código 13 confirmado! Você concluiu a etapa final da campanha. "+score.toLocaleString("pt-BR")+" m percorridos.";
       $("game-overlay-badge").textContent="Vitória fictícia";
       if(lastStatus!=="won")section.dispatchEvent(new Event("runner:won"));
     }
@@ -283,7 +317,7 @@ function initRunner() {
       if(lastStatus!=="over")section.dispatchEvent(new Event("runner:over"));
     }
     if(lastStatus!==run.status||lastStage!==stage.index||lastCollected!==run.collected||lastPower!==power||lastLives!==run.lives||lastEvents!==run.events){
-      let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="ballot"?"Etapa final: digite dois números na urna fictícia.":run.status==="prison"?"Flávio foi preso. A campanha vai recomeçar.":run.status==="won"?"História concluída: todos os "+STORY_BOSS_COUNT+" chefões superados.":run.status==="over"?"Foi pego pela Polícia Federal! "+dodgeHint()+" "+score+" metros percorridos. Toque em Tentar de novo.":stage.name+" · pule ou abaixe conforme o perigo.";
+      let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="ballot"?"Etapa final: digite dois números na urna fictícia.":run.status==="prison"?"Flávio foi preso. A campanha vai recomeçar.":run.status==="won"?(run.practice?"Desafio opcional concluído.":"História concluída. Todas as "+STORY_BOSS_COUNT+" etapas foram superadas."):run.status==="over"?"Foi pego pela Polícia Federal! "+dodgeHint()+" "+score+" metros percorridos. Toque em Tentar de novo.":stage.name+" · pule ou abaixe conforme o perigo.";
       if(run.status==="running"){
         if(run.events>lastEvents)message=run.event;
         else if(lastCollected!==run.collected)message="Passaporte coletado. Faltam "+(100-run.passports%100)+" para uma vida.";
@@ -291,7 +325,7 @@ function initRunner() {
         if(lastStage>=0&&lastStage!==stage.index){message="Chegamos a "+stage.name+"! A corrida continua.";audio.effect("stage");}
       }
       $("game-status").textContent=message;
-      section.querySelectorAll("[data-stage]").forEach((stop,i)=>{stop.classList.toggle("is-current",i===stage.index);stop.classList.toggle("is-done",i<stage.index);if(i===stage.index)stop.setAttribute("aria-current","step");else stop.removeAttribute("aria-current");});
+      updateItinerary(stages,stage);
       lastStatus=run.status;lastStage=stage.index;lastCollected=run.collected;lastPower=power;lastLives=run.lives;lastEvents=run.events;
     }
   }
@@ -382,13 +416,13 @@ function initRunner() {
     }).catch(()=>{supportLoading=false;supportFailed=true;updateUI();});
   }
   $("game-support-retry").addEventListener("click",prepareSupport);
-  function begin(){
+  function begin(practiceId){
     if(!spritesReady){if(spritesFailed)prepareSprites();return;}
     cancelAnimationFrame(frameId);frameId=0;resumeFromGesture();
     audio.stop();audio.prime();audio.actorCue("flavio");voices.reset();lastRaidKey="";
     clearControls();
     shotSounds.reset();lastHeroShotHeard=0;
-    run=createRun({assisted:preferences.assisted,mode:$("game-mode-story").checked?"story":"endless"});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);movementSounds.reset(run);landingUntil=0;
+    run=createRun({assisted:preferences.assisted,mode:practiceId||$("game-mode-story").checked?"story":"endless",practiceId});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);movementSounds.reset(run);landingUntil=0;
     if(!supportReady)prepareSupport();
     $("game-settings").open=false;
     crouchPose=0;lastPoseFrame=performance.now();
@@ -446,7 +480,13 @@ function initRunner() {
     const pointer=[...trackPointers.values()].filter(p=>p.action==="move").at(-1);
     moveRun(run,Number(right)-Number(left)||(pointer?.direction||0));
   }
-  $("game-start").addEventListener("click",begin);
+  $("game-start").addEventListener("click",()=>begin());
+  for(const id of STORY_OPTIONAL_IDS){
+    const b=optionalStoryBossAt(id),button=document.createElement('button');
+    if(!b)continue;
+    button.type='button';button.disabled=!spritesReady;button.textContent=b.name+' · '+routeStagesFor({mode:'story'})[b.stageIndex].name;
+    button.addEventListener('click',()=>begin(id));$("game-practice").append(button);
+  }
   function confirmBallot(){
     const outcome=ballotConfirm(run);
     if(!outcome)return;
@@ -621,6 +661,10 @@ function initRunner() {
   }
   function bossFigure(){
     const b=run.boss;if(!b)return;
+    if(b.type==='povo'){
+      drawCampaignCrowd(ctx,{x:virtualWidth*.71,y:WORLD.ground-3,scale:virtualWidth<650?.75:1,phase:run.elapsed,reducedMotion:prefersReducedMotion()});
+      return;
+    }
     const phase=run.elapsed*9;
     const arenaPose=bossArenaPose(b,virtualWidth);
     const pose={x:arenaPose.x,y:WORLD.ground-arenaPose.platformY,scale:1};
@@ -628,8 +672,9 @@ function initRunner() {
     const presentation=bossPresentationFor(b,run.obstacles);
     const {preparing,attacking}=presentation;
     ctx.save();ctx.translate(bossX,bossY);
-    drawHoverEnemy(ctx,{type:b.type,x:0,y:0,scale:pose.scale,phase,...presentation,hurt:b.hitFlashFor>0,reducedMotion:prefersReducedMotion(),classId:b.classId,armyVariant:STAGES[b.stageIndex]?.id,enraged:b.enraged});
+    drawHoverEnemy(ctx,{type:b.type,x:0,y:0,scale:pose.scale,phase,...presentation,hurt:b.hitFlashFor>0,reducedMotion:prefersReducedMotion(),classId:b.classId,armyVariant:b.stageId||STAGES[b.stageIndex]?.id,enraged:b.enraged});
     ctx.restore();
+    if(b.role)return;
     const counter=b.combat&&bossCounterWindow(b),cue=b.phase==='charge'?b.plannedAttack:bossCue();
     const showDodge=b.combat?b.phase==='charge':b.nextAttack<.65&&b.fired<b.total&&!run.obstacles.some(o=>o.bossAttack&&!o.counted);
     const action=showDodge&&cue?(cue.action==='move'?"↔ DESVIE":cue.action==='jump'?"↑ PULE":"↓ ABAIXE"):"";
@@ -727,9 +772,9 @@ function initRunner() {
     }
     if(["route","destination"].includes(aid.kind)){
       // Compact itinerary: keep the allies' route information without scene captions.
-      const index=stageAt(routeSeconds()).index;
-      for(let i=0;i<STAGES.length;i++){
-        ctx.fillStyle=i===index?"#267448":"#b8d0bf";ctx.beginPath();ctx.arc(virtualWidth-(STAGES.length*14+21)+i*14,83,i===index?4:2.5,0,Math.PI*2);ctx.fill();
+      const index=routeStageFor(run).index,total=routeStagesFor(run).length;
+      for(let i=0;i<total;i++){
+        ctx.fillStyle=i===index?"#267448":"#b8d0bf";ctx.beginPath();ctx.arc(virtualWidth-(total*14+21)+i*14,83,i===index?4:2.5,0,Math.PI*2);ctx.fill();
       }
       ctx.strokeStyle="#267448";ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(virtualWidth-20,80);ctx.lineTo(virtualWidth-17,83);ctx.lineTo(virtualWidth-20,86);ctx.stroke();
     }
@@ -780,7 +825,7 @@ function initRunner() {
   }
   function draw() {
     ctx.setTransform(canvas.width/virtualWidth,0,0,canvas.height/WORLD.height,0,0);
-    drawJourneyScenery(ctx,{routeDistance:run.routeDistance,openingDistance:run.mode==="story"?STORY_OPENING_DISTANCE:0,distance:run.distance,width:virtualWidth,reducedMotion:prefersReducedMotion(),quiet:run.aid?.kind==="quiet"?Math.max(0,Math.min(1,(6-run.aid.remaining)/.35,run.aid.remaining/.35)):0});
+    drawJourneyScenery(ctx,{routeDistance:run.routeDistance,campaignStages:run.mode==='story'?STORY_STAGE_IDS:undefined,openingDistance:run.mode==="story"?STORY_OPENING_DISTANCE:0,distance:run.distance,width:virtualWidth,reducedMotion:prefersReducedMotion(),quiet:run.aid?.kind==="quiet"?Math.max(0,Math.min(1,(6-run.aid.remaining)/.35,run.aid.remaining/.35)):0});
     drawRaidAtmosphere(ctx,{strength:raidMoodFor(run.raid),width:virtualWidth,distance:run.distance,reducedMotion:prefersReducedMotion()});
     if(run.boss?.combat)drawBossArena(ctx,{width:virtualWidth,ground:WORLD.ground,state:run.boss});
     // O Fantasma do Comunismo é a figura principal do confronto final, não decoração.

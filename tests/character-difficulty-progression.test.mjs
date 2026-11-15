@@ -51,8 +51,8 @@ test('no motor, personagens aéreos só surgem após a liberação da dificuldad
   assert.ok(r.seenOverheadActors.every(actor=>tier[actor]<=core.difficultyAt(r.distance,r.elapsed).level),risk);
  }
 });
-test('História possui 24 chefões e o Infinito permanece sem final',()=>{
- assert.equal(core.STORY_BOSS_COUNT,24);
+test('História possui 17 etapas e o Infinito permanece sem final',()=>{
+ assert.equal(core.STORY_BOSS_COUNT,17);
  assert.deepEqual(core.BOSS_ROSTER,['haddad','lula','xandao','janones','pf']);
  for(const mode of core.GAME_MODES){
   const r=core.createRun({mode});assert.equal(r.mode,mode);

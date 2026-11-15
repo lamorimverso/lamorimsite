@@ -270,7 +270,7 @@ test('contagem compacta preserva retrato, percentual e compartilhamento sem sobr
       assert.ok(portrait.width >= 80, `retrato legível em ${width}px`);
       const play = await page.locator('.hero-play').boundingBox();
       assert.ok(play.height >= 44 && play.width >= 44);
-      assert.equal(await page.locator('.game-itinerary').evaluate(x => x.open),false);
+      assert.equal(await page.locator('.game-itinerary').isVisible(),false);
       assert.equal(await page.locator('.game-help').count(),0);
       const game = await page.locator('#runner-canvas').boundingBox();
       const stage = await page.locator('.game-topline').boundingBox();
@@ -312,7 +312,7 @@ test('desktop replica a coluna única do celular sem excesso de texto exposto', 
       assert.ok(Math.abs((geometry.hero.x+geometry.hero.width/2)-(geometry.game.x+geometry.game.width/2))<3,`colunas desalinhadas: ${width}`);
       assert.ok(geometry.photoRight<=geometry.counterX+1 || geometry.photoBottom<=geometry.counterY+1,`retrato não deve cobrir a contagem: ${width}`);
       assert.ok(geometry.viewportWidth >= 240 && geometry.viewportHeight >= 150,`pista legível em ${width}: ${JSON.stringify({w:geometry.viewportWidth,h:geometry.viewportHeight})}`);
-      assert.equal(await page.locator('.game-itinerary').evaluate(e=>e.open),false);
+      assert.equal(await page.locator('.game-itinerary').isVisible(),false);
       assert.equal(await page.locator('.game-help').count(),0);
       assert.equal(await page.locator('.game-guide').count(),0);
     }

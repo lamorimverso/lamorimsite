@@ -1,7 +1,9 @@
-import {ammoCapacityFor} from './runner-supplies.mjs?v=ffd49bde7244';
-import {heroPowerFor} from './runner-earned-powers.mjs?v=27e0bb16e2f2';
+import {ammoCapacityFor} from './runner-supplies.mjs?v=44c67e8a5802';
+import {heroPowerFor} from './runner-earned-powers.mjs?v=432ca45a76e4';
 import {drawSpriteHead,drawCombatSprite} from './runner-sprites.mjs?v=94bad35aaa14';
-import {drawHeroProjectile} from './runner-hero-shot.mjs?v=f273e11b16a6';
+import {drawHeroProjectile} from './runner-hero-shot.mjs?v=6dc2d2659b41';
+
+import {drawCampaignPortrait} from './runner-campaign-art.mjs?v=b9520dc88107';
 
 // DOM meters retain keyboard/touch controls and accessible values over the track.
 const clamp=value=>Math.max(0,Math.min(1,value));
@@ -15,7 +17,7 @@ function portrait(canvas,type,ready){
  const context=canvas.getContext('2d');if(!context)return;
  const source=document.createElement('canvas');source.width=128;source.height=96;
  const c=source.getContext('2d');if(!c)return;
- if(!drawSpriteHead(c,{type,x:54,y:80,size:58}))drawCombatSprite(c,{type,x:64,y:90,scale:.7,frame:0});
+ if(!drawCampaignPortrait(c,{type,x:54,y:80,size:58})&&!drawSpriteHead(c,{type,x:54,y:80,size:58}))drawCombatSprite(c,{type,x:64,y:90,scale:.7,frame:0});
  const pixels=c.getImageData(0,0,128,96).data;let left=128,top=96,right=0,bottom=0;
  for(let y=0;y<96;y++)for(let x=0;x<128;x++)if(pixels[(y*128+x)*4+3]>0){left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x);bottom=Math.max(bottom,y);}
  if(right<left)return;

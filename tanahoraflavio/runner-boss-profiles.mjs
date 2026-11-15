@@ -15,7 +15,18 @@ const profiles=Object.freeze({
  lula:profile(4,'sovereign','Gestos em L',['lhand'],['jump','crouch','jump','move','crouch']),
  dilma:profile(4,'sovereign','Vendavais',['wind'],['crouch','jump','move','jump','crouch']),
  bossonari:profile(4,'sovereign','Frascos cenográficos',['cloroquina-prop','ivermectina-prop'],['jump','crouch','jump','jump','crouch','move']),
- 'meme-army':profile(4,'sovereign','Investidas do Fantasma',['meme-ghost'],['crouch','move','jump','move','jump','crouch'])
+ 'meme-army':profile(4,'sovereign','Investidas do Fantasma',['meme-ghost'],['crouch','move','jump','move','jump','crouch']),
+ 'ana-elisa':profile(2,'gunner','Rede de painéis',['network-panel'],['move','move','move','crouch'],'network'),
+ rick:profile(2,'gunner','Seis pulsos e uma pausa',['signal-pulse'],['jump','crouch','jump','crouch','jump','crouch'],'pulse'),
+ sofia:profile(2,'gunner','Painel de setas',['arrow-panel'],['jump','crouch','move'],'arrows'),
+ guilherme:profile(2,'gunner','Jardineiras alternadas',['garden-box'],['jump','crouch','jump','move'],'rolling'),
+ erika:profile(3,'caster','Refletores cruzados',['stage-spotlight'],['move','move','crouch','jump'],'lights'),
+ 'renato-freitas':profile(3,'caster','Placas giratórias',['rotating-sign'],['jump','crouch','move'],'rotation'),
+ jones:profile(3,'caster','Debate em dois sentidos',['debate-card'],['crouch','jump','move'],'debate'),
+ maestro:profile(3,'caster','Fintas de batuta',['baton-wave'],['jump','crouch','jump'],'music'),
+ capita:profile(3,'caster','Bandeiras de vento',['wind-flag'],['crouch','jump','crouch'],'wind'),
+ fiscal:profile(1,'sentinel','Sequência de cancelas',['inspection-gate'],['move','jump','move'],'traversal'),
+ povo:profile(1,'sentinel','Corredor da praça',['crowd-lane'],['move','move','move'],'traversal')
 });
 // Motion numbers describe each actor's arena path, independent of location.
 const identity={
@@ -32,11 +43,22 @@ const identity={
  lula:['Desvie do L na ida e espere ele voltar ao chefe por cima. Só então contra-ataque.','simone',[59,.95,20,1.4,1.1,.31]],
  dilma:['Desvie quando o vento empurrar a pista. Ataque no instante em que a rajada parar.','dino',[58,.72,29,1.15,1.45,.40]],
  bossonari:['Desvie dos frascos de cloroquina e ivermectina em sequência. Os dois tipos abrem a guarda.','dilma',[61,1.24,17,1.9,2.15,.41]],
- 'meme-army':['Saia da assombração marcada ou pule a investida baixa. Atire quando o fantasma recuar.','boulos',[63,1.09,27,.84,2.9,.42]]
+ 'meme-army':['Saia da assombração marcada ou pule a investida baixa. Atire quando o fantasma recuar.','boulos',[63,1.09,27,.84,2.9,.42]],
+ 'ana-elisa':['Leia a rede: saia de cada área marcada. Atire quando o último painel apagar.','pf',[60,.76,24,1.65,1.4,.27]],
+ rick:['Desvie dos seis pulsos, alternando salto e agachamento. Atire na pausa do sétimo tempo.','xandao',[58,1.27,8,2.9,.73,.41]],
+ sofia:['Siga as setas na ordem: pule, abaixe e saia da marca. O painel abre depois da sequência.','rick',[52,1.12,21,1.16,1.92,.3]],
+ guilherme:['Pule as jardineiras que quicam e abaixe sob as altas. Atire quando o último vaso passar.','joice',[62,1.48,12,2.3,2.4,.38]],
+ erika:['Os refletores cruzam o palco. Saia das duas marcas e espere as luzes apagarem para atirar.','guilherme',[62,.66,29,.97,1.1,.47]],
+ 'renato-freitas':['Acompanhe o giro das placas. Desvie da baixa e da alta e saia da marca quando a placa cair.',null,[56,1.16,23,1.51,.6,.43]],
+ jones:['Leia as duas direções do debate, desvie das cartas e ataque só depois da inversão.','dino',[57,1.24,27,1.38,1.82,.39]],
+ maestro:['Não salte na primeira finta. Desvie das ondas da batuta pelo ritmo e atire na pausa.','simone',[52,1.47,26,.94,.97,.48]],
+ capita:['As bandeiras mudam o vento de lado. Desvie dos três sinais e atire quando as bandeiras baixarem.','dilma',[62,.8,24,2.12,2.52,.36]],
+ fiscal:['Leia a sinalização e passe pelas cancelas sem atirar. A passagem abre depois da sequência.',null,[53,.71,10,1.38,.31,.3]],
+ povo:['Ceda passagem na praça. Saia das áreas marcadas e atravesse sem usar a arma.',null,[46,.52,6,.81,1.5,.2]]
 };
 export const BOSS_PROFILES=Object.freeze(Object.fromEntries(Object.entries(profiles).map(([type,p])=>{
  const [tactic,weakness,[xAmplitude,xRate,yAmplitude,yRate,offset,swerve]]=identity[type];
- return [type,Object.freeze({...p,tactic,weakness,reward:Object.freeze({id:type,name:p.powerName}),
+ return [type,Object.freeze({...p,tactic,weakness,reward:p.style==='traversal'||type==='renato-freitas'?null:Object.freeze({id:type,name:p.powerName}),
   motion:Object.freeze({id:type,xAmplitude,xRate,yAmplitude,yRate,offset,swerve})})];
 })));
 export const bossProfileFor=type=>BOSS_PROFILES[type]||null;

@@ -7,7 +7,7 @@ import {standingEnemyPose,drawHoverEnemy} from '../tanahoraflavio/runner-boss-ar
 // These fail if classes collapse to the same responses, or animated joints
 // return a held key pose throughout an entire wind-up/release.
 test('personagens de cada nível têm rotinas próprias e conservam seus poderes',()=>{
- const rows=[0,1,2,3].map(index=>bosses.storyBossAt(index));
+ const rows=[0,1,2,3].map(index=>bosses.legacyBossAt(index));
  const signatures=rows.map(b=>Array.from({length:12},(_,i)=>bosses.arenaPatternFor({...b,maxHp:b.hp},i)).map(a=>a.action+'/'+a.type).join('|'));
  assert.equal(new Set(signatures).size,4);
  for(const b of rows)for(let i=0;i<12;i++)assert.ok(b.attackTypes.includes(bosses.arenaPatternFor(b,i).type));
@@ -42,15 +42,16 @@ function runAt(distance){
  r.nextRaid=r.nextPower=r.nextPassport=r.nextAllyAt=r.nextSupportAt=Infinity;r.nextBossAt=22000;r.nextObstacle=0;return r;
 }
 test('aproximação reserva um corredor sem novos perigos antes de cada chefe',()=>{
- for(const index of [0,3,4,19]){
+ for(const index of [0,3,4,8,13,14,16]){
   const r=runAt(bosses.nextStoryBossDistance(index)-300);r.bossesDefeated=index;r.nextBossAt=bosses.nextStoryBossDistance(index);
   core.advanceRun(r,1/120,()=>.5);assert.equal(r.obstacles.length,0,'não introduzir ameaça antes da entrada');
  }
 });
 test('ensaio da História usa a arma do próximo chefe, isolada e com prazo de reação',()=>{
  const r=runAt(21200);core.advanceRun(r,1/120,()=>.5);
- assert.equal(r.obstacles.length,1);assert.equal(r.obstacles[0].type,'barrier');
- assert.equal(r.obstacles[0].sourceActor,'pf');assert.equal(r.obstacles[0].rehearsal,true);
+ assert.equal(r.obstacles.length,1);assert.equal(r.obstacles[0].type,'network-panel');
+ assert.equal(r.obstacles[0].sourceActor,'ana-elisa');assert.equal(r.obstacles[0].rehearsal,true);
+ assert.equal(r.obstacles[0].falling,true);
  assert.ok(core.threatTimeToContact(r,r.obstacles[0])>=.82);
  const count=r.spawnedObstacles;for(let i=0;i<25;i++){r.nextObstacle=0;core.advanceRun(r,1/120,()=>.5);}
  assert.equal(r.spawnedObstacles,count,'o ensaio não se repete a cada quadro');
@@ -66,11 +67,11 @@ test('recuperação conclui o gesto que saiu e não salta para a próxima ação
 });
 
 test('perigos comuns não ocupam a janela de ensaio nas etapas avançadas',()=>{
- for(const index of [8,12,19])for(let seed=1;seed<=100;seed++){
+ for(const [index,rehearsalId] of [[9,'campaign-haddad'],[12,'campaign-dino'],[13,'campaign-meme-army'],[16,'campaign-lula']])for(let seed=1;seed<=100;seed++){
   const target=bosses.nextStoryBossDistance(index),r=core.createRun({mode:'story',seed});core.startRun(r);
   Object.assign(r,{bossesDefeated:index,routeDistance:target-1800,distance:target+index*5500,elapsed:index*40+15,nextBossAt:target,shieldFor:Infinity});
   for(const key of ['nextRaid','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[key]=Infinity;
   for(let i=0;i<1600&&!r.boss;i++)core.advanceRun(r,1/120);
-  assert.equal(r.rehearsedBoss,'stage-'+Math.floor(index/4)+'-boss-'+index%4,'índice '+index+', semente '+seed);
+  assert.equal(r.rehearsedBoss,rehearsalId,'índice '+index+', semente '+seed);
  }
 });

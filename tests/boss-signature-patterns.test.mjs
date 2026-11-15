@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {BOSS_PROFILES} from '../tanahoraflavio/runner-boss-profiles.mjs';
-import {storyBossAt,arenaPatternFor,planArenaAttack,stepBossPhase,bossArenaPose} from '../tanahoraflavio/runner-bosses.mjs';
+import {legacyBossAt,arenaPatternFor,planArenaAttack,stepBossPhase,bossArenaPose} from '../tanahoraflavio/runner-bosses.mjs';
 
-const actors=Object.keys(BOSS_PROFILES);
-const actorBoss=(type,extra={})=>({...Array.from({length:24},(_,i)=>storyBossAt(i)).find(b=>b.type===type),maxHp:100,hp:100,fired:0,...extra});
+const actors=[...new Set(Array.from({length:24},(_,i)=>legacyBossAt(i).type))];
+const actorBoss=(type,extra={})=>({...Array.from({length:24},(_,i)=>legacyBossAt(i)).find(b=>b.type===type),maxHp:100,hp:100,fired:0,...extra});
 const fingerprint=p=>JSON.stringify([p.type,p.action,p.approach,p.targetY,p.arcHeight,p.curve,p.waveAmplitude,p.burst,p.burstGap,p.projectileSpeedScale,p.widthScale]);
 const sequence=b=>Array.from({length:12},(_,i)=>fingerprint(arenaPatternFor(b,i)));
 
@@ -41,7 +41,7 @@ test('14 identities have distinct gameplay sequences and announced attacks never
 test('rematches count prior appearances and change attacks beyond hp or speed; half health introduces an advanced sequence',()=>{
  const seen=new Map();
  for(let index=0;index<24;index++){
-  const b=storyBossAt(index),prior=seen.get(b.type)||0;assert.equal(b.rematchIndex,prior);seen.set(b.type,prior+1);
+  const b=legacyBossAt(index),prior=seen.get(b.type)||0;assert.equal(b.rematchIndex,prior);seen.set(b.type,prior+1);
   if(prior)assert.notDeepEqual(sequence({...b,maxHp:100,hp:100}),sequence(actorBoss(b.type)),b.type+' rematch');
  }
  for(const type of actors){

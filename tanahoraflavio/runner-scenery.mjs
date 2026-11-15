@@ -5,7 +5,9 @@ const palettes={
  argentina:{sky:'#dbe7f5',haze:'#fcf4df',far:'#bdcadb',near:'#90abbf',ink:'#647f9a',stone:'#fff6da',shade:'#d7ccb4',road:'#dce0e6'},
  paraguai:{sky:'#f3e2dc',haze:'#fff6df',far:'#d2bdbb',near:'#91b491',ink:'#8c6d73',stone:'#fff0d9',shade:'#dcc9bd',road:'#e4ddcd'},
  florida:{sky:'#fbe4d5',haze:'#fff9e8',far:'#dfc6cb',near:'#b7bfc8',ink:'#927e8b',stone:'#ffe8d2',shade:'#d6b9ba',road:'#e6dcd1'},
- 'casa-branca':{sky:'#e3eafa',haze:'#fcf7e8',far:'#c0ccdf',near:'#94b4a9',ink:'#718898',stone:'#fffff3',shade:'#d6dfe5',road:'#dce3d7'}
+ 'casa-branca':{sky:'#e3eafa',haze:'#fcf7e8',far:'#c0ccdf',near:'#94b4a9',ink:'#718898',stone:'#fffff3',shade:'#d6dfe5',road:'#dce3d7'},
+ 'sao-paulo':{sky:'#dbe7f1',haze:'#f9eee3',far:'#aebfcf',near:'#8da99a',ink:'#607986',stone:'#e7eeed',shade:'#8aa7b7',road:'#dbe1dc'},
+ 'brasilia-final':{sky:'#e8ecee',haze:'#fcf0d6',far:'#bcced0',near:'#8aa99a',ink:'#64818a',stone:'#fffae6',shade:'#cbd9d2',road:'#dce3dc'}
 };
 const wrap=(n,span)=>(n%span+span)%span;
 function shape(c,fill,stroke,draw){c.beginPath();draw();c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=1.3;c.stroke();}}
@@ -32,12 +34,33 @@ function skyline(c,stage,p,d,width){
 function landmark(c,stage,p,x){
  const base=226;c.save();c.translate(x,base);c.lineJoin='round';
  oval(c,0,4,134,5,p.ink+'18');
- if(stage.id==='brasilia'){
+ if(stage.id==='brasilia'||stage.id==='brasilia-final'){
   rect(c,-126,-12,252,12,p.stone,p.ink,2);rect(c,-14,-104,12,92,p.stone,p.ink,1);rect(c,6,-104,12,92,p.stone,p.ink,1);
   rect(c,-10,-100,3,83,p.shade,null);rect(c,10,-100,3,83,p.shade,null);
   shape(c,p.stone,p.ink,()=>{c.moveTo(-111,-13);c.bezierCurveTo(-105,-54,-55,-54,-47,-13);c.closePath();});
   shape(c,p.shade,p.ink,()=>{c.moveTo(45,-42);c.bezierCurveTo(49,-4,102,-4,110,-42);c.closePath();});
   line(c,[[43,-42],[112,-42]],p.stone,4);line(c,[[-116,-7],[116,-7]],p.shade,2);
+ }else if(stage.id==='sao-paulo'){
+  const beam='#ad4c48',light='#c16a5e',shadow='#794e55';
+  // Hall suspended above the broad, empty vão livre. All lines remain behind the roadway.
+  rect(c,-135,0,270,5,p.stone,p.ink,1);
+  rect(c,-109,-83,218,42,'#829eac',p.ink,1);
+  rect(c,-100,-77,200,26,'#a7bfcd',p.ink,1);
+  for(let x=-96;x<101;x+=16){
+   line(c,[[x,-76],[x,-51]],'#668697',1.3);
+   line(c,[[x+2,-73],[x+8,-59]],'#d1e3e6',1.2);
+  }
+  rect(c,-112,-51,224,10,p.shade,p.ink,1);
+  rect(c,-122,-91,244,13,beam,shadow,1);
+  rect(c,-122,-91,244,3,light);
+  for(const x of [-121,110]){rect(c,x,-85,11,85,beam,shadow,1);rect(c,x+1,-78,2,76,light);}
+  rect(c,-55,-16,100,2,p.shade);
+  line(c,[[-57,1],[-48,-10],[49,-10],[59,1]],p.ink+'78',1.2);
+  for(const [x,y,s] of [[-152,-1,.56],[150,-1,.66]]){
+   line(c,[[x,y],[x,y-45*s]],p.ink,3);
+   oval(c,x,y-47*s,25*s,19*s,p.near);
+   oval(c,x-10*s,y-38*s,20*s,16*s,'#77968a');
+  }
  }else if(stage.id==='rio'){
   shape(c,p.near,p.ink+'60',()=>{c.moveTo(-174,0);c.bezierCurveTo(-127,-5,-127,-89,-77,-90);c.bezierCurveTo(-32,-91,-30,-7,20,0);c.closePath();});
   shape(c,p.far,p.ink+'60',()=>{c.moveTo(-9,0);c.bezierCurveTo(17,-14,18,-111,67,-111);c.bezierCurveTo(108,-111,108,-18,154,0);c.closePath();});
@@ -89,13 +112,13 @@ export function drawScenery(c,{stage,distance=0,width=900,reducedMotion=false}){
  c.restore();
 }
 
-const journeyStages=Object.keys(palettes);
+const journeyStages=['brasilia','rio','argentina','paraguai','florida','casa-branca'];
 const segmentLength=7000;
 const planeScales=[.14,.18,.22];
 const smooth=n=>{const t=Math.max(0,Math.min(1,n));return t*t*(3-2*t);};
 const stageAt=index=>journeyStages[wrap(index,journeyStages.length)];
 const colorChannels=hex=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));
-const paletteChannels=Object.fromEntries(journeyStages.map(id=>[id,Object.fromEntries(Object.entries(palettes[id]).map(([key,value])=>[key,colorChannels(value)]))]));
+const paletteChannels=Object.fromEntries(Object.entries(palettes).map(([id,palette])=>[id,Object.fromEntries(Object.entries(palette).map(([key,value])=>[key,colorChannels(value)]))]));
 function blendPalette(from,to,amount){
  return Object.fromEntries(Object.keys(from).map(key=>[key,from[key].map((value,i)=>value+(to[key][i]-value)*amount)]));
 }
@@ -118,12 +141,13 @@ function paletteAlongRoute(location,stageFor=stageAt){
  * the final 1,000 m of each place, so the route still communicates its next stop.
  * Palette channels are floating RGB triples; paletteStops offsets run from 0 to 1.
  */
-export function journeySceneryGeometry({routeDistance=0,distance=routeDistance,width=900,reducedMotion=false,openingDistance=0}={}){
+export function journeySceneryGeometry({routeDistance=0,distance=routeDistance,width=900,reducedMotion=false,openingDistance=0,campaignStages}={}){
  const opening=Number.isFinite(openingDistance)?Math.max(0,openingDistance):0;
  const route=(Number.isFinite(routeDistance)?Math.max(0,routeDistance):0)-opening;
  // Abertura contínua: ocorrências anteriores à campanha também são Brasília.
  // Coordenadas negativas mantêm o parallax, sem congelar nem reiniciar o fundo.
- const stageFor=index=>stageAt(opening?Math.max(0,index):index);
+ const campaign=Array.isArray(campaignStages)&&campaignStages.length>0&&campaignStages.every(id=>Object.hasOwn(palettes,id))?campaignStages:null;
+ const stageFor=index=>campaign?campaign[Math.max(0,Math.min(campaign.length-1,index))]:stageAt(opening?Math.max(0,index):index);
  const travelled=Number.isFinite(distance)?Math.max(0,distance):route;
  const w=Number.isFinite(width)?Math.max(1,width):900;
  const index=Math.floor(route/segmentLength),anchor=w*.35;
@@ -171,6 +195,12 @@ function farBuildings(c,x,p,variant){
 function farFeature(c,x,stageId,p,variant){
  if(stageId==='rio'){
   shape(c,p.far,null,()=>{c.moveTo(x-12,224);c.bezierCurveTo(x+25,200,x+29,155+variant*7,x+66,154+variant*7);c.bezierCurveTo(x+109,151,x+114,215,x+155,224);c.closePath();});
+ }else if(stageId==='sao-paulo'){
+  const blocks=[[0,26,43],[28,24,74+variant*7],[56,33,101-variant*7],[93,26,65],[122,34,53]];
+  for(const [dx,w,h] of blocks){
+   rect(c,x+dx,224-h,w,h,p.far,null,1);
+   for(let row=224-h+9;row<211;row+=13)line(c,[[x+dx+4,row],[x+dx+w-4,row]],p.stone+'8a',1.7);
+  }
  }else if(stageId==='florida'){
   rect(c,x+10,195,50,29,p.far,null,2);rect(c,x+61,180+variant*6,24,44-variant*6,p.far,null,2);rect(c,x+87,203,44,21,p.far,null,2);
  }else farBuildings(c,x,p,variant);
@@ -226,7 +256,7 @@ function drawAmbientDetails(c,geometry,{distance=0,reducedMotion=false}={}){
   const x=seg.stationary?geometry.width*.6:seg.x+3650*geometry.layers[1].scale;
   if(x<-45||x>geometry.width+45)continue;
   const p=palettes[seg.stageId];c.save();c.globalAlpha*=.48*seg.alpha;
-  if(seg.stageId==='brasilia'||seg.stageId==='argentina'||seg.stageId==='casa-branca'){
+  if(seg.stageId==='brasilia'||seg.stageId==='brasilia-final'||seg.stageId==='argentina'||seg.stageId==='casa-branca'){
    line(c,[[x,227],[x,192]],p.ink,1.8);
    shape(c,p.near,null,()=>{c.moveTo(x+1,192);c.quadraticCurveTo(x+15+sway,187,x+27+sway,194);c.lineTo(x+25+sway,204);c.quadraticCurveTo(x+12+sway,199,x+1,202);c.closePath();});
    line(c,[[x+4,195],[x+19+sway,197]],p.stone,1.5);

@@ -34,7 +34,7 @@ test('navegador reproduz voz real e música sem coletas; mute e perda de foco si
   assert.equal(await page.evaluate(()=>!!window.__musicContext),false,'não liga áudio antes de jogar');
   await page.locator('#game-start').click();
   // A nova política não toca políticos aleatórios na largada: teste um chefe real.
-  await page.evaluate(()=>{const r=__audioRun;r.nextObstacle=r.nextRaid=Infinity;r.nextBossAt=0;r.bossesDefeated=7;r.bossBag=[];r.graceFor=30;});
+  await page.evaluate(()=>{const r=__audioRun;r.nextObstacle=r.nextRaid=Infinity;r.nextBossAt=0;r.bossesDefeated=16;r.bossBag=[];r.graceFor=30;});
   await page.waitForFunction(()=>window.__tracks.some(p=>['meme-bora-pra-rua','meme-picanha','meme-mesmo-mundo','meme-ate-teu-pai','meme-defende-meu-pai','meme-passarinho'].some(id=>p.src.includes(id))&&!p.paused&&p.currentTime>0));
   assert.equal(await page.locator('#game-voice-note').isVisible(),true);
   await page.waitForTimeout(700);assert.ok(await rms(page)>.0005,'trilha tem sinal sonoro real fora das coletas');
