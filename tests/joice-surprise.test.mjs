@@ -57,9 +57,9 @@ test('Joice produz mais ondas reais da PF sem reduzir abaixo do intervalo mínim
   surprise.raid={phase:'active',remaining:8,factIndex:0,id:1};
   core.advanceRun(normal,dt,()=>0);core.advanceRun(surprise,dt,()=>0);
   assert.equal(surprise.obstacles[0].type,'pf');
-  const expected=.98-.08*core.difficultyAt(distance,dt).pressure-dt;
+  const expected=1.02-.17*core.difficultyAt(distance,dt).pressure-dt;
   assert.ok(Math.abs(surprise.nextObstacle-expected)<1e-8,'onda usa o ritmo intensificado');
-  assert.ok(surprise.nextObstacle<normal.nextObstacle);assert.ok(surprise.nextObstacle>=.90-dt-1e-8);
+  assert.ok(surprise.nextObstacle<normal.nextObstacle);assert.ok(surprise.nextObstacle>=.85-dt-1e-8);
  }
 });
 test('dificuldade cresce de forma perceptível e contínua a cada destino',()=>{
@@ -75,5 +75,5 @@ test('dificuldade cresce de forma perceptível e contínua a cada destino',()=>{
   const a=core.difficultyAt(distance),b=core.difficultyAt(distance+.01);
   assert.ok(Math.abs(a.speed-b.speed)<.001);assert.ok(Math.abs(a.obstacleGap-b.obstacleGap)<.001);
  }
- const limit=core.difficultyAt(1e12);assert.ok(limit.speed<=535);assert.ok(limit.obstacleGap>=.94);assert.ok(limit.obstacleApproach>=.82);
+ const limit=core.difficultyAt(1e12);assert.ok(limit.speed<=535);assert.ok(limit.obstacleGap>=.86);assert.ok(limit.obstacleApproach>=.82);
 });

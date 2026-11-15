@@ -14,7 +14,7 @@ test('velocidade e risco continuam crescendo depois da primeira volta',()=>{
  assert.ok(points.every((p,i)=>i===0||p.pressure>points[i-1].pressure));
  assert.ok(points.at(-1).speed<=535);
  assert.ok(points[1].obstacleGap>points.at(-1).obstacleGap);
- assert.ok(points[2].speed<435,'não atinge teto ao acabar a segunda volta');
+ assert.ok(points[2].speed<480,'a segunda volta ainda deixa espaço para escalar');
  assert.ok(core.difficultyAt(14000).obstacleApproach<=1.52,'a segunda etapa exige reação mais rápida');
 });
 

@@ -1,5 +1,5 @@
 import {soldierVariantFor} from './runner-soldier-variants.mjs?v=4bf435291c82';
-import {combatActors,combatDefinitions} from './runner-combat-sprite-data.mjs?v=22b4ef6e9140';
+import {combatActors,combatDefinitions} from './runner-combat-sprite-data.mjs?v=85a6343e5d39';
 export function combatActorTypeFor(type,{armyVariant,enraged=false}={}){return type==='army'&&armyVariant?soldierVariantFor(armyVariant).combatActor:type==='santiago'&&enraged?'santiago-phase2':type;}
 /** Whole-pose keys track physical combat state, never a running cycle on a ship. */
 export function combatFrameFor(type,{frame,phase=0,preparing=false,attacking=false,recovering=false,hurt=false,reducedMotion=false,progress,armyVariant,enraged=false}={}){
@@ -14,7 +14,7 @@ export function combatGeometryFor(type,options={}){
  const selected=combatFrameFor(type,options);if(!selected)return null;
  const actor=combatActors[type],sheet=combatDefinitions[selected.sheet],frame=sheet.frames[selected.index];
  const height=Math.max(...sheet.frames.slice(actor.row*4,actor.row*4+4).map(f=>f.groundY-f.y));
- const scale=Number.isFinite(options.scale)?options.scale:1,factor=(type==='flavio-slide-shot'?48:94)*scale/height;
+ const scale=Number.isFinite(options.scale)?options.scale:1,factor=(type==='flavio-slide-shot'?44:94)*scale/height;
  const facing=options.facing===1||options.facing===-1?options.facing:actor.facing,flip=facing/actor.facing;
  return {...selected,frame,factor,flip,muzzle:{x:(frame.muzzle.x-frame.center)*factor*flip,y:(frame.muzzle.y-frame.groundY)*factor},rect:{x:(frame.x-frame.center)*factor,y:(frame.y-frame.groundY)*factor,width:frame.width*factor,height:frame.height*factor}};
 }

@@ -346,7 +346,7 @@ test('progresso distingue a rota dos metros e chefão mostra a ação correta',a
  const {context,page,errors}=await open({instrument:true});
  try{
   await page.locator('#game-mode-infinite').check();await begin(page);
-  await page.evaluate(()=>{const r=__testRun;r.routeDistance=3500;r.distance=8500;r.nextBossAt=0;r.bossBag=['lula'];r.nextRaid=1000;});
+  await page.evaluate(()=>{const r=__testRun;r.routeDistance=3500;r.distance=8500;r.nextBossAt=0;r.bossBag=['lula'];r.nextRaid=Infinity;});
   await page.waitForFunction(()=>document.getElementById('game').dataset.boss==='lula');
   assert.equal(await page.locator('.game-stage-header').isVisible(),true);
   assert.equal(await page.locator('#game-progress').count(),0);
@@ -1381,6 +1381,40 @@ test('desafio opcional de Sofia começa no mapa paulista sem abrir urna',async()
   await page.evaluate(()=>{__testRun.boss.hp=0;});
   await page.getByText('Desafio concluído!',{exact:true}).waitFor();
   assert.equal(await page.locator('#game-ballot').isVisible(),false);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+for(const width of [390,900])test(`atacantes regionais soltam suas próprias armas com corpo completo: ${width}px`,async()=>{
+ const {context,page,errors}=await open({instrument:true,instrumentCasting:true,viewport:{width,height:900}});
+ try{
+  await begin(page);
+  const rows=await page.evaluate(async()=>{const {STORY_ROSTERS}=await import('./runner-stage-roster.mjs');return STORY_ROSTERS.map(row=>({stageId:row.stageId,...row.overhead[0]}));});
+  for(let stage=0;stage<rows.length;stage++){
+   const expected=rows[stage];await page.evaluate(async stage=>{
+    const c=await import('./runner-core.mjs'),r=__testRun;for(const k of ['nextBossAt','nextRaid','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
+    r.elapsed=40;r.routeDistance=r.distance=c.STORY_OPENING_DISTANCE+stage*c.SCENE_DISTANCE+3100;r.obstacles=[];r.pickups=[];r.raid=null;r.boss=null;r.cameo=null;r.lastAction=null;r.actionStreak=0;r.nextObstacle=0;c.crouchRun(r,true);__castPoses=[];
+    const rolls=[.1,.99,.5,.5];c.advanceRun(r,1/120,()=>rolls.shift()??.5);r.nextObstacle=Infinity;
+   },stage);
+   await page.waitForFunction(actor=>__castPoses.some(p=>p.type===actor&&p.attacking),expected.actor);
+   const shots=await page.evaluate(()=>__testRun.obstacles.filter(o=>o.cast).map(o=>({actor:o.sourceActor,type:o.type,stageId:o.stageId,launched:o.launched})));
+   assert.ok(shots.some(shot=>shot.actor===expected.actor&&shot.type===expected.weapon&&shot.stageId===expected.stageId&&shot.launched),JSON.stringify(shots));
+   await page.locator('#runner-canvas').screenshot({path:path.resolve(__dirname,`../ux-captures/regional-${expected.stageId}-${width}.png`)});
+  }
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('toc-toc aparece no navegador em todas as oito etapas da História',async()=>{
+ const {context,page,errors}=await open({instrument:true,instrumentCasting:true,viewport:{width:390,height:844}});
+ try{
+  await begin(page);
+  for(let stage=0;stage<8;stage++){
+   await page.evaluate(async stage=>{const c=await import('./runner-core.mjs'),r=__testRun;for(const k of ['nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;r.nextRaid=999;r.elapsed=40;r.routeDistance=r.distance=c.STORY_OPENING_DISTANCE+stage*c.SCENE_DISTANCE+3100;r.obstacles=[];r.pickups=[];r.raid=null;r.boss=null;r.cameo=null;r.bossCooldown=0;__castPoses=[];},stage);
+   await page.waitForFunction(()=>!!__testRun.raid&&__castPoses.some(p=>p.type==='joice'));
+   const info=await page.evaluate(async()=>{const c=await import('./runner-core.mjs');return {stage:c.routeStageFor(__testRun).id,raid:__testRun.raid.stageId,count:__testRun.raidStages[c.routeStageFor(__testRun).id]};});
+   assert.equal(info.raid,info.stage);assert.ok(info.count>=1);assert.match(await page.locator('#game-raid-title').textContent(),/JOICE/);
+  }
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });

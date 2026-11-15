@@ -1,14 +1,14 @@
 // Atlas e recortes gerados dos desenhos escolhidos, preservando os PNGs fontes.
 import {definitions} from './runner-sprite-data.mjs?v=4a931cb52b80';
-import {combatDefinitions} from './runner-combat-sprite-data.mjs?v=22b4ef6e9140';
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=c040deb109ca';
+import {combatDefinitions} from './runner-combat-sprite-data.mjs?v=85a6343e5d39';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=043d40fd8ef2';
 export const spriteDefinitions={...definitions,...combatDefinitions};
 const sheets=new Map();let activeAttempt=null;
 const actorGroups={flavio:[0,1,2,3,4,5,6,7],xandao:[0,1,2],haddad:[4,5,6],lula:[8,9,10],pf:[3,13],janones:[7,14],army:[11,15],joice:[12]};
 const runningGroups={haddad:{sheet:'chase',start:0},lula:{sheet:'chase',start:4},xandao:{sheet:'chase',start:8},joice:{sheet:'chase',start:12},dilma:{sheet:'cameos',start:0},simone:{sheet:'cameos',start:4},soraya:{sheet:'cameos',start:8},'ze-gotinha':{sheet:'cameos',start:12}};
 for(const [sheet,definition] of Object.entries(definitions))for(const [row,type] of (definition.actors||[]).entries())runningGroups[type]={sheet,start:row*4};
 export const SPRITE_SHEET_COUNT=Object.keys(spriteDefinitions).length;
-export const CORE_SPRITE_SHEET_COUNT=13;
+export const CORE_SPRITE_SHEET_COUNT=14;
 export function loadSprites(onProgress=()=>{},{coreOnly=false}={}){
  const base=['hero','cast','cameos','chase','pursuers',...Object.keys(combatDefinitions)];
  const entries=Object.entries(spriteDefinitions).filter(([name])=>(!coreOnly||base.includes(name))&&!sheets.has(name)),total=entries.length;
@@ -48,7 +48,7 @@ export function loadSprites(onProgress=()=>{},{coreOnly=false}={}){
 export function spriteFrameFor(type,{phase=0,airborne=false,falling=false,landing=false,hurt=false,attacking=false,preparing=false}={}){
  if(type==='flavio'){
   if(hurt)return {sheet:'hero',index:11};
-  if(landing)return {sheet:'hero',index:10};
+  if(landing)return {sheet:'heroCrouch',index:Math.floor(Math.max(0,phase))%4};
   if(airborne)return {sheet:'hero',index:falling?9:8};
   return {sheet:'hero',index:Math.floor(Math.max(0,phase))%8};
  }
@@ -60,6 +60,7 @@ export function spriteFrameFor(type,{phase=0,airborne=false,falling=false,landin
 // Cada atlas tem resolução própria. As poses do Flávio vindas do atlas
 // de elenco devem manter a altura aparente dos quadros de corrida.
 export function spriteScaleFor(type,sheetName,frames,scale=1){
+ if(type==='flavio'&&sheetName==='heroCrouch')return 44*scale/Math.max(...frames.slice(0,4).map(f=>f.groundY-f.y));
  const running=runningGroups[type];
  const indices=running&&sheetName===running.sheet?Array.from({length:4},(_,i)=>running.start+i):actorGroups[type]||actorGroups.pf;
  const sourceHeight=Math.max(...indices.map(i=>frames[i]?.height||0));
@@ -88,8 +89,7 @@ export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,a
  const frame=sheet.frames[selected.index];
  let factor=spriteScaleFor(type,selected.sheet,sheet.frames,scale);
  if(!factor)return false;
- // A pose horizontal conserva proporções; cabe abaixo do ataque alto sem esmagar o rosto.
- if(type==='flavio'&&selected.index===10)factor=Math.min(factor,48*scale/frame.height);
+ // Dedicated complete crouches retain their drawn proportions below high attacks.
  let dx=x+(frame.x-frame.center)*factor;
  if(type==='jacare')dx=2*x-dx-frame.width*factor;
  let baseline=frame.groundY??frame.y+frame.height;
@@ -102,7 +102,7 @@ export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,a
  context.save();context.globalAlpha*=alpha;context.imageSmoothingEnabled=true;
  // Virar dentro do próprio retângulo conserva tamanho, apoio e limites.
  const target=facing===1||facing===-1?facing:type==='flavio'||type==='jacare'?1:-1;
- if(target!==(spriteFacesRight(type)?1:-1)){context.translate(2*dx+frame.width*factor,0);context.scale(-1,1);}
+ if(target!==(spriteFacesRight(type)?1:-1)){context.translate(selected.sheet==='heroCrouch'?2*x:2*dx+frame.width*factor,0);context.scale(-1,1);}
  if(hurt&&type!=='flavio'){context.shadowColor='#ffd56b';context.shadowBlur=9;}
  context.drawImage(sheet.image,frame.x,frame.y,frame.width,frame.height,dx,dy,frame.width*factor,frame.height*factor);
  context.restore();return true;

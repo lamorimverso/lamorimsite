@@ -1,18 +1,19 @@
+import {stageRosterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 import {ROUTE_AMMO,advanceAmmo,addShieldPart} from './runner-supplies.mjs?v=44c67e8a5802';
 import {heroPowerFor,grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=432ca45a76e4';
 export {grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=432ca45a76e4';
 import {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=01fa5c1830b5';
 export {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=01fa5c1830b5';
 import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=1eda01496613';
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=c040deb109ca';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=043d40fd8ef2';
 import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
-import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=6dc2d2659b41';
-import {regularCastMuzzle} from './runner-cast-pose.mjs?v=ed1b40296acc';
+import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=75250b011716';
+import {regularCastMuzzle} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=17aae58c9bc9';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
-import {BOSS_ARENA_RESERVE,BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,optionalStoryBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=fc22a4a43fd1';
-export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=fc22a4a43fd1';
-export {bossArenaPose} from './runner-bosses.mjs?v=fc22a4a43fd1';
+import {BOSS_ARENA_RESERVE,BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,optionalStoryBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=245ba013c167';
+export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=245ba013c167';
+export {bossArenaPose} from './runner-bosses.mjs?v=245ba013c167';
 // Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
 export const WORLD = Object.freeze({width:900,height:300,ground:246});
 // Envelope de todas as poses no atlas a .95 de escala, incluindo o agachamento.
@@ -122,10 +123,7 @@ const routeClock = run => campaignRouteDistance(run) / SCENE_DISTANCE * SCENE_SE
 export const routeStagesFor=run=>run.mode==='story'?STORY_STAGES:STAGES;
 export const routeStageFor=run=>stageAt(routeClock(run),routeStagesFor(run));
 export const routeTransitionFor=run=>stageTransitionAt(routeClock(run),routeStagesFor(run));
-const storyGround=Object.freeze([
- ['pf','barrier'],['orla-runner','barrier'],['paulista-runner','arrow-panel'],['route-scout','case'],
- ['army','barrier'],['terminal-guard','case'],['meme-ghost','barrier'],['lula-runner','ze-gotinha-rival']
-]);
+
 const visibleWidth = run => Math.max(480,Math.min(900,Number(run.viewportWidth)||WORLD.width));
 const announce = (run,text) => {run.event=text;run.events++;};
 const assistance = run => run.assisted ? .82 : 1;
@@ -134,6 +132,9 @@ export const playerX = run => Number.isFinite(run.player.x)?run.player.x:PLAYER.
 export const playerBounds = run => ({min:-PLAYER.visualLeft,max:visibleWidth(run)-(run.boss?.combat&&run.boss.phase!=='intro'?BOSS_ARENA_RESERVE:PLAYER.visualRight)});
 const frontContact = run => playerX(run)+PLAYER.width-6;
 const REACTION_GAP = .82;
+// A full marked-lane escape can close opposing contacts by almost a second
+// at their 180px/s clearance floor, even after the marker itself has ended.
+const OPPOSING_ESCAPE_RESERVE=.95;
 // A retaguarda se aproxima pela esquerda; outras ameaças continuam pela direita.
 const JUMP_BUFFER_SECONDS = .12;
 const JACARE_ENTRY_GRACE = 3;
@@ -157,11 +158,11 @@ export function difficultyAt(distance,elapsed=0) {
  const d=Number.isFinite(distance)?Math.max(0,distance):0,t=Number.isFinite(elapsed)?Math.max(0,elapsed):0;
  // Pressão cresce por várias voltas em vez de saturar na primeira.
  // O tempo e a distância continuam contínuos ao atravessar os cenários.
- const pressure=1-Math.exp(-(d/62000+t/500)),endurance=1-Math.exp(-d/250000),p=d/(d+10000);
+ const pressure=1-Math.exp(-(d/45000+t/360)),endurance=1-Math.exp(-d/180000),p=d/(d+10000);
  return {level:1+Math.floor(9*pressure)+Math.floor(6*endurance),pressure,endurance,
-  speed:270+165*pressure+100*endurance,obstacleGap:Math.max(.94,1.70-.58*pressure-.18*endurance),
+  speed:270+170*pressure+95*endurance,obstacleGap:Math.max(.86,1.70-.66*pressure-.18*endurance),
   pickupGap:12+8*p,passportGap:5.2+1.2*p,powerGap:24+32*p,
-  bossApproach:Math.max(.72,1.15-.30*pressure-.13*endurance),obstacleApproach:Math.max(.82,1.65-.70*pressure-.13*endurance)};
+  bossApproach:Math.max(.72,1.15-.33*pressure-.10*endurance),obstacleApproach:Math.max(.82,1.65-.73*pressure-.10*endurance)};
 }
 // Uma onda mais rápida nunca alcança a anterior e forma um par impossível.
 function threatSpeed(run,x,seconds,visibleX=x){
@@ -173,7 +174,7 @@ function threatSpeed(run,x,seconds,visibleX=x){
  // after a ground marker; that movement closes their two contact times.
  const rear=run.obstacles.filter(o=>!o.passed&&!o.counted&&o.approach==='rear'&&o.speed<0)
   .map(o=>threatReservation(run,o))
-  .filter(t=>t>0).map(t=>t+.4);
+  .filter(t=>t>0).map(t=>t+OPPOSING_ESCAPE_RESERVE);
  const speed=Math.max(1,visibleX-contactX)/seconds*assistance(run);
  const drops=run.obstacles.filter(o=>o.falling||o.groundHazard).map(o=>threatReservation(run,o)).filter(t=>t>0);
  const nextContact=Math.max((x-contactX)/speed,...pending.concat(rear,drops).map(t=>t+REACTION_GAP));
@@ -209,7 +210,7 @@ export function pursuitAt(seconds,rng=()=>.5,level=10,seen=[],last=null) {
 // Retaguarda usa a mesma janela de leitura, sem disputar o contato com um perigo frontal.
 function rearMotion(run,x,width){
  const contactX=frontContact(run),rearContact=playerX(run)+5;
- const front=run.obstacles.filter(o=>!o.passed&&(o.cast||o.x>contactX)&&o.speed>0).map(o=>threatReservation(run,o)+.4);
+ const front=run.obstacles.filter(o=>!o.passed&&(o.cast||o.x>contactX)&&o.speed>0).map(o=>threatReservation(run,o)+OPPOSING_ESCAPE_RESERVE);
  const rear=run.obstacles.filter(o=>!o.passed&&!o.counted&&o.approach==='rear'&&o.speed<0).map(o=>threatReservation(run,o));
  const drops=run.obstacles.filter(o=>o.falling||o.groundHazard).map(o=>threatReservation(run,o));
  const seconds=Math.max(run.assisted?1.22:1.06,...front.concat(rear,drops).filter(t=>t>0).map(t=>t+REACTION_GAP));
@@ -226,7 +227,7 @@ export function createRun({assisted=false,seed,mode='endless',practiceId}={}) {
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,shieldFor:0,graceFor:0,reserveShields:0,allyShieldProgress:0,allyHelpCount:0,
   lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,phantomCloud:null,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:practice?startDistance:null,bossCooldown:0,
-  raid:null,nextRaid:null,raids:0,lastFact:-1,cameo:null,overheadCount:0,lastOverheadActor:null,
+  raid:null,nextRaid:null,raids:0,raidStages:{},raidStageCoverage:{},lastFact:-1,cameo:null,overheadCount:0,lastOverheadActor:null,
   seenOverheadActors:[],seenGroundActors:[],lastGroundActor:null,
   lastAction:null,actionStreak:0,attackStyles:[],nextAllyAt:14000,alliesMet:0,
   nextSupportAt:18000,supportAvailable:true,ally:null,aid:null,allyVisits:{},lastAllyId:null,creditCooldown:0};
@@ -745,22 +746,35 @@ function resolveBossDodges(run){
  announce(run,run.mode==='story'?(boss.traversal?'Passagem concluída · ':'Você derrotou ')+boss.name+'! '+run.bossesDefeated+'/'+STORY_BOSS_COUNT+' etapas concluídas. '+(boss.role==='map-boss'?'Cenário concluído.':'Continue para o próximo confronto.'):
   'Você escapou do chefão '+boss.name+'! '+(run.bossesDefeated%BOSS_ROSTER.length===0?'Cinco chefões superados nesta sequência.':'Continue fugindo.'));
 }
+const raidStageKey=run=>Math.floor(campaignRouteDistance(run)/(routeStagesFor(run).length*SCENE_DISTANCE))+':'+routeStageFor(run).id;
+function recordRaidPresence(run,raid){
+ const key=raidStageKey(run),stage=routeStageFor(run);
+ raid.stageKeys??=[];if(raid.stageKeys.includes(key))return;
+ raid.stageKeys.push(key);run.raidStageCoverage??={};run.raidStageCoverage[key]=true;
+ run.raidStages??={};run.raidStages[stage.id]=(run.raidStages[stage.id]||0)+1;
+}
 function advanceRaid(run,dt,rng){
  if(run.raid){
-  const raid=run.raid;raid.remaining=Math.max(0,raid.remaining-dt);
+  const raid=run.raid;if(raid.phase!=='recovery')recordRaidPresence(run,raid);raid.remaining=Math.max(0,raid.remaining-dt);
   if(raid.remaining<=1e-8){
    if(raid.phase==='warning'){raid.phase='active';raid.remaining=RAID_TIMING.activeFor;announce(run,'Toc, toc, toc… é a Polícia Federal! Pule a PF e abaixe dos microfones por dez segundos.');}
    else if(raid.phase==='active'){raid.phase='recovery';raid.recoveryFor=raid.recoveryFor||RAID_TIMING.recoveryFor;raid.remaining=raid.recoveryFor;announce(run,'A perseguição especial terminou. O ritmo normal está voltando.');}
-   else{run.raid=null;run.nextRaid=26+random(rng)*10;run.bossCooldown=Math.max(2.5,run.bossCooldown);}
+   else{run.raid=null;const risk=difficultyAt(run.distance,run.elapsed).pressure;run.nextRaid=28-12*risk+random(rng)*(8-3*risk);run.bossCooldown=Math.max(2.5,run.bossCooldown);}
   }return;
  }
+ if(!Number.isFinite(run.nextRaid))return;
  run.nextRaid-=dt;
+ const stage=routeStageFor(run),local=campaignRouteDistance(run)%SCENE_DISTANCE;
+ const dueByStage=local>=3000&&!run.raidStageCoverage?.[raidStageKey(run)];
+ // An overdue local encounter reserves the boss approach instead of being
+ // discarded when Jacaré or a preceding duel consumed its normal slot.
  if(run.practice||run.player.isJacare||run.boss||run.bossCooldown>0||routeTransitionFor(run).active||
-  run.mode==='story'&&storyApproachAt(run.routeDistance,run.bossesDefeated))return;
- if(run.nextRaid<=0){
+  !dueByStage&&run.mode==='story'&&storyApproachAt(run.routeDistance,run.bossesDefeated))return;
+ if(run.nextRaid<=0||dueByStage){
   const choices=RAID_FACTS.map((_,i)=>i).filter(i=>i!==run.lastFact);
   const factIndex=choices[Math.floor(random(rng)*choices.length)];run.lastFact=factIndex;
-  run.raid={phase:'warning',remaining:RAID_TIMING.warningFor,recoveryFor:RAID_TIMING.recoveryFor,factIndex,id:++run.raids,waves:0};
+  run.raid={phase:'warning',stageId:stage.id,remaining:RAID_TIMING.warningFor,recoveryFor:RAID_TIMING.recoveryFor,factIndex,id:++run.raids,waves:0};
+  recordRaidPresence(run,run.raid);
   announce(run,'Joice apareceu. Atenção: vem aí uma perseguição especial da PF.');
  }
 }
@@ -776,14 +790,14 @@ function rewardForObstacle(run,obstacle,balance,rng){
   y:obstacle.action==='crouch'?18:100,type:item.type,value:item.value,speed:obstacle.speed,waitFor:obstacle.waitFor||0,anchor:obstacle});
 }
 function regularShot(run,type,actor,approach){
- const width=46,muzzle=regularCastMuzzle(actor,visibleWidth(run),WORLD.ground,run.elapsed*10);
+ const stageId=routeStageFor(run).id,width=46,muzzle=regularCastMuzzle(actor,visibleWidth(run),WORLD.ground,run.elapsed*10,stageId);
  const reserved=run.obstacles.filter(o=>!o.passed&&!o.counted).map(o=>threatReservation(run,o)).filter(t=>Number.isFinite(t)&&t>0);
  const flightFor=Math.min(.6,.24+Math.abs(muzzle.x-(playerX(run)+17))/900);
  // A nearby emitter can hit as soon as it releases. Reserve that release,
  // rather than only the end of flight, after the preceding evasive action.
  const eta=Math.max(1.08,approach/assistance(run),...reserved.map(t=>t+REACTION_GAP+flightFor));
  const waitFor=eta-flightFor;
- return {x:muzzle.x-width/2,y:muzzle.y,width,height:72,type,action:'crouch',sourceActor:actor,projectile:true,
+ return {x:muzzle.x-width/2,y:muzzle.y,width,height:72,type,stageId,action:'crouch',sourceActor:actor,projectile:true,
   approach:'overhead',flightStyle:projectileStyle(type),launchX:muzzle.x,launchY:muzzle.y,targetX:playerX(run)+17,targetY:84,speed:180,waitFor,
   cast:{windupFor:waitFor,flightFor,flightAge:0,fromX:muzzle.x,fromY:muzzle.y,toX:playerX(run)+17}};
 }
@@ -792,7 +806,7 @@ function advanceRegularShot(run,o,dt){
  if(active<=0)return;
  const cast=o.cast;
  if(!o.launched){
-  const muzzle=regularCastMuzzle(o.sourceActor,visibleWidth(run),WORLD.ground,run.elapsed*10),center=playerX(run)+17,half=o.width/2;
+  const muzzle=regularCastMuzzle(o.sourceActor,visibleWidth(run),WORLD.ground,run.elapsed*10,o.stageId||routeStageFor(run).id),center=playerX(run)+17,half=o.width/2;
   const direction=muzzle.x>=center?1:-1,near=direction>0?frontContact(run)+half:playerX(run)+5-half+3;
   const far=direction>0?playerX(run)+5-half+3:frontContact(run)+half;
   cast.fromX=o.launchX=muzzle.x;cast.fromY=o.launchY=muzzle.y;cast.toX=direction*(muzzle.x-near)>=0?near:far;
@@ -850,7 +864,12 @@ export function advanceRun(run,seconds,rng){
  const balance=difficultyAt(run.distance,run.elapsed),travel=balance.speed*assistance(run)*dt;run.distance+=travel;
  if(!run.boss?.combat){
   const stop=run.mode==='story'&&Number.isFinite(run.nextBossAt)&&run.routeDistance<=run.nextBossAt?run.nextBossAt:Infinity;
-  run.routeDistance=Math.min(stop,run.routeDistance+travel);
+  const local=campaignRouteDistance(run)%SCENE_DISTANCE;
+  const missingRaid=Number.isFinite(run.nextRaid)&&!run.practice&&!run.raidStageCoverage?.[raidStageKey(run)];
+  // Keep an unmet local encounter before the scenery transition. Physical
+  // distance still advances while a duel, cooldown or Jacaré finishes.
+  const raidStop=missingRaid&&local<=6200?run.routeDistance-local+6200:Infinity;
+  run.routeDistance=Math.min(stop,raidStop,run.routeDistance+travel);
  }
  run.bossCooldown=Math.max(0,run.bossCooldown-dt);
  if(run.phantomCloud){run.phantomCloud.remaining=Math.max(0,run.phantomCloud.remaining-dt);if(!run.phantomCloud.remaining)run.phantomCloud=null;}
@@ -948,28 +967,29 @@ export function advanceRun(run,seconds,rng){
    const x=visibleWidth(run)+40,approach=raidActive?Math.max(.85,balance.obstacleApproach-.15):balance.obstacleApproach;
    // A partir da segunda etapa, baixos podem rolar, cair de cima ou avançar pela retaguarda.
    // Cada estilo compete por um único intervalo: jamais surgem dois contatos simultâneos.
-   if(raidActive&&(run.raid.waves||0)>0&&random(rng)<.25&&run.raid.remaining>3){
+   if(raidActive&&(run.raid.waves||0)>0&&random(rng)<.20+.15*balance.pressure&&run.raid.remaining>3){
     anchor=spawnFallingThreat(run);
     if(anchor&&anchor.warningFor+anchor.fallFor>run.raid.remaining-.2){run.obstacles=run.obstacles.filter(o=>o!==anchor);anchor=null;}
    }
-   if(!anchor&&!raidActive&&run.elapsed>=12&&random(rng)<.13+.09*balance.pressure)anchor=spawnManholeThreat(run,{rng});
+   if(!anchor&&!raidActive&&run.elapsed>=12&&random(rng)<.12+.14*balance.pressure)anchor=spawnManholeThreat(run,{rng});
    if(anchor){/* A zona local já entrou no mundo com um aviso comprometido. */}
    else if(action==='crouch'){
-    const performers=unlockedCharacters(balance.level,'overhead');
+    const regional=run.mode==='story'?stageRosterFor(routeStageFor(run).id).overhead:null;
+    const performers=regional?regional.map(entry=>entry.actor):unlockedCharacters(balance.level,'overhead');
     const type=raidActive?'joice':chooseProgressiveCharacter(performers,rng,run.seenOverheadActors,run.lastOverheadActor);
     if(!raidActive){
      if(!run.seenOverheadActors.includes(type))run.seenOverheadActors.push(type);
      run.lastOverheadActor=type;run.overheadCount++;
     }
-    const attackType={dilma:'wind',simone:'budget-sheets',soraya:'parachute-cross','meme-army':'meme-ghost',joice:'microphone'}[type];
+    const attackType=(!raidActive&&regional?.find(entry=>entry.actor===type)?.weapon)||{dilma:'wind',simone:'budget-sheets',soraya:'parachute-cross','meme-army':'meme-ghost',joice:'microphone'}[type];
     anchor=regularShot(run,attackType,type,approach);
-    if(!raidActive)run.cameo={type,remaining:anchor.waitFor+.78,shot:anchor};
+    if(!raidActive)run.cameo={type,stageId:anchor.stageId,remaining:anchor.waitFor+.78,shot:anchor};
    }else{
-    const selected=raidActive?foeFor('pf'):run.mode==='story'?foeFor(chooseProgressiveCharacter(storyGround[routeStageFor(run).index],rng,run.seenGroundActors,run.lastGroundActor)):pursuitAt(routeClock(run),rng,balance.level,run.seenGroundActors,run.lastGroundActor);
+    const selected=raidActive?foeFor('pf'):run.mode==='story'?foeFor(chooseProgressiveCharacter(stageRosterFor(routeStageFor(run).id).ground,rng,run.seenGroundActors,run.lastGroundActor)):pursuitAt(routeClock(run),rng,balance.level,run.seenGroundActors,run.lastGroundActor);
     const foe=run.supportAvailable===false&&['boulos','dino'].includes(selected.type)?foeFor('pf'):selected;
     const roll=random(rng);
-    const activeStyles=run.elapsed>=12&&!raidActive&&(run.mode!=='story'||routeStageFor(run).id!=='brasilia-final');
-    const rearChance=.28+.14*balance.pressure;
+    const activeStyles=run.elapsed>=12&&!raidActive;
+    const rearChance=.30+.18*balance.pressure;
     const rear=activeStyles&&run.elapsed>=18&&roll<rearChance;
     const falling=activeStyles&&balance.pressure>.12&&roll>=rearChance&&roll<rearChance+.20;
     const rolling=activeStyles&&roll>=rearChance+.20&&roll<rearChance+.36;
@@ -1001,8 +1021,8 @@ export function advanceRun(run,seconds,rng){
    if(raidActive)run.raid.waves=(run.raid.waves||0)+1;
    run.attackStyles.push(anchor.approach||'overhead');
    if(run.attackStyles.length>16)run.attackStyles.shift();
-   const gap=raidActive ? .98-.08*balance.pressure:run.raid?.phase==='recovery'?
-    (.98-.08*balance.pressure)+(balance.obstacleGap-.98+.08*balance.pressure)*Math.max(0,Math.min(1,1-run.raid.remaining/(run.raid.recoveryFor||RAID_TIMING.recoveryFor))):balance.obstacleGap;
+   const gap=raidActive ? 1.02-.17*balance.pressure:run.raid?.phase==='recovery'?
+    (1.02-.17*balance.pressure)+(balance.obstacleGap-1.02+.17*balance.pressure)*Math.max(0,Math.min(1,1-run.raid.remaining/(run.raid.recoveryFor||RAID_TIMING.recoveryFor))):balance.obstacleGap;
    // Microvariação de intervalo aumenta a incerteza sem criar colisões inevitáveis.
    // A aproximação de cada perigo ainda passa pelo limitador de 0,82 s.
    run.nextObstacle+=gap+(raidActive?random(rng)*.04:random(rng)*(.16+.06*(1-balance.pressure)));
