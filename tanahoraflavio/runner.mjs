@@ -73,7 +73,8 @@ function initRunner() {
   const controlLabels=()=>Object.fromEntries(Object.entries(preferences.controls.keyboard).map(([action,keys])=>[action,keys.map(keyLabel).join('/')]));
   let controlSettings=null,gamepadDriver=null;
   const gamepadHeld=new Set();
-  let run=createRun({assisted:preferences.assisted}),frameId=0;
+  const selectedMode=()=>$("game-mode-story").checked?"story":"endless";
+  let run=createRun({assisted:preferences.assisted,mode:selectedMode()}),frameId=0;
   run.supportAvailable=false;
   const trackPointers=new Map(),moveKeys=new Set(),jumpKeys=createPressGate(),crouchSources=createHeldSources(),attackSources=createHeldSources();
   const attackButton=$("game-attack"),firePointers=new Set(),mouseHeld=new Map();
@@ -316,7 +317,7 @@ function initRunner() {
       $("game-overlay-badge").textContent="Perseguição fictícia";audio.stop();
       if(lastStatus!=="over")section.dispatchEvent(new Event("runner:over"));
     }
-    if(lastStatus!==run.status||lastStage!==stage.index||lastCollected!==run.collected||lastPower!==power||lastLives!==run.lives||lastEvents!==run.events){
+    if(renderedRoute!==stages||lastStatus!==run.status||lastStage!==stage.index||lastCollected!==run.collected||lastPower!==power||lastLives!==run.lives||lastEvents!==run.events){
       let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="ballot"?"Etapa final: digite dois números na urna fictícia.":run.status==="prison"?"Flávio foi preso. A campanha vai recomeçar.":run.status==="won"?(run.practice?"Desafio opcional concluído.":"História concluída. Todas as "+STORY_BOSS_COUNT+" etapas foram superadas."):run.status==="over"?"Foi pego pela Polícia Federal! "+dodgeHint()+" "+score+" metros percorridos. Toque em Tentar de novo.":stage.name+" · pule ou abaixe conforme o perigo.";
       if(run.status==="running"){
         if(run.events>lastEvents)message=run.event;
@@ -422,7 +423,7 @@ function initRunner() {
     audio.stop();audio.prime();audio.actorCue("flavio");voices.reset();lastRaidKey="";
     clearControls();
     shotSounds.reset();lastHeroShotHeard=0;
-    run=createRun({assisted:preferences.assisted,mode:practiceId||$("game-mode-story").checked?"story":"endless",practiceId});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);movementSounds.reset(run);landingUntil=0;
+    run=createRun({assisted:preferences.assisted,mode:practiceId?"story":selectedMode(),practiceId});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);movementSounds.reset(run);landingUntil=0;
     if(!supportReady)prepareSupport();
     $("game-settings").open=false;
     crouchPose=0;lastPoseFrame=performance.now();
@@ -481,6 +482,7 @@ function initRunner() {
     moveRun(run,Number(right)-Number(left)||(pointer?.direction||0));
   }
   $("game-start").addEventListener("click",()=>begin());
+  $("game-mode-chooser").addEventListener("change",()=>{if(run.status==="ready"){run.mode=selectedMode();updateUI();draw();}});
   for(const id of STORY_OPTIONAL_IDS){
     const b=optionalStoryBossAt(id),button=document.createElement('button');
     if(!b)continue;
