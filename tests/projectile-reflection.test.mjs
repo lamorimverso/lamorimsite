@@ -86,3 +86,18 @@ test('a target behind Flávio does not reverse targetless shots after it is gone
  r.obstacles=[];for(let i=0;i<40;i++)core.advanceRun(r,dt);
  assert.equal(core.attackRun(r),true);assert.equal(r.player.shotFacing,1);assert.ok(r.heroShots.at(-1).vx>0);
 });
+
+test('Infinito leaves the last rebound in flight long enough to reach its owner',()=>{
+ const r=core.createRun({mode:'endless',seed:1});core.startRun(r);
+ for(const k of ['nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
+ r.nextBossAt=0;core.advanceRun(r,dt);
+ const boss=r.boss,m=core.heroMuzzleFor(r),hp=boss.hp;
+ Object.assign(boss,{remaining:1,fired:boss.total,nextAttack:Infinity});
+ const threat={type:'receipts',owner:boss.type,bossAttack:true,projectile:true,launched:true,x:m.x+80,width:28,height:30,speed:60,launchX:m.x+94,launchY:m.y,y:m.y,targetY:m.y,targetX:m.x-10};
+ r.obstacles=[threat];assert.equal(core.attackRun(r),true);
+ until(r,()=>threat.reflected);
+ assert.equal(r.boss,boss,'the last rebound is still visible');
+ assert.equal(boss.hp,hp);
+ until(r,()=>r.boss===null);
+ assert.ok(boss.hp<hp,'the reflected object made contact before the victory');
+});
