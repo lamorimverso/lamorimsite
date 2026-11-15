@@ -1,7 +1,7 @@
 import {ammoCapacityFor} from './runner-supplies.mjs?v=44c67e8a5802';
 import {heroPowerFor} from './runner-earned-powers.mjs?v=432ca45a76e4';
-import {drawSpriteHead,drawCombatSprite} from './runner-sprites.mjs?v=94bad35aaa14';
-import {drawHeroProjectile} from './runner-hero-shot.mjs?v=6dc2d2659b41';
+import {drawSpriteHead,drawCombatSprite} from './runner-sprites.mjs?v=532ce9f60515';
+import {drawHeroProjectile} from './runner-hero-shot.mjs?v=75250b011716';
 
 import {drawCampaignPortrait} from './runner-campaign-art.mjs?v=b9520dc88107';
 

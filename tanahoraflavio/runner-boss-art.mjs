@@ -1,10 +1,11 @@
 import {drawCharacterBody,drawCharacterArm} from './runner-body-art.mjs?v=67badae0df52';
-import {drawBossonariHead} from './runner-character-art.mjs?v=cbbe7c478d86';
-import {standingEnemyPose} from './runner-cast-pose.mjs?v=ed1b40296acc';
-export {standingEnemyPose} from './runner-cast-pose.mjs?v=ed1b40296acc';
-import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=94bad35aaa14';
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=c040deb109ca';
-import {drawMemeArmy} from './runner-art.mjs?v=8113d5b47b32';
+import {drawBossonariHead} from './runner-character-art.mjs?v=a9403256b879';
+import {standingEnemyPose} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
+export {standingEnemyPose} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
+import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=532ce9f60515';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=043d40fd8ef2';
+import {drawMemeArmy} from './runner-art.mjs?v=8ef4043ce543';
+import {regionalEmitterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 
 import {campaignAccentFor,drawCampaignBoss,drawCampaignCrowd} from './runner-campaign-art.mjs?v=b9520dc88107';
 
@@ -62,8 +63,9 @@ function fallbackHead(c,type,accent){
  line(c,[[-5,-78],[5,-78]],accent,1.5);
 }
 
-export function drawHoverEnemy(c,{type='haddad',x=0,y=0,scale=1,phase=0,preparing=false,attacking=false,recovering=false,hurt=false,reducedMotion=false,classId='sentinel',action='jump',progress,armyVariant,enraged=false}={}){
+export function drawHoverEnemy(c,{type='haddad',x=0,y=0,scale=1,phase=0,preparing=false,attacking=false,recovering=false,hurt=false,reducedMotion=false,classId='sentinel',action='jump',progress,armyVariant,stageId='brasilia',enraged=false}={}){
  if(!Number.isFinite(x)||!Number.isFinite(y)||!Number.isFinite(scale)||scale<=0)return;
+ const visual=regionalEmitterFor(type,stageId);type=visual.type;armyVariant??=visual.armyVariant;
  if(type==='povo'){drawCampaignCrowd(c,{x,y,scale,phase,reducedMotion});return;}
  const p=standingEnemyPose({phase,preparing,attacking,recovering,hurt,reducedMotion,classId,action,progress}),accent=campaignAccentFor(type)??SUITS[type]?.[2]??'#dbc778';
  c.save();c.translate(x,y);c.scale(scale,scale);

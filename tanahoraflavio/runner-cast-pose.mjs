@@ -1,4 +1,5 @@
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=c040deb109ca';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=043d40fd8ef2';
+import {regionalEmitterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 // Pure rig shared by rendering and regular projectile launch coordinates.
 const CLASS_ALIASES={sentinela:'sentinel',artilheiro:'gunner',conjurador:'caster',soberano:'sovereign'};
 const canonicalClass=value=>CLASS_ALIASES[value]||value||'sentinel';
@@ -53,8 +54,8 @@ export function regularCastPresentation(shot){
  return {preparing:pending,attacking:!pending&&age<.26,recovering:!pending&&age>=.26,
   progress:pending?Math.max(0,Math.min(1,1-shot.waitFor/cast.windupFor)):age<.26?age/.26:Math.min(1,(age-.26)/.5),action:shot.action,classId:'caster'};
 }
-export function regularCastMuzzle(type,width=900,ground=246,phase=0){
- const pose=regularEmitterPose(type,width,ground),hand=combatGeometryFor(type,{frame:2,scale:pose.scale})?.muzzle;
+export function regularCastMuzzle(type,width=900,ground=246,phase=0,stageId='brasilia'){
+ const pose=regularEmitterPose(type,width,ground),visual=regionalEmitterFor(type,stageId),hand=combatGeometryFor(visual.type,{...visual,frame:2,scale:pose.scale})?.muzzle;
  if(!hand)return {x:pose.x-40*pose.scale,y:ground-pose.y+45*pose.scale};
  return {x:pose.x+hand.x,y:ground-pose.y-hand.y};
 }

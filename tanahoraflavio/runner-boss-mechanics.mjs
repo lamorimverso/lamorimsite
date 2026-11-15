@@ -322,7 +322,7 @@ export function bossMechanicFor(boss,fired=0){
  const index=Math.max(0,Math.floor(Number(fired)||0));
  const pattern=patterns[order[index%order.length]%patterns.length],rule=counters[boss.type];
  const stage=Math.max(0,Number(boss.stageIndex)||0),rank=Math.max(1,Number(boss.rank)||1);
- const pressure=stage*.04+(rank-1)*.025+Math.min(rematch,2)*.055+phase*.12;
+ const pressure=stage*.055+(rank-1)*.035+Math.min(rematch,2)*.065+phase*.15;
  const contactFor=Math.max(.82,1.11/(pattern.projectileSpeedScale||1)-pressure*.5);
  const opening=rule?.applies(pattern)?{label:rule.label,delay:rule.delay,trigger:rule.trigger,damage:rule.damage,
   window:Math.max(.68,rule.window-pressure*.42)}:null;

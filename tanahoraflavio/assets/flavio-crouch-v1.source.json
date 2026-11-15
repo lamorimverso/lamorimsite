@@ -1,0 +1,65 @@
+{
+  "tool": "built-in image_gen",
+  "generation": "exec-86d78081-fdd8-47e4-8058-c58f475c2567",
+  "generatedSource": "/workspace/generated_images/exec-86d78081-fdd8-47e4-8058-c58f475c2567.png",
+  "references": [
+    "flavio-motion-v2.webp",
+    "combat-ivermectina-e-v2.png"
+  ],
+  "prompt": "Create a NEW production-ready transparent game sprite atlas, exactly 4 columns by 2 rows, with 8 whole-body drawings of the SAME Flavio character from the supplied references. Reference 1 defines face/costume/style. Reference 2 defines the small purple IVER raygun. Native transparent alpha background, absolutely no checkerboard, no captions, no borders, no ground line or cast shadows. Each of eight sprites isolated in its own equal cell with generous 8% margins, never touching another cell. All sprites facing RIGHT, side/three-quarter view.\n\nPreserve this exact character's identity: worried young adult chibi man, huge rounded expressive warm light skin face, dark brown side-parted swept hair, thick black eyebrows, big white eyes, clenched anxious mouth, clean shaven, prominent round ear, purple suit, white shirt, flowing bright yellow tie, black leather shoes. Same polished bold dark outlined 2D cartoon, rich soft cel shading, sharp clean edges as source. Do not turn into a different hero. This is a genuine newly drawn COMPLETE character in every cell, coherent neck attached to shoulders, two arms/hands, two legs/shoes. NO disconnected head, NO flattening or squeezing the head.\n\nDesign goal: much better LOW CROUCH / LOW SLIDE readable at 45 pixels high, a natural compact crouch with deeply bent knees and planted shoes/sole at common baseline. Head remains upright and recognizable, slightly tucked into shoulders, torso leans forward naturally, hips low behind the head. Full body natural anatomy. Silhouette squat and wide, no more than about 0.65 as tall as wide. Head maximum 45% of body height so legs and shoulders remain clear. Every pose has visible connected shoulders, pelvis, bent knees and shoes. Do not draw crawling, lying prone, floating or a straight horizontal body. Clear weight and forward momentum.\n\nROW 1: four sequential neutral low-crouch/slide phases holding the same small blue phone/passport with gold icon as reference in forward hand near chest, other arm counterbalancing. Frame 1 enters low crouch with both knees bent and front shoe forward; frame 2 deeper glide with back knee tucked and front heel sliding; frame 3 weight transfers with knees compressed and tie trailing; frame 4 settles into balanced low crouch with back shoe pressing down. Keep consistent same head/body scale and feet bottom baseline across all four. Small meaningful changes of knees, arms, coat tails and tie, clear animation rather than duplicate images. Phone never blocks face.\n\nROW 2: four sequential crouched firing poses in same low silhouette as row1, replacing phone with COMPLETE small purple bottle-shaped IVER raygun aimed horizontally RIGHT, held firmly by right hand with a clearly attached shoulder-to-elbow-to-wrist path. Left hand balances beside bent left knee or supports grip. Frame 1 ready aim, frame 2 compact recoil (gun slides back slightly), frame 3 trigger release with barrel pointing right and NO muzzle flash/projectile (the game adds flash), frame 4 recover aim. Entire purple barrel, round dark opening at far right, handle, visible trigger hand and small cream IVER label fully inside every cell. Barrel tip at nearly same height above floor in all four. Keep same gun size as reference and same recognizable face, purple suit, bright yellow tie, black shoes.\n\nOutput single clean transparent 4x2 atlas, 8 complete consistent sharp polished character drawings. No additional objects, no words except IVER on gun, no decorative particles.",
+  "layout": {
+    "columns": 4,
+    "rows": 2,
+    "poses": [
+      [
+        "crouch-entry",
+        "low-glide",
+        "weight-transfer",
+        "settle"
+      ],
+      [
+        "ready",
+        "recoil",
+        "release",
+        "recover"
+      ]
+    ]
+  },
+  "neckAnchors": [
+    {
+      "x": 238,
+      "y": 270
+    },
+    {
+      "x": 682,
+      "y": 282
+    },
+    {
+      "x": 1133,
+      "y": 292
+    },
+    {
+      "x": 1581,
+      "y": 294
+    },
+    {
+      "x": 219,
+      "y": 734
+    },
+    {
+      "x": 661,
+      "y": 734
+    },
+    {
+      "x": 1108,
+      "y": 734
+    },
+    {
+      "x": 1547,
+      "y": 737
+    }
+  ],
+  "conversion": "Lossless WebP. Native image_gen transparency and complete source PNG preserved; no recolouring, background removal or anatomical compositing. Build script derives figure/foot bounds and physical barrel tips from pixels.",
+  "pngSha256": "4e81477ab3fc2bf81257d31ed11eb15cbef4320d906e211bf3eac7def9c5cbcd",
+  "webpSha256": "bb7683c324aa87be9726d3a7f0a24b445b16d3582e4ca31114ef45d0fc46a604"
+}

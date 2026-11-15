@@ -11,7 +11,7 @@ test('oito passos e todas as ações usam o mesmo herói sem trocar escala entre
  assert.deepEqual(Array.from({length:8},(_,phase)=>spriteFrameFor('flavio',{phase}).index),[0,1,2,3,4,5,6,7]);
  assert.deepEqual(spriteFrameFor('flavio',{airborne:true}),{sheet:'hero',index:8});
  assert.deepEqual(spriteFrameFor('flavio',{airborne:true,falling:true}),{sheet:'hero',index:9});
- assert.deepEqual(spriteFrameFor('flavio',{landing:true}),{sheet:'hero',index:10});
+ assert.deepEqual(spriteFrameFor('flavio',{landing:true}),{sheet:'heroCrouch',index:0});
  assert.deepEqual(spriteFrameFor('flavio',{hurt:true}),{sheet:'hero',index:11});
 });
 test('perseguidores alternam pernas em vez de repetir um único recorte',()=>{

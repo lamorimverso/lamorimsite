@@ -1,5 +1,5 @@
 import {STAGES,STORY_STAGES,SCENE_DISTANCE} from './runner-route-data.mjs?v=01fa5c1830b5';
-import {bossMechanicFor} from './runner-boss-mechanics.mjs?v=4fd370d40ff9';
+import {bossMechanicFor} from './runner-boss-mechanics.mjs?v=cce4faf300fb';
 import {BOSS_RANKS,bossProfileFor} from './runner-boss-profiles.mjs?v=1eda01496613';
 // Encontros ficcionais: quatro classes por cenário, sem mudar identidades.
 
@@ -144,7 +144,7 @@ export function bossCounterWindow(boss){
 }
 export function stepBossPhase(boss,dt,player={},rng=Math.random){
  boss.age=(boss.age||0)+dt;boss.phaseFor-=dt;
- boss.motionClock=(boss.motionClock||0)+dt*(1+(Number(boss.stageIndex)||0)*.07+(boss.enraged?.2:0));
+ boss.motionClock=(boss.motionClock||0)+dt*(1+(Number(boss.stageIndex)||0)*.09+(boss.enraged?.28:0));
  if(boss.phaseFor>0)return;
  const enraged=boss.hp<=boss.maxHp/2;
  if(boss.phase==='intro'||boss.phase==='recover'){
