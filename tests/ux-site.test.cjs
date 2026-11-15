@@ -840,7 +840,7 @@ test('elenco completo possui corpo e animação no Canvas do navegador',async()=
  try{
   const result=await page.evaluate(async()=>{
    const art=await import('./runner-art.mjs');await art.loadSprites();const {PURSUERS}=await import('./runner-core.mjs'),{ALLIES}=await import('./runner-allies.mjs');
-   const enemies=PURSUERS.filter(p=>!['barrier','case'].includes(p.type));
+   const enemies=PURSUERS.filter(p=>!['barrier','case','arrow-panel','meme-ghost'].includes(p.type));
    const actors=[{type:'flavio'},...enemies,...['joice','ze-gotinha','jacare',...ALLIES.map(a=>a.id)].map(type=>({type}))];
    const results=[];
    for(let sheet=0;sheet<Math.ceil(actors.length/8);sheet++){
@@ -860,7 +860,7 @@ test('elenco completo possui corpo e animação no Canvas do navegador',async()=
     document.body.append(film);
    }return results;
   });
-  assert.equal(result.length,33);for(const actor of result)assert.ok(actor.frames>=3,actor.type+' precisa de passada visível');
+  assert.equal(result.length,39);for(const actor of result)assert.ok(actor.frames>=3,actor.type+' precisa de passada visível');
   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});for(let sheet=0;sheet<Math.ceil(result.length/8);sheet++)await page.locator('#roster-'+sheet).screenshot({path:path.resolve(__dirname,`../ux-captures/roster-${sheet}.png`)});
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
@@ -1041,7 +1041,7 @@ test('aviso de arma conquistada não cobre os controles compactos no celular',as
    const r=__testRun,{legacyBossAt}=await import('./runner-bosses.mjs'),{grantBossPower}=await import('./runner-earned-powers.mjs');
    for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
    r.obstacles=[];r.pickups=[];r.reserveShields=1;grantBossPower(r,'dilma');
-   const b=storyBossAt(0);r.boss={...b,combat:true,maxHp:b.hp,age:0,phase:'recover',phaseFor:100,nextAttack:100};
+   const b=legacyBossAt(0);r.boss={...b,combat:true,maxHp:b.hp,age:0,phase:'recover',phaseFor:100,nextAttack:100};
   });
   await page.locator('#game-power-reward').waitFor();
   for(const id of ['game-weapon-cycle','game-reserve-shield']){
