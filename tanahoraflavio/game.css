@@ -348,3 +348,28 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
 #game-route li small{display:block;font-size:10px}
 #game-route li.is-current{color:var(--purple)}
 @media(max-width:500px){#game-route{columns:1}}
+
+/* Result actions are part of the track, below the outcome copy. */
+#game-result-actions:empty{display:none}
+#game-result-actions{width:min(100%,350px);pointer-events:auto}
+#game-result-actions .game-controls{grid-template-columns:minmax(0,1fr);width:100%;margin:3px 0 0;gap:5px}
+#game-result-actions .game-mode-chooser{grid-column:1;grid-row:1;gap:5px}
+#game-result-actions .game-mode-chooser label{min-height:38px;gap:4px;padding:4px 3px;font-size:clamp(10px,2.6vw,12px);white-space:nowrap}
+#game-result-actions .game-mode-chooser input{margin:0;flex:none}
+#game-result-actions #game-start{grid-column:1;grid-row:2;min-height:44px;padding:7px 8px}
+.game-card[data-run-state="over"] .game-overlay{gap:5px;overflow:auto;justify-content:safe center}
+.game-card[data-run-state="over"] .game-captured{height:clamp(60px,15dvh,112px);flex:none}
+.game-card[data-run-state="over"] #game-overlay-title{font-size:clamp(17px,4vw,25px)}
+.game-card[data-run-state="won"] #runner-canvas{min-height:235px}
+@media(min-width:480px) and (orientation:landscape) and (max-height:600px){
+ .game-card[data-run-state="over"] .game-overlay{padding:5px 12px;gap:3px}
+ .game-card[data-run-state="over"] .game-captured{height:clamp(43px,calc(100dvh - 272px),94px)}
+ .game-card[data-run-state="over"] #game-overlay-title{font-size:clamp(15px,4vw,21px)}
+ #game-result-actions{width:min(100%,466px)}
+ #game-result-actions .game-controls{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+ #game-result-actions #game-start{grid-column:2;grid-row:1}
+}
+@media(max-width:479px){
+ .game-card[data-run-state="over"] .game-captured{max-height:82px}
+ .game-card[data-run-state="over"] .game-overlay{padding-block:9px}
+}
