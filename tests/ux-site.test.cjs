@@ -1319,6 +1319,11 @@ for(const viewport of [{width:568,height:320},{width:844,height:390}])test(`engr
 test('rota de São Paulo, Brasília final e Infinito mantêm o destino correto',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
  try{
+  await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
+  assert.equal(await page.locator('#game-route li').count(),8,'rota acompanha a História já selecionada na abertura');
+  await page.locator('#game-mode-infinite').check();
+  assert.equal(await page.locator('#game-route li').count(),6,'rota acompanha o modo Infinito antes da largada');
+  await page.locator('#game-mode-story').check();
   await begin(page);
   for(const [index,id] of [[2,'sao-paulo'],[7,'brasilia-final']]){
    await page.evaluate(async index=>{
