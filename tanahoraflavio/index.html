@@ -26,9 +26,9 @@
   <title>Tá na hora, Flávio! · Contagem e minigame</title>
 
   <link rel="stylesheet" href="control-settings.css?v=1c20042497ae">
-  <link rel="stylesheet" href="game.css?v=6a58725ed7a9">
+  <link rel="stylesheet" href="game.css?v=acc34bfb1d39">
   <script defer src="page-layout.js?v=ffb00bd14e77"></script>
-  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=6afb4e575c4a"></script>
+  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=526f8950689e"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -135,7 +135,7 @@
           <div class="power-chip"><span class="sr-only">Vantagem ativa: </span><strong id="game-power">Sem efeito ativo</strong></div>
           <div class="ammo-chip" hidden><span class="sr-only">Munição especial: </span><strong id="game-ammo">Sem arma</strong></div>
         </div>
-          <div class="game-overlay" id="game-overlay"><span class="game-overlay-badge" id="game-overlay-badge">Corrida fictícia</span><img class="game-captured" id="game-captured" src="assets/flavio-captured-v1.webp?v=35a44e31f10f" width="1334" height="1179" alt="Caricatura de Flávio com as mãos algemadas" fetchpriority="low" hidden><strong id="game-overlay-title">Pronto para correr?</strong><p id="game-overlay-copy">Pule ou abaixe para desviar.</p><p class="game-start-hint sr-only" id="game-start-hint">Toque: pular · ↓: abaixar · ↔: mover</p></div>
+          <div class="game-overlay" id="game-overlay"><span class="game-overlay-badge" id="game-overlay-badge">Corrida fictícia</span><img class="game-captured" id="game-captured" src="assets/flavio-captured-v1.webp?v=35a44e31f10f" width="1334" height="1179" alt="Caricatura de Flávio com as mãos algemadas" fetchpriority="low" hidden><strong id="game-overlay-title">Pronto para correr?</strong><p id="game-overlay-copy">Pule ou abaixe para desviar.</p><p class="game-start-hint sr-only" id="game-start-hint">Toque: pular · ↓: abaixar · ↔: mover</p><div id="game-result-actions"></div></div>
         </div>
         <section class="game-ballot" id="game-ballot" hidden tabindex="-1" aria-label="Urna fictícia da campanha">
           <div class="game-ballot-screen">
@@ -161,13 +161,15 @@
             <button type="button" id="game-urna-confirm" disabled>Confirma</button>
           </div>
         </section>
-        <div class="game-controls">
+        <div id="game-ready-actions">
+        <div class="game-controls" id="game-controls">
           <fieldset class="game-mode-chooser" id="game-mode-chooser" aria-label="Modo de jogo">
             <legend class="sr-only">Escolha o modo de jogo</legend>
             <label><input id="game-mode-infinite" type="radio" name="game-mode" value="endless"> Modo Infinito</label>
             <label><input id="game-mode-story" type="radio" name="game-mode" value="story" checked> Modo História</label>
           </fieldset>
           <button type="button" class="game-primary" id="game-start" disabled>Carregando desenhos…</button>
+        </div>
         </div>
         <p class="game-loading-note sr-only" id="game-loading-note" role="status">Preparando os personagens…</p>
 

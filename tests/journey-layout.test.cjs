@@ -206,7 +206,7 @@ test('Joice surge na pista e o fundo realmente se desloca durante a corrida',asy
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
-for(const viewport of [{width:320,height:568},{width:844,height:390}])test(`derrota ${viewport.width}px mostra algemas e legenda abaixo, com nova tentativa acessível`,async()=>{
+for(const viewport of [{width:320,height:568},{width:568,height:320},{width:844,height:390},{width:1440,height:900}])test(`derrota ${viewport.width}px mostra algemas e legenda abaixo, com nova tentativa acessível`,async()=>{
  const {context,page,errors}=await open(viewport,{instrument:true});
  try{
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
@@ -219,6 +219,17 @@ for(const viewport of [{width:320,height:568},{width:844,height:390}])test(`derr
   assert.ok(picture.y+picture.height<=title.y+1,'legenda abaixo do desenho');
   assert.equal(await page.locator('#game-overlay-title').textContent(),'Foi pego pela Polícia Federal!');
   assert.ok(again.y>=0&&again.y+again.height<=viewport.height+1,'nova tentativa cabe sem procurar o botão');
+  const track=await page.locator('.game-viewport').boundingBox(),copy=await page.locator('#game-overlay-copy').boundingBox(),modes=await page.locator('#game-mode-chooser').boundingBox();
+  assert.equal(await page.locator('#game-overlay #game-mode-chooser').count(),1);
+  assert.equal(await page.locator('#game-overlay #game-start').count(),1);
+  assert.ok(copy.y+copy.height<=modes.y+1&&copy.y+copy.height<=again.y+1,'modos e botão abaixo da mensagem');
+  for(const rect of [modes,again])assert.ok(rect.x>=track.x&&rect.x+rect.width<=track.x+track.width&&rect.y+rect.height<=track.y+track.height,'controles inteiros dentro da pista');
+  await page.getByRole('radio',{name:'Modo Infinito',exact:true}).check();
+  await page.getByRole('button',{name:'Tentar de novo',exact:true}).click();
+  assert.equal(await page.locator('#game').getAttribute('data-run-mode'),'endless');
+  assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
+  assert.equal(await page.locator('#game-overlay #game-start').count(),0);
+
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   assert.deepEqual(errors,[]);
  }finally{await context.close();}

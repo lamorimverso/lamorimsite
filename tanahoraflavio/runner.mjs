@@ -29,7 +29,7 @@ function initRunner() {
   if (!canvas || !section) return;
   // Uma aba pode ter conservado o HTML anterior enquanto os módulos já
   // mudaram. Atualizar a página uma vez evita inicializar sobre IDs antigos.
-  if(!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-cycle")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-effects")||!$("game-assist")||$("game-options-panel")||!$("game-attack")||!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-battle-cue")||!$("game-practice")||!$("game-route")||$("game-expand")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
+  if(!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-cycle")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-effects")||!$("game-assist")||$("game-options-panel")||!$("game-attack")||!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-battle-cue")||!$("game-practice")||!$("game-route")||!$("game-result-actions")||!$("game-ready-actions")||!$("game-controls")||$("game-expand")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
     const url=new URL(location.href);
     if(url.searchParams.get("ui")!=="20261115-campaign-hierarchy"){
       url.searchParams.set("ui","20261115-campaign-hierarchy");location.replace(url.href);
@@ -295,6 +295,9 @@ function initRunner() {
     $("game-ballot-message").textContent=run.ballot.message||"Digite dois números e confirme.";
     $("game-urna-confirm").disabled=run.ballot.digits.length!==2;
     $("game-overlay").hidden=run.status==="running"||ballotOpen;
+    const controls=$("game-controls"),inside=run.status==="over"||run.status==="won";
+    const actionsHost=$(inside?"game-result-actions":"game-ready-actions");
+    if(controls.parentNode!==actionsHost)actionsHost.append(controls);
     $("game-captured").hidden=run.status!=="over"&&!prison;
     if(ballotOpen&&lastStatus!=="ballot"){
       clearControls();$("game-ballot").focus({preventScroll:true});
