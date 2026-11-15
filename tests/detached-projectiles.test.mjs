@@ -2,14 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
 import * as art from '../tanahoraflavio/runner-art.mjs';
+import {combatGeometryFor} from '../tanahoraflavio/runner-combat-geometry.mjs';
 test('emissor está acima da pista e projéteis mantêm origem física e tempo original',()=>{
  for(const width of [480,612,900]){
   const r=core.createRun();core.startRun(r);r.viewportWidth=width;r.nextRaid=Infinity;r.nextBossAt=0;r.bossBag=['lula'];
   core.advanceRun(r,1/120,()=>.5);r.boss.nextAttack=0;core.advanceRun(r,1/120,()=>.5);
-  const o=r.obstacles.at(-1),pose=art.enemyEmitterPose(width,246,'lula',true);
-  assert.equal(o.x,width-104);assert.equal(o.flightStyle,'glide');
-  assert.ok(pose.y<246-o.y-o.height/2);
-  assert.ok(Math.abs(pose.x-(o.x+o.width/2))>70);
+  const o=r.obstacles.at(-1),pose=core.bossArenaPose(r.boss,width),g=combatGeometryFor('lula',{frame:2,facing:-1});
+  assert.equal(o.flightStyle,'glide');
+  assert.ok(Math.abs(o.launchX-pose.x-g.muzzle.x)<.001);
+  assert.ok(Math.abs(o.launchY-pose.platformY+g.muzzle.y)<.001);
   assert.ok(Math.abs(core.threatTimeToContact(r,o)-1.15)<.03);
  }
 });

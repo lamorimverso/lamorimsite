@@ -1,14 +1,16 @@
 import {
- ACTION_DEFINITIONS,normalizeControls,keyLabel,gamepadBindingLabel,
- assignKeyboard,assignGamepad,gamepadInputs
-} from './runner-control-map.mjs?v=2bb295d2954f';
+ ACTION_DEFINITIONS,normalizeControls,keyLabel,gamepadBindingLabel,mouseButtonLabel,
+ assignKeyboard,assignGamepad,assignMouse,gamepadInputs
+} from './runner-control-map.mjs?v=568387e3f764';
 
 const inputId=input=>input.kind==='axis'?`axis:${input.index}:${input.direction}`:`button:${input.index}`;
+const bindingDevices={keyboard:'teclado',mouse:'mouse',gamepad:'controle'};
 
 /** Render and capture bindings; the caller owns persistence and gamepad polling. */
 export function createControlSettings({root,controls,onChange=()=>{},onCaptureChange=()=>{}}){
  const doc=root.ownerDocument,view=doc.defaultView,details=root.closest('details');
  let current=normalizeControls(controls),device={connected:false,id:''},capture=null,destroyed=false;
+ let capturedMouseButton=null;
  const buttons=new Map(),cleanups=[];
  const element=(tag,className,text)=>{
   const node=doc.createElement(tag);
@@ -35,12 +37,12 @@ export function createControlSettings({root,controls,onChange=()=>{},onCaptureCh
  controllerStatus.id='game-controller-status';
  const region=element('div','control-bindings-scroll');
  region.setAttribute('role','region');
- region.setAttribute('aria-label','Comandos de teclado e controle');
+ region.setAttribute('aria-label','Comandos de teclado, mouse e controle');
  region.tabIndex=0;
  const table=element('table','control-bindings-table');
  const caption=element('caption','control-bindings-sr','Comandos do jogo');
  const head=element('thead'),headRow=element('tr');
- for(const label of ['Ação','Teclado','Controle']){
+ for(const label of ['Ação','Teclado','Mouse','Controle']){
   const heading=element('th',null,label);heading.scope='col';headRow.append(heading);
  }
  head.append(headRow);
@@ -48,11 +50,10 @@ export function createControlSettings({root,controls,onChange=()=>{},onCaptureCh
  for(const action of ACTION_DEFINITIONS){
   const row=element('tr'),label=element('th',null,action.label);
   label.scope='row';row.append(label);
-  for(const type of ['keyboard','gamepad']){
+  for(const type of Object.keys(bindingDevices)){
    const cell=element('td'),button=element('button','control-binding');
    button.type='button';
    button.dataset.bindAction=action.id;button.dataset.bindDevice=type;
-   button.setAttribute('aria-label',`Alterar ${type==='keyboard'?'teclado':'controle'}: ${action.label}`);
    button.setAttribute('aria-describedby','game-control-status');
    button.setAttribute('aria-pressed','false');
    listen(button,'click',()=>beginCapture(action,type,button));
@@ -67,23 +68,28 @@ export function createControlSettings({root,controls,onChange=()=>{},onCaptureCh
  const actions=element('div','control-bindings-actions');
  const cancel=element('button','control-bindings-cancel','Cancelar');
  cancel.type='button';cancel.hidden=true;
+ const clearMouse=element('button','control-bindings-clear','Limpar botão');
+ clearMouse.type='button';clearMouse.hidden=true;
  const reset=element('button','control-bindings-reset','Restaurar padrões');
  reset.type='button';reset.id='game-controls-reset';
- actions.append(cancel,reset);
+ actions.append(cancel,clearMouse,reset);
  root.replaceChildren(intro,controllerStatus,region,status,actions);
 
  function render(){
   for(const action of ACTION_DEFINITIONS){
-   for(const type of ['keyboard','gamepad']){
+   for(const [type,deviceLabel] of Object.entries(bindingDevices)){
     const button=buttons.get(`${type}:${action.id}`);
     const active=capture?.action.id===action.id&&capture?.type===type;
-    const labels=current[type][action.id].map(type==='keyboard'?keyLabel:gamepadBindingLabel);
-    button.textContent=active?'Aguardando…':labels.join(' / ');
-    button.title=labels.join(' / ');
+    const binding=current[type][action.id];
+    const label=type==='mouse'?mouseButtonLabel(binding):binding.map(type==='keyboard'?keyLabel:gamepadBindingLabel).join(' / ');
+    button.textContent=active?(type==='mouse'?'Clique…':'Aguardando…'):label;
+    button.title=label;
+    button.setAttribute('aria-label',`Alterar ${deviceLabel}: ${action.label} (${label})`);
     button.setAttribute('aria-pressed',String(active));
    }
   }
   cancel.hidden=!capture;
+  clearMouse.hidden=capture?.type!=='mouse';
  }
  function finish(message,{focus=false}={}){
   if(!capture)return;
@@ -106,20 +112,23 @@ export function createControlSettings({root,controls,onChange=()=>{},onCaptureCh
   capture.timer=view.setTimeout(()=>finish('Tempo esgotado. Escolha o comando para tentar novamente.'),15000);
   status.textContent=type==='keyboard'
    ?`Pressione a nova tecla para ${action.label}. Esc cancela.`
+   :type==='mouse'
+   ?`Clique com o botão desejado nesta área. Delete limpa e Esc cancela.`
    :`Pressione um botão ou mova um direcional para ${action.label}. Solte comandos já pressionados antes de usá-los. Esc cancela.`;
   render();onCaptureChange(true);
  }
- function apply(result){
+ function apply(result,message){
   if(!result.ok){status.textContent=`${result.error} Escolha outro comando ou pressione Esc para cancelar.`;return;}
   const label=capture.action.label;
   current=result.controls;
-  finish(`Comando de ${label} alterado.`,{focus:true});
+  finish(message??`Comando de ${label} alterado.`,{focus:true});
   onChange(current);
  }
  listen(doc,'keydown',event=>{
   if(!capture)return;
   event.preventDefault();event.stopImmediatePropagation();
   if(event.code==='Escape'||event.key==='Escape'){finish('Alteração cancelada.',{focus:true});return;}
+  if(!event.repeat&&capture.type==='mouse'&&(event.code==='Delete'||event.key==='Delete')){removeMouseBinding();return;}
   if(event.repeat||capture.type!=='keyboard')return;
   if(event.ctrlKey||event.altKey||event.metaKey||/^(Control|Alt|Meta)/.test(event.code||'')){
    status.textContent='Use uma tecla sem Ctrl, Alt ou Meta. Esc cancela.';return;
@@ -131,7 +140,27 @@ export function createControlSettings({root,controls,onChange=()=>{},onCaptureCh
   if(!capture)return;
   event.preventDefault();event.stopImmediatePropagation();
  },true);
+ function removeMouseBinding(){
+  if(capture?.type==='mouse')apply(assignMouse(current,capture.action.id,null),'Botão do mouse removido.');
+ }
+ const consume=event=>{event.preventDefault();event.stopImmediatePropagation();};
+ listen(doc,'pointerdown',event=>{
+  if(event.pointerType!=='mouse')return;
+  capturedMouseButton=null;
+  if(capture?.type!=='mouse'||!root.contains(event.target)||actions.contains(event.target))return;
+  consume(event);
+  capturedMouseButton=event.button;
+  apply(assignMouse(current,capture.action.id,event.button));
+ },true);
+ // Prevent the pointer gesture used for remapping from clicking another setting,
+ // opening the browser menu, or triggering middle/side mouse defaults.
+ for(const type of ['pointerup','click','auxclick','contextmenu'])listen(doc,type,event=>{
+  if(capturedMouseButton===null||event.button!==capturedMouseButton||event.pointerType&&event.pointerType!=='mouse')return;
+  if(type==='click'&&event.detail===0)return;
+  consume(event);
+ },true);
  listen(cancel,'click',()=>finish('Alteração cancelada.',{focus:true}));
+ listen(clearMouse,'click',removeMouseBinding);
  listen(reset,'click',()=>{
   if(capture)finish();
   current=normalizeControls(null);render();status.textContent='Comandos padrão restaurados.';onChange(current);

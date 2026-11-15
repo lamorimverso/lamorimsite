@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as art from '../tanahoraflavio/runner-art.mjs';
 import * as core from '../tanahoraflavio/runner-core.mjs';
+import {pilotCounter} from '../tools/story-pilot.mjs';
 function canvas(){const calls=[];return {calls,save(){},restore(){},translate(...x){calls.push(['translate',...x]);},scale(...x){calls.push(['scale',...x]);},rotate(...x){calls.push(['rotate',...x]);},beginPath(){},closePath(){},moveTo(){},lineTo(){},bezierCurveTo(){},quadraticCurveTo(){},ellipse(){},fill(){},stroke(){},roundRect(){},fillText(s){calls.push(['text',s]);}}}
 test('todos os personagens possuem uma identidade de arma definida',()=>{
  for(const type of ['pf','janones','army','boulos','dino','xandao','haddad','lula','dilma','simone','soraya','joice','meme-army','bossonari'])assert.ok(art.enemyWeaponFor(type),type);
@@ -27,8 +28,7 @@ test('Bossonari lança frascos e o fantasma final possui ataques próprios',()=>
   }
   for(const type of expected)assert.ok(seen.has(type),type);
   assert.equal(r.status,'running','sobreviver não encerra a luta');
-  core.setAttackRun(r,true);
-  for(let i=0;i<120*60&&r.boss;i++){core.setAttackRun(r,r.player.attackHeld?r.ammo>0:r.ammo>=12);core.advanceRun(r,1/120,()=>.5);}
+  for(let i=0;i<120*110&&r.boss;i++){pilotCounter(r);core.advanceRun(r,1/120,()=>.5);}
   assert.equal(r.status,index===23?'ballot':'running');
  }
 });

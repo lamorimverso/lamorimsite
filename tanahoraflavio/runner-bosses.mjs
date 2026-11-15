@@ -1,9 +1,10 @@
 import {STAGES} from './runner-route-data.mjs?v=859ae4e257bd';
-import {bossMechanicFor} from './runner-boss-mechanics.mjs?v=fefc6adba0bd';
-import {BOSS_RANKS,bossProfileFor} from './runner-boss-profiles.mjs?v=686945c2001a';
+import {bossMechanicFor} from './runner-boss-mechanics.mjs?v=7504f540d837';
+import {BOSS_RANKS,bossProfileFor} from './runner-boss-profiles.mjs?v=9b99f75feafd';
 // Encontros ficcionais: quatro classes por cenário, sem mudar identidades.
 export const STORY_ENCOUNTERS=STAGES.length*4;
 export const STORY_OPENING_DISTANCE=20800;
+export const BOSS_ARENA_RESERVE=326;
 export const BOSS_CLASSES=Object.freeze({
  sentinel:Object.freeze({name:'Sentinela',color:'#63c4e1',telegraph:.92,recover:1.3,burst:1}),
  gunner:Object.freeze({name:'Artilheiro',color:'#f1b65d',telegraph:.82,recover:1.15,burst:3}),
@@ -67,8 +68,17 @@ export function bossArenaPose(boss,width=900){
  const arrival=boss.phase==='intro'?Math.max(0,1-age/1.1)**3*150:0;
  const tempo=1+(Number(boss.stageIndex)||0)*.06+(boss.enraged?.16:0);
  const t=age*tempo,release=boss.attackFlashFor>0?Math.sin(boss.attackFlashFor/.26*Math.PI)*7:0;
- const motion=identity?{x:Math.sin(t*identity.xRate)*identity.xAmplitude+release,
-  y:76+Math.sin(t*identity.yRate)*identity.yAmplitude}:{
+ if(boss.combat&&identity){
+  // These routes occupy the right corridor, leaving a fixed safe run-up at
+  // the same proportional screen position even when a mobile device rotates.
+  const time=(boss.motionClock??t)+identity.offset;
+  const orbit=time*identity.xRate,side=Math.sin(orbit)+identity.swerve*Math.sin(orbit*2+.55);
+  const height=time*identity.yRate;
+  return {x:width-123+identity.xAmplitude*side/(1+identity.swerve)+arrival,
+   platformY:69+identity.yAmplitude*Math.sin(height)*(.84+.16*Math.cos(orbit))};
+ }
+ const motion=identity?{x:Math.sin(t*identity.xRate)*Math.min(identity.xAmplitude*.52,32)+release,
+  y:76+Math.sin(t*identity.yRate)*identity.yAmplitude*.72}:{
   sentinel:{x:Math.sin(t*.65)*amplitude,y:68+Math.sin(t*1.1)*6},
   gunner:{x:Math.sin(t*1.4)*amplitude+release,y:70+Math.sin(t*2.2)*8},
   caster:{x:Math.sin(t*.9)*amplitude,y:78+Math.sin(t*1.45)*22},
@@ -80,21 +90,27 @@ export function bossArenaPose(boss,width=900){
 // counterattacks finish fights sooner without introducing another input.
 export function bossCounterWindow(boss){
  const recovery=boss.phase==='recover',elapsed=(boss.recover||1)-(boss.phaseFor||0);
+ if(boss.combat){
+  const counter=boss.earnedCounter;
+  const opened=recovery&&counter&&elapsed+1e-8>=counter.delay&&elapsed<counter.delay+counter.window;
+  return {damage:opened?counter.damage:recovery?1:.66,label:opened?counter.label:null};
+ }
  const special=boss.classId==='caster'&&boss.phase==='charge'&&boss.phaseFor<=.3||
   recovery&&(boss.classId==='gunner'&&elapsed<.45||boss.classId==='sovereign'&&elapsed<.32);
  return {damage:special?3:recovery?2:1,label:special?'ABERTURA · CONTRA-ATAQUE ×3':recovery?'RECUPERAÇÃO · ATIRE! ×2':null};
 }
 export function stepBossPhase(boss,dt,player={},rng=Math.random){
  boss.age=(boss.age||0)+dt;boss.phaseFor-=dt;
+ boss.motionClock=(boss.motionClock||0)+dt*(1+(Number(boss.stageIndex)||0)*.07+(boss.enraged?.2:0));
  if(boss.phaseFor>0)return;
  const enraged=boss.hp<=boss.maxHp/2;
  if(boss.phase==='intro'||boss.phase==='recover'){
-  boss.phase='charge';boss.patternIndex=Number.isFinite(boss.patternIndex)?boss.patternIndex+1:0;
+  boss.phase='charge';boss.earnedCounter=null;boss.patternIndex=Number.isFinite(boss.patternIndex)?boss.patternIndex+1:0;
   boss.plannedAttack=planArenaAttack(boss,player,rng);
   boss.telegraph=boss.plannedAttack.telegraph??boss.telegraph;boss.recover=boss.plannedAttack.recover??boss.recover;
   boss.phaseFor=boss.telegraph;
  }else if(boss.phase==='charge'){
-  boss.phase='attack';boss.volleyLeft=boss.plannedAttack?.burst??boss.burst??1;boss.nextAttack=0;boss.phaseFor=Infinity;
+  boss.phase='attack';boss.volleyShots=[];boss.volleyLeft=boss.plannedAttack?.burst??boss.burst??1;boss.nextAttack=0;boss.phaseFor=Infinity;
  }else if(boss.phase==='attack'){
   boss.phase='recover';boss.phaseFor=boss.recover;
  }

@@ -25,10 +25,10 @@
   <link rel="canonical" href="https://lamorimverso.github.io/lamorimsite/tanahoraflavio/">
   <title>Tá na hora, Flávio! · Contagem e minigame</title>
 
-  <link rel="stylesheet" href="control-settings.css?v=4c3d536e01fd">
-  <link rel="stylesheet" href="game.css?v=e54341fd4f60">
+  <link rel="stylesheet" href="control-settings.css?v=1c20042497ae">
+  <link rel="stylesheet" href="game.css?v=10426c031dda">
   <script defer src="page-layout.js?v=d515141f39cb"></script>
-  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=1ee091ba4e81"></script>
+  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=7f68eff85e08"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -90,7 +90,7 @@
         </div>
         <details class="game-settings" id="game-settings"><summary title="Configurações de comandos"><span aria-hidden="true">⚙</span><span class="sr-only">Comandos</span></summary>
           <div class="game-settings-content">
-            <p class="game-instructions" id="game-instructions">Configure teclado e controle abaixo. No toque: toque para pular; deslize para mover ou abaixar. A corrida fica parada enquanto você ajusta os comandos.</p>
+            <p class="game-instructions" id="game-instructions">Configure teclado, mouse e controle. No toque: toque para pular, deslize para mover ou abaixar e use o ícone de mira para atirar nos chefes. A corrida fica parada enquanto você ajusta os comandos.</p>
             <div id="game-control-bindings"></div>
             <div class="game-options">
               <label for="game-crouch-mode">Abaixar<select id="game-crouch-mode" disabled><option value="hold">Deslizar e segurar</option><option value="toggle">Deslizar para alternar</option></select></label>
@@ -109,7 +109,7 @@
             <div class="combat-player">
               <div class="combat-columns">
                 <div class="combat-column combat-life-column"><span class="combat-caption" aria-hidden="true">VIDA</span><div id="game-hero-health" class="combat-meter combat-life" role="progressbar" aria-label="Vida de Flávio" aria-valuemin="0" aria-valuemax="5" aria-valuenow="5"><span></span></div><canvas id="game-hero-portrait" class="combat-portrait" width="48" height="48" aria-hidden="true"></canvas></div>
-                <div class="combat-column combat-power-column"><span class="combat-caption" aria-hidden="true">TIROS</span><div id="game-power-charge" class="combat-meter combat-charge" role="progressbar" aria-label="Munição do poder" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><span></span></div><div class="game-power-loadout" id="game-power-loadout" hidden><label for="game-weapon-select" class="sr-only">Poder · Q</label><canvas id="game-weapon-icon" width="64" height="64" aria-hidden="true"></canvas><select id="game-weapon-select" aria-label="Poder de Flávio" aria-describedby="game-weapon-effect"><option value="ivermectina">Arma IVER</option></select><span id="game-weapon-effect" class="sr-only"></span><span id="game-weapon-level" aria-hidden="true">6/6</span></div></div>
+                <div class="combat-column combat-power-column"><span class="combat-caption" aria-hidden="true">TIROS</span><div id="game-power-charge" class="combat-meter combat-charge sr-only" role="progressbar" aria-label="Munição do poder" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><span></span></div><div class="game-power-loadout" id="game-power-loadout" hidden><canvas id="game-weapon-icon" width="64" height="64" aria-hidden="true"></canvas><span id="game-weapon-effect" class="sr-only"></span><span id="game-weapon-level" aria-hidden="true">6/6</span></div><button type="button" id="game-weapon-cycle" class="game-weapon-cycle" aria-label="Trocar arma" aria-describedby="game-weapon-effect" hidden>T</button></div>
               </div>
               <div class="game-aid-bar" id="game-aid-bar" hidden><span id="game-aid-status" class="sr-only">Ajudas 0/6 para o escudo de reserva</span><button type="button" id="game-reserve-shield" disabled aria-label="Usar escudo de reserva, tecla E"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 21 6v6c0 5-9 10-9 10S3 17 3 12V6Z"/><path d="m8 12 3 3 5-6"/></svg><span id="game-shield-count" aria-hidden="true">0/6</span><span class="combat-shield-track" aria-hidden="true"><span id="game-shield-progress"></span></span></button></div>
             </div>
@@ -120,7 +120,7 @@
         </div>
             <p id="game-power-reward" class="game-power-reward" role="status" hidden></p>
           </div>
-          <button type="button" id="game-attack" class="game-attack" aria-label="Disparar: segure para repetir; teclas J ou Z" hidden>◎ Disparar</button>
+          <button type="button" id="game-attack" class="game-attack" aria-label="Disparar: segure para repetir; teclas J ou Z" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 2v6m0 8v6M2 12h6m8 0h6"/></svg></button>
                   <div class="game-hud sr-only" aria-label="Perseguição e vantagens">
           <div class="pursuit-chip"><span class="sr-only">Na perseguição: </span><strong id="game-threat">1/5 · PF</strong></div>
           <div class="power-chip"><span class="sr-only">Vantagem ativa: </span><strong id="game-power">Sem efeito ativo</strong></div>

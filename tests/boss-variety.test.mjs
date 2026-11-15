@@ -24,14 +24,15 @@ test('contra-ataque recompensa oportunidades diferentes por classe',()=>{
  assert.equal(bosses.bossCounterWindow({classId:'sovereign',phase:'recover',phaseFor:1,recover:1.05}).damage,3);
 });
 
-test('disparar ao ver a abertura garante o bônus mesmo após o tempo de voo',async()=>{
+test('disparar antes de a abertura fechar garante o bônus mesmo após o tempo de voo',async()=>{
  const core=await import('../tanahoraflavio/runner-core.mjs');
- for(const [index,phase,phaseFor] of [[1,'recover',1.15],[2,'charge',.29],[3,'recover',1.05]]){
-  const r=core.createRun({mode:'story'});core.startRun(r);r.nextBossAt=0;r.bossesDefeated=index;r.shieldFor=Infinity;
-  r.nextObstacle=r.nextRaid=r.nextPower=r.nextPassport=r.nextAllyAt=r.nextSupportAt=Infinity;core.advanceRun(r,1/120,()=>.5);
-  Object.assign(r.boss,{phase,phaseFor,hp:100,maxHp:100});
-  assert.equal(bosses.bossCounterWindow(r.boss).damage,3);assert.equal(core.attackRun(r),true);
-  for(let i=0;i<240&&r.heroShots.length;i++)core.advanceRun(r,1/120,()=>.5);
-  assert.equal(r.boss.hp,97,'bônus anunciado para '+r.boss.classId);
- }
+ const r=core.createRun({mode:'story'});core.startRun(r);r.nextBossAt=0;r.shieldFor=Infinity;
+ r.nextObstacle=r.nextRaid=r.nextPower=r.nextPassport=r.nextAllyAt=r.nextSupportAt=Infinity;core.advanceRun(r,1/120,()=>.5);
+ const opening=r.boss.plannedAttack.counter;
+ Object.assign(r.boss,{phase:'recover',phaseFor:.105,recover:opening.window+.1,earnedCounter:opening,hp:100,maxHp:100});
+ assert.equal(bosses.bossCounterWindow(r.boss).damage,opening.damage);assert.equal(core.attackRun(r),true);
+ for(let i=0;i<30;i++)core.advanceRun(r,1/120,()=>.5);
+ assert.equal(bosses.bossCounterWindow(r.boss).label,null);assert.equal(r.boss.hp,100);
+ for(let i=0;i<240&&r.heroShots.length;i++)core.advanceRun(r,1/120,()=>.5);
+ assert.equal(r.boss.hp,100-opening.damage);
 });

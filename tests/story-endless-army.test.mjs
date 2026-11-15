@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
 import * as art from '../tanahoraflavio/runner-art.mjs';
+import {pilotCounter} from '../tools/story-pilot.mjs';
 
 const DT=1/120;
 function isolated(mode='endless'){
@@ -31,8 +32,8 @@ test('História conclui somente depois de derrotar o último chefão',()=>{
  const r=isolated('story');
  r.distance=r.routeDistance=62100;r.bossesDefeated=23;r.nextBossAt=0;r.shieldFor=Infinity;
  const seen=new Set();
- for(let i=0;i<120*42&&r.status==='running';i++){
-  if(r.boss)core.setAttackRun(r,r.player.attackHeld?r.ammo>0:r.ammo>=12);
+ for(let i=0;i<120*110&&r.status==='running';i++){
+  pilotCounter(r);
   core.advanceRun(r,DT,()=>.5);
   if(r.boss)seen.add(r.boss.type);
  }

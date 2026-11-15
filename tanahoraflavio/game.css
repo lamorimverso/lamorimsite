@@ -271,29 +271,31 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
 .game-card[data-run-state="prison"] .game-overlay{background:#fff;pointer-events:none}
 .game-card[data-run-state="prison"] #runner-canvas{min-height:270px}
 @media(max-width:480px){.game-ballot{grid-template-columns:1fr;max-width:360px;padding:10px;gap:9px}.game-ballot-pad{grid-template-columns:repeat(3,minmax(0,1fr))}.game-ballot-screen{padding:9px}.game-ballot-number{margin:6px 0;font-size:28px}}
-.game-attack{position:absolute;right:12px;bottom:10px;z-index:5;min-width:106px;min-height:46px;padding:10px 14px;border:2px solid #f4d988;border-radius:14px;background:#244c65;color:#fff5d4;font:800 15px system-ui;box-shadow:0 3px 0 #172f45;touch-action:none;user-select:none}
-.game-attack:active{transform:translateY(2px);box-shadow:0 1px 0 #172f45;background:#35738a}
-.game-attack:focus-visible{outline:3px solid #e6a52d;outline-offset:3px}
-.game-attack[hidden]{display:none}
+.game-attack{position:absolute;right:8px;bottom:8px;z-index:5;display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid #dce8ee8c;border-radius:50%;background:#21384cbf;color:#f4f7fa;touch-action:none;user-select:none}
+.game-attack svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.6}
+.game-attack[data-ammo="reload"] svg,.game-attack[data-ammo="held"] svg{opacity:.38}
+.game-attack:active{background:#31536ad9}
+.game-attack:focus-visible,.game-weapon-cycle:focus-visible{outline:2px solid #f3d886;outline-offset:2px}
 .game-card[data-run-state="running"]:not([data-boss="none"]) .game-hud{display:flex;top:8px;left:8px;bottom:auto;right:auto;max-width:calc(100% - 16px);animation:none}
 
 .game-attack:disabled{opacity:.55;cursor:default;box-shadow:none}
 
-/* Quiet route controls; life and vertical gauges appear only in boss fights. */
+/* Small supplies and horizontal life indicators keep the track clear. */
 .game-combat-hud{--meter-height:clamp(38px,7vw,56px);position:absolute;inset:0;z-index:4;pointer-events:none;color:#f4f6f8;font:700 10px/1 system-ui}
 .game-combat-hud[hidden],.combat-column[hidden],.combat-meter[hidden]{display:none}
 .combat-player{position:absolute;top:10px;left:10px;display:flex;gap:6px;align-items:flex-start;width:auto}
 .combat-columns{display:flex;align-items:flex-start;gap:8px}
 .combat-column{display:flex;flex-direction:column;align-items:center;gap:5px}
 .combat-caption{display:none}
-.combat-meter,.game-combat-hud .game-boss-health{--meter-color:#f2d26e;position:relative;width:10px;height:var(--meter-height);padding:0;border:1px solid #dce8eea6;border-radius:4px;background:#1c2d40c9;box-shadow:0 1px 3px #16233725;overflow:hidden}
-.combat-meter>span,.game-combat-hud .game-boss-health>span{display:block;position:absolute;inset:auto 1px 1px;height:calc(var(--meter-fill,100%) - 2px);width:auto!important;max-height:calc(100% - 2px);background:var(--meter-color);border-radius:2px;transition:height .16s ease-out,background-color .16s ease-out}
+.combat-meter,.game-combat-hud .game-boss-health{--meter-color:#f2d26e;position:relative;width:46px;height:6px;padding:0;border:1px solid #dce8eea6;border-radius:4px;background:#1c2d40c9;overflow:hidden}
+.combat-meter>span,.game-combat-hud .game-boss-health>span{display:block;position:absolute;inset:1px auto 1px 1px;width:clamp(0px,calc(var(--meter-fill,100%) - 2px),calc(100% - 2px))!important;background:var(--meter-color);border-radius:2px;transition:width .16s ease-out,background-color .16s ease-out}
 .combat-portrait{display:block;width:23px;height:23px;object-fit:contain;pointer-events:none}
 .game-combat-hud .game-power-loadout{position:relative;display:flex;align-items:center;justify-content:center;gap:4px;width:76px;height:40px;margin:0;padding:4px 7px;border:1px solid #ffffff45;border-radius:11px;background:#21384cce;box-shadow:0 2px 5px #17304718;pointer-events:auto}
 .game-power-loadout[hidden]{display:none!important}
 #game-weapon-icon{display:block;width:27px;height:27px;flex:none}
-.game-combat-hud .game-power-loadout select{position:absolute;inset:0;width:100%;height:100%;min-height:0;margin:0;padding:0;opacity:0;cursor:pointer;font:14px system-ui;touch-action:manipulation}
-.game-power-loadout:focus-within{outline:2px solid #f3d886;outline-offset:2px}
+.game-weapon-cycle{display:grid;place-items:center;width:30px;height:40px;padding:0;border:1px solid #ffffff5c;border-radius:9px;background:#21384cce;color:#f4f7fa;font:750 13px system-ui;pointer-events:auto;touch-action:manipulation}
+.game-weapon-cycle:active{background:#31536a}
+.combat-power-column{flex-direction:row;gap:4px}
 #game-weapon-level{position:static;min-width:24px;padding:0;background:none;color:#f8fafc;font:700 11px/1 system-ui;font-variant-numeric:tabular-nums}
 .game-combat-hud .game-aid-bar{position:relative;width:54px;margin:0;min-height:0;display:block}
 .game-aid-bar[hidden]{display:none!important}
@@ -305,13 +307,14 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
 #game-reserve-shield:focus-visible{outline:2px solid #f3d886;outline-offset:2px}
 .combat-shield-track{position:absolute;left:7px;right:7px;bottom:5px;height:2px;border-radius:2px;background:#c8e4e426;overflow:hidden}
 .combat-shield-track>span{display:block;height:100%;background:#aedcbf;transition:width .18s ease-out}
-.game-combat-hud[data-combat="true"] .combat-player{width:66px}
-.game-combat-hud[data-combat="true"] .combat-columns{display:grid;grid-template-columns:24px 34px}
-.game-combat-hud[data-combat="true"] .game-aid-bar{position:absolute;left:78px;top:0}
-.game-combat-hud[data-combat="true"] .game-power-loadout{width:36px;height:32px;padding:2px;border-radius:9px}
-.game-combat-hud[data-combat="true"] #game-weapon-icon{width:25px;height:25px}
-.game-combat-hud[data-combat="true"] #game-weapon-level{position:absolute;bottom:-2px;right:-5px;min-width:26px;padding:2px 3px;border-radius:4px;background:#314457;color:#fff;font-size:8px;text-align:center}
-.game-combat-hud .game-boss{position:absolute;top:10px;right:8px;display:flex;flex-direction:column;align-items:center;gap:5px;width:36px;min-height:0;padding:0;margin:0;border:0;border-radius:0;background:none;pointer-events:none}
+.game-combat-hud[data-combat="true"] .combat-columns{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.game-combat-hud[data-combat="true"] .combat-life-column{gap:4px;min-width:46px;flex-direction:column-reverse}
+.game-combat-hud[data-combat="true"] .game-power-loadout{width:59px;height:32px;padding:2px;gap:2px}
+.game-combat-hud[data-combat="true"] #game-weapon-icon{width:23px;height:23px}
+.game-combat-hud[data-combat="true"] #game-weapon-level{min-width:24px;font-size:10px}
+.game-combat-hud[data-combat="true"] .game-weapon-cycle{height:32px;width:28px}
+.game-combat-hud[data-combat="true"] #game-reserve-shield{min-height:32px}
+.game-combat-hud .game-boss{position:absolute;top:10px;right:8px;display:flex;flex-direction:column;align-items:center;gap:5px;width:46px;min-height:0;padding:0;margin:0;border:0;border-radius:0;background:none;pointer-events:none}
 .game-combat-hud .game-boss[hidden]{display:none}
 .game-combat-hud .game-boss-health{--meter-color:var(--boss-accent,#ed7a82);margin:0}
 .combat-tag{max-width:55px;padding:2px 4px;border-radius:4px;background:#21384cbd;color:#f6f8fa;font-size:8px;letter-spacing:.02em}
@@ -320,10 +323,12 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
 .game-combat-hud .sr-only,.game-viewport .game-hud.sr-only{width:1px;height:1px;min-height:0;margin:-1px;padding:0;border:0;overflow:hidden}
 @media(orientation:landscape) and (max-height:500px){.is-expanded #runner-canvas{max-height:calc(100dvh - 135px)}}
 @media(max-width:380px){.game-combat-hud{--meter-height:32px}.combat-player{left:7px;top:8px}.game-combat-hud .game-boss{right:5px;top:8px}.game-combat-hud .game-power-reward{font-size:9px;padding:5px}}
-.game-attack{width:118px;max-width:calc(50% - 16px);min-width:100px;padding:10px 11px;white-space:nowrap}
 /* Commands stay inside a bounded gear panel, including expanded play. */
 #game-settings>.game-settings-content{max-height:min(68dvh,390px);overflow-y:auto;overscroll-behavior:contain;padding:12px;gap:10px}
 #game-settings .game-instructions{font-size:11px;line-height:1.45}
 .is-expanded .game-settings{display:block}
 .is-expanded .game-actions{padding-right:44px}
 .is-expanded #game-settings>.game-settings-content{position:absolute;top:54px;left:12px;right:12px;z-index:12;max-height:calc(100dvh - 72px);margin:0;background:#fff;box-shadow:0 12px 32px #18223b22}
+
+@media(max-width:380px){.game-combat-hud[data-combat="true"] .combat-player{gap:4px}.game-combat-hud[data-combat="true"] .game-aid-bar,.game-combat-hud[data-combat="true"] #game-reserve-shield{width:45px}}
+@media(max-width:600px){.game-combat-hud .game-power-reward{top:54px;left:8px;right:8px;max-width:calc(100% - 16px)}}

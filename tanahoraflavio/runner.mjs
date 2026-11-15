@@ -1,17 +1,17 @@
-import {normalizeControls,keyboardActionFor,keyLabel} from './runner-control-map.mjs?v=2bb295d2954f';
-import {createControlSettings} from './runner-control-settings.mjs?v=4f1a7c34883d';
-import {createGamepadDriver} from './runner-gamepad.mjs?v=b3315cc72b13';
-import {HERO_POWERS,heroPowerFor,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=27e0bb16e2f2';
-import {updateCombatHUD} from './runner-combat-hud.mjs?v=105e8d20d358';
+import {normalizeControls,keyboardActionFor,mouseActionFor,keyLabel} from './runner-control-map.mjs?v=568387e3f764';
+import {createControlSettings} from './runner-control-settings.mjs?v=25524a717d9e';
+import {createGamepadDriver} from './runner-gamepad.mjs?v=18383546c2cd';
+import {HERO_POWERS,heroPowerFor,cycleHeroPower} from './runner-earned-powers.mjs?v=27e0bb16e2f2';
+import {updateCombatHUD} from './runner-combat-hud.mjs?v=805b48034621';
 import {createMovementSoundDirector} from './runner-movement-audio.mjs?v=6411ef96c0d1';
 import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=f273e11b16a6';
 import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=ed1b40296acc';
 import {createShotSoundTracker} from './runner-shot-events.mjs?v=a3769f250d68';
-import {bossPresentationFor} from './runner-bosses.mjs?v=4d0d9c1a5182';
+import {bossPresentationFor} from './runner-bosses.mjs?v=8b294a2e8e86';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=9f0d4a32624f";
-import {bossCounterWindow} from './runner-bosses.mjs?v=4d0d9c1a5182';
-import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=a750937a6c76';
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=1312bb379148";
+import {bossCounterWindow} from './runner-bosses.mjs?v=8b294a2e8e86';
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=dddd6a6cbe3c';
 import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=40174ceffa76";
 import { createGameAudio } from "./runner-audio.mjs?v=2a8c89ab71ed";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=d5e017561fd6";
@@ -27,10 +27,10 @@ function initRunner() {
   if (!canvas || !section) return;
   // Uma aba pode ter conservado o HTML anterior enquanto os módulos já
   // mudaram. Atualizar a página uma vez evita inicializar sobre IDs antigos.
-  if(!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-select")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-effects")||!$("game-assist")||$("game-options-panel")||!$("game-attack")||!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-expand-label")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
+  if(!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-cycle")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-effects")||!$("game-assist")||$("game-options-panel")||!$("game-attack")||!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-expand-label")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
     const url=new URL(location.href);
-    if(url.searchParams.get("ui")!=="20261115-clean-game"){
-      url.searchParams.set("ui","20261115-clean-game");location.replace(url.href);
+    if(url.searchParams.get("ui")!=="20261115-boss-controls"){
+      url.searchParams.set("ui","20261115-boss-controls");location.replace(url.href);
     }else{
       const button=$("game-start"),note=$("game-loading-note");
       if(button){button.disabled=false;button.textContent="Recarregar jogo";button.addEventListener("click",()=>location.reload(),{once:true});}
@@ -74,7 +74,7 @@ function initRunner() {
   let run=createRun({assisted:preferences.assisted}),frameId=0;
   run.supportAvailable=false;
   const trackPointers=new Map(),moveKeys=new Set(),jumpKeys=createPressGate(),crouchSources=createHeldSources(),attackSources=createHeldSources();
-  const attackButton=$("game-attack"),firePointers=new Set();
+  const attackButton=$("game-attack"),firePointers=new Set(),mouseHeld=new Map();
   const frameClock=createFrameClock(performance.now());
   let spritesReady=false,spritesFailed=false,loadedSprites=0,loadingSprites=false,landingUntil=0;
   let supportReady=false,supportLoading=false,supportFailed=false;
@@ -104,7 +104,7 @@ function initRunner() {
   function bossCue(){
     if(!run.boss)return null;
     const incoming=run.obstacles.filter(o=>o.bossAttack&&!o.counted&&!o.passed).sort((a,b)=>threatTimeToContact(run,a)-threatTimeToContact(run,b))[0];
-    return incoming||(run.boss.plannedFor===run.boss.fired?run.boss.plannedAttack:bossAttackFor(run.boss.type,Math.min(run.boss.fired,run.boss.total-1),run.boss.round-1));
+    return incoming||(run.boss.combat||run.boss.plannedFor===run.boss.fired?run.boss.plannedAttack:bossAttackFor(run.boss.type,Math.min(run.boss.fired,run.boss.total-1),run.boss.round-1));
   }
   function dodgeHint(){
     const hit=run.lastHit;if(!hit)return "Observe os perigos e tente novamente.";
@@ -128,11 +128,12 @@ function initRunner() {
     if((run.status==="over"||run.status==="won")&&score>best){best=score;try{localStorage.setItem(recordKey,String(best));}catch{}}
     $("game-score").textContent=String(score).padStart(4,"0");
     $("game-lives").textContent=String(run.lives);
-    const weapon=heroPowerFor(run),loadout=$("game-weapon-select"),owned=run.ownedPowers||['ivermectina'];
+    const weapon=heroPowerFor(run),cycle=$("game-weapon-cycle"),labels=controlLabels();
     $("game-power-loadout").hidden=run.status!=="running";
-    if(loadout.options.length!==owned.length){loadout.replaceChildren(...owned.map(id=>{const option=document.createElement('option');option.value=id;option.textContent=HERO_POWERS[id].name;return option;}));}
-    for(const option of loadout.options){const label=HERO_POWERS[option.value].name+(option.value!=='ivermectina'?' · Nv. '+(run.powerLevels[option.value]||1):'');if(option.textContent!==label)option.textContent=label;}
-    loadout.value=run.activePower;$("game-weapon-effect").textContent=run.lastPowerReward&&section.classList.contains('is-expanded')&&innerHeight<500?'Conquistado: '+run.lastPowerReward.name:weapon.description;
+    cycle.hidden=run.status!=="running"||(run.ownedPowers?.length||1)<2;
+    cycle.disabled=controlsOpen()||cycle.hidden;
+    const switchLabel="Trocar arma · "+labels.power;
+    cycle.title=switchLabel;cycle.setAttribute("aria-label",switchLabel);$("game-weapon-effect").textContent=run.lastPowerReward&&section.classList.contains('is-expanded')&&innerHeight<500?'Conquistado: '+run.lastPowerReward.name:weapon.description;
     const reward=$("game-power-reward");reward.hidden=!run.lastPowerReward||run.status!=="running";
     if(run.lastPowerReward)reward.textContent=(run.lastPowerReward.isNew?'PODER CONQUISTADO · ':'PODER MELHORADO · ')+run.lastPowerReward.name+' · nível '+run.lastPowerReward.level;
     section.dataset.heroPower=run.activePower;
@@ -170,12 +171,11 @@ function initRunner() {
       recovery.setAttribute("aria-label","Jacaré: "+remainingJacareSeconds+" segundos restantes; desvie lateralmente das ampolas");
     }
     $("game-ammo").parentElement.hidden=!run.boss;
-    $("game-weapon-select").disabled=controlsOpen()||run.status!=="running";
-    const fireLabel=controlLabels().fire;
+    const fireLabel=labels.fire;
     $("game-ammo").textContent=run.boss?fireLabel+" · Disparar":"Sem arma";
     attackButton.disabled=controlsOpen()||run.player.isJacare||!run.boss&&run.ammo===0;
-    attackButton.textContent=run.ammo>0?"◎ Disparar":run.boss?(run.player.attackHeld?"Solte":"Recarga"):"Vazio";
-    const ammoHint=run.ammo===0?(run.boss?"Solte o disparo para recarregar durante a luta":"Sem munição. Colete ajudantes para repor tiros"):"";
+    attackButton.dataset.ammo=run.ammo>0?"ready":run.player.attackHeld?"held":"reload";
+    const ammoHint=run.ammo===0?(run.boss?(run.player.attackHeld?"Solte o disparo para recarregar":"Recarregando munição"):"Sem munição. Colete ajudantes para repor tiros"):"";
     attackButton.title=ammoHint||(run.player.isJacare?"Disparo indisponível durante a transformação":"Disparar: "+fireLabel+" · "+weapon.name);
     attackButton.setAttribute("aria-label","Disparar: segure para repetir; tecla "+fireLabel+"; "+weapon.name+(ammoHint?"; "+ammoHint:""));
     const hideAttack=run.status!=="running"||!run.boss;
@@ -199,8 +199,8 @@ function initRunner() {
        $("game-boss-health").setAttribute("aria-valuenow",String(b.hp));
        $("game-boss-health").setAttribute("aria-label","Energia de "+b.name);
        $("game-boss-progress").style.width=100*b.hp/b.maxHp+"%";
-       const state=bossCounterWindow(b).label||({intro:'ENTRADA',charge:'PREPARANDO',attack:'ATAQUE',recover:'RECUPERAÇÃO · ATIRE!'})[b.phase];
-       $("game-boss-weapon").textContent=state+" · "+b.hp+"/"+b.maxHp+" PV"+(b.enraged?" · FASE 2":"")+(b.rematchIndex?" · REVANCHE "+b.rematchIndex:"")+(b.weakness?" · Fraco a "+(HERO_POWERS[b.weakness]?.name||b.weakness):"");
+       const state=bossCounterWindow(b).label||({intro:'ENTRADA',charge:'PREPARANDO',attack:'ATAQUE',recover:'RECUPERAÇÃO'})[b.phase];
+       $("game-boss-weapon").textContent=state+" · "+b.hp+"/"+b.maxHp+" PV"+(b.enraged?" · FASE 2":"")+(b.rematchIndex?" · REVANCHE "+b.rematchIndex:"")+(b.weakness?" · Fraco a "+(HERO_POWERS[b.weakness]?.name||b.weakness):"")+(b.tactic?" · "+b.tactic:"");
       }else{
       $("game-boss-name").textContent=b.type==="janones"?"Janones · bloco "+Math.min(3,Math.floor((b.total-b.remaining)/Math.ceil(b.total/3))+1)+"/3":(b.type==="haddad"?"Haddad · Taxad":b.type==="pf"?"Blitz da PF":b.name)+" · rodada "+b.level;
       $("game-boss-health").setAttribute("aria-valuemax",String(b.total));
@@ -211,7 +211,7 @@ function initRunner() {
       const goal=dodged+"/"+b.total+" ataques superados";
       const attack=attackCueFor(bossCue());
       $("game-boss-weapon").textContent=(attack?.short||"Observe o ataque")+
-        (bossCue().approach==="drop"?" · VEM DO ALTO!":"")+" · "+goal+(Number.isFinite(b.hp)?" · PV "+b.hp+"/"+b.maxHp:"");
+        (bossCue()?.approach==="drop"?" · VEM DO ALTO!":"")+" · "+goal+(Number.isFinite(b.hp)?" · PV "+b.hp+"/"+b.maxHp:"");
       }
       $("game-boss").style.setProperty("--boss-accent",b.color);
     }
@@ -399,7 +399,11 @@ function initRunner() {
     if(run.shotsFired<=lastHeroShotHeard)return;lastHeroShotHeard=run.shotsFired;
     audio.heroShot(({wind:'wind',receipts:'papers','budget-sheets':'papers',hammer:'metal','court-seal':'metal',handcuffs:'metal'})[heroPowerFor(run).projectile]||'magic');
   }
-  $("game-weapon-select").addEventListener('change',event=>{if(controlsOpen()){event.target.value=run.activePower;return;}equipHeroPower(run,event.target.value);attackSources.clear();updateUI();draw();canvas.focus({preventScroll:true});});
+  function switchWeapon(){
+    if(controlsOpen()||run.status!=="running"||(run.ownedPowers?.length||1)<2)return;
+    if(cycleHeroPower(run)){attackSources.clear();updateUI();draw();}
+  }
+  $("game-weapon-cycle").addEventListener('click',()=>{switchWeapon();if(!controlsOpen())canvas.focus({preventScroll:true});});
   function useReserveShield(){
     if(controlsOpen())return;
     resumeFromGesture();if(activateReserveShield(run)){audio.effect('restore');updateUI();draw();canvas.focus({preventScroll:true});}
@@ -417,7 +421,7 @@ function initRunner() {
     else if(!active)draw();
   }
   function clearControls(){
-    trackPointers.clear();moveKeys.clear();gamepadHeld.clear();gamepadDriver?.reset();jumpKeys.clear();crouchSources.clear();attackSources.clear();clearRunInput(run);movementSounds.reset(run);
+    trackPointers.clear();moveKeys.clear();mouseHeld.clear();gamepadHeld.clear();gamepadDriver?.reset();jumpKeys.clear();crouchSources.clear();attackSources.clear();clearRunInput(run);movementSounds.reset(run);
   }
   function fire(source,active){
     if(active&&controlsOpen())return;
@@ -436,7 +440,7 @@ function initRunner() {
   attackButton.addEventListener('click',event=>{if(controlsOpen()||attackButton.hidden)return;if(event.detail===0){if(attackRun(run))heroShotSound();draw();}});
   function updateMovement(){
     if(controlsOpen()){moveRun(run,0);return;}
-    const actions=[...moveKeys].map(code=>keyboardActionFor(preferences.controls,code));
+    const actions=[...moveKeys].map(code=>keyboardActionFor(preferences.controls,code)).concat([...mouseHeld.values()]);
     const right=actions.includes('right')||gamepadHeld.has('right'),left=actions.includes('left')||gamepadHeld.has('left');
     const pointer=[...trackPointers.values()].filter(p=>p.action==="move").at(-1);
     moveRun(run,Number(right)-Number(left)||(pointer?.direction||0));
@@ -488,9 +492,38 @@ function initRunner() {
   }
   $("game-expand").addEventListener("click",()=>setExpanded(!expanded));
   document.addEventListener("keydown",event=>{if(!event.defaultPrevented&&event.code==="Escape"&&expanded){event.preventDefault();setExpanded(false);canvas.focus({preventScroll:true});}});
-  // Gestos na pista substituem os botões: toque/passe para cima, ou desça e segure.
+  // Mouse usa eventos por botão para permitir dois comandos físicos juntos.
+  canvas.addEventListener('mousedown',event=>{
+    if(controlsOpen()||event.sourceCapabilities?.firesTouchEvents)return;
+    const action=mouseActionFor(preferences.controls,event.button);
+    if(!action||mouseHeld.has(event.button))return;
+    event.preventDefault();lastPointerAt=performance.now();canvas.focus({preventScroll:true});resumeFromGesture();
+    const source='mouse:'+event.button;
+    if(action==='jump')jump();
+    else if(action==='power')switchWeapon();
+    else if(action==='shield')useReserveShield();
+    else if(action==='start'){if(['ready','over','won'].includes(run.status))begin();}
+    else if(run.status==='running'){
+      mouseHeld.set(event.button,action);
+      if(action==='fire')fire(source,true);
+      else if(action==='crouch'){crouchSources.set(source,true);crouch(crouchSources.active);}
+      else updateMovement();
+    }
+  });
+  window.addEventListener('mouseup',event=>{
+    const action=mouseHeld.get(event.button);if(!action)return;
+    mouseHeld.delete(event.button);const source='mouse:'+event.button;
+    if(action==='fire')fire(source,false);
+    else if(action==='crouch'){crouchSources.set(source,false);crouch(crouchSources.active);}
+    else updateMovement();
+  });
+  for(const type of ['contextmenu','auxclick'])canvas.addEventListener(type,event=>{
+    if(!controlsOpen()&&mouseActionFor(preferences.controls,type==='contextmenu'?2:event.button))event.preventDefault();
+  });
+  // O toque mantém os gestos existentes, independentemente do mouse.
+
   canvas.addEventListener("pointerdown",event=>{
-    if(controlsOpen())return;
+    if(controlsOpen()||event.pointerType==="mouse")return;
     if(event.button!==0||(event.isPrimary===false&&event.pointerType!=="touch"))return;
     lastPointerAt=performance.now();
     event.preventDefault();resumeFromGesture();canvas.focus({preventScroll:true});
@@ -525,7 +558,7 @@ function initRunner() {
   }
   canvas.addEventListener("pointerup",releaseTrackPointer);
   canvas.addEventListener("lostpointercapture",releaseTrackPointer);
-  canvas.addEventListener("pointercancel",()=>{clearControls();crouch(false);});
+  canvas.addEventListener("pointercancel",releaseTrackPointer);
   canvas.addEventListener("click",event=>{
     // Alguns navegadores enviam click de toque com detail0; o pointer já o tratou.
     const physical=!!event.pointerType||performance.now()-lastPointerAt<500;
@@ -543,7 +576,7 @@ function initRunner() {
     const ownFireShortcut=action==='fire'&&event.target.closest('#game-attack');
     const ownShieldShortcut=action==='shield'&&(event.target.closest('#game-reserve-shield')||event.target.closest('#game-attack'));
     if (event.target.closest("button,a,input,select,textarea,summary")&&!ownFireShortcut&&!ownShieldShortcut || event.ctrlKey || event.metaKey || event.altKey) return;
-    if(action==='power'){event.preventDefault();if(!event.repeat){cycleHeroPower(run);attackSources.clear();updateUI();draw();}}
+    if(action==='power'){event.preventDefault();if(!event.repeat)switchWeapon();}
     else if(action==='shield'){event.preventDefault();if(!event.repeat)useReserveShield();}
     else if(isFireKey(event.code)){
       event.preventDefault();if(!event.repeat)fire('key:'+event.code,true);
@@ -609,9 +642,19 @@ function initRunner() {
     ctx.save();ctx.translate(bossX,bossY);
     drawHoverEnemy(ctx,{type:b.type,x:0,y:0,scale:pose.scale,phase,...presentation,hurt:b.hitFlashFor>0,reducedMotion:prefersReducedMotion(),classId:b.classId,armyVariant:STAGES[b.stageIndex]?.id,enraged:b.enraged});
     ctx.restore();
-    if(b.nextAttack<.65&&b.fired<b.total&&!run.obstacles.some(o=>o.bossAttack&&!o.counted)){
-      ctx.fillStyle="#843338";ctx.font="800 16px system-ui";ctx.textAlign="center";
-      ctx.fillText(bossCue().action==="move"?"↔ DESVIE":bossCue().action==="jump"?"↑ PULE":"↓ ABAIXE",virtualWidth-86,62);ctx.textAlign="start";
+    const counter=b.combat&&bossCounterWindow(b),cue=b.phase==='charge'?b.plannedAttack:bossCue();
+    const showDodge=b.combat?b.phase==='charge':b.nextAttack<.65&&b.fired<b.total&&!run.obstacles.some(o=>o.bossAttack&&!o.counted);
+    const action=showDodge&&cue?(cue.action==='move'?"↔ DESVIE":cue.action==='jump'?"↑ PULE":"↓ ABAIXE"):"";
+    const hint=counter?.label||action;
+    if(hint){
+      const tip=!counter?.label&&cue?.counterHint;
+      ctx.save();ctx.font="750 13px system-ui";ctx.textAlign="center";
+      const w=Math.min(246,Math.max(ctx.measureText(hint).width,tip?ctx.measureText(tip).width:0)+18),y=Math.max(86,bossY-115);
+      const x=Math.max(w/2+18,Math.min(virtualWidth-w/2-76,bossX));
+      ctx.fillStyle=counter?.label?"#265044ee":"#572f42ee";ctx.beginPath();ctx.roundRect(x-w/2,y-12,w,tip?34:20,5);ctx.fill();
+      ctx.fillStyle="#fff";ctx.fillText(hint,x,y+2,w-12);
+      if(tip){ctx.font="600 12px system-ui";ctx.fillText(tip,x,y+16,w-12);}
+      ctx.restore();
     }
   }
   function character(){
@@ -751,10 +794,7 @@ function initRunner() {
     ctx.setTransform(canvas.width/virtualWidth,0,0,canvas.height/WORLD.height,0,0);
     drawJourneyScenery(ctx,{routeDistance:run.routeDistance,openingDistance:run.mode==="story"?STORY_OPENING_DISTANCE:0,distance:run.distance,width:virtualWidth,reducedMotion:prefersReducedMotion(),quiet:run.aid?.kind==="quiet"?Math.max(0,Math.min(1,(6-run.aid.remaining)/.35,run.aid.remaining/.35)):0});
     drawRaidAtmosphere(ctx,{strength:raidMoodFor(run.raid),width:virtualWidth,distance:run.distance,reducedMotion:prefersReducedMotion()});
-    if(run.boss?.combat)drawBossArena(ctx,{width:virtualWidth,ground:WORLD.ground,phase:run.elapsed*8,state:{phase:run.boss.phase,enraged:run.boss.enraged},stageIndex:run.boss.stageIndex,reducedMotion:prefersReducedMotion()});
-    if(run.boss?.combat){
-      ctx.save();ctx.strokeStyle='#69a5b488';ctx.lineWidth=3;ctx.setLineDash([4,5]);ctx.beginPath();ctx.moveTo(virtualWidth-170,WORLD.ground-35);ctx.lineTo(virtualWidth-170,WORLD.ground+2);ctx.stroke();ctx.restore();
-    }
+    if(run.boss?.combat)drawBossArena(ctx,{width:virtualWidth,ground:WORLD.ground,state:run.boss});
     // O Fantasma do Comunismo é a figura principal do confronto final, não decoração.
     bossFigure();
     joiceFigure();
@@ -789,7 +829,7 @@ function initRunner() {
     else if(action==='fire')fire('gamepad',active);
     else if(action==='crouch'){crouchSources.set('gamepad',active);crouch(crouchSources.active);}
     else if(active&&action==='jump')jump();
-    else if(active&&action==='power'&&run.status==='running'){cycleHeroPower(run);attackSources.clear();updateUI();draw();}
+    else if(active&&action==='power')switchWeapon();
     else if(active&&action==='shield')useReserveShield();
     else if(active&&action==='start'&&['ready','over','won'].includes(run.status))begin();
   }

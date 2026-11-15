@@ -19,25 +19,25 @@ const profiles=Object.freeze({
 });
 // Motion numbers describe each actor's arena path, independent of location.
 const identity={
- pf:['Pule a barreira, abaixe sob as algemas e saia do marcador antes da queda.','meme-army',[18,.65,6,1.1]],
- army:['Leia o sinalizador: pule a salva baixa, abaixe na alta e avance na pausa.','xandao',[20,1.05,7,1.8]],
- janones:['Espere a terceira mensagem da rajada e atire durante a pausa longa.','pf',[24,1.4,8,2.2]],
- joice:['Abaixe nas notas altas, pule as ondas baixas e atire entre os refrões.','army',[26,1.1,12,1.6]],
- soraya:['Observe a cruz descendo: saia do marcador e ataque após o pouso.','lula',[21,.55,19,.85]],
- boulos:['Pule a mala rasteira, abaixe na alta e abandone o marcador da mala em queda.','bossonari',[29,1.65,8,2.8]],
- haddad:['Abaixe nos recibos, pule os carimbos e saia da coluna TAXA antes do impacto.','janones',[29,.9,22,1.45]],
- simone:['Leia as linhas: pule a baixa, abaixe na alta e saia da coluna marcada.','joice',[23,.8,15,1.25]],
- dino:['Saia do selo marcado; o carimbo lento deixa uma abertura longa para atirar.','soraya',[20,.7,18,1.7]],
- xandao:['Pule o martelo baixo, abaixe nos mandados e contra-ataque após a martelada.','haddad',[34,.8,16,.95]],
- lula:['Desvie do L na ida: ele retorna para o chefe; atire depois da volta.','simone',[30,.95,14,1.4]],
- dilma:['Leia a onda do vento e avance contra a rajada anunciada; atire na calmaria.','dino',[31,.7,20,1.15]],
- bossonari:['Pule os frascos baixos, abaixe na rajada alta e saia do marcador de queda.','dilma',[25,1.25,13,1.9]],
- 'meme-army':['Saia da assombração marcada, pule a investida baixa e atire quando o fantasma recuar.','boulos',[32,1.15,21,.8]]
+ pf:['Pule todas as barreiras sem encostar. A blitz abre a guarda ao concluir o bloqueio.','meme-army',[57,.72,8,1.1,0,.12]],
+ army:['Desvie de todos os sinalizadores de uma salva. Ataque quando a última chama passar.','xandao',[56,1.02,12,1.8,.8,.26]],
+ janones:['Espere a terceira mensagem da rajada. Desvie das três e dispare no intervalo.','pf',[58,1.34,9,2.2,1.2,.32]],
+ joice:['Abaixe até a nota alta passar. Ataque quando o microfone ficar mudo.','army',[59,1.11,19,1.6,2,.29]],
+ soraya:['Acompanhe a cruz até o chão. Desvie da queda e dispare logo após o pouso.','lula',[52,.59,30,.86,.45,.40]],
+ boulos:['Pule a mala quicante até ela passar de vez. A mala alta não abre a guarda.','bossonari',[60,1.58,10,2.7,2.45,.38]],
+ haddad:['Escape do carimbo TAXA, inclusive no marcador. Dispare assim que ele baixar.','janones',[58,.91,27,1.44,1.7,.31]],
+ simone:['Saia da coluna de orçamento marcada. A brecha vem quando a planilha cai no alvo vazio.','joice',[56,.82,19,1.25,2.8,.34]],
+ dino:['Escape do selo em queda. Deixe o impacto baixar antes de atirar.','soraya',[55,.73,25,1.66,.68,.22]],
+ xandao:['Salte sobre a martelada. Espere o braço baixar para atacar, sem gastar tiro no mandado.','haddad',[60,.88,19,.98,2.6,.23]],
+ lula:['Desvie do L na ida e espere ele voltar ao chefe por cima. Só então contra-ataque.','simone',[59,.95,20,1.4,1.1,.31]],
+ dilma:['Desvie quando o vento empurrar a pista. Ataque no instante em que a rajada parar.','dino',[58,.72,29,1.15,1.45,.40]],
+ bossonari:['Desvie dos frascos de cloroquina e ivermectina em sequência. Os dois tipos abrem a guarda.','dilma',[61,1.24,17,1.9,2.15,.41]],
+ 'meme-army':['Saia da assombração marcada ou pule a investida baixa. Atire quando o fantasma recuar.','boulos',[63,1.09,27,.84,2.9,.42]]
 };
 export const BOSS_PROFILES=Object.freeze(Object.fromEntries(Object.entries(profiles).map(([type,p])=>{
- const [tactic,weakness,[xAmplitude,xRate,yAmplitude,yRate]]=identity[type];
+ const [tactic,weakness,[xAmplitude,xRate,yAmplitude,yRate,offset,swerve]]=identity[type];
  return [type,Object.freeze({...p,tactic,weakness,reward:Object.freeze({id:type,name:p.powerName}),
-  motion:Object.freeze({id:type,xAmplitude,xRate,yAmplitude,yRate})})];
+  motion:Object.freeze({id:type,xAmplitude,xRate,yAmplitude,yRate,offset,swerve})})];
 })));
 export const bossProfileFor=type=>BOSS_PROFILES[type]||null;
 export function bossWeaponFor(type,fired=0,action='jump'){

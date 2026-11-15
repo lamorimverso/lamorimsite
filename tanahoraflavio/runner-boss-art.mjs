@@ -100,43 +100,11 @@ export function drawHoverEnemy(c,{type='haddad',x=0,y=0,scale=1,phase=0,preparin
  c.restore();
 }
 
-/** Arena markings overlay the existing environment without replacing its scene. */
-export function drawBossArena(c,{width=900,ground=246,phase=0,state='idle',stageIndex=0,reducedMotion=false}={}){
+/** Keep the stage itself and only a faint combat line on the road. */
+export function drawBossArena(c,{width=900,ground=246,state='idle'}={}){
  if(!Number.isFinite(width)||width<=0||!Number.isFinite(ground))return;
- const tones=['#b65d4d','#5b7eae','#9674ac','#4d8c86','#bb9153'];
- const accent=tones[((Math.floor(stageIndex)||0)%tones.length+tones.length)%tones.length];
- const mode=typeof state==='string'?state:state?.phase||'idle';
- const enraged=mode==='phase2'||Boolean(state&&typeof state==='object'&&state.enraged);
- const charging=['prepare','preparing','windup','charge','telegraph'].includes(mode),release=['attack','attacking','release'].includes(mode),recovery=['recover','recovery','vulnerable'].includes(mode);
- const t=reducedMotion?0:Math.sin((Number.isFinite(phase)?phase:0)*.35),pulse=.08+(t+1)*.025;
- const marker=release?'#e9a068':charging?'#f0ca72':recovery?'#92d3ba':accent;
- c.save();
- c.fillStyle=release?'#8e314315':charging?'#e9bd6320':'#33334a12';c.fillRect(0,ground-160,width,160);
- // Floor remains visible and bounded, while the runner's background survives.
- c.fillStyle='#29364b48';c.fillRect(0,ground,width,19);
- line(c,[[20,ground+1],[width-20,ground+1]],marker,2);
- for(let xx=26;xx<width-20;xx+=48){line(c,[[xx,ground+6],[xx+16,ground+6]],'#e8d6b770',2);}
- for(const xx of [16,width-16]){
-  c.fillStyle=marker;c.globalAlpha*=.65;c.fillRect(xx-2,ground-106,4,106);c.globalAlpha/=.65;
-  for(let i=0;i<4;i++)line(c,[[xx-5,ground-18-i*24],[xx+5,ground-24-i*24]],marker,2);
-  oval(c,xx,ground-110,5,5,marker,INK,1);
- }
- // Concentric target around the enemy's arena side. Only decoration pulses.
- c.globalAlpha*=pulse;
- oval(c,width*.76,ground+5,Math.min(132,width*.17),14,marker,null);
- c.globalAlpha/=pulse;
- if(charging||release||recovery){
-  const center=width*.76;
-  line(c,[[center-47,ground-6],[center-38,ground-12],[center-28,ground-6]],marker,2);
-  line(c,[[center+28,ground-6],[center+38,ground-12],[center+47,ground-6]],marker,2);
- }
- if(enraged){
-  // Persistent second-phase marks supplement the current attack/recovery cue.
-  // Static lightning crests and a doubled floor band stay readable without motion.
-  const rage='#c64f7b';
-  for(const xx of [16,width-16])polygon(c,[[xx+2,ground-151],[xx-8,ground-136],[xx-1,ground-136],[xx-4,ground-124],[xx+9,ground-140],[xx+2,ground-140]],rage,CREAM,1.4);
-  line(c,[[width*.60,ground+11],[width*.91,ground+11]],rage,2.5);
-  line(c,[[width*.60,ground+16],[width*.91,ground+16]],rage,2.5);
- }
- c.restore();
+ const phase=typeof state==='string'?state:state?.phase;
+ const intense=phase==='phase2'||!!state?.enraged;
+ const color=phase==='charge'?'#b38d48':phase==='attack'?'#a9535e':phase==='recover'?'#599888':intense?'#a56076':'#627f8b';
+ c.save();line(c,[[16,ground+1],[width-16,ground+1]],color+(intense?'8c':'55'),1.5);c.restore();
 }

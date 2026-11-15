@@ -8,7 +8,7 @@ const axis = (index,direction) => ({kind:'axis',index,direction});
 test('defaults expose every ability and preserve familiar keyboard aliases',async()=>{
  const {ACTION_DEFINITIONS,DEFAULT_CONTROLS,keyboardActionFor}=await controlMap();
  assert.deepEqual(ACTION_DEFINITIONS.map(({id})=>id),['left','right','jump','crouch','fire','power','shield','start']);
- for(const [code,action] of [['KeyA','left'],['ArrowLeft','left'],['KeyD','right'],['ArrowRight','right'],['KeyW','jump'],['ArrowUp','jump'],['Space','jump'],['KeyS','crouch'],['ArrowDown','crouch'],['KeyJ','fire'],['KeyZ','fire'],['KeyQ','power'],['KeyE','shield'],['Enter','start']]){
+ for(const [code,action] of [['KeyA','left'],['ArrowLeft','left'],['KeyD','right'],['ArrowRight','right'],['KeyW','jump'],['ArrowUp','jump'],['Space','jump'],['KeyS','crouch'],['ArrowDown','crouch'],['KeyJ','fire'],['KeyZ','fire'],['KeyT','power'],['KeyQ','power'],['KeyE','shield'],['Enter','start']]){
   assert.equal(keyboardActionFor(DEFAULT_CONTROLS,code),action);
  }
  assert.equal(keyboardActionFor(DEFAULT_CONTROLS,'KeyF'),null);
@@ -35,11 +35,67 @@ test('normalization repairs malformed persisted controls and duplicate aliases',
  const clean=normalizeControls(saved);
  assert.equal(keyboardActionFor(clean,'KeyD'),'right');
  assert.equal(keyboardActionFor(clean,'Escape'),null);
- assert.deepEqual(clean.keyboard.power,['KeyQ']);
+ assert.deepEqual(clean.keyboard.power,['KeyT','KeyQ']);
  assert.deepEqual(clean.keyboard.shield,['KeyE']);
  assert.deepEqual(clean.gamepad.jump,[button(0)]);
  assert.deepEqual(clean.gamepad.fire,[button(2),button(7)]);
  assert.equal(JSON.stringify(saved),copy);
+});
+
+test('weapon switch gains T for legacy defaults without stealing a customized binding',async()=>{
+ const {normalizeControls,keyboardActionFor,assignKeyboard,ACTION_DEFINITIONS}=await controlMap();
+ assert.equal(ACTION_DEFINITIONS.find(({id})=>id==='power').label,'Trocar arma');
+ const legacy={keyboard:{power:['KeyQ']}};
+ assert.deepEqual(normalizeControls(legacy).keyboard.power,['KeyT','KeyQ']);
+ for(const saved of [legacy,{keyboard:{}}]){
+  const custom=normalizeControls({keyboard:{...saved.keyboard,fire:['KeyT']}});
+  assert.equal(keyboardActionFor(custom,'KeyT'),'fire');
+  assert.equal(keyboardActionFor(custom,'KeyQ'),'power');
+ }
+ assert.deepEqual(normalizeControls({keyboard:{power:['KeyR']}}).keyboard.power,['KeyR']);
+ const intentionalQ=assignKeyboard(normalizeControls(),'power','KeyQ');
+ assert.equal(intentionalQ.ok,true);
+ assert.deepEqual(normalizeControls(JSON.parse(JSON.stringify(intentionalQ.controls))).keyboard.power,['KeyQ']);
+});
+
+test('legacy controls still jump with a primary mouse click by default',async()=>{
+ const {normalizeControls,mouseActionFor,mouseButtonLabel}=await controlMap();
+ const controls=normalizeControls({keyboard:{fire:['KeyF']}});
+ assert.equal(mouseActionFor(controls,0),'jump');
+ for(const button of [1,2,3,4,5,-1,'0',null])assert.equal(mouseActionFor(controls,button),null);
+ assert.deepEqual([0,1,2,3,4,null].map(mouseButtonLabel),['Esquerdo','Meio','Direito','Lateral 1','Lateral 2','Sem botão']);
+});
+
+test('mouse assignments survive persistence, prevent collisions and support explicit removal',async()=>{
+ const {normalizeControls,mouseActionFor,assignMouse}=await controlMap();
+ const initial=normalizeControls();
+ assert.equal(assignMouse(initial,'fire',0).ok,false);
+ for(const button of [-1,1.5,5,'2',undefined])assert.equal(assignMouse(initial,'fire',button).ok,false);
+ assert.equal(assignMouse(initial,'missing',2).ok,false);
+ const unbound=assignMouse(initial,'jump',null);
+ assert.equal(unbound.ok,true);
+ assert.equal(mouseActionFor(initial,0),'jump');
+ assert.equal(mouseActionFor(normalizeControls(unbound.controls),0),null);
+ let controls=unbound.controls;
+ for(const [button,action] of [[0,'start'],[1,'crouch'],[2,'fire'],[3,'left'],[4,'right']]){
+  const next=assignMouse(controls,action,button);
+  assert.equal(next.ok,true);
+  controls=next.controls;
+ }
+ const restored=normalizeControls(JSON.parse(JSON.stringify(controls)));
+ assert.deepEqual([0,1,2,3,4].map(button=>mouseActionFor(restored,button)),['start','crouch','fire','left','right']);
+ assert.equal(restored.mouse.jump,null);
+});
+
+test('a valid persisted mouse binding takes precedence over a missing default and duplicate input has one owner',async()=>{
+ const {normalizeControls,mouseActionFor}=await controlMap();
+ const restored=normalizeControls({mouse:{fire:0,power:2,shield:2,crouch:'1',start:9}});
+ assert.equal(mouseActionFor(restored,0),'fire');
+ assert.equal(restored.mouse.jump,null);
+ assert.equal(mouseActionFor(restored,2),'power');
+ assert.equal(restored.mouse.shield,null);
+ assert.equal(restored.mouse.crouch,null);
+ assert.equal(restored.mouse.start,null);
 });
 
 test('normalization returns independent mutable maps without retaining input descriptors',async()=>{
