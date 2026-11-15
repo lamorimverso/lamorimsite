@@ -1,12 +1,15 @@
+import {normalizeControls,keyboardActionFor,keyLabel} from './runner-control-map.mjs?v=2bb295d2954f';
+import {createControlSettings} from './runner-control-settings.mjs?v=4f1a7c34883d';
+import {createGamepadDriver} from './runner-gamepad.mjs?v=b3315cc72b13';
 import {HERO_POWERS,heroPowerFor,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=27e0bb16e2f2';
-import {updateCombatHUD} from './runner-combat-hud.mjs?v=0d7532fc386d';
+import {updateCombatHUD} from './runner-combat-hud.mjs?v=105e8d20d358';
 import {createMovementSoundDirector} from './runner-movement-audio.mjs?v=3b96b07ed6e3';
 import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=f273e11b16a6';
 import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=ed1b40296acc';
 import {createShotSoundTracker} from './runner-shot-events.mjs?v=a3769f250d68';
 import {bossPresentationFor} from './runner-bosses.mjs?v=4d0d9c1a5182';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=84c8b0a7312f";
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_SECONDS, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, stageAt, stageTransitionAt, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=9f0d4a32624f";
 import {bossCounterWindow} from './runner-bosses.mjs?v=4d0d9c1a5182';
 import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=a750937a6c76';
 import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=40174ceffa76";
@@ -16,7 +19,7 @@ import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-sc
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
 
 import {ALLIES,allyById} from './runner-allies.mjs?v=260a67b845c4';
-import {createPressGate,createHeldSources,fireBindingFor} from './runner-input.mjs?v=bbf7f3e16548';
+import {createPressGate,createHeldSources} from './runner-input.mjs?v=bbf7f3e16548';
 
 function initRunner() {
   const $ = id => document.getElementById(id);
@@ -24,10 +27,10 @@ function initRunner() {
   if (!canvas || !section) return;
   // Uma aba pode ter conservado o HTML anterior enquanto os módulos já
   // mudaram. Atualizar a página uma vez evita inicializar sobre IDs antigos.
-  if(!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-select")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-options-panel")||!$("game-help")||!$("game-fire-key")||!$("game-attack")||!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-expand-label")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
+  if(!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-select")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-options-panel")||!$("game-help")||!$("game-attack")||!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-expand-label")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
     const url=new URL(location.href);
-    if(url.searchParams.get("ui")!=="20261115-combat-hud"){
-      url.searchParams.set("ui","20261115-combat-hud");location.replace(url.href);
+    if(url.searchParams.get("ui")!=="20261115-custom-controls"){
+      url.searchParams.set("ui","20261115-custom-controls");location.replace(url.href);
     }else{
       const button=$("game-start"),note=$("game-loading-note");
       if(button){button.disabled=false;button.textContent="Recarregar jogo";button.addEventListener("click",()=>location.reload(),{once:true});}
@@ -49,7 +52,7 @@ function initRunner() {
     const stored = Number(localStorage.getItem(recordKey));
     if (Number.isSafeInteger(stored) && stored >= 0 && stored <= 10000000) best = stored;
   } catch { /* O modo privado e o armazenamento bloqueado não impedem jogar. */ }
-  const preferences={crouchMode:"hold",effects:"system",assisted:false,fireKey:"default"};
+  const preferences={crouchMode:"hold",effects:"system",assisted:false,controls:normalizeControls(null)};
   const preferencesKey="tanahoraflavio.runner.preferences.v1";
   try{
     const saved=JSON.parse(localStorage.getItem(preferencesKey)||"{}");
@@ -57,14 +60,17 @@ function initRunner() {
       if(["hold","toggle"].includes(saved.crouchMode))preferences.crouchMode=saved.crouchMode;
       if(["system","reduce"].includes(saved.effects))preferences.effects=saved.effects;
       preferences.assisted=saved.assisted===true;
-      if(fireBindingFor(saved.fireKey)!==fireBindingFor("default"))preferences.fireKey=saved.fireKey;
+      preferences.controls=normalizeControls(saved.controls,saved.fireKey);
     }
   }catch{/* Ajustes continuam disponíveis sem persistência. */}
   $("game-crouch-mode").value=preferences.crouchMode;
   $("game-effects").value=preferences.effects;
   $("game-assist").checked=preferences.assisted;
-  $("game-fire-key").value=preferences.fireKey;
-  const isFireKey=code=>fireBindingFor(preferences.fireKey).keys.includes(code);
+  const controlsOpen=()=>$("game-settings").open;
+  const isFireKey=code=>keyboardActionFor(preferences.controls,code)==='fire';
+  const controlLabels=()=>Object.fromEntries(Object.entries(preferences.controls.keyboard).map(([action,keys])=>[action,keys.map(keyLabel).join('/')]));
+  let controlSettings=null,gamepadDriver=null;
+  const gamepadHeld=new Set();
   let run=createRun({assisted:preferences.assisted}),frameId=0;
   run.supportAvailable=false;
   const trackPointers=new Map(),moveKeys=new Set(),jumpKeys=createPressGate(),crouchSources=createHeldSources(),attackSources=createHeldSources();
@@ -131,7 +137,7 @@ function initRunner() {
     section.dataset.heroPower=run.activePower;
     $("game-aid-bar").hidden=run.status!=="running";
     const reserve=$("game-reserve-shield"),ally=allyById(run.aid?.id);
-    reserve.disabled=run.status!=="running"||!run.reserveShields||run.shieldFor>0;
+    reserve.disabled=controlsOpen()||run.status!=="running"||!run.reserveShields||run.shieldFor>0;
     $("game-aid-status").textContent=ally?ally.name+" · "+run.aid.label+" · "+Math.ceil(run.aid.remaining)+" s":run.reserveShields?"Escudo de reserva pronto. Use quando precisar.":"Ajudas "+run.allyShieldProgress+"/6 para guardar um escudo";
     $("game-passports").textContent=String(run.passports);
     $("game-passport-next").textContent=String(100-run.passports%100);
@@ -163,9 +169,10 @@ function initRunner() {
       recovery.setAttribute("aria-label","Jacaré: "+remainingJacareSeconds+" segundos restantes; desvie lateralmente das ampolas");
     }
     $("game-ammo").parentElement.hidden=!run.boss;
-    const fireLabel=fireBindingFor(preferences.fireKey).label;
+    $("game-weapon-select").disabled=controlsOpen()||run.status!=="running";
+    const fireLabel=controlLabels().fire;
     $("game-ammo").textContent=run.boss?fireLabel+" · Disparar":"Sem arma";
-    $("game-attack").disabled=run.player.isJacare||!run.boss&&run.ammo===0;
+    $("game-attack").disabled=controlsOpen()||run.player.isJacare||!run.boss&&run.ammo===0;
     $("game-attack").textContent=run.ammo>0?"◎ Disparar":run.boss?(run.player.attackHeld?"Solte":"Recarga"):"Vazio";
     const ammoHint=run.ammo===0?(run.boss?"Solte o disparo para recarregar durante a luta":"Sem munição. Colete ajudantes para repor tiros"):"";
     $("game-attack").title=ammoHint||(run.player.isJacare?"Disparo indisponível durante a transformação":"Disparar: "+fireLabel+" · "+weapon.name);
@@ -198,7 +205,7 @@ function initRunner() {
       }
       $("game-boss").style.setProperty("--boss-accent",b.color);
     }
-    updateCombatHUD(run,{spritesReady});
+    updateCombatHUD(run,{spritesReady,controlLabels:controlLabels()});
     const liveAttack=run.obstacles.filter(o=>!o.passed&&!o.counted)
       .sort((a,b)=>threatTimeToContact(run,a)-threatTimeToContact(run,b))[0];
     const liveCue=attackCueFor(liveAttack);
@@ -280,13 +287,13 @@ function initRunner() {
   }
 
   function schedule() {
-    if (!frameId && run.status === "running" && !document.hidden && windowFocused && inView) frameId = requestAnimationFrame(frame);
+    if (!frameId && run.status === "running" && !document.hidden && windowFocused && inView && !$("game-settings").open) frameId = requestAnimationFrame(frame);
   }
-  // Sem controle de pausa: congela apenas a simulação oculta e retoma sozinha.
+  // Configuração, aba oculta e perda de foco suspendem a simulação e os comandos mantidos.
   function syncActivity() {
     cancelAnimationFrame(frameId);frameId=0;
     resetFrameClock(frameClock,performance.now());
-    if(document.hidden||!windowFocused||!inView||run.status!=="running"){
+    if(document.hidden||!windowFocused||!inView||$("game-settings").open||run.status!=="running"){
       audio.stop();lastRaidKey="";clearControls();
     }
     schedule();
@@ -301,6 +308,8 @@ function initRunner() {
   }
   function frame(now) {
     frameId=0;if(run.status!=="running")return;
+    if($("game-settings").open){resetFrameClock(frameClock,now);return;}
+    gamepadDriver?.poll();
     const timing=advanceFrameClock(frameClock,now),wasAirborne=run.player.y>0;
     const before={hp:run.player.hp,lives:run.lives,collected:run.collected,boss:run.boss?.type,
       passports:run.passports,spawned:run.spawnedObstacles,attacks:run.boss?.fired||0,jacare:run.player.isJacare};
@@ -385,24 +394,28 @@ function initRunner() {
     if(run.shotsFired<=lastHeroShotHeard)return;lastHeroShotHeard=run.shotsFired;
     audio.heroShot(({wind:'wind',receipts:'papers','budget-sheets':'papers',hammer:'metal','court-seal':'metal',handcuffs:'metal'})[heroPowerFor(run).projectile]||'magic');
   }
-  $("game-weapon-select").addEventListener('change',event=>{equipHeroPower(run,event.target.value);attackSources.clear();updateUI();draw();canvas.focus({preventScroll:true});});
+  $("game-weapon-select").addEventListener('change',event=>{if(controlsOpen()){event.target.value=run.activePower;return;}equipHeroPower(run,event.target.value);attackSources.clear();updateUI();draw();canvas.focus({preventScroll:true});});
   function useReserveShield(){
+    if(controlsOpen())return;
     resumeFromGesture();if(activateReserveShield(run)){audio.effect('restore');updateUI();draw();canvas.focus({preventScroll:true});}
   }
   $("game-reserve-shield").addEventListener('click',useReserveShield);
   function jump(){
+    if(controlsOpen())return;
     resumeFromGesture();
     if(["ready","over"].includes(run.status))begin();
     if(jumpRun(run)){movementSounds.update(run);draw();}
   }
   function crouch(active){
+    if(active&&controlsOpen())return;
     if(crouchRun(run,active)){draw();}
     else if(!active)draw();
   }
   function clearControls(){
-    trackPointers.clear();moveKeys.clear();jumpKeys.clear();crouchSources.clear();attackSources.clear();clearRunInput(run);movementSounds.reset(run);
+    trackPointers.clear();moveKeys.clear();gamepadHeld.clear();gamepadDriver?.reset();jumpKeys.clear();crouchSources.clear();attackSources.clear();clearRunInput(run);movementSounds.reset(run);
   }
   function fire(source,active){
+    if(active&&controlsOpen())return;
     attackSources.set(source,active);setAttackRun(run,attackSources.active);
     if(active){resumeFromGesture();if(attackRun(run))heroShotSound();draw();}
   }
@@ -412,9 +425,11 @@ function initRunner() {
     try{$('game-attack').setPointerCapture(event.pointerId);}catch{}
   });
   for(const type of ['pointerup','pointercancel','lostpointercapture'])$('game-attack').addEventListener(type,event=>fire('pointer:'+event.pointerId,false));
-  $('game-attack').addEventListener('click',event=>{if(event.detail===0){if(attackRun(run))heroShotSound();draw();}});
+  $('game-attack').addEventListener('click',event=>{if(controlsOpen())return;if(event.detail===0){if(attackRun(run))heroShotSound();draw();}});
   function updateMovement(){
-    const right=moveKeys.has("ArrowRight")||moveKeys.has("KeyD"),left=moveKeys.has("ArrowLeft")||moveKeys.has("KeyA");
+    if(controlsOpen()){moveRun(run,0);return;}
+    const actions=[...moveKeys].map(code=>keyboardActionFor(preferences.controls,code));
+    const right=actions.includes('right')||gamepadHeld.has('right'),left=actions.includes('left')||gamepadHeld.has('left');
     const pointer=[...trackPointers.values()].filter(p=>p.action==="move").at(-1);
     moveRun(run,Number(right)-Number(left)||(pointer?.direction||0));
   }
@@ -444,10 +459,11 @@ function initRunner() {
     $("game-sound").setAttribute("aria-pressed",String(enabled));lastRaidKey="";updateUI();
   });
   function savePreferences(){try{localStorage.setItem(preferencesKey,JSON.stringify(preferences));}catch{/* A sessão atual permanece funcional. */}}
-  $("game-fire-key").addEventListener("change",()=>{
-    attackSources.clear();setAttackRun(run,false);
-    preferences.fireKey=$("game-fire-key").value;savePreferences();updateUI();draw();
-  });
+  function applyControls(next){
+    clearControls();preferences.controls=normalizeControls(next);
+    controlSettings?.setControls(preferences.controls);
+    savePreferences();updateUI();draw();
+  }
   $("game-crouch-mode").addEventListener("change",()=>{crouchSources.clear();crouch(false);preferences.crouchMode=$("game-crouch-mode").value;savePreferences();});
   $("game-effects").addEventListener("change",()=>{preferences.effects=$("game-effects").value;savePreferences();updateUI();draw();});
   $("game-assist").addEventListener("change",()=>{preferences.assisted=$("game-assist").checked;savePreferences();});
@@ -463,9 +479,10 @@ function initRunner() {
     resize();resumeFromGesture();
   }
   $("game-expand").addEventListener("click",()=>setExpanded(!expanded));
-  document.addEventListener("keydown",event=>{if(event.code==="Escape"&&expanded){event.preventDefault();setExpanded(false);canvas.focus({preventScroll:true});}});
+  document.addEventListener("keydown",event=>{if(!event.defaultPrevented&&event.code==="Escape"&&expanded){event.preventDefault();setExpanded(false);canvas.focus({preventScroll:true});}});
   // Gestos na pista substituem os botões: toque/passe para cima, ou desça e segure.
   canvas.addEventListener("pointerdown",event=>{
+    if(controlsOpen())return;
     if(event.button!==0||(event.isPrimary===false&&event.pointerType!=="touch"))return;
     lastPointerAt=performance.now();
     event.preventDefault();resumeFromGesture();canvas.focus({preventScroll:true});
@@ -507,34 +524,36 @@ function initRunner() {
     if(!("PointerEvent" in window)||event.detail===0&&!physical)jump();
   });
   section.addEventListener("keydown", event => {
+    if(controlsOpen())return;
     if(run.status==="ballot"&&!event.ctrlKey&&!event.metaKey&&!event.altKey){
       if(/^[0-9]$/.test(event.key)){event.preventDefault();if(!event.repeat)ballotDigit(run,event.key);updateUI();}
       else if(event.key==="Backspace"||event.key==="Delete"){event.preventDefault();ballotClear(run);updateUI();}
       else if(event.key==="Enter"&&!event.target.closest("button")){event.preventDefault();if(run.ballot.digits.length===2&&!event.repeat)confirmBallot();}
       return;
     }
-    const ownFireShortcut=isFireKey(event.code)&&event.target.closest('#game-attack');
-    const ownShieldShortcut=event.code==='KeyE'&&(event.target.closest('#game-reserve-shield')||event.target.closest('#game-attack'));
+    const action=keyboardActionFor(preferences.controls,event.code);
+    const ownFireShortcut=action==='fire'&&event.target.closest('#game-attack');
+    const ownShieldShortcut=action==='shield'&&(event.target.closest('#game-reserve-shield')||event.target.closest('#game-attack'));
     if (event.target.closest("button,a,input,select,textarea,summary")&&!ownFireShortcut&&!ownShieldShortcut || event.ctrlKey || event.metaKey || event.altKey) return;
-    if(event.code==='KeyQ'){event.preventDefault();if(!event.repeat){cycleHeroPower(run);attackSources.clear();updateUI();draw();}}
-    else if(event.code==='KeyE'){event.preventDefault();if(!event.repeat)useReserveShield();}
+    if(action==='power'){event.preventDefault();if(!event.repeat){cycleHeroPower(run);attackSources.clear();updateUI();draw();}}
+    else if(action==='shield'){event.preventDefault();if(!event.repeat)useReserveShield();}
     else if(isFireKey(event.code)){
       event.preventDefault();if(!event.repeat)fire('key:'+event.code,true);
-    }else if(["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code)){
+    }else if(action==='left'||action==='right'){
       event.preventDefault();moveKeys.add(event.code);resumeFromGesture();updateMovement();
-    }else if (["Space","ArrowUp","KeyW"].includes(event.code)) {
+    }else if (action==='jump') {
       event.preventDefault();
       if(jumpKeys.press(event.code,{repeat:event.repeat}))jump();
-    } else if(["ArrowDown","KeyS"].includes(event.code)) {
+    } else if(action==='crouch') {
       event.preventDefault();
       crouchSources.set("key:"+event.code,true);crouch(crouchSources.active);
-    }
+    }else if(action==='start'&&!event.repeat&&['ready','over','won'].includes(run.status)){event.preventDefault();begin();}
   });
   document.addEventListener("keyup",event=>{
     if(isFireKey(event.code))fire('key:'+event.code,false);
-    if(["Space","ArrowUp","KeyW"].includes(event.code))jumpKeys.release(event.code);
-    if(["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code)&&moveKeys.has(event.code)){event.preventDefault();moveKeys.delete(event.code);updateMovement();}
-    if(["ArrowDown","KeyS"].includes(event.code)){crouchSources.set("key:"+event.code,false);crouch(crouchSources.active);}
+    jumpKeys.release(event.code);
+    if(moveKeys.has(event.code)){event.preventDefault();moveKeys.delete(event.code);updateMovement();}
+    if(keyboardActionFor(preferences.controls,event.code)==='crouch'){crouchSources.set("key:"+event.code,false);crouch(crouchSources.active);}
   });
   section.addEventListener("focusout",event=>{
     if(!section.contains(event.relatedTarget)){clearControls();draw();}
@@ -742,7 +761,42 @@ function initRunner() {
     for(const shot of run.heroShots||[])drawHeroProjectile(ctx,shot,WORLD.ground);
     character();
   }
-  for(const id of ["game-sound","game-expand","game-crouch-mode","game-effects","game-assist","game-fire-key"])$(id).disabled=false;
+  // A controller is another held-input source, with neutral rearming after menus/focus.
+  let ballotFocus=0;
+  const ballotControls={gamepad:{left:[{kind:'button',index:14},{kind:'axis',index:0,direction:-1}],right:[{kind:'button',index:15},{kind:'axis',index:0,direction:1}],jump:[{kind:'button',index:0}],crouch:[{kind:'button',index:13},{kind:'axis',index:1,direction:1}],shield:[{kind:'button',index:12},{kind:'axis',index:1,direction:-1}],fire:[{kind:'button',index:1}],power:[{kind:'button',index:9}],start:[]}};
+  function padAction(action,active){
+    if(active)gamepadHeld.add(action);else gamepadHeld.delete(action);
+    if(run.status==='ballot'){
+      if(!active)return;
+      const buttons=[...$('game-ballot').querySelectorAll('button')];
+      if(['left','right','crouch','shield'].includes(action)){
+        ballotFocus=(ballotFocus+({left:-1,right:1,crouch:3,shield:-3})[action]+buttons.length)%buttons.length;
+        buttons[ballotFocus]?.focus({preventScroll:true});
+      }else if(action==='jump')buttons[ballotFocus]?.click();
+      else if(action==='fire'){ballotClear(run);updateUI();}
+      else if(action==='power')confirmBallot();
+      return;
+    }
+    if(action==='left'||action==='right')updateMovement();
+    else if(action==='fire')fire('gamepad',active);
+    else if(action==='crouch'){crouchSources.set('gamepad',active);crouch(crouchSources.active);}
+    else if(active&&action==='jump')jump();
+    else if(active&&action==='power'&&run.status==='running'){cycleHeroPower(run);attackSources.clear();updateUI();draw();}
+    else if(active&&action==='shield')useReserveShield();
+    else if(active&&action==='start'&&['ready','over','won'].includes(run.status))begin();
+  }
+  controlSettings=createControlSettings({root:$('game-control-bindings'),controls:preferences.controls,onChange:applyControls,onCaptureChange:()=>clearControls()});
+  gamepadDriver=createGamepadDriver({getControls:()=>run.status==='ballot'?ballotControls:preferences.controls,
+    canPlay:()=>spritesReady&&!document.hidden&&windowFocused&&(run.status==='ballot'?(()=>{const r=$('game-ballot').getBoundingClientRect();return r.height>0&&r.bottom>0&&r.top<innerHeight;})():inView)&&!$('game-settings').open&&!controlSettings.capturing,
+    onAction:padAction,onDevice:state=>controlSettings.setDevice(state),onCapture:pads=>controlSettings.pollCapture(pads)});
+  $('game-settings').addEventListener('toggle',()=>{syncActivity();updateUI();draw();});
+  const pollControllerOutsideGame=()=>{if(run.status!=='running'||$('game-settings').open)gamepadDriver.poll();};
+  let controllerTimer=setInterval(pollControllerOutsideGame,80);
+  window.addEventListener('gamepadconnected',()=>gamepadDriver.poll());
+  window.addEventListener('gamepaddisconnected',()=>gamepadDriver.poll());
+  window.addEventListener('pagehide',()=>{clearInterval(controllerTimer);controllerTimer=null;gamepadDriver.reset();controlSettings.cancelCapture();});
+  window.addEventListener('pageshow',()=>{if(controllerTimer===null)controllerTimer=setInterval(pollControllerOutsideGame,80);gamepadDriver.reset();syncActivity();});
+  for(const id of ["game-sound","game-expand","game-crouch-mode","game-effects","game-assist"])$(id).disabled=false;
   updateUI();resize();draw();prepareSprites();
 }
 

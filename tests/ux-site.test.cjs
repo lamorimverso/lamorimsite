@@ -203,7 +203,7 @@ test('primeira visita ensina pular e abaixar sem expor um bloco longo',async()=>
   assert.equal(await page.locator('#game-settings').evaluate(e=>e.open),false);
   await page.locator('#game-settings summary').click();
   assert.equal(await page.locator('#game-instructions').isVisible(),true);
-  assert.match(await page.locator('#game-instructions').textContent(),/Espaço.*S/);
+  assert.match(await page.locator('[data-bind-action=jump][data-bind-device=keyboard]').textContent(),/Espaço/);assert.match(await page.locator('[data-bind-action=crouch][data-bind-device=keyboard]').textContent(),/S/);
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
@@ -452,7 +452,7 @@ test('HUD do chefão fica no canto direito da pista sem deslocar pista ou contro
 for(const initialSearch of ['', '?ui=20261111-run-controls'])test('HTML antigo no cache se atualiza sem travar a inicialização '+initialSearch,async()=>{
  const {context,page,errors}=await open({legacyFirst:true,initialSearch});
  try{
-  await page.waitForURL(url=>url.searchParams.get('ui')==='20261115-combat-hud', {timeout:4000});
+  await page.waitForURL(url=>url.searchParams.get('ui')==='20261115-custom-controls', {timeout:4000});
   await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
   assert.equal(await page.locator('#game-settings').count(),1);
   assert.match(await page.locator('#days').textContent(),/^\d+$/);
@@ -684,7 +684,7 @@ test('disparo fica visível, respeita a tecla configurada, cancela troca mantida
  try{
   await page.locator('#game-settings summary').click();
   await page.locator('#game-crouch-mode').selectOption('toggle');
-  await page.locator('#game-fire-key').selectOption('KeyF');
+  await page.locator('[data-bind-action=fire][data-bind-device=keyboard]').click();await page.keyboard.press('f');
   await begin(page);
   assert.equal(await page.locator('#game-attack').isVisible(),true);
   assert.equal(await page.locator('#game-attack').isEnabled(),true,'a corrida também permite disparar');
@@ -698,7 +698,7 @@ test('disparo fica visível, respeita a tecla configurada, cancela troca mantida
   const fired=await page.evaluate(()=>__testRun.shotsFired);await page.keyboard.press('j');
   assert.equal(await page.evaluate(()=>__testRun.shotsFired),fired,'atalho antigo deixa de disparar');
   await page.keyboard.down('f');await page.waitForFunction(n=>__testRun.shotsFired>n,fired);
-  await page.locator('#game-settings summary').click();await page.locator('#game-fire-key').selectOption('KeyK');
+  await page.locator('#game-settings summary').click();await page.locator('[data-bind-action=fire][data-bind-device=keyboard]').click();await page.keyboard.press('k');
   assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),false);
   const changed=await page.evaluate(()=>__testRun.shotsFired);await page.waitForTimeout(350);
   assert.equal(await page.evaluate(()=>__testRun.shotsFired),changed,'troca cancela o tiro mantido');
@@ -706,8 +706,8 @@ test('disparo fica visível, respeita a tecla configurada, cancela troca mantida
   await page.locator('#runner-canvas').scrollIntoViewIfNeeded();await page.locator('#runner-canvas').focus();
   await page.keyboard.down('k');await page.waitForFunction(n=>__testRun.shotsFired>n,changed);await page.keyboard.up('k');
   assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),false);
-  await page.reload();await page.waitForFunction(()=>!document.querySelector('#game-fire-key').disabled);await page.locator('#game-settings summary').click();
-  assert.equal(await page.locator('#game-fire-key').inputValue(),'KeyK');
+  await page.reload();await page.waitForFunction(()=>document.querySelector('[data-bind-action=fire]'));await page.locator('#game-settings summary').click();
+  assert.equal(await page.locator('[data-bind-action=fire][data-bind-device=keyboard]').textContent(),'K');
   assert.equal(await page.locator('#game-crouch-mode').inputValue(),'toggle');
   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
   await page.locator('#game-settings').screenshot({path:path.resolve(__dirname,'../ux-captures/fire-controls-390.png')});
@@ -719,9 +719,9 @@ test('engrenagem contém só comandos, com opções e créditos separados',async
  const {context,page,errors}=await open({viewport:{width:390,height:844}});
  try{
   await page.locator('#game-settings summary').click();
-  assert.deepEqual(await page.locator('#game-settings select').evaluateAll(rows=>rows.map(e=>e.id)),['game-crouch-mode','game-fire-key']);
+  assert.deepEqual(await page.locator('#game-settings select').evaluateAll(rows=>rows.map(e=>e.id)),['game-crouch-mode']);
   assert.equal(await page.locator('#game-settings a').count(),0);
-  assert.match(await page.locator('#game-instructions').textContent(),/W.*Espaço.*A\/D.*S/);
+  assert.equal(await page.locator('#game-control-bindings tbody tr').count(),8);assert.match(await page.locator('[data-bind-action=right][data-bind-device=keyboard]').textContent(),/D.*→/);
   const box=await page.locator('#game-settings').boundingBox();assert.ok(box.height<420,'painel de comandos compacto');
   assert.equal(await page.locator('#game-options-panel').evaluate(e=>e.open),false);
   assert.equal(await page.locator('#game-help').evaluate(e=>e.open),false);
@@ -1030,7 +1030,8 @@ for(const width of [320,390])test(`HUD deixa o corpo livre ao mover até a borda
   await begin(page);await page.evaluate(()=>{for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])__testRun[k]=Infinity;__testRun.obstacles=[];__testRun.pickups=[];});
   await page.locator('#runner-canvas').focus();await page.keyboard.down('ArrowLeft');await page.waitForFunction(()=>__testRun.player.x<=26.1);await page.keyboard.up('ArrowLeft');
   const track=await page.locator('#runner-canvas').boundingBox(),headTop=track.y+track.height*(246-100)/300;
-  for(const id of ['game-hero-portrait','game-power-loadout','game-reserve-shield']){
+  assert.equal(await page.locator('#game-hero-portrait').isVisible(),false);
+  for(const id of ['game-power-loadout','game-reserve-shield']){
    const box=await page.locator('#'+id).boundingBox();assert.ok(box.y+box.height<=headTop,`${id} não cobre o corpo na borda esquerda: ${JSON.stringify(box)}; cabeça em ${headTop}`);
   }
   await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/hud-clear-left-${width}.png`)});assert.deepEqual(errors,[]);
@@ -1067,5 +1068,133 @@ test('botão com munição vazia mantém tamanho compacto e deixa Flávio livre 
    assert.ok(button.width<=120,`${state}: botão compacto, ${button.width}px`);assert.ok(button.x>=track.x+track.width*.5,`${state}: botão continua do lado direito`);
   }
   assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+for(const viewport of [{width:320,height:844},{width:390,height:844},{width:844,height:390}])test(`HUD limpo esconde vida na corrida e mostra só no chefe: ${viewport.width}px`,async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport});
+ try{
+  if(viewport.width===844)await page.locator('#game-expand').click();
+  await begin(page);await page.evaluate(()=>{const r=__testRun;for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;r.obstacles=[];r.pickups=[];r.ammo=4;r.allyShieldProgress=3;});
+  await page.waitForFunction(()=>document.getElementById('game-weapon-level').textContent==='4/6');
+  assert.equal(await page.locator('#game-hero-health').isVisible(),false,'vida não aparece durante a corrida');
+  assert.equal(await page.locator('#game-hero-portrait').isVisible(),false,'remove o retrato redundante durante a corrida');
+  assert.equal(await page.locator('#game-power-charge').isVisible(),false,'contador compacto substitui a torre de munição na corrida');
+  const track=await page.locator('#runner-canvas').boundingBox();
+  for(const id of ['game-power-loadout','game-reserve-shield']){
+   const box=await page.locator('#'+id).boundingBox();assert.ok(box.height>=36&&box.height<=42,`${id} compacto e fácil de tocar`);
+   assert.ok(box.y>=track.y&&box.y+box.height<track.y+track.height*.4&&box.x>=track.x&&box.x+box.width<=track.x+track.width,`${id} fica no canto superior livre`);
+  }
+  await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/clean-run-${viewport.width}.png`)});
+  await page.evaluate(async()=>{const r=__testRun,{storyBossAt}=await import('./runner-bosses.mjs');r.boss={...storyBossAt(0),combat:true,hp:18,maxHp:18,total:18,remaining:18,fired:0,age:0,phase:'recover',phaseFor:100,nextAttack:100};r.player.hp=3;});
+  await page.waitForFunction(()=>!document.getElementById('game-hero-health').closest('[hidden]'));
+  assert.equal(await page.locator('#game-hero-health').isVisible(),true);assert.equal(await page.locator('#game-hero-health').getAttribute('aria-valuenow'),'3');
+  assert.equal(await page.locator('#game-power-charge').isVisible(),true);
+  await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/clean-boss-${viewport.width}.png`)});
+  const ammoBefore=await page.evaluate(()=>{const r=__testRun,ammo=r.ammo;r.boss=null;return ammo;});await page.waitForFunction(()=>!!document.getElementById('game-hero-health').closest('[hidden]'));
+  assert.equal(await page.evaluate(()=>__testRun.ammo),Math.min(6,ammoBefore));assert.equal(await page.evaluate(()=>__testRun.allyShieldProgress),3);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('engrenagem lista todas as ações, remapeia teclado sem executar o jogo e salva os comandos',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
+ try{
+  await begin(page);await page.evaluate(()=>{const r=__testRun;for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;r.obstacles=[];r.pickups=[];});
+  await page.locator('#game-settings summary').click();
+  assert.equal(await page.locator('#game-control-bindings button[data-bind-action]').count(),16);
+  const before=await page.evaluate(()=>({elapsed:__testRun.elapsed,x:__testRun.player.x,ammo:__testRun.ammo}));
+  await page.locator('[data-bind-action="right"][data-bind-device="keyboard"]').click();await page.keyboard.press('l');
+  assert.equal(await page.locator('[data-bind-action="right"][data-bind-device="keyboard"]').textContent(),'L');
+  await page.locator('[data-bind-action="jump"][data-bind-device="keyboard"]').click();await page.keyboard.press('h');
+  await page.locator('[data-bind-action="fire"][data-bind-device="keyboard"]').click();await page.keyboard.press('l');assert.match(await page.locator('#game-control-status').textContent(),/já está em uso/);await page.keyboard.press('n');
+  const paused=await page.evaluate(()=>({elapsed:__testRun.elapsed,x:__testRun.player.x,ammo:__testRun.ammo}));assert.deepEqual(paused,before,'editar comandos não joga nem avança a corrida');
+  await page.locator('#game-settings summary').click();await page.locator('#runner-canvas').scrollIntoViewIfNeeded();await page.locator('#runner-canvas').focus();
+  await page.keyboard.down('d');await page.waitForTimeout(130);await page.keyboard.up('d');assert.equal(await page.evaluate(()=>__testRun.player.x),before.x);
+  await page.keyboard.down('l');await page.waitForFunction(x=>__testRun.player.x>x+10,before.x);await page.keyboard.up('l');
+  await page.keyboard.press('h');await page.waitForFunction(()=>__testRun.player.y>10);await page.keyboard.press('n');await page.waitForFunction(()=>__testRun.shotsFired===1);
+  await page.reload();await page.locator('#game-settings summary').click();
+  for(const [action,key] of [['right','L'],['jump','H'],['fire','N']])assert.equal(await page.locator(`[data-bind-action="${action}"][data-bind-device="keyboard"]`).textContent(),key);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  await page.locator('#game-settings').screenshot({path:path.resolve(__dirname,'../ux-captures/all-controls-390.png')});assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('controle usa analógico e botões reais da API, solta no desconectar e permite remapear',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844},init:()=>{window.__pads=[];Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>window.__pads});}});
+ try{
+  await begin(page);await page.evaluate(()=>{const r=__testRun;for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;r.obstacles=[];r.pickups=[];window.__pads=[{connected:true,id:'Controle de teste',index:0,axes:[0,0],buttons:Array.from({length:18},()=>({pressed:false,value:0}))}];});
+  await page.waitForFunction(()=>document.getElementById('game-controller-status')?.textContent.includes('Controle de teste'));
+  const x=await page.evaluate(()=>__testRun.player.x);await page.evaluate(()=>__pads[0].axes[0]=1);await page.waitForFunction(x=>__testRun.player.x>x+12,x);await page.evaluate(()=>__pads[0].axes[0]=0);
+  await page.evaluate(()=>__pads[0].buttons[0]={pressed:true,value:1});await page.waitForFunction(()=>__testRun.player.y>15);await page.waitForFunction(()=>__testRun.player.y===0);await page.waitForTimeout(180);assert.equal(await page.evaluate(()=>__testRun.player.y),0,'segurar A não repete salto');
+  await page.evaluate(()=>{__pads[0].buttons[0]={pressed:false,value:0};__pads[0].buttons[2]={pressed:true,value:1};});await page.waitForFunction(()=>__testRun.shotsFired>0);
+  await page.evaluate(()=>window.__pads=[]);await page.waitForFunction(()=>__testRun.player.attackHeld===false&&__testRun.player.moveHeld===0);
+  await page.evaluate(()=>window.__pads=[{connected:true,id:'Controle de teste',index:0,axes:[0,0],buttons:Array.from({length:18},()=>({pressed:false,value:0}))}]);
+  await page.locator('#game-settings summary').click();await page.waitForFunction(()=>document.getElementById('game-controller-status').textContent.includes('Controle de teste'));
+  await page.locator('[data-bind-action="fire"][data-bind-device="gamepad"]').click();await page.evaluate(()=>__pads[0].buttons[6]={pressed:true,value:1});
+  await page.waitForFunction(()=>document.querySelector('[data-bind-action="fire"][data-bind-device="gamepad"]').textContent.includes('LT'));
+  await page.evaluate(()=>__pads[0].buttons[6]={pressed:false,value:0});await page.locator('#game-settings summary').click();await page.locator('#runner-canvas').scrollIntoViewIfNeeded();await page.locator('#runner-canvas').focus();
+  const fired=await page.evaluate(()=>__testRun.shotsFired);await page.evaluate(()=>__pads[0].buttons[6]={pressed:true,value:1});await page.waitForFunction(n=>__testRun.shotsFired>n,fired);
+  await page.evaluate(()=>window.__pads=[]);assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('controle inicia a corrida e conclui a urna sem reiniciar ao segurar Start',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844},init:()=>{delete window.IntersectionObserver;window.__pads=[];Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>window.__pads});}});
+ const button=async(index,pressed)=>page.evaluate(([index,pressed])=>{__pads[0].buttons[index]={pressed,value:pressed?1:0};},[index,pressed]);
+ try{
+  await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();await page.locator('#runner-canvas').scrollIntoViewIfNeeded();
+  await page.evaluate(()=>window.__pads=[{connected:true,id:'Controle de teste',index:0,axes:[0,0],buttons:Array.from({length:18},()=>({pressed:false,value:0}))}]);
+  await page.waitForFunction(()=>document.getElementById('game-controller-status').textContent.includes('Controle de teste'));
+  await button(9,true);await page.waitForFunction(()=>__testRun.status==='running');await button(9,false);
+  await page.evaluate(async()=>{const r=__testRun,{storyBossAt}=await import('./runner-bosses.mjs');for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;r.obstacles=[];r.pickups=[];r.mode='story';r.bossesDefeated=23;r.boss={...storyBossAt(23),combat:true,hp:0,maxHp:64,total:64,remaining:0,fired:0,nextAttack:100};});
+  await page.waitForFunction(()=>document.getElementById('game-ballot').hidden===false);await page.waitForTimeout(100);
+  await button(0,true);await page.waitForFunction(()=>__testRun.ballot.digits==='1');await button(0,false);await page.waitForTimeout(100);
+  await button(15,true);await page.waitForFunction(()=>document.activeElement?.dataset.urnaDigit==='2');await button(15,false);await page.waitForTimeout(100);
+  await button(15,true);await page.waitForFunction(()=>document.activeElement?.dataset.urnaDigit==='3');await button(15,false);await page.waitForTimeout(100);
+  await button(0,true);await page.waitForFunction(()=>__testRun.ballot.digits==='13');await button(0,false);await page.waitForTimeout(100);
+  await button(9,true);await page.waitForFunction(()=>__testRun.status==='won');await page.waitForTimeout(300);
+  assert.equal(await page.evaluate(()=>__testRun.status),'won','manter a confirmação não dispara um novo Começar');await button(9,false);assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('controle continua disponível ao retornar pelo histórico da página',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844},init:()=>{window.__pads=[];Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>window.__pads});}});
+ try{
+  await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();await page.locator('#runner-canvas').scrollIntoViewIfNeeded();
+  await page.evaluate(()=>window.__pads=[{connected:true,id:'Controle de teste',index:0,axes:[0,0],buttons:Array.from({length:18},()=>({pressed:false,value:0}))}]);
+  await page.waitForFunction(()=>document.getElementById('game-controller-status').textContent.includes('Controle de teste'));
+  await page.evaluate(()=>{window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});
+  await page.waitForTimeout(120);await page.evaluate(()=>__pads[0].buttons[9]={pressed:true,value:1});
+  await page.waitForFunction(()=>__testRun.status==='running');assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('configurações bloqueiam teclas e controles da pista sem gastar suprimentos',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
+ try{
+  await begin(page);await page.evaluate(()=>{const r=__testRun;for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;r.obstacles=[];r.pickups=[];r.reserveShields=1;});
+  await page.locator('#game-settings summary').click();await page.locator('.control-bindings-scroll').focus();
+  const before=await page.evaluate(()=>({ammo:__testRun.ammo,reserve:__testRun.reserveShields,x:__testRun.player.x,elapsed:__testRun.elapsed}));
+  await page.keyboard.press('j');await page.keyboard.press('e');await page.keyboard.press('ArrowRight');
+  await page.locator('#runner-canvas').dispatchEvent('pointerdown',{button:0,pointerId:98,pointerType:'touch',isPrimary:true,clientX:100,clientY:100});
+  await page.locator('#runner-canvas').dispatchEvent('pointerup',{pointerId:98,pointerType:'touch',clientX:100,clientY:100});
+  await page.locator('#game-reserve-shield').dispatchEvent('click');await page.locator('#game-attack').dispatchEvent('click',{detail:0});
+  const after=await page.evaluate(()=>({ammo:__testRun.ammo,reserve:__testRun.reserveShields,x:__testRun.player.x,elapsed:__testRun.elapsed}));
+  assert.deepEqual(after,before);assert.equal(await page.evaluate(()=>__testRun.player.moveHeld),0);assert.equal(await page.evaluate(()=>__testRun.player.y),0);
+  assert.equal(await page.locator('#game-attack').isDisabled(),true);assert.equal(await page.locator('#game-reserve-shield').isDisabled(),true);assert.equal(await page.locator('#game-weapon-select').isDisabled(),true);
+  await page.locator('#game-settings summary').click();await page.waitForFunction(()=>!document.getElementById('game-attack').disabled);assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('engrenagem ampliada cabe em paisagem e Esc cancela a captura sem fechar o jogo',async()=>{
+ const {context,page,errors}=await open({viewport:{width:844,height:390}});
+ try{
+  await page.locator('#game-expand').click();await page.locator('#game-settings summary').click();
+  assert.equal(await page.locator('#game-control-bindings tbody tr').count(),8);
+  const panel=await page.locator('#game-settings>.game-settings-content').boundingBox();assert.ok(panel.y>=0&&panel.y+panel.height<=391,'comandos cabem na tela ampliada');
+  await page.locator('[data-bind-action=jump][data-bind-device=keyboard]').click();await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#game-expand').getAttribute('aria-pressed'),'true');assert.equal(await page.locator('#game-settings').evaluate(e=>e.open),true);
+  assert.match(await page.locator('#game-control-status').textContent(),/cancelada/);assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });

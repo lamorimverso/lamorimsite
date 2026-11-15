@@ -1,3 +1,4 @@
+import {keyboardActionFor,normalizeControls} from '../tanahoraflavio/runner-control-map.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -16,7 +17,7 @@ test('perseguidores comuns usam o desenho de corrida sem nave',()=>{
 test('W pula uma vez por pressionamento usando o handler real',()=>{
  const start=ui.indexOf('  section.addEventListener("keydown", event => {'),end=ui.indexOf('  document.addEventListener("keyup",event=>{',start);
  let handler,jumps=0;const section={addEventListener(type,f){handler=f;}},jumpKeys=createPressGate();
- Function('env','const {run,section,isFireKey,jumpKeys,jump}=env;'+ui.slice(start,end))({run:{status:'running'},section,isFireKey:code=>fireBindingFor('default').keys.includes(code),jumpKeys,jump(){jumps++;}});
+ Function('env','const {run,section,isFireKey,jumpKeys,jump,keyboardActionFor,preferences,controlsOpen}=env;'+ui.slice(start,end))({run:{status:'running'},section,keyboardActionFor,controlsOpen:()=>false,preferences:{controls:normalizeControls(null)},isFireKey:code=>fireBindingFor('default').keys.includes(code),jumpKeys,jump(){jumps++;}});
  const event={code:'KeyW',repeat:false,target:{closest(){return null;}},preventDefault(){}};
  handler(event);handler(event);handler({...event,repeat:true});assert.equal(jumps,1);
  jumpKeys.release('KeyW');handler(event);assert.equal(jumps,2);
