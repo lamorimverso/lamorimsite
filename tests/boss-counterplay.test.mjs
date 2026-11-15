@@ -33,10 +33,8 @@ test('Blitz opens after actually clearing the barrier, not after tanking it behi
  const open=bossCounterWindow(cleared.boss),closed=bossCounterWindow(shielded.boss);
  assert.match(open.label,/BLITZ/);assert.ok(open.damage>=3);
  assert.equal(closed.label,null);assert.ok(closed.damage<=1);
- const hp=cleared.boss.hp;
- assert.equal(core.attackRun(cleared),true);
- until(cleared,()=>cleared.boss.hp<hp);
- assert.equal(hp-cleared.boss.hp,open.damage,'firing during the cue locks the counter bonus');
+ assert.equal(cleared.boss.counterReady?.label,open.label,'earning the window primes the next reflected projectile');
+ assert.equal(shielded.boss.counterReady,undefined);
 });
 
 test('a Janones opening waits for all three messages to clear',()=>{

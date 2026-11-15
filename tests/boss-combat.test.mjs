@@ -5,6 +5,7 @@ import * as bosses from '../tanahoraflavio/runner-bosses.mjs';
 import * as art from '../tanahoraflavio/runner-art.mjs';
 import {readFileSync} from 'node:fs';
 import {pilotCounter} from '../tools/story-pilot.mjs';
+import {combatGeometryFor} from '../tanahoraflavio/runner-combat-geometry.mjs';
 
 const dt=1/120;
 function scene(index=0){
@@ -34,15 +35,16 @@ test('sobreviver aos ataques não derrota um chefão da História',()=>{
  assert.ok(r.distance>distance,'corrida e relógio continuam ativos');
  assert.ok(r.boss.fired>0);
 });
-test('disparo real possui intervalo e acerta o chefe sem dano durante sua entrada',()=>{
- const r=scene();assert.equal(typeof core.attackRun,'function');
+test('disparo real possui intervalo e rebate um projétil, sem aceitar tiro durante a entrada',()=>{
+ const r=scene(1);assert.equal(typeof core.attackRun,'function');
  assert.equal(core.attackRun(r),false,'entrada do chefe não aceita disparo');
- for(let i=0;i<160;i++)core.advanceRun(r,dt,()=>.5);
+ for(let i=0;i<120*4&&!r.obstacles.some(core.isHostileProjectile);i++)core.advanceRun(r,dt,()=>.5);
+ assert.ok(r.obstacles.some(core.isHostileProjectile));
  const hp=r.boss.hp;assert.equal(core.attackRun(r),true);
  assert.equal(core.attackRun(r),false,'intervalo de tiro evita spam');
  assert.equal(r.heroShots.length,1);
  for(let i=0;i<160;i++)core.advanceRun(r,dt,()=>.5);
- assert.ok(r.boss.hp<hp,'é preciso existir colisão de tiro, não apenas animação');
+ assert.ok(r.boss.hp<hp,'é preciso rebater um projétil, não atingir o próprio chefe');
 });
 test('atirar e esquivar vence encontros e a urna só abre depois do último',()=>{
  for(let index=0;index<core.STORY_BOSS_COUNT;index++){
@@ -54,17 +56,18 @@ test('atirar e esquivar vence encontros e a urna só abre depois do último',()=
   assert.equal(r.status,index===core.STORY_BOSS_COUNT-1?'ballot':'running');
  }
 });
-test('resize da arena conserva combate e tiros; entrada reposiciona sem teleporte',()=>{
- const r=scene();r.player.x=820;
+test('resize da arena conserva combate e devolução; entrada reposiciona sem teleporte',()=>{
+ const r=scene(1);r.player.x=820;
  const original=r.player.x;core.advanceRun(r,dt,()=>.5);
  assert.ok(original-r.player.x<3,'entrada deve aproximar suavemente');
  for(let i=0;i<180;i++)core.advanceRun(r,dt,()=>.5);
  assert.ok(r.player.x<=core.playerBounds(r).max);
- core.setAttackRun(r,true);core.advanceRun(r,.05,()=>.5);
+ for(let i=0;i<480&&!r.obstacles.some(core.isHostileProjectile);i++)core.advanceRun(r,dt,()=>.5);
+ assert.ok(r.obstacles.some(core.isHostileProjectile));core.setAttackRun(r,true);core.advanceRun(r,.05,()=>.5);
  core.resizeRun(r,480);
  assert.ok(r.player.x<=core.playerBounds(r).max);assert.ok(r.heroShots.every(s=>Number.isFinite(s.x)&&Number.isFinite(s.vx)));
  const hp=r.boss.hp;
- for(let i=0;i<360&&r.boss;i++)core.advanceRun(r,dt,()=>.5);
+ for(let i=0;i<720&&r.boss&&r.boss.hp===hp;i++){pilotCounter(r);core.advanceRun(r,dt,()=>.5);}
  assert.ok(!r.boss||r.boss.hp<hp);
 });
 test('limpar comandos e reiniciar não mantém o disparo automático',()=>{
@@ -97,21 +100,23 @@ test('anúncios da História usam a identidade e o objetivo real dos 17 encontro
  const r=scene();r.boss.hp=0;core.advanceRun(r,dt,()=>.5);
  assert.match(r.event,new RegExp('1/'+core.STORY_BOSS_COUNT));
 });
-test('bossFigure desenha o corpo na mesma posição atingida pelo tiro nos dois modos',()=>{
+test('bossFigure desenha o corpo na origem física do projétil inimigo nos dois modos',()=>{
  const source=readFileSync(new URL('../tanahoraflavio/runner.mjs',import.meta.url),'utf8');
  const start=source.indexOf('  function bossFigure(){'),end=source.indexOf('  function character(){',start);
  const make=Function('env','const {run,ctx,virtualWidth,WORLD,STAGES,bossArenaPose,bossPresentationFor,bossCounterWindow,enemyEmitterPose,enemyMotionFor,prefersReducedMotion,drawHoverEnemy,bossCue}=env;'+source.slice(start,end)+';return bossFigure;');
  for(const mode of ['story','endless'])for(const reduced of [true,false]){
   const r=core.createRun({mode});core.startRun(r);r.nextBossAt=0;r.nextRaid=Infinity;r.shieldFor=Infinity;
-  core.advanceRun(r,dt,()=>.5);for(let i=0;i<160;i++)core.advanceRun(r,dt,()=>.5);
+  if(mode==='story')r.bossesDefeated=1;
+  core.advanceRun(r,dt,()=>.5);for(let i=0;i<120*4&&!r.obstacles.some(core.isHostileProjectile);i++)core.advanceRun(r,dt,()=>.5);
   const state={x:0,y:0},stack=[];let drawn;
   const ctx={save(){stack.push({...state});},restore(){Object.assign(state,stack.pop());},translate(x,y){state.x+=x;state.y+=y;},fillText(){},beginPath(){},roundRect(){},fill(){},measureText(s){return {width:s.length*7};}};
   const draw=make({run:r,ctx,STAGES:core.STAGES,virtualWidth:900,WORLD:core.WORLD,bossArenaPose:core.bossArenaPose,bossPresentationFor:bosses.bossPresentationFor,bossCounterWindow:bosses.bossCounterWindow,
    enemyEmitterPose:art.enemyEmitterPose,enemyMotionFor:art.enemyMotionFor,prefersReducedMotion:()=>reduced,
    drawHoverEnemy(c,args){drawn={x:state.x+args.x,y:state.y+args.y};},bossCue:()=>({action:'jump'})});
-  draw();assert.equal(core.attackRun(r),true);
-  const shot=r.heroShots.at(-1),heightAtBody=shot.y+(drawn.x-shot.x)*shot.vy/shot.vx;
-  assert.ok(Math.abs((core.WORLD.ground-heightAtBody)-(drawn.y-48))<.001,mode+' mira fora do corpo');
+  draw();
+  const shot=r.obstacles.find(core.isHostileProjectile),muzzle=combatGeometryFor(r.boss.type,{frame:2,facing:-1}).muzzle;
+  assert.ok(Math.abs(shot.launchX-(drawn.x+muzzle.x))<15,mode+' arma deslocada horizontalmente');
+  assert.ok(Math.abs((core.WORLD.ground-shot.launchY)-(drawn.y+muzzle.y))<8,mode+' arma deslocada verticalmente');
  }
 });
 test('plataforma mantém posição estável quando os efeitos reduzidos estão ativos',()=>{

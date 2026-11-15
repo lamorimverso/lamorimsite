@@ -573,7 +573,18 @@ test('chefão da Casa Branca atravessa a arena e lança sua própria investida e
  }
 });
 
-for(const viewport of [{width:390,height:844},{width:1440,height:900}])test(`arena de combate ${viewport.width}px mostra classe, energia e disparo funcional`,async()=>{
+async function incomingProjectile(page){
+ return page.evaluate(async()=>{
+  const {heroMuzzleFor}=await import('./runner-core.mjs'),r=__testRun,m=heroMuzzleFor(r);
+  r.obstacles=[];
+  Object.assign(r.boss,{phase:'recover',phaseFor:100,nextAttack:100});
+  r.obstacles.push({type:'message',owner:r.boss.type,bossAttack:true,x:m.x+78,width:30,height:32,speed:34,
+   projectile:true,launched:true,launchX:m.x+93,launchY:m.y,y:m.y,targetY:m.y,targetX:m.x-10});
+  return r.boss.hp;
+ });
+}
+
+for(const viewport of [{width:390,height:844},{width:1440,height:900}])test(`arena de combate ${viewport.width}px mostra energia e rebate projéteis com os controles`,async()=>{
  const {context,page,errors}=await open({instrument:true,viewport,hasTouch:viewport.width<500,isMobile:viewport.width<500});
  try{
   await page.locator('#game-mode-story').check();await begin(page);
@@ -586,7 +597,7 @@ for(const viewport of [{width:390,height:844},{width:1440,height:900}])test(`are
   assert.match(await page.locator('#game-power').textContent(),/Energia 5\/5/);
   assert.equal(await page.locator('#game-attack').isVisible(),true);
   assert.equal((await page.locator('#game-attack').textContent()).trim(),'','tiro na arena usa apenas um ícone');
-  const hp=await page.evaluate(()=>__testRun.boss.hp);
+  const hp=await incomingProjectile(page);
   if(viewport.width<500){
    await page.locator('#game-attack').dispatchEvent('pointerdown',{button:0,pointerId:91,pointerType:'touch'});
   }else{
@@ -620,18 +631,18 @@ test('perda de foco cancela disparo mantido e a corrida pode retomar sem tiros p
  }finally{await context.close();}
 });
 
-test('J/Z funcionam com Disparar focado e o Infinito mostra dano na vida do chefe',async()=>{
+test('J/Z funcionam com Disparar focado e o Infinito registra dano do projétil devolvido',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:900,height:720}});
  try{
   await page.locator('#game-mode-infinite').check();await begin(page);
   await page.evaluate(()=>{const r=__testRun;r.nextRaid=r.nextObstacle=r.nextPower=Infinity;r.routeDistance=r.distance=22000;r.nextBossAt=0;r.shieldFor=Infinity;r.obstacles=[];});
   await page.waitForFunction(()=>!!__testRun.boss);
-  const hp=await page.evaluate(()=>__testRun.boss.hp),button=page.locator('#game-attack');
+  const hp=await incomingProjectile(page),button=page.locator('#game-attack');
   await button.focus();await page.keyboard.down('j');
   await page.waitForFunction(previous=>__testRun.boss.hp<previous,hp,{timeout:6000});
   await page.keyboard.up('j');
   assert.equal(await button.evaluate(e=>e===document.activeElement),true);
-  assert.match(await page.locator('#game-boss-weapon').textContent(),/PV \d+\/18/);
+  assert.match(await page.locator('#game-boss-weapon').textContent(),/PV \d+(?:,\d+)?\/18/);
   assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),false);
   assert.deepEqual(errors,[]);
  }finally{await context.close();}

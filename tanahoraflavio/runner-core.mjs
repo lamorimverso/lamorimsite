@@ -3,16 +3,16 @@ import {heroPowerFor,grantBossPower,equipHeroPower,cycleHeroPower} from './runne
 export {grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=432ca45a76e4';
 import {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=01fa5c1830b5';
 export {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=01fa5c1830b5';
-import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=7ae5c3b53107';
+import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=1eda01496613';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=c040deb109ca';
 import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
 import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=6dc2d2659b41';
 import {regularCastMuzzle} from './runner-cast-pose.mjs?v=ed1b40296acc';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=17aae58c9bc9';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
-import {BOSS_ARENA_RESERVE,BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,optionalStoryBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=78e27523ed63';
-export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=78e27523ed63';
-export {bossArenaPose} from './runner-bosses.mjs?v=78e27523ed63';
+import {BOSS_ARENA_RESERVE,BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,optionalStoryBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=fc22a4a43fd1';
+export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=fc22a4a43fd1';
+export {bossArenaPose} from './runner-bosses.mjs?v=fc22a4a43fd1';
 // Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
 export const WORLD = Object.freeze({width:900,height:300,ground:246});
 // Envelope de todas as poses no atlas a .95 de escala, incluindo o agachamento.
@@ -395,22 +395,74 @@ export function heroMuzzleFor(run,facing=1){
  const {muzzle}=heroShotPose({facing,crouching:run.player.crouching,airborne:run.player.y>0});
  return {x:playerX(run)+PLAYER.width/2+muzzle.x,y:run.player.y-muzzle.y};
 }
+// Geometria e alvo do disparo só incluem projéteis hostis já lançados.
+// Zé rival reutiliza trajetória de quique, mas continua sendo um personagem.
+const nonProjectileBodies=new Set(['povo','crowd-lane','ze-gotinha-rival','lula-runner','orla-runner','paulista-runner','route-scout','terminal-guard']);
+export function isHostileProjectile(o){
+ return !!o?.projectile&&!nonProjectileBodies.has(o.type)&&!o.falling&&!o.groundHazard&&!o.reflected&&!o.destroyed&&
+  (o.launched||!o.cast&&!o.storyVolley&&!(o.waitFor>0))&&(!o.passed&&!o.counted||o.returning&&!o.contactHit);
+}
+function projectileFlightY(o,x){
+ const landingX=(o.laneX??o.targetX+PLAYER.width/2-6)+o.width/2;
+ const span=Math.max(1,o.launchX-landingX);
+ const u=Math.max(0,Math.min(1,(o.launchX-(x+o.width/2))/span));
+ if(!Number.isFinite(u)||!Number.isFinite(o.launchY)||!Number.isFinite(o.targetY))return o.y;
+ let y=o.launchY+(o.targetY-o.launchY)*u+Math.sin(Math.PI*u)*(o.arcHeight||0);
+ if(o.curve){
+  const envelope=Math.sin(Math.PI*u)**2,cycle=Math.sin(u*Math.PI*2*(o.waveCycles||1)),amplitude=o.waveAmplitude||16;
+  y+=(o.curve==='bounce'?Math.abs(cycle):cycle)*amplitude*envelope;
+  if(o.action==='crouch')y=Math.max(48+o.height/2,y);
+  else if(u>=.72)y=Math.min(26,y);
+ }
+ return y;
+}
+function projectileAt(o,seconds){
+ if(o.cast){
+  const c=o.cast,time=c.flightAge+seconds,u=Math.min(1,time/c.flightFor);
+  return {x:c.fromX+(c.toX-c.fromX)*u-o.speed*Math.max(0,time-c.flightFor),y:c.fromY+(o.targetY-c.fromY)*u};
+ }
+ const coasting=o.bossFlight&&!o.returning?Math.min(seconds,o.bossFlight.remaining):0;
+ const left=o.x-(o.speed||0)*(seconds-coasting)-(o.bossFlight?.speed||0)*coasting;
+ return {x:left+o.width/2,y:o.returning?o.y:projectileFlightY(o,left)};
+}
+function aimAtProjectile(run,power){
+ const center=playerX(run)+PLAYER.width/2;
+ const candidates=run.obstacles.filter(isHostileProjectile)
+  .sort((a,b)=>Math.abs(a.x+a.width/2-center)-Math.abs(b.x+b.width/2-center));
+ for(const target of candidates){
+  const facing=target.x+target.width/2<center?-1:1,muzzle=heroMuzzleFor(run,facing);
+  if((target.x+target.width/2-muzzle.x)*facing<=0)continue;
+  // Procura o primeiro ponto futuro alcançável onde os dois trajetos se cruzam.
+  // Amostra a aceleração e a curva já comprometidas do inimigo, sem mirar em seu autor.
+  for(let i=1;i<=72;i++){
+   const time=i/60,anticipated=projectileAt(target,time);
+   if((anticipated.x-muzzle.x)*facing<=0)break;
+   if(Math.hypot(anticipated.x-muzzle.x,anticipated.y-muzzle.y)<=time*power.speed){
+    const lift=shotLift(power.behavior,Math.min(1,time/Math.max(.15,time)));
+    return {...anticipated,y:anticipated.y-lift,facing};
+   }
+  }
+ }
+ return null;
+}
+function shotLift(behavior,progress){
+ const envelope=Math.sin(Math.PI*progress);
+ return behavior==='lob'?60*envelope:behavior==='arc'?30*envelope:behavior==='heavy'?18*envelope:
+  behavior==='bounce'?28*Math.abs(Math.sin(progress*Math.PI*3)):behavior==='orbit'?22*Math.sin(progress*Math.PI*4)*envelope:behavior==='gust'?8*Math.sin(progress*Math.PI*5)*envelope:0;
+}
 export function attackRun(run){
  const b=run.boss,p=run.player,power=heroPowerFor(run),level=run.powerLevels?.[run.activePower]||1;
  if(run.status!=='running'||!(run.ammo>0)||p.isJacare||b?.traversal||b?.phase==='intro'||p.attackCooldown>0||(run.heroShots?.length||0)>=18)return false;
- const target=b?{x:bossArenaPose(b,visibleWidth(run)).x,y:bossArenaPose(b,visibleWidth(run)).platformY+48}:
-  run.obstacles.filter(o=>!o.passed&&!o.counted&&!o.destroyed&&!o.groundHazard&&(!o.falling||o.age>=o.warningFor))
-   .sort((a,z)=>Math.abs(a.x-playerX(run))-Math.abs(z.x-playerX(run)))[0];
- const targetX=target?(b?target.x:target.x+target.width/2):visibleWidth(run)-30;
- p.shotFacing=targetX<playerX(run)+PLAYER.width/2?-1:1;
- const {x,y}=heroMuzzleFor(run,p.shotFacing),targetY=target?(b?target.y:target.projectile||target.falling?target.y:target.height/2):y;
- const dx=p.shotFacing*Math.max(1,Math.abs(targetX-x)),dy=targetY-y,distance=Math.max(1,Math.hypot(dx,dy)),angle=Math.atan2(dy,dx);
+ const target=aimAtProjectile(run,power);
+ p.shotFacing=target?.facing??1;
+ const {x,y}=heroMuzzleFor(run,p.shotFacing),targetX=target?.x??x+p.shotFacing*160,targetY=target?.y??y;
+ const dx=p.shotFacing*Math.max(1,(targetX-x)*p.shotFacing),dy=targetY-y,distance=Math.max(1,Math.hypot(dx,dy)),angle=Math.atan2(dy,dx);
  for(let i=0;i<power.shots;i++){
   const spread=power.behavior==='fan'?(i-1)*power.spread:0,offset=power.behavior==='stack'?(i-1)*18:power.behavior==='double'?(i-.5)*12:0;
   const vx=Math.cos(angle+spread)*power.speed,vy=Math.sin(angle+spread)*power.speed;
   (run.heroShots??=[]).push({type:run.activePower==='ivermectina'?'hero-ivermectina':power.projectiles?.[i]||power.projectile,powerId:run.activePower,
    behavior:power.behavior,x,y:y+offset,originX:x,originY:y+offset,previousX:x,previousY:y+offset,vx,vy,age:0,flightFor:Math.max(.15,distance/power.speed),
-   radius:power.radius,cancels:power.cancels,damage:power.damage*(1+(level-1)*.12)*(b?.combat?bossCounterWindow(b).damage:1)});
+   radius:power.radius,cancels:power.cancels,damage:power.damage*(1+(level-1)*.12)});
  }
  run.ammo--;run.ammoIdleFor=0;run.ammoReloadFor=0;
  p.attackCooldown=power.cooldown*(1-(level-1)*.06);p.attackFor=HERO_SHOT_DURATION;run.shotsFired=(run.shotsFired||0)+1;return true;
@@ -422,36 +474,57 @@ function segmentHitsBox(shot,minX,maxX,minY,maxY,radius=0){
   else{const a=(min-origin)/delta,z=(max-origin)/delta;near=Math.max(near,Math.min(a,z));far=Math.min(far,Math.max(a,z));}
  }return near<=far;
 }
+function interceptProjectile(run,shot,o){
+ const boss=run.boss;
+ if(o.bossAttack&&boss&&!boss.traversal&&(o.owner===boss.type||o.storyVolley&&o.owner==null)){
+  // Guarda o bônus na interceptação. O PV continua intocado até a volta física.
+  const weakness=boss.weakness&&shot.powerId===boss.weakness;
+  const earned=boss.counterReady;
+  const basis=boss.combat?Math.max(3,boss.maxHp*.145):Math.max(2,boss.maxHp*.12);
+  const damage=basis*Math.max(.84,Math.min(1.55,shot.damage||1))*(earned?1+earned.damage*.16:1)*(weakness?1.35:1);
+  boss.counterReady=null;
+  if(!boss.combat&&!o.counted)boss.remaining=Math.max(0,boss.remaining-1);
+  Object.assign(o,{reflected:true,returning:true,passed:true,counted:true,resolved:true,waitFor:0,speed:-510,
+   reflection:{boss,damage,weakness,age:0}});
+ }else{o.destroyed=true;o.counted=true;o.passed=true;}
+ run.clearedAt={x:o.x+o.width/2,remaining:.25};
+}
+function advanceReflectedProjectile(run,o,dt){
+ const reflected=o.reflection,boss=run.boss;
+ if(!boss||reflected.boss!==boss||boss.traversal||boss.hp<=0){o.destroyed=true;return;}
+ reflected.age+=dt;
+ const pose=bossArenaPose(boss,visibleWidth(run));
+ const x=o.x+o.width/2,dx=pose.x-x,dy=pose.platformY+48-o.y,distance=Math.hypot(dx,dy),pace=610*dt;
+ if(distance<=24+pace){
+  boss.hp=Math.max(0,boss.hp-reflected.damage);boss.hitFlashFor=.16;
+  if(reflected.weakness)boss.weaknessFlashFor=.3;
+  o.destroyed=true;return;
+ }
+ if(reflected.age>2){o.destroyed=true;return;}
+ o.x+=dx/distance*pace;o.y+=dy/distance*pace;
+}
 function advanceHeroShots(run,dt){
  const p=run.player;p.attackCooldown=Math.max(0,(p.attackCooldown||0)-dt);p.attackFor=Math.max(0,(p.attackFor||0)-dt);
  advanceAmmo(run,dt);
  if(p.attackHeld)attackRun(run);
- const b=run.boss,pose=b?bossArenaPose(b,visibleWidth(run)):null;
  run.heroShots=(run.heroShots||[]).filter(shot=>{
   shot.previousX=shot.x;shot.previousY=shot.y;shot.age+=dt;
-  if(shot.behavior==='homing'&&b){const dx=pose.x-shot.x,dy=pose.platformY+48-shot.y,d=Math.max(1,Math.hypot(dx,dy)),k=Math.min(1,dt*4);shot.vx+=(dx/d*540-shot.vx)*k;shot.vy+=(dy/d*540-shot.vy)*k;}
+  if(shot.behavior==='homing'){
+   const target=run.obstacles.filter(isHostileProjectile).sort((a,b)=>Math.hypot(a.x+a.width/2-shot.x,a.y-shot.y)-Math.hypot(b.x+b.width/2-shot.x,b.y-shot.y))[0];
+   if(target){const dx=target.x+target.width/2-shot.x,dy=target.y-shot.y,d=Math.max(1,Math.hypot(dx,dy)),k=Math.min(1,dt*4);shot.vx+=(dx/d*540-shot.vx)*k;shot.vy+=(dy/d*540-shot.vy)*k;}
+  }
   if(shot.behavior==='return'&&shot.age>shot.flightFor*1.2&&!shot.returned){shot.vx=-shot.vx;shot.vy=-shot.vy*.5;shot.returned=true;}
-  shot.x+=shot.vx*dt;shot.y+=shot.vy*dt;
-  const progress=Math.min(1,shot.age/(shot.flightFor||1)),envelope=Math.sin(Math.PI*progress);
-  const lift=shot.behavior==='lob'?60*envelope:shot.behavior==='arc'?30*envelope:shot.behavior==='heavy'?18*envelope:
-   shot.behavior==='bounce'?28*Math.abs(Math.sin(progress*Math.PI*3)):shot.behavior==='orbit'?22*Math.sin(progress*Math.PI*4)*envelope:shot.behavior==='gust'?8*Math.sin(progress*Math.PI*5)*envelope:0;
-  if(lift)shot.y=(shot.originY??shot.previousY)+shot.vy*shot.age+lift;
+  shot.x+=shot.vx*dt;
+  const progress=Math.min(1,shot.age/(shot.flightFor||1)),previous=Math.min(1,Math.max(0,shot.age-dt)/(shot.flightFor||1));
+  shot.y+=shot.vy*dt+shotLift(shot.behavior,progress)-shotLift(shot.behavior,previous);
   if(shot.age>3||shot.x<-40||shot.x>visibleWidth(run)+40||shot.y<-50||shot.y>360)return false;
   const radius=shot.behavior==='wave'?Math.min(34,shot.radius+shot.age*30):shot.radius||0;
   for(const o of run.obstacles){
-   if(o.passed||o.counted||o.destroyed||o.groundHazard||(o.projectile&&o.waitFor>0&&!o.launched)||(o.falling&&o.age<o.warningFor)||o.bossAttack&&!(shot.cancels>0))continue;
-   const low=o.projectile||o.falling?o.y-o.height/2:0,high=o.projectile||o.falling?o.y+o.height/2:o.height;
-   if(!segmentHitsBox(shot,o.x,o.x+o.width,low,high,radius))continue;
-   o.hitPoints=(o.hitPoints??(['pf','army','janones','boulos','dino'].includes(o.type)?2:1))-shot.damage;
-   if(o.hitPoints<=0){if(o.storyVolley){o.resolved=true;o.contactHit=true;}if(o.bossAttack&&!o.counted&&run.boss&&!run.boss.combat)run.boss.remaining=Math.max(0,run.boss.remaining-1);o.destroyed=true;o.counted=true;o.passed=true;run.defeatedEnemies=(run.defeatedEnemies||0)+1;run.clearedAt={x:o.x+o.width/2,remaining:.25};}
+   if(!isHostileProjectile(o)||!segmentHitsBox(shot,o.x,o.x+o.width,o.y-o.height/2,o.y+o.height/2,radius))continue;
+   interceptProjectile(run,shot,o);
    if(shot.cancels>0){shot.cancels--;continue;}return false;
   }
-  if(!b||b.traversal||!segmentHitsBox(shot,pose.x-34,pose.x+34,pose.platformY+8,pose.platformY+104,Math.min(12,radius)))return true;
-  if(b.phase==='intro')return false;
-  const weakness=b.weakness&&shot.powerId===b.weakness?1.65:1;
-  b.hp=Math.max(0,(b.hp??b.total)-(shot.damage??(b.combat?bossCounterWindow(b).damage:b.phase==='recover'?2:1))*weakness);b.hitFlashFor=.16;
-  if(weakness>1)b.weaknessFlashFor=.3;
-  return false;
+  return true;
  });
 }
 // A intenção permanece durante o salto, sem encolher a colisão no ar.
@@ -589,7 +662,9 @@ function finishStoryVolley(boss){
  const cleared=shots.every(o=>!o.contactHit);
  const prior=boss.previousVolley;
  if(cleared&&boss.traversal&&pattern.counter?.trigger==='clear-only')boss.hp=0;
- if(cleared&&pattern.counter&&(pattern.counter.trigger!=='alternate'||prior?.cleared&&prior.type!==pattern.type))boss.earnedCounter=pattern.counter;
+ if(cleared&&pattern.counter&&(pattern.counter.trigger!=='alternate'||prior?.cleared&&prior.type!==pattern.type)){
+  boss.earnedCounter=pattern.counter;if(!boss.traversal)boss.counterReady=pattern.counter;
+ }
  boss.previousVolley={type:pattern.type,cleared};
  boss.phaseFor=0;return true;
 }
@@ -790,6 +865,7 @@ export function advanceRun(run,seconds,rng){
  run.shieldFor=Math.max(0,run.shieldFor-dt);run.graceFor=Math.max(0,run.graceFor-dt);
  const castDeltas=new Map();
  for(const obstacle of run.obstacles){
+  if(obstacle.reflected){advanceReflectedProjectile(run,obstacle,dt);continue;}
   if(obstacle.cast){const before=obstacle.x;advanceRegularShot(run,obstacle,dt);castDeltas.set(obstacle,obstacle.x-before);continue;}
   if(obstacle.groundHazard){obstacle.age+=dt;continue;}
   if(obstacle.falling){
@@ -815,17 +891,7 @@ export function advanceRun(run,seconds,rng){
   const coast=obstacle.bossFlight&&!obstacle.returning?Math.min(activeDelta,obstacle.bossFlight.remaining):0;
   if(coast>0){obstacle.bossFlight.remaining-=coast;obstacle.x-=obstacle.bossFlight.speed*coast;}
   obstacle.x-=Number.isFinite(obstacle.speed)?obstacle.speed*(activeDelta-coast):travel;
-  if(obstacle.projectile&&!obstacle.returning){
-   const landingX=(obstacle.laneX??obstacle.targetX+PLAYER.width/2-6)+obstacle.width/2;
-   const span=Math.max(1,obstacle.launchX-landingX);
-   const progress=Math.max(0,Math.min(1,(obstacle.launchX-(obstacle.x+obstacle.width/2))/span));
-   obstacle.y=obstacle.launchY+(obstacle.targetY-obstacle.launchY)*progress+Math.sin(Math.PI*progress)*(obstacle.arcHeight||0);
-   if(obstacle.curve){const envelope=Math.sin(Math.PI*progress)**2,cycle=Math.sin(progress*Math.PI*2*(obstacle.waveCycles||1)),amplitude=obstacle.waveAmplitude||16;
-    obstacle.y+=(obstacle.curve==='bounce'?Math.abs(cycle):cycle)*amplitude*envelope;
-    if(obstacle.action==='crouch')obstacle.y=Math.max(48+obstacle.height/2,obstacle.y);
-    else if(progress>=.72)obstacle.y=Math.min(26,obstacle.y);
-   }
-  }
+  if(obstacle.projectile&&!obstacle.returning)obstacle.y=projectileFlightY(obstacle,obstacle.x);
   if(obstacle.storyVolley&&obstacle.launched&&!obstacle.passed&&overlapsPlayer(run,obstacle))obstacle.contactHit=true;
   const left=playerX(run)+(run.player.isJacare?-15:5),right=playerX(run)+(run.player.isJacare?PLAYER.width+17:PLAYER.width-3);
   if(obstacle.speed>0&&obstacle.x+obstacle.width-3<=left||obstacle.speed<0&&obstacle.x+3>=right)obstacle.passed=true;

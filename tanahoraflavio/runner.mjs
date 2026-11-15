@@ -7,12 +7,12 @@ import {createMovementSoundDirector} from './runner-movement-audio.mjs?v=6411ef9
 import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=6dc2d2659b41';
 import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=ed1b40296acc';
 import {createShotSoundTracker} from './runner-shot-events.mjs?v=a3769f250d68';
-import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=78e27523ed63';
+import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=fc22a4a43fd1';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=67afc2bc5754";
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=4b7111aa98aa";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=01fa5c1830b5';
 import {drawCampaignCrowd} from './runner-campaign-art.mjs?v=b9520dc88107';
-import {bossCounterWindow} from './runner-bosses.mjs?v=78e27523ed63';
+import {bossCounterWindow} from './runner-bosses.mjs?v=fc22a4a43fd1';
 import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=3e6fb93bfef5';
 import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=8113d5b47b32";
 import { createGameAudio } from "./runner-audio.mjs?v=3d359f7e85fe";
@@ -100,6 +100,7 @@ function initRunner() {
   let lastRaidKey="",lastPageMotion=null,lastHeroShotHeard=0;
   const campaignPhases=["Convenções","Campanha","1º turno","Travessia do Paraguai","Reta final","Diplomação"];
   const pad = number => String(number).padStart(2, "0");
+  const healthText=value=>Number(value).toLocaleString("pt-BR",{maximumFractionDigits:1});
   // A preferência pode mudar enquanto o jogo está aberto.
   const motionPreference = window.matchMedia?.("(prefers-reduced-motion: reduce)");
   const compactLandscape = window.matchMedia?.("(min-width:480px) and (orientation:landscape) and (max-height:600px)");
@@ -201,8 +202,8 @@ function initRunner() {
     attackButton.disabled=controlsOpen()||run.boss?.traversal||run.player.isJacare||!run.boss&&run.ammo===0;
     attackButton.dataset.ammo=run.ammo>0?"ready":run.player.attackHeld?"held":"reload";
     const ammoHint=run.ammo===0?(run.boss?(run.player.attackHeld?"Solte o disparo para recarregar":"Recarregando munição"):"Sem munição. Colete ajudantes para repor tiros"):"";
-    attackButton.title=ammoHint||(run.player.isJacare?"Disparo indisponível durante a transformação":"Disparar: "+fireLabel+" · "+weapon.name);
-    attackButton.setAttribute("aria-label","Disparar: segure para repetir; tecla "+fireLabel+"; "+weapon.name+(ammoHint?"; "+ammoHint:""));
+    attackButton.title=ammoHint||(run.player.isJacare?"Disparo indisponível durante a transformação":"Rebater projéteis · "+fireLabel+" · "+weapon.name);
+    attackButton.setAttribute("aria-label","Disparar para rebater projéteis; segure para repetir; tecla "+fireLabel+"; "+weapon.name+(ammoHint?"; "+ammoHint:""));
     const hideAttack=run.status!=="running"||!run.boss||run.boss.traversal;
     if(hideAttack&&!attackButton.hidden){
       for(const id of firePointers){
@@ -225,7 +226,7 @@ function initRunner() {
        $("game-boss-health").setAttribute("aria-label","Energia de "+b.name);
        $("game-boss-progress").style.width=100*b.hp/b.maxHp+"%";
        const state=bossCounterWindow(b).label||({intro:'ENTRADA',charge:'PREPARANDO',attack:'ATAQUE',recover:'RECUPERAÇÃO'})[b.phase];
-       $("game-boss-weapon").textContent=state+" · "+b.hp+"/"+b.maxHp+" PV"+(b.enraged?" · FASE 2":"")+(b.rematchIndex?" · REVANCHE "+b.rematchIndex:"")+(b.weakness?" · Fraco a "+(HERO_POWERS[b.weakness]?.name||b.weakness):"")+(b.tactic?" · "+b.tactic:"");
+       $("game-boss-weapon").textContent=state+" · "+healthText(b.hp)+"/"+b.maxHp+" PV"+(b.enraged?" · FASE 2":"")+(b.rematchIndex?" · REVANCHE "+b.rematchIndex:"")+(b.weakness?" · Fraco a "+(HERO_POWERS[b.weakness]?.name||b.weakness):"")+(b.tactic?" · "+b.tactic:"");
       }else{
       $("game-boss-name").textContent=b.type==="janones"?"Janones · bloco "+Math.min(3,Math.floor((b.total-b.remaining)/Math.ceil(b.total/3))+1)+"/3":(b.type==="haddad"?"Haddad · Taxad":b.type==="pf"?"Blitz da PF":b.name)+" · rodada "+b.level;
       $("game-boss-health").setAttribute("aria-valuemax",String(b.total));
@@ -236,7 +237,7 @@ function initRunner() {
       const goal=dodged+"/"+b.total+" ataques superados";
       const attack=attackCueFor(bossCue());
       $("game-boss-weapon").textContent=(attack?.short||"Observe o ataque")+
-        (bossCue()?.approach==="drop"?" · VEM DO ALTO!":"")+" · "+goal+(Number.isFinite(b.hp)?" · PV "+b.hp+"/"+b.maxHp:"");
+        (bossCue()?.approach==="drop"?" · VEM DO ALTO!":"")+" · "+goal+(Number.isFinite(b.hp)?" · PV "+healthText(b.hp)+"/"+b.maxHp:"");
       }
       $("game-boss").style.setProperty("--boss-accent",b.color);
     }
@@ -245,13 +246,15 @@ function initRunner() {
       .sort((a,b)=>threatTimeToContact(run,a)-threatTimeToContact(run,b))[0];
     const liveCue=attackCueFor(liveAttack);
     const b=run.boss,combatCue=b?.combat&&(b.phase==='charge'?b.plannedAttack:b.phase==='attack'&&liveAttack?.bossAttack?liveAttack:null);
+    const reflected=run.obstacles.some(o=>o.reflected&&!o.destroyed);
+    const intercept=!!b&&!b.traversal&&run.obstacles.some(o=>o.bossAttack&&isHostileProjectile(o));
     const opening=b?.combat&&!b.traversal&&bossCounterWindow(b).label;
     const cue=$("game-battle-cue");
-    cue.hidden=run.status!=="running"||!b?.role||(!opening&&!combatCue&&!b.traversal);
-    cue.dataset.opening=String(!!opening);
+    cue.hidden=run.status!=="running"||!b?.role||(!opening&&!combatCue&&!b.traversal&&!reflected&&!intercept);
+    cue.dataset.opening=String(reflected||!!opening);
     if(!cue.hidden){
-      $("game-battle-attack").textContent=opening?'Guarda aberta':b.traversal?b.name:(attackCueFor(combatCue)?.label||b.powerName);
-      $("game-battle-action").textContent=opening?'Contra-ataque':combatCue?.action==='jump'?'Pule':combatCue?.action==='crouch'?'Abaixe':combatCue?.action==='move'?'Desvie para o lado':'Atravesse a passagem';
+      $("game-battle-attack").textContent=reflected?'Projétil devolvido':opening?'Guarda aberta':b.traversal?b.name:(attackCueFor(combatCue)?.label||b.powerName);
+      $("game-battle-action").textContent=reflected?'Continue desviando':intercept?'Rebata ou desvie':opening?'Aguarde o próximo projétil':combatCue?.action==='jump'?'Pule':combatCue?.action==='crouch'?'Abaixe':combatCue?.action==='move'?'Desvie para o lado':'Atravesse a passagem';
     }
 
     const cameoAttack=run.cameo?run.obstacles.find(o=>o.sourceActor===run.cameo.type&&!o.passed):null;
@@ -811,6 +814,12 @@ function initRunner() {
       ctx.fillText("→ !",12,WORLD.ground-96);ctx.restore();
     }
     if(item.projectile){
+      if(item.reflected){
+        const x=item.x+item.width/2,y=WORLD.ground-item.y,w=Math.min(20,item.width*.42);
+        ctx.save();ctx.strokeStyle="#388878";ctx.lineWidth=2;ctx.lineCap="round";
+        ctx.beginPath();ctx.moveTo(x-w-15,y-4);ctx.lineTo(x-w-3,y-4);
+        ctx.moveTo(x-w-21,y+3);ctx.lineTo(x-w-5,y+3);ctx.stroke();ctx.restore();
+      }
       drawProjectile(ctx,item,WORLD.ground,item.cast?(item.cast.flightAge||0)*24:run.elapsed*10,{reducedMotion:prefersReducedMotion()});
     }else drawThreat(ctx,item,WORLD.ground,run.elapsed*10,{reducedMotion:prefersReducedMotion()});
   }
@@ -843,7 +852,7 @@ function initRunner() {
       drawHoverEnemy(ctx,{type:actor,...pose,...presentation,phase:run.elapsed*10,reducedMotion:prefersReducedMotion()});
     }
     for(const item of run.pickups)pickup(item);
-    for(const item of run.obstacles){ctx.save();if(item.returning)ctx.globalAlpha*=.4;obstacle(item);ctx.restore();}
+    for(const item of run.obstacles){ctx.save();if(item.returning&&!item.reflected)ctx.globalAlpha*=.4;obstacle(item);ctx.restore();}
     for(const shot of run.heroShots||[])drawHeroProjectile(ctx,shot,WORLD.ground);
     character();
   }

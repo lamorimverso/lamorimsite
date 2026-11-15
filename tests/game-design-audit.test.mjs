@@ -26,6 +26,8 @@ test('recuperação só começa depois do último lançamento reservado',()=>{
 });
 test('disparo para trás nasce na mão voltada ao alvo, sem atravessar o próprio corpo',()=>{
  const r=arena('endless',0,900);r.player.x=core.playerBounds(r).max;
+ const muzzle=core.heroMuzzleFor(r,-1);
+ r.obstacles.push({type:'receipts',x:muzzle.x-90,y:muzzle.y,width:35,height:40,speed:-150,projectile:true,launched:true});
  assert.equal(core.attackRun(r),true);const shot=r.heroShots.at(-1);
  assert.ok(shot.vx<0);assert.ok(shot.x<r.player.x+core.PLAYER.width/2,'origem do lado errado');
 });
@@ -42,7 +44,7 @@ test('atalhos de disparo funcionam com o próprio botão Disparar focado',()=>{
 test('HUD do Infinito apresenta energia restante quando Flávio pode atirar',()=>{
  const r=arena('endless',0,900);r.boss.hp--;
  const nodes=new Map(),$=id=>{if(!nodes.has(id))nodes.set(id,{style:{setProperty(){}},setAttribute(){}});return nodes.get(id);};
- const start=ui.indexOf('    if(run.boss){'),end=ui.indexOf('    const liveAttack=',start);
- Function('env','const {run,$,section,bossCue,attackCueFor,updateCombatHUD,spritesReady,controlLabels}=env;'+ui.slice(start,end))({run:r,$,section:{dataset:{}},bossCue:()=>r.boss.plannedAttack,attackCueFor:core.attackCueFor,updateCombatHUD(){},spritesReady:false,controlLabels:()=>({power:'Q',shield:'E'})});
+ const start=ui.indexOf('    if(run.boss){',ui.indexOf('$("game-boss").hidden')),end=ui.indexOf('    const liveAttack=',start);
+ Function('env','const {run,$,section,bossCue,attackCueFor,updateCombatHUD,spritesReady,controlLabels,healthText}=env;'+ui.slice(start,end))({run:r,$,section:{dataset:{}},bossCue:()=>r.boss.plannedAttack,attackCueFor:core.attackCueFor,updateCombatHUD(){},spritesReady:false,controlLabels:()=>({power:'Q',shield:'E'}),healthText:value=>Number(value).toLocaleString('pt-BR',{maximumFractionDigits:1})});
  assert.match($('game-boss-weapon').textContent,/PV 17\/18/,'acertos precisam de feedback de vida visível');
 });
