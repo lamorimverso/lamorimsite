@@ -23,20 +23,20 @@ function portrait(canvas,type,ready){
  context.clearRect(0,0,canvas.width,canvas.height);
  context.drawImage(source,left,top,width,height,(canvas.width-width*scale)/2,(canvas.height-height*scale)/2,width*scale,height*scale);artKeys.set(canvas,type);
 }
-export function updateCombatHUD(run,{spritesReady=false,controlLabels={power:'Q',shield:'E'}}={}){
+export function updateCombatHUD(run,{spritesReady=false,controlLabels={power:'T',shield:'E'}}={}){
  const $=id=>document.getElementById(id),active=run.status==='running',weapon=heroPowerFor(run);
  $('game-combat-hud').hidden=!active;
  if(!active)return;
  const combat=!!run.boss;$('game-combat-hud').dataset.combat=String(combat);
  const life=$('game-hero-health'),charge=$('game-power-charge'),level=run.powerLevels?.[run.activePower]||1;
- life.parentElement.hidden=!combat;charge.hidden=!combat;
+ life.parentElement.hidden=!combat;
  meter(life,run.player.hp,run.player.maxHp,run.player.hp+' de '+run.player.maxHp+' pontos de vida');
  const capacity=ammoCapacityFor(run),ammo=run.ammo??6;
  charge.setAttribute('aria-label','Munição de '+weapon.name);
  meter(charge,ammo,capacity,ammo+' de '+capacity+' tiros · '+(run.boss?(run.player.attackHeld?'Solte o disparo para recarregar':'Recarrega ao parar de atirar'):'Reponha munição com ajudantes'));
  charge.style.setProperty('--meter-color',weapon.color);
- const select=$('game-weapon-select');select.setAttribute('aria-label','Poder de Flávio, '+ammo+' de '+capacity+' tiros');select.title=weapon.name+' · nível '+level+' · '+weapon.description+' · '+controlLabels.power+' troca o poder';
- $('game-power-loadout').title=select.title;$('game-weapon-level').textContent=ammo+'/'+capacity;
+ const loadout=$('game-power-loadout');loadout.title=weapon.name+' · nível '+level+' · '+weapon.description+' · '+controlLabels.power+' troca a arma';
+ $('game-weapon-level').textContent=ammo+'/'+capacity;
  const reserve=$('game-reserve-shield'),ready=run.reserveShields>0,guarded=run.shieldFor>0;
  const shieldText=ready?(guarded?'Escudo guardado; aguarde a proteção atual terminar':run.reserveShields+' escudos prontos; usar com '+controlLabels.shield+' ou toque'):'Escudo: '+run.allyShieldProgress+'/6 ajudas';
  reserve.setAttribute('aria-label',shieldText);reserve.setAttribute('aria-describedby','game-aid-status');reserve.title=shieldText+' · '+run.reserveShields+' reservas · '+run.allyShieldProgress+'/6 partes';

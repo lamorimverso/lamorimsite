@@ -5,6 +5,7 @@
 #game-control-bindings .control-bindings-table{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;font-size:11px}
 #game-control-bindings .control-bindings-table th,#game-control-bindings .control-bindings-table td{padding:5px 4px;text-align:left;vertical-align:middle;overflow-wrap:anywhere;border-bottom:1px solid var(--line,#e5e5eb)}
 #game-control-bindings .control-bindings-table th:first-child{width:28%;padding-left:7px}
+#game-control-bindings .control-bindings-table thead th:nth-child(3){width:23%}
 #game-control-bindings .control-bindings-table thead th{position:sticky;top:0;z-index:1;background:var(--pale,#f7f5fa);color:var(--muted,#62636d);font-weight:650;font-size:10px}
 #game-control-bindings .control-bindings-table tbody th{font-weight:600}
 #game-control-bindings .control-bindings-table tbody tr:last-child>*{border-bottom:0}
@@ -17,3 +18,8 @@
 #game-control-bindings .control-bindings-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
 #game-control-bindings .control-bindings-actions button{font-size:11px}
 #game-control-bindings .control-bindings-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+@media(max-width:380px){
+ #game-control-bindings .control-bindings-table th,#game-control-bindings .control-bindings-table td{padding-inline:3px}
+ #game-control-bindings .control-bindings-table th:first-child{padding-left:5px}
+ #game-control-bindings .control-binding{font-size:10px;padding-inline:2px}
+}

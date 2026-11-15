@@ -160,6 +160,27 @@ const finalPatrols={
 };
 export const BOSS_MECHANICS=Object.freeze(Object.fromEntries(Object.entries(introductions).map(([type,patterns])=>
  [type,Object.freeze([...patterns,...returns[type],...(finalPatrols[type]||returns[type])])])));
+// The tell and the counter belong to the attack, not to the boss class.
+// An evasive volley must finish without any physical hit, even behind a shield.
+const counter=(applies,label,counterHint,{delay=0,window=.94,damage=3.8,trigger='evade'}={})=>
+ Object.freeze({applies,label,counterHint,delay,window,damage,trigger});
+const counters=Object.freeze({
+ pf:counter(p=>p.type==='barrier','BLITZ ABERTA · ATIRE','Pule todas as barreiras',{damage:4.1}),
+ army:counter(p=>p.burst>1,'FIM DA SALVA · ATIRE','Desvie de toda a salva',{delay:.12,damage:4.2}),
+ janones:counter(p=>p.burst===3,'FIM DA RAJADA · ATIRE','Desvie das três mensagens',{window:1.06,damage:4.3}),
+ joice:counter(p=>p.action==='crouch','SEM VOZ · ATIRE','Abaixe até a nota passar',{delay:.14,damage:3.5}),
+ soraya:counter(p=>p.approach==='drop','POUSOU · ATIRE','Desvie e espere a cruz pousar',{delay:.18,damage:4.2}),
+ boulos:counter(p=>p.curve==='bounce'&&p.action==='jump','MALA PASSOU · ATIRE','Pule a mala até o último quique',{damage:4.2}),
+ haddad:counter(p=>p.type==='stamp','CARIMBO BAIXOU · ATIRE','Escape do carimbo TAXA',{delay:.13,damage:4.4}),
+ simone:counter(p=>p.approach==='vertical','COLUNA LIVRE · ATIRE','Saia da coluna travada',{damage:4.4}),
+ dino:counter(p=>p.action==='move'||p.approach==='drop','SELO NO CHÃO · ATIRE','Desvie e espere o selo baixar',{delay:.24,damage:4.4}),
+ xandao:counter(p=>p.type==='hammer'&&p.burst<=2,'MARTELO BAIXOU · ATIRE','Pule a martelada e espere',{delay:.22,damage:4.5}),
+ lula:counter(p=>p.curve==='boomerang','O L VOLTOU · ATIRE','Desvie na ida e espere o retorno',{trigger:'return',window:1.1,damage:4.5}),
+ dilma:counter(p=>!!p.gust,'CALMARIA · ATIRE','Desvie da rajada até o vento parar',{trigger:'gust',delay:.18,damage:4.6}),
+ bossonari:counter(p=>p.type==='ivermectina-prop','FRASCOS EM PAUSA · ATIRE','Desvie dos dois tipos seguidos',{trigger:'alternate',window:1.06,damage:4.8}),
+ 'meme-army':counter(p=>p.action==='move'||p.signature==='ghost-low-charge','RECUOU · ATIRE','Escape da marca ou da investida',{delay:.25,window:.95,damage:4.9})
+});
+
 // Entries 4/5 are phase-two attacks; 6/7 arrive only on the first rematch.
 // Patrols PF/army also have exclusive entries 8/9 on their third appearance.
 const orders=Object.freeze([
@@ -173,5 +194,14 @@ export function bossMechanicFor(boss,fired=0){
  const phase=Number.isFinite(boss.maxHp)&&boss.maxHp>0&&boss.hp<=boss.maxHp/2?1:0;
  const order=orders[Math.min(rematch,orders.length-1)][phase];
  const index=Math.max(0,Math.floor(Number(fired)||0));
- return {...patterns[order[index%order.length]],encounterPhase:phase+1,rematchIndex:rematch};
+ const pattern=patterns[order[index%order.length]],rule=counters[boss.type];
+ const stage=Math.max(0,Number(boss.stageIndex)||0),rank=Math.max(1,Number(boss.rank)||1);
+ const pressure=stage*.04+(rank-1)*.025+Math.min(rematch,2)*.055+phase*.12;
+ const contactFor=Math.max(.82,1.11/(pattern.projectileSpeedScale||1)-pressure*.5);
+ const opening=rule?.applies(pattern)?{label:rule.label,delay:rule.delay,trigger:rule.trigger,damage:rule.damage,
+  window:Math.max(.68,rule.window-pressure*.42)}:null;
+ const recover=Math.max(.62,pattern.recover*.72-pressure*.48,opening?opening.delay+opening.window+.08:0);
+ return {...pattern,encounterPhase:phase+1,rematchIndex:rematch,contactFor,recover,
+  telegraph:Math.max(.62,pattern.telegraph-pressure*.86),burstGap:Math.max(.78,pattern.burstGap-pressure*.35),
+  counter:opening,counterHint:opening?rule.counterHint:null};
 }

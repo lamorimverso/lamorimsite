@@ -4,6 +4,7 @@ import * as core from '../tanahoraflavio/runner-core.mjs';
 import * as bosses from '../tanahoraflavio/runner-bosses.mjs';
 import * as art from '../tanahoraflavio/runner-art.mjs';
 import {readFileSync} from 'node:fs';
+import {pilotCounter} from '../tools/story-pilot.mjs';
 
 const dt=1/120;
 function scene(index=0){
@@ -46,8 +47,8 @@ test('disparo real possui intervalo e acerta o chefe sem dano durante sua entrad
 });
 test('atirar e esquivar vence encontros e a urna só abre depois do último',()=>{
  for(let index=0;index<core.STORY_BOSS_COUNT;index++){
-  const r=scene(index);core.setAttackRun(r,true);
-  for(let i=0;i<120*60&&r.bossesDefeated===index;i++){core.setAttackRun(r,r.player.attackHeld?r.ammo>0:r.ammo>=12);core.advanceRun(r,dt,()=>.5);}
+  const r=scene(index);r.shieldFor=0;
+  for(let i=0;i<120*100&&r.status==='running'&&r.bossesDefeated===index;i++){pilotCounter(r);core.advanceRun(r,dt,()=>.5);}
   assert.equal(r.bossesDefeated,index+1,'encontro '+index);
   assert.equal(r.boss,null);assert.equal(r.heroShots.length,0);
   assert.equal(r.status,index===core.STORY_BOSS_COUNT-1?'ballot':'running');
@@ -96,13 +97,13 @@ test('anúncios da História usam a identidade e o objetivo real dos 24 encontro
 test('bossFigure desenha o corpo na mesma posição atingida pelo tiro nos dois modos',()=>{
  const source=readFileSync(new URL('../tanahoraflavio/runner.mjs',import.meta.url),'utf8');
  const start=source.indexOf('  function bossFigure(){'),end=source.indexOf('  function character(){',start);
- const make=Function('env','const {run,ctx,virtualWidth,WORLD,STAGES,bossArenaPose,bossPresentationFor,enemyEmitterPose,enemyMotionFor,prefersReducedMotion,drawHoverEnemy,bossCue}=env;'+source.slice(start,end)+';return bossFigure;');
+ const make=Function('env','const {run,ctx,virtualWidth,WORLD,STAGES,bossArenaPose,bossPresentationFor,bossCounterWindow,enemyEmitterPose,enemyMotionFor,prefersReducedMotion,drawHoverEnemy,bossCue}=env;'+source.slice(start,end)+';return bossFigure;');
  for(const mode of ['story','endless'])for(const reduced of [true,false]){
   const r=core.createRun({mode});core.startRun(r);r.nextBossAt=0;r.nextRaid=Infinity;r.shieldFor=Infinity;
   core.advanceRun(r,dt,()=>.5);for(let i=0;i<160;i++)core.advanceRun(r,dt,()=>.5);
   const state={x:0,y:0},stack=[];let drawn;
-  const ctx={save(){stack.push({...state});},restore(){Object.assign(state,stack.pop());},translate(x,y){state.x+=x;state.y+=y;},fillText(){}};
-  const draw=make({run:r,ctx,STAGES:core.STAGES,virtualWidth:900,WORLD:core.WORLD,bossArenaPose:core.bossArenaPose,bossPresentationFor:bosses.bossPresentationFor,
+  const ctx={save(){stack.push({...state});},restore(){Object.assign(state,stack.pop());},translate(x,y){state.x+=x;state.y+=y;},fillText(){},beginPath(){},roundRect(){},fill(){},measureText(s){return {width:s.length*7};}};
+  const draw=make({run:r,ctx,STAGES:core.STAGES,virtualWidth:900,WORLD:core.WORLD,bossArenaPose:core.bossArenaPose,bossPresentationFor:bosses.bossPresentationFor,bossCounterWindow:bosses.bossCounterWindow,
    enemyEmitterPose:art.enemyEmitterPose,enemyMotionFor:art.enemyMotionFor,prefersReducedMotion:()=>reduced,
    drawHoverEnemy(c,args){drawn={x:state.x+args.x,y:state.y+args.y};},bossCue:()=>({action:'jump'})});
   draw();assert.equal(core.attackRun(r),true);

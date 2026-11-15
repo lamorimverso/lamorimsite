@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createRun,startRun,advanceRun,jumpRun,crouchRun,PLAYER,SCENE_DISTANCE,scoreFor,difficultyAt} from '../tanahoraflavio/runner-core.mjs';
+import {createRun,startRun,advanceRun,jumpRun,crouchRun,PLAYER,SCENE_DISTANCE,scoreFor,difficultyAt,threatTimeToContact} from '../tanahoraflavio/runner-core.mjs';
 
 const step=(r,n)=>{for(let i=0;i<n&&r.status==='running';i++)advanceRun(r,1/120,()=>0);};
 function bossRun(type='xandao',fired=0){
@@ -27,10 +27,11 @@ test('objeto sai da mão do chefão e viaja em linha reta até o Flávio',()=>{
  assert.ok(shot.bossAttack&&shot.projectile);
  assert.equal(shot.targetX,PLAYER.x+PLAYER.width/2);
  assert.equal(shot.targetY,PLAYER.height/2);
- assert.equal(shot.y,77);
+ assert.equal(shot.y,shot.launchY);
+ assert.ok(shot.launchY>90);
  const initialX=shot.x;step(r,24);
  assert.ok(shot.x<initialX,'o disparo deve mover-se da direita para a esquerda');
- assert.ok(shot.y<77,'o ataque deve aproximar-se da altura real do jogador');
+ assert.ok(shot.y<shot.launchY,'o ataque deve aproximar-se da altura real do jogador');
  const landingX=shot.targetX+PLAYER.width/2-6+shot.width/2;
  const progress=(shot.launchX-(shot.x+shot.width/2))/(shot.launchX-landingX);
  assert.ok(Math.abs(shot.y-(shot.launchY+(shot.targetY-shot.launchY)*progress))<.0001);
@@ -43,7 +44,7 @@ test('projétil acertando tira vida e derruba jogador desprotegido',()=>{
 test('o salto depois do lançamento realmente evita o projétil direcionado',()=>{
  const r=bossRun(),first=r.obstacles[0];
  r.boss.nextAttack=Infinity;
- step(r,Math.floor(((first.x-148)/first.speed-.26)*120));assert.equal(r.status,'running');
+ step(r,Math.floor((threatTimeToContact(r,first)-.18)*120));assert.equal(r.status,'running');
  assert.equal(jumpRun(r),true);
  step(r,120);
  assert.equal(r.status,'running');

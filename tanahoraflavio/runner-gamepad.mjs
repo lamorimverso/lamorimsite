@@ -1,4 +1,4 @@
-import {readGamepadActions} from './runner-control-map.mjs?v=2bb295d2954f';
+import {readGamepadActions} from './runner-control-map.mjs?v=568387e3f764';
 
 // The caller owns scheduling. Only controller-owned action transitions leave
 // this driver, so resetting a pad never releases a keyboard or touch source.

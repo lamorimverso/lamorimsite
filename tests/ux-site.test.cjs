@@ -464,7 +464,7 @@ test('HUD do chefão fica no canto direito da pista sem deslocar pista ou contro
 for(const initialSearch of ['', '?ui=20261111-run-controls', '?ui=20261115-custom-controls'])test('HTML antigo no cache se atualiza sem travar a inicialização '+initialSearch,async()=>{
  const {context,page,errors}=await open({legacyFirst:true,initialSearch});
  try{
-  await page.waitForURL(url=>url.searchParams.get('ui')==='20261115-clean-game', {timeout:4000});
+  await page.waitForURL(url=>url.searchParams.get('ui')==='20261115-boss-controls', {timeout:4000});
   await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
   assert.equal(await page.locator('#game-settings').count(),1);
   assert.match(await page.locator('#days').textContent(),/^\d+$/);
@@ -555,14 +555,14 @@ test('urna 22 mostra prisão e recomeça História automaticamente',async()=>{
  }finally{await context.close();}
 });
 
-test('chefão final redesenhado aparece com investida do fantasma em celular e desktop',async()=>{
+test('chefão final atravessa a arena e lança sua própria investida em celular e desktop',async()=>{
  for(const viewport of [{width:390,height:844},{width:900,height:720}]){
   const {context,page,errors}=await open({instrument:true,viewport,init:()=>{
-   const labels=[];globalThis.__drawnBossLabels=labels;
-   const orig=CanvasRenderingContext2D.prototype.fillText;
-   CanvasRenderingContext2D.prototype.fillText=function(value,...args){
-    if(String(value).includes('FANTASMA DO COMUNISMO'))labels.push(String(value));
-    return orig.call(this,value,...args);
+   const samples=[];globalThis.__bossSteps=samples;
+   const orig=CanvasRenderingContext2D.prototype.translate;
+   CanvasRenderingContext2D.prototype.translate=function(x,y){
+    if(this.canvas.id==='runner-canvas'&&x>__testRun?.viewportWidth-225&&y>115&&y<215&&__testRun?.boss?.type==='meme-army'&&__testRun.boss.phase!=='intro')samples.push(x);
+    return orig.call(this,x,y);
    };
   }});
   try{
@@ -573,12 +573,8 @@ test('chefão final redesenhado aparece com investida do fantasma em celular e d
    });
    await page.waitForFunction(()=>document.getElementById('game').dataset.boss==='meme-army');
    assert.match(await page.locator('#game-boss-name').textContent(),/Fantasma do Comunismo/);
-   await page.evaluate(()=>{
-    const r=__testRun;r.boss.fired=4;r.boss.plannedFor=4;
-    r.boss.plannedAttack={type:'meme-ghost',action:'jump',approach:'drop'};
-    r.boss.phase='attack';r.boss.phaseFor=Infinity;r.boss.volleyLeft=1;r.boss.nextAttack=0;
-   });
-   await page.waitForFunction(()=>__testRun.obstacles.some(o=>o.type==='meme-ghost'&&o.bossAttack));
+   await page.waitForFunction(()=>__testRun.obstacles.some(o=>o.type==='meme-ghost'&&o.bossAttack&&o.launched),null,{timeout:4500});
+   await page.waitForFunction(()=>__bossSteps.length>30&&Math.max(...__bossSteps)-Math.min(...__bossSteps)>55,null,{timeout:6500});
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
  }
@@ -596,6 +592,7 @@ for(const viewport of [{width:390,height:844},{width:1440,height:900}])test(`are
   assert.match(await page.locator('#game-boss-name').textContent(),/Sentinela.*Patrulha/);
   assert.match(await page.locator('#game-power').textContent(),/Energia 5\/5/);
   assert.equal(await page.locator('#game-attack').isVisible(),true);
+  assert.equal((await page.locator('#game-attack').textContent()).trim(),'','tiro na arena usa apenas um ícone');
   const hp=await page.evaluate(()=>__testRun.boss.hp);
   if(viewport.width<500){
    await page.locator('#game-attack').dispatchEvent('pointerdown',{button:0,pointerId:91,pointerType:'touch'});
@@ -979,7 +976,7 @@ test('seis ajudantes liberam escudo guardado, ativável por E e pelo botão no c
  }
 });
 
-test('vitória sobre Dilma libera vento, seletor e Q; Flávio atira também fora da arena',async()=>{
+test('vitória sobre Dilma libera vento e botão T, e Flávio atira também fora da arena',async()=>{
  for(const width of [390,1440]){
   const {context,page,errors}=await open({instrument:true,viewport:{width,height:900}});
   try{
@@ -990,7 +987,8 @@ test('vitória sobre Dilma libera vento, seletor e Q; Flávio atira também fora
    });
    await page.waitForFunction(()=>__testRun.activePower==='dilma');
    assert.match(await page.locator('#game-power-reward').textContent(),/PODER CONQUISTADO.*Vendaval/);
-   assert.equal(await page.locator('#game-weapon-select option').count(),2);
+   assert.equal(await page.locator('#game-weapon-cycle').isVisible(),true);
+   assert.equal(await page.locator('#game-weapon-cycle').textContent(),'T');
    assert.equal(await page.locator('#game-attack').isVisible(),false);
    await page.locator('#runner-canvas').focus();await page.keyboard.down('j');
    await page.waitForFunction(()=>__testRun.heroShots.some(s=>s.powerId==='dilma'&&s.type==='wind'));await page.keyboard.up('j');
@@ -998,15 +996,16 @@ test('vitória sobre Dilma libera vento, seletor e Q; Flávio atira também fora
     const {drawHeroProjectile}=await import('./runner-hero-shot.mjs');const hashes=[];
     for(const powerId of ['ivermectina','dilma']){const c=document.createElement('canvas');c.width=140;c.height=120;const x=c.getContext('2d');drawHeroProjectile(x,{powerId,type:powerId==='dilma'?'wind':'hero-ivermectina',behavior:powerId==='dilma'?'gust':'bolt',x:70,y:50,vx:500,vy:0,age:.2},100);const data=x.getImageData(0,0,140,120).data;let filled=0,hash=0;for(let i=0;i<data.length;i+=4){if(data[i+3]>100)filled++;hash=(Math.imul(hash,31)+data[i]+data[i+1]+data[i+2]+data[i+3])|0;}hashes.push({filled,hash});}return hashes;
    });assert.notEqual(art[0].hash,art[1].hash);assert.ok(art[1].filled>300,'vento é desenhado como uma rajada completa');
-   await page.locator('#game-weapon-select').selectOption('ivermectina');assert.equal(await page.evaluate(()=>__testRun.activePower),'ivermectina');
-   await page.locator('#runner-canvas').focus();await page.keyboard.press('q');assert.equal(await page.evaluate(()=>__testRun.activePower),'dilma');
+   await page.locator('#game-weapon-cycle').click();assert.equal(await page.evaluate(()=>__testRun.activePower),'ivermectina');
+   await page.keyboard.press('t');assert.equal(await page.evaluate(()=>__testRun.activePower),'dilma');
+   await page.keyboard.press('q');assert.equal(await page.evaluate(()=>__testRun.activePower),'ivermectina','Q continua disponível como atalho antigo');
    await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/earned-wind-${width}.png`)});
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(errors,[]);
   }finally{await context.close();}
  }
 });
 
-for(const viewport of [{width:320,height:568},{width:390,height:844},{width:1440,height:900},{width:844,height:390}])test(`barras verticais e controles ficam dentro da pista: ${viewport.width}px`,async()=>{
+for(const viewport of [{width:320,height:568},{width:390,height:844},{width:1440,height:900},{width:844,height:390}])test(`indicadores compactos e controles ficam dentro da pista: ${viewport.width}px`,async()=>{
  const {context,page,errors}=await open({instrument:true,viewport});
  try{
   if(viewport.width===844)await page.locator('#game-expand').click();
@@ -1022,9 +1021,11 @@ for(const viewport of [{width:320,height:568},{width:390,height:844},{width:1440
    const box=await page.locator('#'+id).boundingBox();assert.ok(box,`${id} visível`);
    assert.ok(box.x>=track.x&&box.x+box.width<=track.x+track.width&&box.y>=track.y&&box.y+box.height<=track.y+track.height,`${id} dentro da pista: ${JSON.stringify(box)}`);
   }
-  for(const id of ['game-hero-health','game-power-charge','game-boss-health']){
-   const box=await page.locator('#'+id).boundingBox();assert.ok(box.height>box.width*3,`${id} é vertical`);
+  for(const id of ['game-hero-health','game-boss-health']){
+   const box=await page.locator('#'+id).boundingBox();assert.ok(box.height<=18&&box.width>box.height*2,`${id} não tem torre vertical`);
   }
+  assert.equal(await page.locator('#game-power-charge').evaluate(e=>e.getBoundingClientRect().height),1);
+  assert.equal(await page.locator('#game-weapon-level').textContent(),'12/12');
   assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuenow'),'9');
   assert.equal(await page.locator('#game-hero-health').getAttribute('aria-valuemax'),'5');
   assert.match(await page.locator('#game-reserve-shield').getAttribute('aria-label'),/4\/6/);
@@ -1041,6 +1042,42 @@ for(const viewport of [{width:320,height:568},{width:390,height:844},{width:1440
  }finally{await context.close();}
 });
 
+test('aviso de arma conquistada não cobre os controles compactos no celular',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
+ try{
+  await begin(page);await page.evaluate(async()=>{
+   const r=__testRun,{storyBossAt}=await import('./runner-bosses.mjs'),{grantBossPower}=await import('./runner-earned-powers.mjs');
+   for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
+   r.obstacles=[];r.pickups=[];r.reserveShields=1;grantBossPower(r,'dilma');
+   const b=storyBossAt(0);r.boss={...b,combat:true,maxHp:b.hp,age:0,phase:'recover',phaseFor:100,nextAttack:100};
+  });
+  await page.locator('#game-power-reward').waitFor();
+  for(const id of ['game-weapon-cycle','game-reserve-shield']){
+   const box=await page.locator('#'+id).boundingBox(),notice=await page.locator('#game-power-reward').boundingBox();
+   assert.ok(box.y+box.height<=notice.y||box.x+box.width<=notice.x||notice.x+notice.width<=box.x,id+' está livre');
+  }
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('segunda fase da arena preserva o cenário sem os postes e raios laterais',async()=>{
+ const {context,page,errors}=await open();try{
+  const marks=await page.evaluate(async()=>{
+   const {drawBossArena}=await import('./runner-boss-art.mjs'),canvas=document.createElement('canvas');
+   canvas.width=480;canvas.height=300;
+   const c=canvas.getContext('2d');drawBossArena(c,{width:480,ground:246,state:{phase:'recover',enraged:true}});
+   const {data}=c.getImageData(0,0,480,300);let scenery=0,road=0;
+   for(let y=0;y<300;y++)for(let x=0;x<480;x++){
+    if(!data[(y*480+x)*4+3])continue;
+    if(y<245)scenery++;else road++;
+   }
+   return {scenery,road};
+  });
+  assert.equal(marks.scenery,0);assert.ok(marks.road>0&&marks.road<1300,'o cenário só recebe uma linha de chão discreta');
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
 test('HUD desenha retratos e ícones de todas as 14 identidades e mantém o nome do poder acessível',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
  try{
@@ -1051,13 +1088,13 @@ test('HUD desenha retratos e ícones de todas as 14 identidades e mantém o nome
     for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
     r.obstacles=[];r.pickups=[];const b=storyBossAt(index);grantBossPower(r,b.type);r.boss={...b,combat:true,hp:b.hp,maxHp:b.hp,total:b.hp,remaining:b.hp,fired:0,age:0,phase:'recover',phaseFor:100,nextAttack:100};return b.type;
    },index);
-   await page.waitForFunction(type=>document.getElementById('game').dataset.boss===type&&document.getElementById('game-weapon-select').value===type,type);
+   await page.waitForFunction(type=>document.getElementById('game').dataset.boss===type&&document.getElementById('game').dataset.heroPower===type,type);
    const pixels=await page.evaluate(()=>['game-hero-portrait','game-boss-portrait','game-weapon-icon'].map(id=>{
     const canvas=document.getElementById(id),data=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;let filled=0,hash=0;for(let i=0;i<data.length;i++){hash=(Math.imul(hash,31)+data[i])|0;if(i%4===3&&data[i]>80)filled++;}return {id,filled,hash};
    }));
    for(const row of pixels)assert.ok(row.filled>70,`${type}: ${row.id} tem arte visível (${row.filled})`);
    const portrait=pixels.find(row=>row.id==='game-boss-portrait');assert.equal(portraits.has(portrait.hash),false,`${type}: retrato muda para a identidade atual`);portraits.add(portrait.hash);
-   assert.ok((await page.locator('#game-weapon-select').getAttribute('title')).length>10);
+   assert.ok((await page.locator('#game-power-loadout').getAttribute('title')).length>10);
   }
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
@@ -1089,7 +1126,7 @@ test('munição escassa e escudos acumulados funcionam pelos controles reais sem
   await page.locator('#game-reserve-shield').click();assert.equal(await page.evaluate(()=>__testRun.reserveShields),1);assert.equal(await page.evaluate(()=>__testRun.player.y),0);
   await page.evaluate(async()=>{const r=__testRun,{storyBossAt}=await import('./runner-bosses.mjs');r.boss={...storyBossAt(0),combat:true,hp:18,maxHp:18,total:18,remaining:18,fired:0,age:0,phase:'recover',phaseFor:100,nextAttack:100};r.ammo=0;r.ammoIdleFor=0;r.ammoReloadFor=0;});
   await page.locator('#runner-canvas').focus();await page.keyboard.down('j');await page.waitForTimeout(1300);assert.equal(await page.evaluate(()=>__testRun.ammo),0,'segurar vazio impede recarga');
-  assert.match(await page.locator('#game-attack').textContent(),/Solte/);await page.keyboard.up('j');
+  assert.match(await page.locator('#game-attack').getAttribute('aria-label'),/Solte/);await page.keyboard.up('j');
   await page.waitForFunction(()=>__testRun.ammo>0);assert.equal(await page.locator('#game-power-charge').getAttribute('aria-valuemax'),'12');
   await page.locator('#game').screenshot({path:path.resolve(__dirname,'../ux-captures/hud-ammo-shields-390.png')});assert.deepEqual(errors,[]);
  }finally{await context.close();}
@@ -1100,9 +1137,9 @@ test('botão com munição vazia mantém tamanho compacto e deixa Flávio livre 
  try{
   await begin(page);await page.evaluate(async()=>{const r=__testRun,{storyBossAt}=await import('./runner-bosses.mjs');for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;r.obstacles=[];r.pickups=[];r.boss={...storyBossAt(0),combat:true,hp:18,maxHp:18,total:18,remaining:18,fired:0,age:0,phase:'recover',phaseFor:100,nextAttack:100};r.ammo=0;});
   await page.locator('#runner-canvas').focus();await page.keyboard.down('j');
-  await page.waitForFunction(()=>document.getElementById('game-attack').textContent.includes('Solte'));
+  await page.waitForFunction(()=>document.getElementById('game-attack').getAttribute('aria-label').includes('Solte'));
   for(const state of ['held','released']){
-   if(state==='released'){await page.keyboard.up('j');await page.waitForFunction(()=>!document.getElementById('game-attack').textContent.includes('Solte'));}
+   if(state==='released'){await page.keyboard.up('j');await page.waitForFunction(()=>!document.getElementById('game-attack').getAttribute('aria-label').includes('Solte'));}
    const track=await page.locator('#runner-canvas').boundingBox(),button=await page.locator('#game-attack').boundingBox();
    assert.ok(button.width<=120,`${state}: botão compacto, ${button.width}px`);assert.ok(button.x>=track.x+track.width*.5,`${state}: botão continua do lado direito`);
   }
@@ -1118,7 +1155,10 @@ for(const viewport of [{width:320,height:844},{width:390,height:844},{width:844,
   await page.waitForFunction(()=>document.getElementById('game-weapon-level').textContent==='4/6');
   assert.equal(await page.locator('#game-hero-health').isVisible(),false,'vida não aparece durante a corrida');
   assert.equal(await page.locator('#game-hero-portrait').isVisible(),false,'remove o retrato redundante durante a corrida');
-  assert.equal(await page.locator('#game-power-charge').isVisible(),false,'contador compacto substitui a torre de munição na corrida');
+  const accessibleAmmo=page.getByRole('progressbar',{name:/Munição de/});
+  assert.equal(await accessibleAmmo.getAttribute('aria-valuenow'),'4');
+  assert.equal(await accessibleAmmo.evaluate(e=>e.getBoundingClientRect().height),1,'munição acessível sem torre no cenário');
+  assert.equal(await page.locator('#game-weapon-cycle').isVisible(),false,'não há troca antes da segunda arma');
   const track=await page.locator('#runner-canvas').boundingBox();
   for(const id of ['game-power-loadout','game-reserve-shield']){
    const box=await page.locator('#'+id).boundingBox();assert.ok(box.height>=36&&box.height<=42,`${id} compacto e fácil de tocar`);
@@ -1128,7 +1168,7 @@ for(const viewport of [{width:320,height:844},{width:390,height:844},{width:844,
   await page.evaluate(async()=>{const r=__testRun,{storyBossAt}=await import('./runner-bosses.mjs');r.boss={...storyBossAt(0),combat:true,hp:18,maxHp:18,total:18,remaining:18,fired:0,age:0,phase:'recover',phaseFor:100,nextAttack:100};r.player.hp=3;});
   await page.waitForFunction(()=>!document.getElementById('game-hero-health').closest('[hidden]'));
   assert.equal(await page.locator('#game-hero-health').isVisible(),true);assert.equal(await page.locator('#game-hero-health').getAttribute('aria-valuenow'),'3');
-  assert.equal(await page.locator('#game-power-charge').isVisible(),true);
+  assert.equal(await page.locator('#game-power-charge').evaluate(e=>e.getBoundingClientRect().height),1);
   await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/clean-boss-${viewport.width}.png`)});
   const ammoBefore=await page.evaluate(()=>{const r=__testRun,ammo=r.ammo;r.boss=null;return ammo;});await page.waitForFunction(()=>!!document.getElementById('game-hero-health').closest('[hidden]'));
   assert.equal(await page.evaluate(()=>__testRun.ammo),Math.min(6,ammoBefore));assert.equal(await page.evaluate(()=>__testRun.allyShieldProgress),3);
@@ -1141,7 +1181,7 @@ test('engrenagem lista todas as ações, remapeia teclado sem executar o jogo e 
  try{
   await begin(page);await page.evaluate(()=>{const r=__testRun;for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;r.obstacles=[];r.pickups=[];});
   await page.locator('#game-settings summary').click();
-  assert.equal(await page.locator('#game-control-bindings button[data-bind-action]').count(),16);
+  assert.equal(await page.locator('#game-control-bindings button[data-bind-action]').count(),24);
   const before=await page.evaluate(()=>({elapsed:__testRun.elapsed,x:__testRun.player.x,ammo:__testRun.ammo}));
   await page.locator('[data-bind-action="right"][data-bind-device="keyboard"]').click();await page.keyboard.press('l');
   assert.equal(await page.locator('[data-bind-action="right"][data-bind-device="keyboard"]').textContent(),'L');
@@ -1197,6 +1237,40 @@ test('controle inicia a corrida e conclui a urna sem reiniciar ao segurar Start'
  }finally{await context.close();}
 });
 
+test('mouse configurado na engrenagem salva ações, dispara e não deixa movimento preso',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:900,height:820},hasTouch:true});
+ const mouseBinding=action=>page.locator(`[data-bind-action=${action}][data-bind-device=mouse]`);
+ let input;
+ try{
+  await page.locator('#game-settings summary').click();
+  await page.getByRole('columnheader',{name:'Mouse'}).waitFor();
+  await mouseBinding('fire').click();await mouseBinding('fire').click({button:'right'});
+  await mouseBinding('right').click();await mouseBinding('right').click({button:'middle'});
+  await page.reload();await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
+  await page.locator('#game-settings summary').click();
+  assert.match(await mouseBinding('fire').textContent(),/direit/i);assert.match(await mouseBinding('right').textContent(),/meio|central/i);
+  await begin(page);
+  await page.evaluate(()=>{const r=__testRun;r.nextRaid=r.nextBossAt=r.nextObstacle=r.nextAllyAt=r.nextSupportAt=r.nextPower=r.nextPassport=Infinity;r.obstacles=[];r.pickups=[];});
+  const track=page.locator('#runner-canvas'),box=await track.boundingBox();
+  await page.mouse.move(box.x+box.width*.5,box.y+box.height*.5);
+  await page.mouse.down({button:'right'});await page.waitForFunction(()=>__testRun.shotsFired>0);
+  input=await context.newCDPSession(page);
+  await input.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:Math.round(box.x+box.width*.4),y:Math.round(box.y+box.height*.6)}]});
+  await input.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});
+  assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),true,'cancelar o toque não cancela o botão do mouse');
+  await page.mouse.up({button:'right'});
+  assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),false);
+  const x=await page.evaluate(()=>__testRun.player.x);
+  await page.mouse.down({button:'middle'});await page.waitForFunction(x=>__testRun.player.x>x+10,x);
+  await page.mouse.down({button:'right'});assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),true);
+  await page.mouse.up({button:'right'});assert.equal(await page.evaluate(()=>__testRun.player.moveHeld),1);
+  await page.mouse.move(1,1);await page.mouse.up({button:'middle'});
+  assert.equal(await page.evaluate(()=>__testRun.player.moveHeld),0);
+  await track.click();await page.waitForFunction(()=>__testRun.player.y>10);
+  assert.deepEqual(errors,[]);
+ }finally{await input?.detach();await context.close();}
+});
+
 test('controle continua disponível ao retornar pelo histórico da página',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844},init:()=>{window.__pads=[];Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>window.__pads});}});
  try{
@@ -1215,13 +1289,13 @@ test('configurações bloqueiam teclas e controles da pista sem gastar supriment
   await begin(page);await page.evaluate(async()=>{
    const {storyBossAt}=await import('./runner-bosses.mjs'),r=__testRun;
    for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
-   r.obstacles=[];r.pickups=[];r.reserveShields=1;
+   r.obstacles=[];r.pickups=[];r.reserveShields=1;r.ownedPowers.push('dilma');
    r.boss={...storyBossAt(0),combat:true,hp:18,maxHp:18,total:18,remaining:18,fired:0,age:0,phase:'recover',phaseFor:100,nextAttack:100};
   });
-  await page.waitForFunction(()=>['game-attack','game-reserve-shield','game-weapon-select'].every(id=>!document.getElementById(id).disabled));
+  await page.waitForFunction(()=>['game-attack','game-reserve-shield','game-weapon-cycle'].every(id=>!document.getElementById(id).disabled));
   await page.locator('#game-attack').waitFor();
   await page.locator('#game-settings summary').click();
-  await page.waitForFunction(()=>['game-attack','game-reserve-shield','game-weapon-select'].every(id=>document.getElementById(id).disabled));
+  await page.waitForFunction(()=>['game-attack','game-reserve-shield','game-weapon-cycle'].every(id=>document.getElementById(id).disabled));
   await page.locator('.control-bindings-scroll').focus();
   const before=await page.evaluate(()=>({ammo:__testRun.ammo,reserve:__testRun.reserveShields,x:__testRun.player.x,elapsed:__testRun.elapsed}));
   await page.keyboard.press('j');await page.keyboard.press('e');await page.keyboard.press('ArrowRight');
@@ -1230,7 +1304,7 @@ test('configurações bloqueiam teclas e controles da pista sem gastar supriment
   await page.locator('#game-reserve-shield').dispatchEvent('click');await page.locator('#game-attack').dispatchEvent('click',{detail:0});
   const after=await page.evaluate(()=>({ammo:__testRun.ammo,reserve:__testRun.reserveShields,x:__testRun.player.x,elapsed:__testRun.elapsed}));
   assert.deepEqual(after,before);assert.equal(await page.evaluate(()=>__testRun.player.moveHeld),0);assert.equal(await page.evaluate(()=>__testRun.player.y),0);
-  assert.equal(await page.locator('#game-attack').isDisabled(),true);assert.equal(await page.locator('#game-reserve-shield').isDisabled(),true);assert.equal(await page.locator('#game-weapon-select').isDisabled(),true);
+  assert.equal(await page.locator('#game-attack').isDisabled(),true);assert.equal(await page.locator('#game-reserve-shield').isDisabled(),true);assert.equal(await page.locator('#game-weapon-cycle').isDisabled(),true);
   await page.locator('#game-settings summary').click();await page.waitForFunction(()=>!document.getElementById('game-attack').disabled);assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });

@@ -10,14 +10,15 @@ const freeze=value=>{
 export const ACTION_DEFINITIONS=freeze([
  {id:'left',label:'Recuar'},{id:'right',label:'Avançar'},
  {id:'jump',label:'Pular'},{id:'crouch',label:'Abaixar'},
- {id:'fire',label:'Disparar'},{id:'power',label:'Trocar poder'},
+ {id:'fire',label:'Disparar'},{id:'power',label:'Trocar arma'},
  {id:'shield',label:'Usar escudo'},{id:'start',label:'Começar / recomeçar'}
 ]);
 const button=index=>({kind:'button',index});
 const axis=(index,direction)=>({kind:'axis',index,direction});
 export const DEFAULT_CONTROLS=freeze({
- keyboard:{left:['KeyA','ArrowLeft'],right:['KeyD','ArrowRight'],jump:['KeyW','ArrowUp','Space'],crouch:['KeyS','ArrowDown'],fire:['KeyJ','KeyZ'],power:['KeyQ'],shield:['KeyE'],start:['Enter']},
- gamepad:{left:[axis(0,-1),button(14)],right:[axis(0,1),button(15)],jump:[button(0)],crouch:[button(1),button(13)],fire:[button(2),button(7)],power:[button(3),button(5)],shield:[button(4)],start:[button(9)]}
+ keyboard:{left:['KeyA','ArrowLeft'],right:['KeyD','ArrowRight'],jump:['KeyW','ArrowUp','Space'],crouch:['KeyS','ArrowDown'],fire:['KeyJ','KeyZ'],power:['KeyT','KeyQ'],shield:['KeyE'],start:['Enter']},
+ gamepad:{left:[axis(0,-1),button(14)],right:[axis(0,1),button(15)],jump:[button(0)],crouch:[button(1),button(13)],fire:[button(2),button(7)],power:[button(3),button(5)],shield:[button(4)],start:[button(9)]},
+ mouse:{left:null,right:null,jump:0,crouch:null,fire:null,power:null,shield:null,start:null}
 });
 const ids=ACTION_DEFINITIONS.map(({id})=>id);
 const labels=new Map(ACTION_DEFINITIONS.map(({id,label})=>[id,label]));
@@ -27,17 +28,24 @@ const validBinding=value=>!!value&&typeof value==='object'&&Number.isInteger(val
 const copyBinding=value=>value.kind==='axis'?axis(value.index,value.direction):button(value.index);
 const bindingId=value=>value.kind==='axis'?`axis:${value.index}:${value.direction}`:`button:${value.index}`;
 const copyList=(list,device)=>list.map(value=>device==='keyboard'?value:copyBinding(value));
+const mouseNames=['Esquerdo','Meio','Direito','Lateral 1','Lateral 2'];
+const validMouseButton=value=>Number.isInteger(value)&&value>=0&&value<mouseNames.length;
+// Resolve old keyboard conflicts before introducing T so another action can keep it.
+const baseDefault=(device,id)=>device==='keyboard'&&id==='power'?['KeyQ']:DEFAULT_CONTROLS[device][id];
 
 // Persisted data is untrusted. Invalid or conflicting action maps fall back to
 // their familiar defaults, including conflicts exposed by another fallback.
 export function normalizeControls(saved,legacyFireKey='default'){
- const result={keyboard:{},gamepad:{}};
+ const result={keyboard:{},gamepad:{},mouse:{}};
+ let defaultPower=false;
  for(const device of ['keyboard','gamepad']){
   const valid=device==='keyboard'?validKey:validBinding;
   const token=device==='keyboard'?value=>value:bindingId;
   for(const id of ids){
    const candidate=saved?.[device]?.[id];
-   const source=Array.isArray(candidate)&&candidate.length>0&&candidate.every(valid)?candidate:DEFAULT_CONTROLS[device][id];
+   const isValid=Array.isArray(candidate)&&candidate.length>0&&candidate.every(valid);
+   const source=isValid?candidate:baseDefault(device,id);
+   if(device==='keyboard'&&id==='power')defaultPower=!isValid;
    const unique=new Map(source.map(value=>[token(value),value]));
    result[device][id]=copyList([...unique.values()],device);
   }
@@ -48,10 +56,30 @@ export function normalizeControls(saved,legacyFireKey='default'){
     if(owner){conflicts.add(owner);conflicts.add(id);}else owners.set(key,id);
    }
    if(!conflicts.size)break;
-   for(const id of conflicts)result[device][id]=copyList(DEFAULT_CONTROLS[device][id],device);
+   for(const id of conflicts){
+    if(device==='keyboard'&&id==='power')defaultPower=true;
+    result[device][id]=copyList(baseDefault(device,id),device);
+   }
   }
  }
  if(saved==null)result.keyboard.fire=[...fireBindingFor(legacyFireKey).keys];
+ const power=result.keyboard.power;
+ if((defaultPower||saved?.mouse==null&&power.length===1&&power[0]==='KeyQ')&&!keyboardActionFor(result,'KeyT'))power.unshift('KeyT');
+ const assigned=new Set();
+ for(const id of ids){
+  const candidate=saved?.mouse?.[id];
+  if(candidate===null)result.mouse[id]=null;
+  if(validMouseButton(candidate)){
+   result.mouse[id]=assigned.has(candidate)?null:candidate;
+   assigned.add(candidate);
+  }
+ }
+ for(const id of ids){
+  if(Object.hasOwn(result.mouse,id))continue;
+  const fallback=DEFAULT_CONTROLS.mouse[id];
+  result.mouse[id]=assigned.has(fallback)?null:fallback;
+  if(fallback!==null)assigned.add(fallback);
+ }
  return result;
 }
 
@@ -66,6 +94,25 @@ export function keyLabel(code){
 export function keyboardActionFor(controls,code){
  if(!validKey(code))return null;
  return ids.find(id=>Array.isArray(controls?.keyboard?.[id])&&controls.keyboard[id].includes(code))??null;
+}
+
+export function mouseButtonLabel(button){
+ return validMouseButton(button)?mouseNames[button]:'Sem botão';
+}
+
+export function mouseActionFor(controls,button){
+ if(!validMouseButton(button))return null;
+ return ids.find(id=>controls?.mouse?.[id]===button)??null;
+}
+
+export function assignMouse(controls,action,button){
+ if(!labels.has(action))return {ok:false,error:'Ação desconhecida.'};
+ if(button!==null&&!validMouseButton(button))return {ok:false,error:'Botão de mouse inválido.'};
+ const next=normalizeControls(controls);
+ const conflict=mouseActionFor(next,button);
+ if(conflict&&conflict!==action)return {ok:false,error:`Este botão do mouse já está em uso: ${labels.get(conflict)}.`};
+ next.mouse[action]=button;
+ return {ok:true,controls:next};
 }
 
 export function assignKeyboard(controls,action,code){

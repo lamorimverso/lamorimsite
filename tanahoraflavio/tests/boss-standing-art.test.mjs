@@ -46,7 +46,8 @@ test('hover art and arena balance canvas state, use a visible platform, and do n
  for(const state of ['intro','prepare','attack','recover','phase2','victory']){
   const c=context();drawBossArena(c,{width:900,ground:246,phase:4,state,stageIndex:2});
   assert.equal(c.commands.filter(x=>x[0]==='save').length,c.commands.filter(x=>x[0]==='restore').length);
-  assert.ok(c.commands.some(x=>x[0]==='fillRect'));
+  assert.equal(c.commands.filter(x=>x[0]==='stroke').length,1);
+  assert.ok(c.commands.filter(x=>x[0]==='moveTo'||x[0]==='lineTo').every(x=>x[2]===247));
  }
 });
 
@@ -59,7 +60,7 @@ test('human Bossonari and final meme-army keep separate original identities',()=
  assert.ok(!human.commands.some(x=>x[0]==='set'&&x[1]==='fillStyle'&&x[2]==='#8c233b'),'human encounter does not become the ghost');
 });
 
-test('phase two adds a persistent arena cue without replacing charge, release or recovery',()=>{
+test('phase two intensifies the same ground line without restoring arena clutter',()=>{
  function arena(state,phase=0){const c=context();drawBossArena(c,{state,phase,reducedMotion:true});return c.commands;}
  const idle=arena('idle'),phase2=arena('phase2');
  assert.notDeepEqual(phase2,idle,'phase two must remain visible with reduced motion');
@@ -68,7 +69,9 @@ test('phase two adds a persistent arena cue without replacing charge, release or
  for(const phase of ['charge','attack','recover']){
   const normal=arena(phase),enraged=arena({phase,enraged:true});
   assert.deepEqual(normal,arena({phase,enraged:false}));
-  assert.deepEqual(enraged.slice(0,normal.length-1),normal.slice(0,-1),'existing phase cues are retained');
-  assert.ok(enraged.length>normal.length,'rage adds a separate cue');
+  assert.equal(enraged.length,normal.length,'no additional markers');
+  const shade=commands=>commands.find(c=>c[0]==='set'&&c[1]==='strokeStyle')[2];
+  assert.equal(shade(normal).slice(0,7),shade(enraged).slice(0,7),'charge, attack and recover retain their hue');
+  assert.notEqual(shade(normal),shade(enraged));
  }
 });

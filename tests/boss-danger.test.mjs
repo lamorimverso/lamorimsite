@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createRun,startRun,advanceRun} from '../tanahoraflavio/runner-core.mjs';
+import {bossArenaPose,createRun,startRun,advanceRun} from '../tanahoraflavio/runner-core.mjs';
+import {combatGeometryFor} from '../tanahoraflavio/runner-combat-geometry.mjs';
 const running=()=>{const r=createRun();startRun(r);r.nextRaid=Infinity;return r;};
 function bossRun(type='xandao',width=480){
  const r=running();r.viewportWidth=width;r.bossBag=[type];r.nextBossAt=0;
@@ -9,7 +10,9 @@ function bossRun(type='xandao',width=480){
 test('ataque nasce junto ao chefão dentro da área visível em celular e desktop',()=>{
  for(const width of [480,620,900]){
   const r=bossRun('xandao',width);r.boss.nextAttack=0;advanceRun(r,1/120,()=>.5);
-  const attack=r.obstacles.at(-1);assert.ok(attack.x>=width-145&&attack.x<=width-60,'origem coerente com a posição do chefão: '+attack.x);
+  const attack=r.obstacles.at(-1),pose=bossArenaPose(r.boss,width),g=combatGeometryFor(r.boss.type,{frame:2,facing:-1});
+  assert.ok(attack.x>=0&&attack.x+attack.width<=width);
+  assert.ok(Math.abs(attack.launchX-pose.x-g.muzzle.x)<.001);
  }
 });
 test('inimigos comuns também nascem na borda da área de jogo real',()=>{

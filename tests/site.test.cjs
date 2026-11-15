@@ -125,11 +125,16 @@ test('layout e controles cabem em 320, 390, 768 e 1440 pixels', async () => {
   try {
     for (const width of [320,390,768,1440]) {
       await page.setViewportSize({width,height:1000});
-      await page.locator('#runner-canvas').waitFor({state:'visible',timeout:1500});
+      await page.waitForFunction(()=>{
+        const c=document.getElementById('runner-canvas');
+        if(!c?.style.aspectRatio)return false;
+        const dpr=Math.min(window.devicePixelRatio||1,2);
+        return c.width===Math.round(c.getBoundingClientRect().width*dpr);
+      });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),true,`overflow em ${width}px`);
       for (const id of ['days','hours','minutes','seconds']) assert.ok(Number.isFinite(Number(await page.locator('#'+id).textContent())));
       const canvas = await page.locator('#runner-canvas').boundingBox();
-      assert.ok(canvas.width <= width && canvas.height >= 150);
+      assert.ok(canvas.width <= width && canvas.height >= 150,`pista ${canvas.width}×${canvas.height} em viewport de ${width}px`);
     }
     assert.equal(await page.locator('.sources').count(),0);
     assert.equal(await page.locator('.compact-legal').count(),0,'nota retirada conforme o print do usuário');
