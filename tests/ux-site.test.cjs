@@ -1212,8 +1212,17 @@ test('controle continua disponível ao retornar pelo histórico da página',asyn
 test('configurações bloqueiam teclas e controles da pista sem gastar suprimentos',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
  try{
-  await begin(page);await page.evaluate(()=>{const r=__testRun;for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;r.obstacles=[];r.pickups=[];r.reserveShields=1;});
-  await page.locator('#game-settings summary').click();await page.locator('.control-bindings-scroll').focus();
+  await begin(page);await page.evaluate(async()=>{
+   const {storyBossAt}=await import('./runner-bosses.mjs'),r=__testRun;
+   for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
+   r.obstacles=[];r.pickups=[];r.reserveShields=1;
+   r.boss={...storyBossAt(0),combat:true,hp:18,maxHp:18,total:18,remaining:18,fired:0,age:0,phase:'recover',phaseFor:100,nextAttack:100};
+  });
+  await page.waitForFunction(()=>['game-attack','game-reserve-shield','game-weapon-select'].every(id=>!document.getElementById(id).disabled));
+  await page.locator('#game-attack').waitFor();
+  await page.locator('#game-settings summary').click();
+  await page.waitForFunction(()=>['game-attack','game-reserve-shield','game-weapon-select'].every(id=>document.getElementById(id).disabled));
+  await page.locator('.control-bindings-scroll').focus();
   const before=await page.evaluate(()=>({ammo:__testRun.ammo,reserve:__testRun.reserveShields,x:__testRun.player.x,elapsed:__testRun.elapsed}));
   await page.keyboard.press('j');await page.keyboard.press('e');await page.keyboard.press('ArrowRight');
   await page.locator('#runner-canvas').dispatchEvent('pointerdown',{button:0,pointerId:98,pointerType:'touch',isPrimary:true,clientX:100,clientY:100});
