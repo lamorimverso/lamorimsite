@@ -27,7 +27,7 @@ function initRunner() {
   if (!canvas || !section) return;
   // Uma aba pode ter conservado o HTML anterior enquanto os módulos já
   // mudaram. Atualizar a página uma vez evita inicializar sobre IDs antigos.
-  if(!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-select")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-options-panel")||!$("game-help")||!$("game-attack")||!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-expand-label")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
+  if(!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-select")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-options-panel")||!$("game-attack")||!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-expand-label")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
     const url=new URL(location.href);
     if(url.searchParams.get("ui")!=="20261115-custom-controls"){
       url.searchParams.set("ui","20261115-custom-controls");location.replace(url.href);
@@ -380,7 +380,7 @@ function initRunner() {
     shotSounds.reset();lastHeroShotHeard=0;
     run=createRun({assisted:preferences.assisted,mode:$("game-mode-story").checked?"story":"endless"});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);movementSounds.reset(run);landingUntil=0;
     if(!supportReady)prepareSupport();
-    $("game-settings").open=false;$("game-options-panel").open=false;$("game-help").open=false;
+    $("game-settings").open=false;$("game-options-panel").open=false;
     crouchPose=0;lastPoseFrame=performance.now();
     lastCollected=0;lastPower="";lastStatus="";lastEvents=0;lastLives=1;
     resetFrameClock(frameClock,performance.now());

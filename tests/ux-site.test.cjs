@@ -715,7 +715,7 @@ test('disparo fica visível, respeita a tecla configurada, cancela troca mantida
  }finally{await context.close();}
 });
 
-test('engrenagem contém só comandos, com opções e créditos separados',async()=>{
+test('engrenagem mantém comandos e opções sem a seção removida de ajuda',async()=>{
  const {context,page,errors}=await open({viewport:{width:390,height:844}});
  try{
   await page.locator('#game-settings summary').click();
@@ -724,11 +724,9 @@ test('engrenagem contém só comandos, com opções e créditos separados',async
   assert.equal(await page.locator('#game-control-bindings tbody tr').count(),8);assert.match(await page.locator('[data-bind-action=right][data-bind-device=keyboard]').textContent(),/D.*→/);
   const box=await page.locator('#game-settings').boundingBox();assert.ok(box.height<420,'painel de comandos compacto');
   assert.equal(await page.locator('#game-options-panel').evaluate(e=>e.open),false);
-  assert.equal(await page.locator('#game-help').evaluate(e=>e.open),false);
+  assert.equal(await page.locator('#game-help').count(),0);
   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
   await page.locator('#game-settings').screenshot({path:path.resolve(__dirname,'../ux-captures/compact-controls-390.png')});
-  await page.locator('#game-help summary').click();assert.ok(await page.locator('#game-help a').count()>2,'fontes e créditos preservados');
-  assert.equal(await page.locator('#game-help p').first().isVisible(),true,'a ajuda preservada não herda o estilo oculto antigo');
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
