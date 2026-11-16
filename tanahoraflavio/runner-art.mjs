@@ -1,8 +1,8 @@
-import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=d4e471a4d682';
-import {drawSpecialRunner} from './runner-character-art.mjs?v=a9403256b879';
-export {drawHeroShot} from './runner-character-art.mjs?v=a9403256b879';
+import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=f79ef9e1d27f';
+import {drawSpecialRunner} from './runner-character-art.mjs?v=2b02f5b89e18';
+export {drawHeroShot} from './runner-character-art.mjs?v=2b02f5b89e18';
 import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=532ce9f60515";
-import {CAMPAIGN_PROP_COLORS,drawCampaignProp} from './runner-campaign-art.mjs?v=b9520dc88107';
+import {CAMPAIGN_PROP_COLORS,drawCampaignProp} from './runner-campaign-art.mjs?v=9cc4e669f36d';
 // Personagens em atlas WebP; itens e perigos continuam vetoriais em Canvas.
 const INK='#292337',CREAM='#fff6e5';
 function oval(c,x,y,rx,ry,fill,stroke=INK,w=1.8){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=w;c.stroke();}}

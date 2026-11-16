@@ -30,50 +30,56 @@ function arrow(c,x,y,hue,sign=1){line(c,[[x-11*sign,y],[x+10*sign,y]],hue,3);lin
 // as drawCompleteWeapon, so the silhouette follows the actual hitbox.
 export function drawCampaignProp(c,{type,x=0,y=0,width=60,height=48,phase=0,reducedMotion=false}={}){
  if(!Object.hasOwn(CAMPAIGN_PROP_COLORS,type)||![x,y,width,height].every(Number.isFinite)||width<=0||height<=0)return false;
- const tone=CAMPAIGN_PROP_COLORS[type],sway=reducedMotion?0:Math.sin((Number(phase)||0)*.34);
+ const tone=CAMPAIGN_PROP_COLORS[type],sway=reducedMotion?0:Math.sin((Number(phase)||0)*.72),flutter=reducedMotion?0:Math.sin((Number(phase)||0)*.96);
  c.save();c.translate(x,y);c.scale(width/60,height/48);
  switch(type){
  case 'network-panel':
   for(const [i,n] of [[-1,-7],[0,-14],[1,-6]]){
-   const xx=i*17;box(c,xx-9,n-24,18,25,4,'#294c58');box(c,xx-6,n-21,12,12,2,tone,null);
+   const xx=i*17;
+   if(i!==0)loop(c,'#527b81',2,()=>{c.moveTo(xx,n+1);c.quadraticCurveTo(xx+flutter*5,-2,0,-2);c.lineTo(0,-14);});
+   c.save();c.translate(xx,n+1);c.rotate(i*sway*.2);c.translate(-xx,-n-1);
+   box(c,xx-9,n-24,18,25,4,'#294c58');box(c,xx-6,n-21,12,12,2,tone,null);
    for(const dot of [-3,2])oval(c,xx+dot,n-5,1,1,i===0?'#fff2a9':'#b4edd5',null);
-   if(i!==0)line(c,[[xx,n+1],[xx,-2],[0,-2],[0,-14]],'#527b81',2);
+   c.restore();
   }
   break;
  case 'signal-pulse':
-  for(const w of [29,23,17])oval(c,0,-23,w,w*.61,w===29?'#f3bb7770':null,w===23?'#fff0cb':tone,w===17?2.5:1.8);
-  poly(c,[[-14,-22],[-6,-22],[-1,-30],[3,-15],[7,-24],[14,-24],[9,-20],[3,-12],[-1,-25],[-5,-19]],CREAM,'#875c48');
+  for(const w of [29,23,17]){const pulse=w+(w===23?sway*3:-sway*2);oval(c,0,-23,pulse,pulse*.61,w===29?'#f3bb7770':null,w===23?'#fff0cb':tone,w===17?2.5:1.8);}
+  poly(c,[[-14,-22],[-6,-22],[-1,-30+flutter*3],[3,-15],[7,-24],[14,-24],[9,-20],[3,-12-flutter*3],[-1,-25],[-5,-19]],CREAM,'#875c48');
   break;
  case 'arrow-panel':
   poly(c,[[-27,-41],[16,-41],[28,-24],[16,-7],[-27,-7],[-19,-24]],'#54436e');
   poly(c,[[-21,-36],[14,-36],[23,-24],[14,-12],[-21,-12],[-14,-24]],tone,'#efd3eb');
-  arrow(c,-1,-24,'#fff0df');break;
+  arrow(c,-1+sway*5,-24,'#fff0df');break;
  case 'garden-box':
   poly(c,[[-26,-20],[26,-20],[22,-4],[-22,-4]],'#937152','#59463d');
   box(c,-28,-22,56,6,2,'#c48766','#684d3e');
   for(const [i,yy] of [[-2,-32],[-1,-39],[0,-34],[1,-43],[2,-29]]){
-   const xx=i*9;line(c,[[xx,-20],[xx-2,yy]],'#486f56',2);
-   oval(c,xx-4,yy+4,5,3,tone,'#507250');oval(c,xx+3,yy+1,5,3,'#accc7d','#587754');
+   const xx=i*9;c.save();c.translate(xx,-20);c.rotate((sway+flutter*i*.25)*.22);c.translate(-xx,20);
+   line(c,[[xx,-20],[xx-2,yy]],'#486f56',2);
+   oval(c,xx-4,yy+4,5,3,tone,'#507250');oval(c,xx+3,yy+1,5,3,'#accc7d','#587754');c.restore();
   }
   break;
  case 'stage-spotlight':
+  line(c,[[-18,-32],[-23,-32],[-23,-43],[23,-43],[23,-32],[18,-32]],'#6e566c',2);
+  c.save();c.translate(0,-32);c.rotate(sway*.23);c.translate(0,32);
   poly(c,[[-11,-20],[11,-20],[26,-2],[-26,-2]],'#f3cc706f','#d69b53',1);
   box(c,-16,-43,32,23,5,'#4f4057');
   oval(c,0,-28,14,8,tone,'#fff1c5',2);
-  line(c,[[-6,-29],[5,-31]],CREAM,2);line(c,[[-18,-32],[-23,-32],[-23,-43],[23,-43],[23,-32],[18,-32]],'#6e566c',2);
+  line(c,[[-6,-29],[5,-31]],CREAM,2);c.restore();
   break;
  case 'rotating-sign':
   line(c,[[0,-4],[0,-17]],'#645064',4);
-  c.save();c.translate(0,-27);c.rotate(sway*.12);poly(c,[[-22,-12],[15,-12],[24,0],[15,12],[-22,12]],tone,'#6e4956');
+  c.save();c.translate(0,-27);c.rotate(sway*.22);poly(c,[[-22,-12],[15,-12],[24,0],[15,12],[-22,12]],tone,'#6e4956');
   line(c,[[-19,-8],[12,-8]],'#ffb994',1.6);arrow(c,-1,0,CREAM);c.restore();break;
  case 'debate-card':
-  poly(c,[[-26,-41],[19,-41],[26,-34],[26,-10],[2,-10],[-7,-4],[-6,-10],[-26,-10]],CREAM,'#715158');
+  paint(c,CREAM,()=>{c.moveTo(-26,-41);c.quadraticCurveTo(0,-41+sway*6,19,-41);c.lineTo(26,-34+sway*4);c.lineTo(26,-10+flutter*4);c.quadraticCurveTo(15,-10-flutter*3,2,-10);c.lineTo(-7,-4);c.lineTo(-6,-10);c.lineTo(-26,-10);c.closePath();},'#715158');
   box(c,-23,-37,46,7,2,tone,null);
-  line(c,[[-17,-25],[-5,-25]],'#945969',2.2);line(c,[[-17,-20],[10,-20]],'#806876',1.8);
-  line(c,[[-17,-15],[6,-15]],'#806876',1.8);break;
+  line(c,[[-17,-25],[-5,-25+sway*2]],'#945969',2.2);line(c,[[-17,-20],[10,-20+flutter*3]],'#806876',1.8);
+  line(c,[[-17,-15],[6,-15+flutter*2]],'#806876',1.8);break;
  case 'baton-wave':
-  for(const [i,dy] of [[-1,-8],[0,0],[1,8]])loop(c,i===0?'#f7dfb9':tone,i===0?3.3:2.4,()=>{c.moveTo(-25,-20+dy);c.bezierCurveTo(-11,-33+dy,3,-11+dy,24,-24+dy);});
-  for(const xx of [-16,0,16])oval(c,xx,-33+xx*.2,2,2,tone,null);
+  for(const [i,dy] of [[-1,-8],[0,0],[1,8]])loop(c,i===0?'#f7dfb9':tone,i===0?3.3:2.4,()=>{c.moveTo(-25,-20+dy);c.bezierCurveTo(-11,-33+dy+sway*6,3,-11+dy-flutter*7,24,-24+dy+sway*3);});
+  for(const xx of [-16,0,16])oval(c,xx,-33+xx*.2+flutter*2,2,2,tone,null);
   break;
  case 'wind-flag':
   line(c,[[-20,-3],[-20,-43]],'#385c6c',3.2);
@@ -82,12 +88,13 @@ export function drawCampaignProp(c,{type,x=0,y=0,width=60,height=48,phase=0,redu
   break;
  case 'inspection-gate':
   for(const xx of [-21,21]){box(c,xx-3,-36,6,34,2,'#6a675b');box(c,xx-6,-5,12,4,1,'#454b4d');}
+  c.save();c.translate(0,sway*3);
   box(c,-27,-29,54,11,2,tone,'#6b554a');
   for(const xx of [-21,-7,7,21])line(c,[[xx-3,-20],[xx+3,-27]],'#fff0c4',3.2);
-  oval(c,-21,-38,3.5,4,'#f5ca76','#8f6648');oval(c,21,-38,3.5,4,'#f5ca76','#8f6648');break;
+  c.restore();oval(c,-21,-38,3.5,4,'#f5ca76','#8f6648');oval(c,21,-38,3.5,4,'#f5ca76','#8f6648');break;
  case 'crowd-lane':
   poly(c,[[-28,-4],[-17,-30],[17,-30],[28,-4]],'#d0ead8','#477966');
-  for(const xx of [-15,0,15])line(c,[[xx-5,-16],[xx,-22],[xx+5,-16]],tone,3);
+  for(const xx of [-15,0,15])line(c,[[xx-5,-16+sway*3],[xx,-22+sway*3],[xx+5,-16+sway*3]],tone,3);
   line(c,[[-18,-10],[18,-10]],'#fffbdd',2);break;
  }
  c.restore();return true;

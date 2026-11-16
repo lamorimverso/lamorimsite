@@ -2,19 +2,19 @@ import {normalizeControls,keyboardActionFor,mouseActionFor,keyLabel} from './run
 import {createControlSettings} from './runner-control-settings.mjs?v=25524a717d9e';
 import {createGamepadDriver} from './runner-gamepad.mjs?v=18383546c2cd';
 import {HERO_POWERS,heroPowerFor,cycleHeroPower} from './runner-earned-powers.mjs?v=432ca45a76e4';
-import {updateCombatHUD} from './runner-combat-hud.mjs?v=1f76f3dd53da';
+import {updateCombatHUD} from './runner-combat-hud.mjs?v=bec1e196e73e';
 import {createMovementSoundDirector} from './runner-movement-audio.mjs?v=6411ef96c0d1';
-import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=75250b011716';
+import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=82c942b39f83';
 import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
 import {createShotSoundTracker} from './runner-shot-events.mjs?v=a3769f250d68';
 import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=245ba013c167';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=e0ff8410b8d8";
+import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=57dcad52745f";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=01fa5c1830b5';
-import {drawCampaignCrowd} from './runner-campaign-art.mjs?v=b9520dc88107';
+import {drawCampaignCrowd} from './runner-campaign-art.mjs?v=9cc4e669f36d';
 import {bossCounterWindow} from './runner-bosses.mjs?v=245ba013c167';
-import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=cae2e7ad8e1d';
-import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=8ef4043ce543";
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=ae7ca7b2e514';
+import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=2090bc2c60d2";
 import { createGameAudio } from "./runner-audio.mjs?v=3d359f7e85fe";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=d5e017561fd6";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=527b9c811649";
@@ -853,7 +853,7 @@ function initRunner() {
     }
     for(const item of run.pickups)pickup(item);
     for(const item of run.obstacles){ctx.save();if(item.returning&&!item.reflected)ctx.globalAlpha*=.4;obstacle(item);ctx.restore();}
-    for(const shot of run.heroShots||[])drawHeroProjectile(ctx,shot,WORLD.ground);
+    for(const shot of run.heroShots||[])drawHeroProjectile(ctx,shot,WORLD.ground,{reducedMotion:prefersReducedMotion()});
     character();
   }
   // A controller is another held-input source, with neutral rearming after menus/focus.
