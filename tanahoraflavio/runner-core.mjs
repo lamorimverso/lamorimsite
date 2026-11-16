@@ -7,7 +7,7 @@ export {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from '.
 import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=1eda01496613';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=043d40fd8ef2';
 import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
-import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=75250b011716';
+import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=82c942b39f83';
 import {regularCastMuzzle} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=17aae58c9bc9';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';

@@ -138,6 +138,38 @@ test('começar deixa a contagem compacta e a pista/comandos alinhados na tela',a
   assert.equal(await page.locator('#game-settings').evaluate(e=>e.open),false);assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
+for(const viewport of [{width:1365,height:650},{width:390,height:844},{width:844,height:390}])test(`reiniciar preserva a rolagem escolhida e a posição da pista: ${viewport.width}×${viewport.height}`,async()=>{
+ const touch=viewport.width===390;
+ const {context,page,errors}=await open(viewport,{instrument:true,...(touch?{hasTouch:true,isMobile:true}:{})});
+ try{
+  await page.locator('#game-start').click();
+  for(let attempt=0;attempt<2;attempt++){
+   await page.evaluate(()=>{
+    const r=__journeyRun;for(const key of ['nextObstacle','nextBossAt','nextRaid','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[key]=Infinity;
+    r.obstacles=[];const track=document.querySelector('.game-viewport').getBoundingClientRect();
+    const top=Math.min(110,Math.max(12,(innerHeight-track.height)/2));
+    scrollTo(0,track.top+scrollY-top);
+   });
+   await page.evaluate(()=>{__journeyRun.obstacles=[{x:125,width:34,height:44,type:'pf',action:'jump',speed:0}];});
+   await page.getByRole('button',{name:'Tentar de novo',exact:true}).waitFor();
+   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+   const before=await page.evaluate(()=>({scroll:scrollY,top:document.querySelector('.game-viewport').getBoundingClientRect().top}));
+   if(touch)await page.locator('#game-start').tap();
+   else if(viewport.width===844){await page.locator('#game-start').evaluate(e=>e.focus({preventScroll:true}));await page.keyboard.press('Enter');}
+   else await page.locator('#game-start').click();
+   await page.waitForFunction(()=>__journeyRun.status==='running');
+   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+   const after=await page.evaluate(()=>({scroll:scrollY,top:document.querySelector('.game-viewport').getBoundingClientRect().top,focused:document.activeElement.id}));
+   assert.ok(Math.abs(after.scroll-before.scroll)<=1,`rolagem não muda: ${JSON.stringify({before,after})}`);
+   assert.ok(Math.abs(after.top-before.top)<=1,'pista permanece no mesmo lugar');
+   assert.equal(after.focused,'runner-canvas');
+  }
+  await page.evaluate(()=>{__journeyRun.nextObstacle=Infinity;const old=scrollY;scrollBy(0,-20);globalThis.__manualScroll=scrollY-old;});
+  assert.ok(Math.abs(await page.evaluate(()=>__manualScroll))>1,'rolagem manual permanece disponível');
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
 test('movimento reduzido evita os tamanhos intermediários da transformação',async()=>{
  const {context,page,errors}=await open({width:390,height:844},{reducedMotion:'reduce'});
  try{
