@@ -107,8 +107,8 @@ test('recortes pré-calculados conservam a orientação original à direita em t
   if(pose.landing){
    assert.deepEqual(context.transforms[0],['translate',100,200],'a pose mantém o pivô de apoio');
    assert.ok(context.transforms.filter(call=>call[0]==='scale').every(([,x,y])=>x===y&&x>0),'o rig não inverte nem deforma a arte');
-   assert.equal(context.drawn.length,4,'usa cabeça, sapatos e item do atlas original');
-   assert.ok(context.drawn.every(([image])=>image===images[Object.keys(definitions).indexOf('heroCrouch')]));
+   assert.equal(context.drawn.length,1,'desenha um único quadro ilustrado com o corpo todo');
+   assert.equal(context.drawn[0][0],images[Object.keys(definitions).indexOf('heroActions')]);
   }else{
    assert.deepEqual(context.transforms,[],'corrida, salto e derrota mantêm a direção do atlas');
    assert.equal(context.drawn[0][0],images[0]);
@@ -138,16 +138,16 @@ test('atlas com dimensões incompatíveis é rejeitado e pode ser tentado de nov
 test('corrida base carrega antes dos apoios e falha opcional não descarta os personagens prontos',async t=>{
  const {sprites,images,load}=await browserEvents(t);
  const core=sprites.loadSprites(()=>{},{coreOnly:true});
- assert.equal(images.length,16,'folhas essenciais incluem combate, agachamento e objetos ilustrados');
+ assert.equal(images.length,17,'folhas essenciais incluem combate, as duas ações baixas e objetos ilustrados');
  for(const image of images)load(image);await core;
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'pf'}),true,'PF usa seu próprio desenho original enquanto a expansão carrega');
  for(const type of ['army-run','army-rio-run','army-argentina-run','army-florida-run','army-casa-branca-run'])assert.equal(sprites.drawCombatSprite(drawingContext(),{type,frame:2}),true,'uniforme inteiro é essencial: '+type);
  const extras=sprites.loadSprites(),error=extras.then(()=>null,e=>e);
- assert.equal(images.length,20,'as quatro folhas de apoio não baixam novamente as dezesseis prontas');
- images[16].onerror();assert.ok(await error);
+ assert.equal(images.length,21,'as quatro folhas de apoio não baixam novamente as dezessete prontas');
+ images[17].onerror();assert.ok(await error);
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'flavio'}),true);
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'pf'}),true);
- const retry=sprites.loadSprites();for(const image of images.slice(20))load(image);await retry;
+ const retry=sprites.loadSprites();for(const image of images.slice(21))load(image);await retry;
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'boulos'}),true);
 });
 test('rostos de todos os chefes normais estão nos atlas essenciais',async t=>{

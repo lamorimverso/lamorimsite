@@ -5,10 +5,20 @@ import {fileURLToPath} from 'node:url';
 import {drawActor,drawHeroShot,loadSprites} from '../tanahoraflavio/runner-art.mjs';
 import {heroShotPose} from '../tanahoraflavio/runner-hero-shot.mjs';
 import {HURT_BODY_SCALE,playerBodyFor} from '../tanahoraflavio/runner-body.mjs';
+import {heroActionFrameFor} from '../tanahoraflavio/runner-hero-actions.mjs';
 
 const require=createRequire(import.meta.url);
 let canvas;
 try{canvas=require('@napi-rs/canvas');}catch(error){if(error.code!=='MODULE_NOT_FOUND')throw error;}
+
+test('agachamento, deslize e recuperação selecionam quadros próprios',()=>{
+ assert.deepEqual([.2,.45,.8,1].map(crouchPose=>heroActionFrameFor({crouchPose})),[0,1,2,3]);
+ assert.deepEqual([.04,.14,.52,.94].map(slidePhase=>heroActionFrameFor({sliding:true,slidePhase})),[4,5,6,7]);
+ assert.equal(heroActionFrameFor({crouchPose:1,slidePose:.61,slidePhase:.52}),7);
+ assert.equal(heroActionFrameFor({crouchPose:1,slidePose:.61,slidePhase:.52,slideShot:{state:'recoil'}}),7,'o recuo não pula o recolhimento da perna');
+ assert.equal(heroActionFrameFor({crouchPose:1,slidePose:.06,slidePhase:.52}),3);
+ assert.equal(heroActionFrameFor({airborne:true,sliding:true}),null);
+});
 
 test('o deslize desenha uma silhueta baixa, estendida e apoiada, inclusive ao disparar',{
  skip:!canvas&&'A renderização em Canvas nativo é opcional. O teste de navegador mede os pixels em CI.'
@@ -21,10 +31,16 @@ test('o deslize desenha uma silhueta baixa, estendida e apoiada, inclusive ao di
  };
  t.after(()=>prior?Object.defineProperty(globalThis,'Image',prior):delete globalThis.Image);
  await loadSprites(()=>{},{coreOnly:true});
+ const frameContext=canvas.createCanvas(360,360).getContext('2d'),completeDraw=frameContext.drawImage.bind(frameContext);
+ for(const pose of [{landing:true},{landing:true,sliding:true}]){
+  let layers=0;frameContext.drawImage=(...args)=>{layers++;completeDraw(...args);};
+  assert.ok(drawActor(frameContext,{x:60,y:104,scale:.95,...pose}));
+  assert.equal(layers,1,'cada ação usa um quadro ilustrado inteiro, não membros recortados');
+ }
  const ratio=3,x=60;
  function alphaMask(args){
   const c=canvas.createCanvas(360,360).getContext('2d');c.scale(ratio,ratio);
-  assert.equal(drawActor(c,{x,y:104,scale:.95,groundedStride:true,...args}),true);
+  assert.equal(drawActor(c,{x,y:104,scale:.95,...args}),true);
   return c.getImageData(0,0,360,360).data;
  }
  function contourDelta(before,after){
@@ -76,8 +92,8 @@ test('o deslize desenha uma silhueta baixa, estendida e apoiada, inclusive ao di
  assert.deepEqual(rising,descending,'subida e descida percorrem a mesma dobra do corpo');
  assert.ok(slide.height<=playerBodyFor({hp:2,sliding:true}).terrainHeight+1&&slide.height<crouch.height-5,JSON.stringify({slide,crouch}));
  assert.ok(slide.width>=crouch.width+8,JSON.stringify({slide,crouch}));
- const push=measure(drawActor,{landing:true,sliding:true,slidePhase:.5,scale:.95});
- assert.ok(push.width>slide.width+2&&Math.abs(push.sole)<=1.5,'a passada alonga durante o deslize sem levantar as solas');
+ const retract=measure(drawActor,{landing:true,slidePose:.55,slidePhase:.55,scale:.95});
+ assert.ok(retract.width<slide.width-8&&Math.abs(retract.sole)<=1.5,'o calcanhar recolhe na saída do deslize');
  const startingSlide=measure(drawActor,{landing:true,sliding:true,slidePose:.5,scale:.95});
  assert.ok(startingSlide.width>crouch.width+2&&startingSlide.width<slide.width-2&&Math.abs(startingSlide.sole)<=1.5,'a perna estende aos poucos com a sola apoiada');
  const raised=measure(drawActor,{landing:true,sliding:true,scale:.95},{floor:81});

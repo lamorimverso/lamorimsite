@@ -13,18 +13,19 @@ async function setup(t){
 }
 function bounds(c){const {data,width,height}=c.getImageData(0,0,c.canvas.width,c.canvas.height);let x0=width,x1=-1,y0=height,y1=-1,n=0;for(let y=0;y<height;y++)for(let x=0;x<width;x++)if(data[(y*width+x)*4+3]>64){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);n++;}return {x0,x1,y0,y1,n};}
 test('four sampled frames of the bend lower the body and mirror without moving the grounded soles',{skip:!canvas},async t=>{
- const {sprites}=await setup(t),heights=[];
- for(const crouchPose of [.2,.45,.72,1]){
+ const {sprites}=await setup(t),heights=[],frames=[];
+ for(const crouchPose of [.22,.48,.85,1]){
   const poses=[];
   for(const facing of [1,-1]){
    const c=canvas.createCanvas(260,180).getContext('2d');
    assert.equal(sprites.drawSpriteActor(c,{type:'flavio',x:130,y:150,scale:.95,landing:true,crouchPose,facing}),true);
    const b=bounds(c);assert.ok(b.n>550);assert.ok(b.y1<=150&&b.y1>=149,'shoes keep the floor baseline');poses.push(b);
-   if(facing===1)heights.push(b.y1-b.y0+1);
+   if(facing===1){heights.push(b.y1-b.y0+1);frames.push(Buffer.from(c.getImageData(0,0,260,180).data).toString('base64'));}
   }
   assert.ok(Math.abs(poses[0].x0+poses[1].x1-259)<=1,'feet anchor stays fixed when facing changes');assert.equal(poses[0].y1,poses[1].y1);
  }
- assert.ok(heights.every((height,i)=>i===0||height<heights[i-1]),JSON.stringify(heights));
+ assert.ok(heights[0]>heights[1]&&heights[1]>heights[2]&&Math.abs(heights[2]-heights[3])<=1,JSON.stringify(heights));
+ assert.equal(new Set(frames).size,4,'the two squat holds are differently drawn');
  assert.ok(heights.at(-1)>=51&&heights.at(-1)<=58,JSON.stringify(heights));
 });
 test('release, recoil and recovery render distinct complete low poses and muzzle flash touches the new barrel',{skip:!canvas},async t=>{

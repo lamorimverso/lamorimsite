@@ -1,6 +1,7 @@
 import {soldierVariantFor} from './runner-soldier-variants.mjs?v=4bf435291c82';
-import {drawSpriteActor,drawCombatSprite} from './runner-sprites.mjs?v=307f5682b570';
-import {heroShotPose} from './runner-hero-shot.mjs?v=3466bc9f4812';
+import {drawSpriteActor,drawCombatSprite} from './runner-sprites.mjs?v=9e242007649d';
+import {heroShotPose} from './runner-hero-shot.mjs?v=276077df40b3';
+import {heroActionFrameFor} from './runner-hero-actions.mjs?v=4baecc7909c9';
 const INK='#292337';
 function line(c,points,color,width){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.lineCap='round';c.lineJoin='round';c.strokeStyle=color;c.lineWidth=width;c.stroke();}
 function oval(c,x,y,rx,ry,fill,stroke=INK,width=1.5){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke();}}
@@ -20,15 +21,16 @@ export function drawBossonariHead(c){
  line(c,[[-5,-6],[1,-5.4],[5,-6.4]],'#fff0db',1.4);line(c,[[-4,-.8],[3,-1.3]],'#edc8a5',1.2);
 }
 /** Firing uses complete illustrated keyframes; complete slide stays below high attacks. */
-export function drawHeroShot(c,{x=0,y=0,phase=0,age=0,crouching=false,crouchPose=crouching?1:0,sliding=false,slidePose=sliding?1:0,slidePhase=0,airborne=false,falling=false,reducedMotion=false,facing=1,alpha=1}={}){
+export function drawHeroShot(c,{x=0,y=0,phase=0,age=0,crouching=false,crouchPose=crouching?1:0,sliding=false,slidePose=sliding?1:0,slidePhase=sliding?.45:0,airborne=false,falling=false,reducedMotion=false,facing=1,alpha=1}={}){
  const low=crouching||sliding&&!airborne;
  const p=heroShotPose({age,crouching:low,airborne,facing});
  const type=low?'flavio-slide-shot':airborne?'flavio-air-shot':'flavio';
  const frame=p.state==='release'?2:p.state==='recoil'?1:p.settle<.8?3:0;
- const ready=(low&&!airborne&&drawSpriteActor(c,{type:'flavio',x,y,scale:.95,landing:true,crouchPose,sliding,slidePose,slidePhase,slideShot:p,reducedMotion,facing,alpha}))||
+ const posture={landing:true,crouchPose,sliding,slidePose,slidePhase,slideShot:p,reducedMotion};
+ const ready=(low&&!airborne&&drawSpriteActor(c,{type:'flavio',x,y,scale:.95,facing,alpha,...posture}))||
   drawCombatSprite(c,{type,x,y,scale:.95,frame,facing,alpha})||
   drawSpriteActor(c,{type:'flavio',x,y,phase,airborne,falling,landing:low,facing,alpha});
- if(ready&&p.state==='release'){
+ if(ready&&p.state==='release'&&(!low||airborne||heroActionFrameFor(posture)!==7)){
   c.save();c.translate(x+p.muzzle.x,y+p.muzzle.y);c.scale(p.facing,1);c.globalAlpha*=alpha;
   polygon(c,[[0,0],[5,-3],[4,-7],[10,-3],[17,0],[10,3],[4,7],[5,2]],'#fff4bc','#e6a24b',1.1);c.restore();
  }
