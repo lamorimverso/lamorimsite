@@ -1,4 +1,4 @@
-import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=03e5eaf9ccb0';
+import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=b67356b4e6e7';
 import {drawCombatSprite} from './runner-sprites.mjs?v=75f5261a8955';
 import {HERO_POWERS} from './runner-earned-powers.mjs?v=432ca45a76e4';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=043d40fd8ef2';

@@ -1,13 +1,13 @@
 import {drawCharacterBody,drawCharacterArm} from './runner-body-art.mjs?v=67badae0df52';
-import {drawBossonariHead} from './runner-character-art.mjs?v=09f7c2621823';
+import {drawBossonariHead} from './runner-character-art.mjs?v=67c98bf25df0';
 import {standingEnemyPose} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
 export {standingEnemyPose} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
 import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=75f5261a8955';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=043d40fd8ef2';
-import {drawMemeArmy} from './runner-art.mjs?v=1c087f685c95';
+import {drawMemeArmy} from './runner-art.mjs?v=9d08a96776de';
 import {regionalEmitterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 
-import {campaignAccentFor,drawCampaignBoss,drawCampaignCrowd} from './runner-campaign-art.mjs?v=9cc4e669f36d';
+import {CAMPAIGN_CAST_POINT,campaignAccentFor,campaignBossPoseFor,drawCampaignBoss,drawCampaignCrowd} from './runner-campaign-art.mjs?v=311bd72684f6';
 
 // Full illustrated combat sprites share the original running artwork style.
 // Coordinates are logical game pixels; y always remains the top of the deck.
@@ -68,12 +68,16 @@ function fallbackHead(c,type,accent){
 export function drawHoverEnemy(c,{type='haddad',x=0,y=0,scale=1,phase=0,preparing=false,attacking=false,recovering=false,hurt=false,reducedMotion=false,classId='sentinel',action='jump',progress,armyVariant,stageId='brasilia',enraged=false}={}){
  if(!Number.isFinite(x)||!Number.isFinite(y)||!Number.isFinite(scale)||scale<=0)return;
  const visual=regionalEmitterFor(type,stageId);type=visual.type;armyVariant??=visual.armyVariant;
- if(type==='povo'){drawCampaignCrowd(c,{x,y,scale,phase,reducedMotion});return;}
+ if(type==='povo'){drawCampaignCrowd(c,{x,y,scale,phase,reducedMotion,preparing,attacking,recovering,progress});return;}
  const p=standingEnemyPose({phase,preparing,attacking,recovering,hurt,reducedMotion,classId,action,progress}),accent=campaignAccentFor(type)??SUITS[type]?.[2]??'#dbc778';
  c.save();c.translate(x,y);c.scale(scale,scale);
  drawShip(c,p,accent,preparing,attacking,hurt);
- if(drawCampaignBoss(c,{type,pose:p})){
-  drawMagic(c,p,accent,preparing&&!hurt,attacking&&!hurt);
+ const campaignPose=campaignBossPoseFor(type,p,{phase,reducedMotion,action,progress});
+ if(campaignPose&&drawCampaignBoss(c,{type,pose:campaignPose})){
+  // The launch spark matches the unchanged engine origin. A marked lane does
+  // not fire from the hand, so its accent stays beside the visual gesture.
+  const cue=attacking&&action!=='move'?{arms:{left:{hand:{x:CAMPAIGN_CAST_POINT.x+7,y:CAMPAIGN_CAST_POINT.y}}}}:campaignPose;
+  drawMagic(c,cue,accent,preparing&&!hurt,attacking&&!hurt);
   if(hurt)line(c,[[22,-105],[30,-110]],CREAM,3);
   c.restore();return;
  }

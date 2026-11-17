@@ -191,3 +191,9 @@ O volume da música abaixa sob voz/alerta. Presenças são discretas e não inte
 ## Bordões de 14/11/2026
 
 Sete recortes originais de Dilma Rousseff, Soraya Thronicke, Flávio Dino e Alexandre de Moraes têm fonte, contexto e hashes em `runner-famous-voices.mjs`. [Documentação dos bordões](../../docs/ajudantes-escudo-ivermectina-2026-11-14.md). As lutas usam o catálogo conhecido; os arquivos de discurso genérico permanecem no acervo para consulta. Sem voz sintética ou clonagem.
+
+## Identidades sonoras de 17/11/2026
+
+Ana Elisa, Rick, Sofia, Guilherme Cortez, Érika, Renato Freitas, Jones, Maestro, Capitã, Fiscal e Povo têm efeitos não verbais próprios em `runner-encounter-sounds.mjs`. São sinais curtos sintetizados localmente pelo jogo. Não há novas gravações, vozes imitadas ou alterações em recortes, atribuições, legendas, trilha ou física.
+
+A entrada usa um motivo próprio. O aviso toca uma vez quando a arena se compromete com a sequência. Os três timbres alternados de lançamento só tocam quando a ameaça começa a se mover, inclusive na queda após o marcador. Os pulsos reais de Rick não preenchem o sétimo tempo, que é uma pausa. O impacto só dá retorno de dano quando Flávio perde energia. Renato, Fiscal e Povo usam retorno de passagem bloqueada, sem dano. Os sinais não são necessários para jogar: os avisos visuais continuam independentes do som.

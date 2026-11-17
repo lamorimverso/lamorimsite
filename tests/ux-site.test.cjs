@@ -19,7 +19,7 @@ before(async()=>{
  browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{})});
 });
 after(async()=>{await browser?.close();await new Promise(resolve=>server?.close(resolve));});
-async function open({instrument=false,instrumentAudio=false,instrumentCasting=false,instrumentHero=false,instrumentThreats=false,instrumentSprites=false,init,blockEntry=false,blockSupports=false,legacyFirst=false,initialSearch='',...options}={}){
+async function open({instrument=false,instrumentAudio=false,instrumentCasting=false,instrumentHero=false,instrumentThreats=false,instrumentSprites=false,instrumentCrowd=false,init,blockEntry=false,blockSupports=false,legacyFirst=false,initialSearch='',...options}={}){
  const context=await browser.newContext(options);
  await context.route(/^https:\/\//,route=>route.abort());
  if(blockSupports)await context.route(url=>/\/assets\/(?:allies-motion-)/.test(url.pathname),route=>route.abort());
@@ -43,6 +43,10 @@ async function open({instrument=false,instrumentAudio=false,instrumentCasting=fa
  if(instrumentSprites){
   const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-sprites.mjs'),'utf8');
   await context.route('**/runner-sprites.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+"\nconst drawOriginal=drawSpriteActor;drawSpriteActor=(c,args)=>{const rows=(globalThis.__actorMotion??=[]);rows.push({type:args.type,facing:args.facing,frame:spriteFrameFor(args.type,args)?.index});if(rows.length>1000)rows.shift();return drawOriginal(c,args);};"}));
+ }
+ if(instrumentCrowd){
+  const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-campaign-art.mjs'),'utf8');
+  await context.route('**/runner-campaign-art.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+'\nconst originalCrowd=drawCampaignCrowd;drawCampaignCrowd=(ctx,args)=>{const frames=(globalThis.__crowdFrames??=[]);frames.push(args);if(frames.length>300)frames.shift();return originalCrowd(ctx,args);};'}));
  }
  if(instrumentAudio){
   const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-audio.mjs'),'utf8');
@@ -1537,7 +1541,7 @@ test('rota de São Paulo, Brasília final e Infinito mantêm o destino correto',
 });
 
 test('Povo Brasileiro é travessia sem mira, disparo ou barra de vida',async()=>{
- const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
+ const {context,page,errors}=await open({instrument:true,instrumentCrowd:true,viewport:{width:390,height:844},reducedMotion:'reduce'});
  try{
   await begin(page);
   await page.evaluate(async()=>{
@@ -1549,6 +1553,9 @@ test('Povo Brasileiro é travessia sem mira, disparo ou barra de vida',async()=>
   assert.equal(await page.locator('#game-boss-health').isVisible(),false);
   assert.match(await page.locator('#game-battle-attack').textContent(),/Povo Brasileiro/);
   await page.keyboard.press('j');assert.equal(await page.evaluate(()=>__testRun.shotsFired),0);
+  await page.waitForFunction(()=>globalThis.__crowdFrames?.some(f=>f.preparing&&f.action==='move'&&f.reducedMotion));
+  await page.waitForFunction(()=>globalThis.__crowdFrames?.some(f=>f.attacking&&f.reducedMotion));
+  assert.equal(await page.evaluate(()=>__testRun.obstacles.some(o=>o.type==='crowd-lane')),true);
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });

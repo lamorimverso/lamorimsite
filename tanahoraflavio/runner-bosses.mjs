@@ -1,6 +1,6 @@
 import {STAGES,STORY_STAGES,SCENE_DISTANCE} from './runner-route-data.mjs?v=01fa5c1830b5';
-import {bossMechanicFor} from './runner-boss-mechanics.mjs?v=5083d1259455';
-import {BOSS_RANKS,bossProfileFor} from './runner-boss-profiles.mjs?v=1eda01496613';
+import {bossMechanicFor} from './runner-boss-mechanics.mjs?v=640e2bd41abb';
+import {BOSS_RANKS,bossProfileFor} from './runner-boss-profiles.mjs?v=740e8ab135c4';
 // Encontros ficcionais: quatro classes por cenário, sem mudar identidades.
 
 export const STORY_OPENING_DISTANCE=20800;
@@ -92,16 +92,24 @@ export function storyApproachAt(distance,index){
 }
 // A munição pode ficar reservada após a fase de carga. O corpo deve continuar
 // preparando-a, e uma segunda reserva nunca pode esconder o disparo em curso.
-export function bossPresentationFor(boss,obstacles=[]){
- const pending=obstacles.find(o=>o.bossAttack&&o.projectile&&o.waitFor>0&&!o.launched);
+export function bossPresentationFor(boss,obstacles=[],{continuousCast=false}={}){
+ const arenaCast=continuousCast&&boss.combat;
+ const pending=obstacles.find(o=>o.bossAttack&&o.projectile&&!o.launched&&
+  (o.waitFor>0||arenaCast&&o.storyVolley&&o.owner===boss.type));
+ // Cada batida da rajada tem um gesto. A reserva da História é criada um
+ // passo antes do lançamento, mesmo com espera zero: não voltar à pose neutra.
+ const beatWindup=.32,upcoming=arenaCast&&boss.phase==='attack'&&boss.volleyLeft>0&&boss.nextAttack<beatWindup;
+ const volley=boss.volleyPattern||boss.plannedAttack;
+ const beat=upcoming&&volley?.burstMode==='sequence'?volley.sequence?.[(volley.burst||1)-boss.volleyLeft]:null;
  const endlessCue=!boss.combat&&boss.nextAttack<.55&&boss.fired<boss.total;
- const attacking=boss.attackFlashFor>0,preparing=!attacking&&(boss.phase==='charge'||!!pending||endlessCue);
+ const attacking=boss.attackFlashFor>0,preparing=!attacking&&(boss.phase==='charge'||!!pending||upcoming||endlessCue);
  const recovering=!attacking&&!preparing&&boss.phase==='recover';
  const progress=attacking?1-boss.attackFlashFor/.26:preparing?
-  boss.phase==='charge'?1-boss.phaseFor/boss.telegraph:pending?1-pending.waitFor/.82:1-boss.nextAttack/.55:
+  boss.phase==='charge'?1-boss.phaseFor/boss.telegraph:pending?1-(pending.waitFor||0)/.82:
+   upcoming?1-boss.nextAttack/beatWindup:1-boss.nextAttack/.55:
   recovering?1-boss.phaseFor/boss.recover:0;
  return {attacking,preparing,recovering,progress:Math.max(0,Math.min(1,progress||0)),
-  action:attacking||recovering?boss.lastReleasedAction||boss.lastAction||'jump':pending?.action||boss.plannedAttack?.action||'jump'};
+  action:attacking||recovering?boss.lastReleasedAction||boss.lastAction||'jump':pending?.action||beat?.action||boss.plannedAttack?.action||'jump'};
 }
 export function bossArenaPose(boss,width=900){
  if(boss.reducedMotion)return {x:width-94,platformY:68};

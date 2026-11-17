@@ -11,16 +11,16 @@ import {heroPowerFor,grantBossPower,equipHeroPower,cycleHeroPower} from './runne
 export {grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=432ca45a76e4';
 import {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=01fa5c1830b5';
 export {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=01fa5c1830b5';
-import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=1eda01496613';
+import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=740e8ab135c4';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=043d40fd8ef2';
 import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
-import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=f973724a4ad7';
+import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=52e10e65adc3';
 import {regularCastMuzzle} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=d3b6a81b34b9';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
-import {BOSS_ARENA_RESERVE,BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,optionalStoryBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=65386943135d';
-export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=65386943135d';
-export {bossArenaPose} from './runner-bosses.mjs?v=65386943135d';
+import {BOSS_ARENA_RESERVE,BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,optionalStoryBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=cac93b5ab93b';
+export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=cac93b5ab93b';
+export {bossArenaPose} from './runner-bosses.mjs?v=cac93b5ab93b';
 // Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
 export const WORLD = Object.freeze({width:900,height:300,ground:246});
 // Envelope de todas as poses no atlas a .95 de escala, incluindo o agachamento.
@@ -251,7 +251,7 @@ export function createRun({assisted=false,seed,mode='endless',practiceId}={}) {
   ballot:{digits:'',message:''},
   event:'',events:0,movementSkills:createMovementSkills(),lastSkillReward:null,terrain:createTerrain(),player:{airJumpsUsed:0,grounded:true,supportY:0,sliding:false,slideRemaining:0,slideLatched:false,x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareProgress:0,jacareAge:0,nextJacareThreat:0,restoreFlashFor:0,coyoteUntil:0,jumpBufferedUntil:0,attackHeld:false,attackFor:0,attackCooldown:0,shotFacing:1,hp:HERO_MAX_HP,maxHp:HERO_MAX_HP,recoveryPending:false,terrainContact:null},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ammo:ROUTE_AMMO,ammoIdleFor:0,ammoReloadFor:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,recoveryReadyAt:0,shieldFor:0,graceFor:0,reserveShields:0,allyShieldProgress:0,allyHelpCount:0,
-  lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,phantomCloud:null,
+  lastPickup:null,lastTraversalBlock:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,phantomCloud:null,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:practice?startDistance:null,bossCooldown:0,
   raid:null,nextRaid:null,raids:0,raidStages:{},raidStageCoverage:{},lastFact:-1,cameo:null,overheadCount:0,lastOverheadActor:null,
   seenOverheadActors:[],seenGroundActors:[],lastGroundActor:null,
@@ -547,9 +547,16 @@ function interceptProjectile(run,shot,o){
  }else{o.destroyed=true;o.counted=true;o.passed=true;}
  run.clearedAt={x:o.x+o.width/2,remaining:.25};
 }
+// Uma sequência comprometida mantém as ameaças reais mesmo após o golpe
+// letal e dá tempo de ler a pausa; nenhum novo ataque é preparado por isso.
+function storyVolleyPendingVictory(boss){
+ const settle=boss.volleyPattern?.finishBeforeVictory;
+ return boss.combat&&settle>0&&(boss.phase==='attack'||
+  boss.phase==='recover'&&boss.recover-boss.phaseFor<Math.min(settle,boss.recover));
+}
 function advanceReflectedProjectile(run,o,dt){
  const reflected=o.reflection,boss=run.boss;
- if(!boss||reflected.boss!==boss||boss.traversal||boss.hp<=0){o.destroyed=true;return;}
+ if(!boss||reflected.boss!==boss||boss.traversal||boss.hp<=0&&!storyVolleyPendingVictory(boss)){o.destroyed=true;return;}
  reflected.age+=dt;
  const pose=bossArenaPose(boss,visibleWidth(run));
  const x=o.x+o.width/2,dx=pose.x-x,dy=pose.platformY+48-o.y,distance=Math.hypot(dx,dy),pace=610*dt;
@@ -789,6 +796,7 @@ function resolveBossDodges(run){
  for(const o of run.obstacles)if(o.bossAttack&&!o.counted&&(o.falling?o.age>=o.warningFor+o.fallFor:o.x+o.width<playerX(run))){o.counted=true;if(run.boss.combat)run.boss.evaded++;else run.boss.remaining--;}
  const boss=run.boss;
  if(boss.combat?boss.hp>0:!(Number.isFinite(boss.hp)&&boss.hp<=0)&&(boss.fired<boss.total||boss.remaining>0))return;
+ if(storyVolleyPendingVictory(boss))return;
  if(!boss.combat&&boss.hp>0&&run.obstacles.some(o=>o.reflected&&!o.destroyed&&o.reflection?.boss===boss))return;
  if(!boss.traversal)grantBossPower(run,boss.type);run.lastBoss=boss.type;run.boss=null;run.ammo=Math.min(ROUTE_AMMO,run.ammo);run.bossesDefeated++;rewardMovementVictory(run,boss);run.bossCooldown=4;
  run.heroShots=[];run.player.attackHeld=false;run.obstacles=[];
@@ -869,7 +877,8 @@ function applyPendingRecovery(run){
 }
 function finishImpact(run,hit,fatalFall){
  const p=run.player;
- run.lastHit={type:hit.type,action:hit.action||(hit.projectile&&(hit.targetY??hit.y)>50?'crouch':'jump')};
+ const actor=hit.sourceActor||hit.owner;
+ run.lastHit={type:hit.type,action:hit.action||(hit.projectile&&(hit.targetY??hit.y)>50?'crouch':'jump'),...(actor?{actor}:{})};
  if(hit.source)p.terrainContact=hit.source;
  else if(hit!==null){
   hit.counted=true;hit.contactHit=true;
@@ -890,7 +899,11 @@ export function canContinueRun(run){
 export function continueRun(run){
  if(!canContinueRun(run))return false;
  const p=run.player,b=run.boss;
- if(b&&!b.combat){
+ if(b?.combat){
+  // A continuação remove as ameaças emitidas, mas a rajada ainda guarda
+  // essas referências. Resolva-as como não esquivadas antes de limpar a pista.
+  for(const shot of b.volleyShots??[])if(!shot.resolved){shot.resolved=true;shot.contactHit=true;}
+ }else if(b){
   const cleared=run.obstacles.filter(o=>o.bossAttack&&!o.counted).length;
   b.remaining=Math.max(0,b.remaining-cleared);
  }
@@ -1241,6 +1254,7 @@ export function advanceRun(run,seconds,rng){
  // cannot clear the passage, even with an already-active reserve shield.
  if(run.boss?.traversal&&hit?.bossAttack){
   hit.counted=true;hit.contactHit=true;run.graceFor=1.1;
+  run.lastTraversalBlock={actor:run.boss.type,type:hit.type};
   announce(run,'Passagem bloqueada. Leia o próximo sinal e tente outra abertura.');return;
  }
  if(hit&&!protectedNow)finishImpact(run,hit,false);

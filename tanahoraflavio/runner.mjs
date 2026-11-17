@@ -7,20 +7,20 @@ import {normalizeControls,keyboardActionFor,mouseActionFor,keyLabel} from './run
 import {createControlSettings} from './runner-control-settings.mjs?v=25524a717d9e';
 import {createGamepadDriver} from './runner-gamepad.mjs?v=18383546c2cd';
 import {HERO_POWERS,heroPowerFor,cycleHeroPower} from './runner-earned-powers.mjs?v=432ca45a76e4';
-import {updateCombatHUD} from './runner-combat-hud.mjs?v=e0feb68d65fe';
+import {updateCombatHUD} from './runner-combat-hud.mjs?v=2880beb23e71';
 import {createMovementSoundDirector,movementIsAirborne} from './runner-movement-audio.mjs?v=31522b0ccc1e';
-import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=f973724a4ad7';
+import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=52e10e65adc3';
 import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
-import {createShotSoundTracker} from './runner-shot-events.mjs?v=a3769f250d68';
-import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=65386943135d';
+import {createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=3385b73f9cf9';
+import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=cac93b5ab93b';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_PRESSES, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, recoverJacareRun, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=170dca3615a6";
+import { WORLD, PLAYER, JACARE_RECOVERY_PRESSES, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, recoverJacareRun, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=ea333b3a3825";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=01fa5c1830b5';
-import {drawCampaignCrowd} from './runner-campaign-art.mjs?v=9cc4e669f36d';
-import {bossCounterWindow} from './runner-bosses.mjs?v=65386943135d';
-import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=d7ea5b2830ca';
-import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=1c087f685c95";
-import { createGameAudio } from "./runner-audio.mjs?v=1d496e82860c";
+import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=311bd72684f6';
+import {bossCounterWindow} from './runner-bosses.mjs?v=cac93b5ab93b';
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=aab1c14bb205';
+import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=9d08a96776de";
+import { createGameAudio } from "./runner-audio.mjs?v=d93419fd0e46";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=d5e017561fd6";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=73113e4c788c";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
@@ -98,6 +98,9 @@ function initRunner() {
     note.title=clip?clip.speaker+". "+clip.context:"";
   }});
   const shotSounds=createShotSoundTracker((actor,weapon,shot)=>{if(!audio.enemyShot(actor,weapon))audio.effect(weaponEffect(shot));});
+  const encounterSounds=createEncounterSoundTracker((kind,actor,weapon)=>{
+    if(kind==='windup')audio.enemyWindup(actor);else audio.traversalBlock(actor,weapon);
+  });
   const voices=createVoiceDirector({play:(id,options)=>audio.voice(id,options),selector:audio.voiceSelector});
   const movementSounds=createMovementSoundDirector({play:name=>audio.movement(name)});
   $("game-sound-label").textContent=audio.enabled?"Som ligado":"Som desligado";
@@ -370,6 +373,7 @@ function initRunner() {
     if(['meme-ghost','lhand','parachute-cross','cloroquina-prop','ivermectina-prop'].includes(type))return 'magic';
     return item?.falling?'drop':item?.action==='crouch'?'high':'low';
   }
+  function playPlayerImpact(){if(!audio.enemyImpact(run.lastHit?.actor,run.lastHit?.type))audio.effect('hit');}
   function frame(now) {
     frameId=0;if(run.status!=="running")return;
     if($("game-settings").open){resetFrameClock(frameClock,now);return;}
@@ -381,14 +385,15 @@ function initRunner() {
     for(let i=0;i<timing.steps&&run.status==="running";i++){
       const wasAirborne=movementIsAirborne(run.player),pending=run.player.jumpBufferedUntil>0&&run.player.velocity<=0;
       advanceRun(run,timing.step);
+      encounterSounds.update(run);
       if(wasAirborne&&!movementIsAirborne(run.player))landingUntil=run.elapsed+.12;
       if(pending&&run.player.jumpBufferedUntil===0&&run.player.velocity>0)bufferedTakeoff=true;
     }
     updateUI();
-    if(run.status==="running"&&run.lastHit!==before.hit)audio.effect("hit");
+    if(!before.boss&&run.boss){audio.enemyEntrance(run.boss);voices.event("boss",run);}
+    if(run.status==="running"&&run.lastHit!==before.hit)playPlayerImpact();
     else if(run.player.hp>before.hp)audio.effect("restore");
     else if(before.boss&&!run.boss)audio.effect("victory");
-    else if(!before.boss&&run.boss){audio.enemyEntrance(run.boss);voices.event("boss",run);}
     else if(run.collected>before.collected)audio.effect(run.lastPickup==="ze-gotinha"?"transform":run.lastPickup==="ally"?"ally":"pickup");
     if(run.spawnedObstacles>before.spawned){
       const newest=run.obstacles.at(-1);
@@ -405,7 +410,7 @@ function initRunner() {
     voices.update(run,{safe:nearest>.9});
     shotSounds.update(run.obstacles,run.boss?.type);
     audio.background({active:run.status==="running",pressure:difficultyAt(run.distance,run.elapsed).pressure,boss:!!run.boss,raid:run.raid?.phase==="active"});
-    if(run.status==="over"&&run.lastHit!==before.hit)audio.effect("hit");
+    if(run.status==="over"&&run.lastHit!==before.hit)playPlayerImpact();
     heroShotSound();movementSounds.update(run,{bufferedTakeoff});
     draw();schedule();
   }
@@ -442,7 +447,7 @@ function initRunner() {
     audio.stop();audio.prime();audio.actorCue("flavio");voices.reset();lastRaidKey="";
     clearControls();
     shotSounds.reset();lastHeroShotHeard=0;
-    run=createRun({assisted:preferences.assisted,mode:practiceId?"story":selectedMode(),practiceId});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);movementSounds.reset(run);landingUntil=0;crouchPose=0;lastPoseElapsed=0;
+    run=createRun({assisted:preferences.assisted,mode:practiceId?"story":selectedMode(),practiceId});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);encounterSounds.reset(run);movementSounds.reset(run);landingUntil=0;crouchPose=0;lastPoseElapsed=0;
     if(!supportReady)prepareSupport();
     $("game-settings").open=false;
     crouchPose=0;
@@ -692,15 +697,15 @@ function initRunner() {
   }
   function bossFigure(){
     const b=run.boss;if(!b)return;
+    const presentation=bossPresentationFor(b,run.obstacles,{continuousCast:campaignAccentFor(b.type)!==null});
     if(b.type==='povo'){
-      drawCampaignCrowd(ctx,{x:virtualWidth*.71,y:WORLD.ground-3,scale:virtualWidth<650?.75:1,phase:run.elapsed,reducedMotion:prefersReducedMotion()});
+      drawCampaignCrowd(ctx,{x:virtualWidth*.71,y:WORLD.ground-3,scale:virtualWidth<650?.75:1,phase:run.elapsed,...presentation,reducedMotion:prefersReducedMotion()});
       return;
     }
     const phase=run.elapsed*9;
     const arenaPose=bossArenaPose(b,virtualWidth);
     const pose={x:arenaPose.x,y:WORLD.ground-arenaPose.platformY,scale:1};
     const bossX=pose.x,bossY=pose.y;
-    const presentation=bossPresentationFor(b,run.obstacles);
     const {preparing,attacking}=presentation;
     ctx.save();ctx.translate(bossX,bossY);
     drawHoverEnemy(ctx,{type:b.type,x:0,y:0,scale:pose.scale,phase,...presentation,hurt:b.hitFlashFor>0,reducedMotion:prefersReducedMotion(),classId:b.classId,armyVariant:b.stageId||STAGES[b.stageIndex]?.id,enraged:b.enraged});

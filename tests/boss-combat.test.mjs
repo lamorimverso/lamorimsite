@@ -6,6 +6,7 @@ import * as art from '../tanahoraflavio/runner-art.mjs';
 import {readFileSync} from 'node:fs';
 import {pilotCounter} from '../tools/story-pilot.mjs';
 import {combatGeometryFor} from '../tanahoraflavio/runner-combat-geometry.mjs';
+import {campaignAccentFor} from '../tanahoraflavio/runner-campaign-art.mjs';
 
 const dt=1/120;
 function scene(index=0){
@@ -103,14 +104,14 @@ test('anúncios da História usam a identidade e o objetivo real dos 17 encontro
 test('bossFigure desenha o corpo na origem física do projétil inimigo nos dois modos',()=>{
  const source=readFileSync(new URL('../tanahoraflavio/runner.mjs',import.meta.url),'utf8');
  const start=source.indexOf('  function bossFigure(){'),end=source.indexOf('  function character(){',start);
- const make=Function('env','const {run,ctx,virtualWidth,WORLD,STAGES,bossArenaPose,bossPresentationFor,bossCounterWindow,enemyEmitterPose,enemyMotionFor,prefersReducedMotion,drawHoverEnemy,bossCue}=env;'+source.slice(start,end)+';return bossFigure;');
+ const make=Function('env','const {run,ctx,virtualWidth,WORLD,STAGES,bossArenaPose,bossPresentationFor,bossCounterWindow,enemyEmitterPose,enemyMotionFor,prefersReducedMotion,drawHoverEnemy,bossCue,campaignAccentFor}=env;'+source.slice(start,end)+';return bossFigure;');
  for(const mode of ['story','endless'])for(const reduced of [true,false]){
   const r=core.createRun({mode});core.startRun(r);r.nextBossAt=0;r.nextRaid=Infinity;r.shieldFor=Infinity;
   if(mode==='story')r.bossesDefeated=1;
   core.advanceRun(r,dt,()=>.5);for(let i=0;i<120*4&&!r.obstacles.some(core.isHostileProjectile);i++)core.advanceRun(r,dt,()=>.5);
   const state={x:0,y:0},stack=[];let drawn;
   const ctx={save(){stack.push({...state});},restore(){Object.assign(state,stack.pop());},translate(x,y){state.x+=x;state.y+=y;},fillText(){},beginPath(){},roundRect(){},fill(){},measureText(s){return {width:s.length*7};}};
-  const draw=make({run:r,ctx,STAGES:core.STAGES,virtualWidth:900,WORLD:core.WORLD,bossArenaPose:core.bossArenaPose,bossPresentationFor:bosses.bossPresentationFor,bossCounterWindow:bosses.bossCounterWindow,
+  const draw=make({run:r,ctx,STAGES:core.STAGES,virtualWidth:900,WORLD:core.WORLD,bossArenaPose:core.bossArenaPose,bossPresentationFor:bosses.bossPresentationFor,bossCounterWindow:bosses.bossCounterWindow,campaignAccentFor,
    enemyEmitterPose:art.enemyEmitterPose,enemyMotionFor:art.enemyMotionFor,prefersReducedMotion:()=>reduced,
    drawHoverEnemy(c,args){drawn={x:state.x+args.x,y:state.y+args.y};},bossCue:()=>({action:'jump'})});
   draw();

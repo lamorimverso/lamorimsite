@@ -10,3 +10,17 @@ export function createShotSoundTracker(play){
   }
  }};
 }
+
+// One anticipation per committed arena volley. The release tracker remains
+// independent, so additional projectiles are not mistaken for new windups.
+export function createEncounterSoundTracker(play){
+ let announced=new WeakMap(),lastBlock=null;
+ return {reset(run){announced=new WeakMap();lastBlock=run?.lastTraversalBlock;},update(run){
+  const boss=run.boss;
+  if(boss?.combat&&boss.phase==='charge'&&announced.get(boss)!==boss.patternIndex){
+   announced.set(boss,boss.patternIndex);play('windup',boss.type);
+  }
+  const blocked=run.lastTraversalBlock;
+  if(blocked&&blocked!==lastBlock){lastBlock=blocked;play('blocked',blocked.actor,blocked.type);}
+ }};
+}

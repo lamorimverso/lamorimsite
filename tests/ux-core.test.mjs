@@ -59,14 +59,14 @@ test('padrão público mistura salto e abaixar usando as armas de cada chefão',
  }
 });
 
-test('o impacto registra a ação que teria evitado o perigo real',()=>{
+test('o impacto registra a ação que teria evitado o perigo real e seu autor quando explícito',()=>{
  const common=running();common.obstacles=[{x:125,width:34,height:44,type:'pf'}];
  core.advanceRun(common,DT,()=>0);
  assert.deepEqual(common.lastHit,{type:'pf',action:'jump'});
  const high=isolatedBoss('lula',900,0,false,1);step(high,2);
- assert.equal(high.player.hp,1);assert.deepEqual(high.lastHit,{type:'lhand',action:'crouch'});
+ assert.equal(high.player.hp,1);assert.deepEqual(high.lastHit,{type:'lhand',action:'crouch',actor:'lula'});
  const low=isolatedBoss('haddad',900,0,false,1);core.crouchRun(low,true);step(low,2);
- assert.equal(low.player.hp,1);assert.deepEqual(low.lastHit,{type:'receipts',action:'jump'});
+ assert.equal(low.player.hp,1);assert.deepEqual(low.lastHit,{type:'receipts',action:'jump',actor:'haddad'});
 });
 
 function commonContact(width,distance,assisted=false){
