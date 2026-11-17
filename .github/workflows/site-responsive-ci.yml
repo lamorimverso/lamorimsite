@@ -35,7 +35,7 @@ jobs:
       - name: Test runner and desktop/mobile UI
         env:
           PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/google-chrome
-        run: node --test --test-concurrency=1 tests/*.test.*
+        run: node --test --test-concurrency=1 tests/*.test.* tanahoraflavio/tests/*.test.mjs
       - name: Replay matched gameplay in desktop and mobile Chrome
         if: success()
         env:

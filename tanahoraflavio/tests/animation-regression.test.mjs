@@ -73,13 +73,21 @@ test('Bossonari movimenta braços e cabeça durante preparação e lançamento',
  }
 });
 test('antecipação de projétil não causa dano antes do lançamento',()=>{
- const r=core.createRun();core.startRun(r);
- for(const k of ['nextBossAt','nextRaid','nextObstacle','nextPower','nextPassport','nextPickup','nextAllyAt','nextSupportAt'])r[k]=Infinity;
- r.obstacles=[{type:'message',x:125,width:44,height:36,y:22,launchY:22,targetY:22,launchX:147,targetX:137,projectile:true,waitFor:1,speed:180}];
- core.advanceRun(r,1/120);
- assert.equal(r.status,'running','o aviso sem corpo físico não pode matar');
- r.obstacles[0].waitFor=0;core.advanceRun(r,1/120);
- assert.equal(r.status,'over','o mesmo disparo lançado deve colidir');
+ for(const initialHealth of [2,1]){
+  const r=core.createRun({seed:7});core.startRun(r);r.player.hp=initialHealth;
+  for(const k of ['nextBossAt','nextRaid','nextObstacle','nextPower','nextPassport','nextPickup','nextAllyAt','nextSupportAt'])r[k]=Infinity;
+  const shot={type:'message',x:125,width:44,height:36,y:22,launchY:22,targetY:22,launchX:147,targetX:137,projectile:true,waitFor:1,speed:180};
+  r.obstacles=[shot];
+  for(let i=0;i<60;i++)core.advanceRun(r,1/120);
+  assert.equal(Boolean(shot.launched),false);
+  assert.equal(r.player.hp,initialHealth,'o aviso sobreposto não tira energia');
+  assert.equal(r.lastHit,null);
+  for(let i=0;i<70&&!shot.launched;i++)core.advanceRun(r,1/120);
+  assert.equal(shot.launched,true);
+  assert.equal(shot.contactHit,true);
+  assert.equal(r.player.hp,initialHealth-1,'o corpo físico lançado consome um impacto');
+  assert.equal(r.status,initialHealth===2?'running':'over');
+ }
 });
 test('pose de disparo do chefe começa no lançamento, após a espera reservada',()=>{
  const r=core.createRun();core.startRun(r);r.viewportWidth=480;r.player.x=390;r.shieldFor=Infinity;
