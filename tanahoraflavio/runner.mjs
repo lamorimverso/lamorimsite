@@ -1,8 +1,8 @@
 import {HURT_BODY_SCALE} from './runner-body.mjs?v=f32e9999b4fb';
 import {createPresentationDOM,createControlLabelReader} from './runner-presentation-cache.mjs?v=4712d27109dc';
 import {edgeThreatsFor,drawEdgeThreats} from './runner-edge-cues.mjs?v=b4b61c9e89df';
-import {drawTerrain,drawSlideContact} from './runner-terrain-art.mjs?v=22db2cd22519';
-import {terrainSupportAt} from './runner-terrain.mjs?v=31b5bc51e6b0';
+import {drawTerrain,drawSlideContact} from './runner-terrain-art.mjs?v=cd18c5e6285b';
+import {terrainSupportAt} from './runner-terrain.mjs?v=65a410e5d235';
 import {normalizeControls,keyboardActionFor,mouseActionFor,keyLabel} from './runner-control-map.mjs?v=568387e3f764';
 import {createControlSettings} from './runner-control-settings.mjs?v=25524a717d9e';
 import {createGamepadDriver} from './runner-gamepad.mjs?v=18383546c2cd';
@@ -11,10 +11,10 @@ import {updateCombatHUD} from './runner-combat-hud.mjs?v=2880beb23e71';
 import {createMovementSoundDirector,movementIsAirborne} from './runner-movement-audio.mjs?v=31522b0ccc1e';
 import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=52e10e65adc3';
 import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
-import {createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=3385b73f9cf9';
+import {createAircraftWarningTracker,createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=37fd940420f1';
 import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=cac93b5ab93b';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_PRESSES, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, recoverJacareRun, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=ea333b3a3825";
+import { WORLD, PLAYER, JACARE_RECOVERY_PRESSES, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, recoverJacareRun, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=f912e9bb0b17";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=01fa5c1830b5';
 import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=311bd72684f6';
 import {bossCounterWindow} from './runner-bosses.mjs?v=cac93b5ab93b';
@@ -101,6 +101,7 @@ function initRunner() {
   const encounterSounds=createEncounterSoundTracker((kind,actor,weapon)=>{
     if(kind==='windup')audio.enemyWindup(actor);else audio.traversalBlock(actor,weapon);
   });
+  const aircraftWarnings=createAircraftWarningTracker(effect=>audio.effect(effect));
   const voices=createVoiceDirector({play:(id,options)=>audio.voice(id,options),selector:audio.voiceSelector});
   const movementSounds=createMovementSoundDirector({play:name=>audio.movement(name)});
   $("game-sound-label").textContent=audio.enabled?"Som ligado":"Som desligado";
@@ -409,6 +410,7 @@ function initRunner() {
     const nearest=Math.min(Infinity,...run.obstacles.filter(o=>!o.passed&&!o.counted).map(o=>threatTimeToContact(run,o)));
     voices.update(run,{safe:nearest>.9});
     shotSounds.update(run.obstacles,run.boss?.type);
+    aircraftWarnings(run.terrain?.active?.flight);
     audio.background({active:run.status==="running",pressure:difficultyAt(run.distance,run.elapsed).pressure,boss:!!run.boss,raid:run.raid?.phase==="active"});
     if(run.status==="over"&&run.lastHit!==before.hit)playPlayerImpact();
     heroShotSound();movementSounds.update(run,{bufferedTakeoff});

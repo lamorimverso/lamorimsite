@@ -28,9 +28,6 @@ export function pilotDodge(r){
   }else if(terrain.kind==='ground-lesson'){
    const bar=terrain.platforms[0],eta=(bar.x-r.player.x-18)/terrain.speed;
    if(r.player.grounded&&r.player.supportY===0&&eta<.22&&eta>-.10)core.jumpRun(r);
-  }else if(terrain.kind==='passage'){
-   const roof=terrain.ceilings[0],eta=(roof.x-(r.player.x+31))/terrain.speed;
-   if(roof.x+roof.width>r.player.x+5&&eta<.38){core.crouchRun(r,true);core.moveRun(r,1);}
   }else{
    const gap=terrain.gaps[0],eta=(gap.x-(r.player.x+17))/terrain.speed;
    if(r.player.grounded&&r.player.supportY===0&&eta<.13&&eta>-.06)core.jumpRun(r);

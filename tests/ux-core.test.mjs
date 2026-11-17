@@ -157,12 +157,13 @@ function lateralDestination(run,zones){
 }
 export function legalPilot(seed,{width=900,assisted=false,limit=340,resize=false}={}){
  const run=running({assisted}),rng=seeded(seed);run.viewportWidth=width;
- let jumps=0,crouches=0,peak=0,shieldFrames=0,widthChanges=0;
+ let jumps=0,crouches=0,peak=0,takeoffY=0,shieldFrames=0,widthChanges=0;
+ const measureJump=()=>{if(run.player.grounded)takeoffY=run.player.y;else peak=Math.max(peak,run.player.y-takeoffY);};
  for(let i=0;i<120*limit&&run.status==='running'&&run.passports<100;i++){
   if(resize&&i>0&&i%(120*12)===0){const width=[480,900,612,900][(i/(120*12)-1)%4];if(width!==run.viewportWidth){core.resizeRun(run,width);widthChanges++;}}
   if(run.terrain?.active){
    pilotTerrain(run);if(run.reserveShields&&run.shieldFor<=0)core.activateReserveShield(run);
-   core.advanceRun(run,DT,rng);peak=Math.max(peak,run.player.y);if(run.shieldFor>0)shieldFrames++;continue;
+   core.advanceRun(run,DT,rng);measureJump();if(run.shieldFor>0)shieldFrames++;continue;
   }
   if(pilotJacare(run)){core.advanceRun(run,DT,rng);if(run.shieldFor>0)shieldFrames++;continue;}
   // O piloto considera o alerta de retaguarda antes de o inimigo entrar na tela.
@@ -194,7 +195,7 @@ export function legalPilot(seed,{width=900,assisted=false,limit=340,resize=false
   const jumpAhead=danger?.approach==='rear'?.22:(danger ? .35-(danger.width+20)/(2*speed) : 0);
   if(danger&&action==='jump'&&until<=jumpAhead&&until>-.1&&(!run.movementSkills?.doubleJump||run.player.grounded)&&core.jumpRun(run))jumps++;
   if(run.reserveShields&&run.shieldFor<=0)core.activateReserveShield(run);
-  core.advanceRun(run,DT,rng);peak=Math.max(peak,run.player.y);
+  core.advanceRun(run,DT,rng);measureJump();
   if(run.shieldFor>0)shieldFrames++;
  }
  return {run,jumps,crouches,peak,shieldFrames,widthChanges};
@@ -208,7 +209,7 @@ test('piloto legal coleta cem passaportes em 150–330 s sem imunidade ou telepo
   assert.ok(run.elapsed>=150&&run.elapsed<=330,`${run.elapsed}s na sequência ${seed}/${width}`);
   assert.equal(run.lives,2);assert.equal(run.lastHit,null,'coletas naturais sem consumo de vida');
   assert.ok(jumps>20&&crouches>0,'usa as duas ações em encontros reais');
-  assert.ok(peak>95&&peak<110,'respeita o alcance físico do salto');
+  assert.ok(peak>95&&peak<110,'respeita o alcance físico do salto acima do apoio de que partiu');
   assert.ok(shieldFrames>0&&shieldFrames/run.elapsed/120<.3,'apenas escudos conquistados e ativados pelo piloto');
   assert.ok(run.bossesDefeated>=3,'a economia inclui os chefões da rota');
  }

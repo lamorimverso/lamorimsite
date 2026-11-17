@@ -41,7 +41,8 @@ export function replayEndless({width,seed,rate,seconds=2100,profile=false}){
  const speed=core.difficultyAt(run.distance,run.elapsed).speed;
  const state={status:run.status,activeSeconds:round(run.elapsed),steps,distance:round(run.distance),speed:round(speed),
   bosses:run.bossesDefeated,rounds:Math.floor(run.routeDistance/(core.STAGES.length*core.SCENE_DISTANCE)),
-  terrain:run.terrain.completed,hits,shields,continues,firstNearCap,lateStyles,windows,lastHit:run.lastHit};
+  terrain:run.terrain.completed,lessonCompleted:run.terrain.lessonCompleted,flightCompleted:run.terrain.flightCompleted,
+  hits,shields,continues,firstNearCap,lateStyles,windows,lastHit:run.lastHit};
  if(profile){stepSamples.sort((a,b)=>a-b);state.kernel={p95ms:round(percentile(stepSamples,.95),4),p99ms:round(percentile(stepSamples,.99),4),heap};}
  return state;
 }

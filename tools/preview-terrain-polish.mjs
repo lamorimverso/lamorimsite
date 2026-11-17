@@ -22,13 +22,13 @@ try{
   await page.route('**/runner.mjs*',route=>route.fulfill({contentType:'text/javascript',body:runner.replace('  updateUI();resize();draw();prepareSprites();','  globalThis.__previewFrame=()=>{cancelAnimationFrame(frameId);frameId=0;updateUI();draw();};updateUI();resize();draw();prepareSprites();')}));
   await page.goto(`http://127.0.0.1:${server.address().port}/tanahoraflavio/`);
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
-  for(const kind of ['passagem','apoio','salto','escudo']){
+  for(const kind of ['deslize','apoio','salto','escudo']){
    await page.evaluate(kind=>{
     const r=__previewRun;for(const key of ['nextObstacle','nextRaid','nextBossAt','nextAllyAt','nextSupportAt','nextPassport','nextPower'])r[key]=Infinity;
     r.obstacles=[];r.pickups=[];r.terrain.nextAt=Infinity;r.allyShieldFor=kind==='escudo'?3:0;r.shieldFor=r.allyShieldFor;
-    r.terrain.active={kind:kind==='passagem'?'passage':'gap-platform',age:2,speed:200,warningFor:2.3,ceilings:kind==='passagem'?[{x:190,width:110,bottom:46,top:122}]:[],gaps:kind==='passagem'?[]:[{x:145,width:125}],platforms:kind==='passagem'?[]:[{x:235,width:140,y:28}]};
-    if(kind==='escudo')r.terrain.active=null;
-    Object.assign(r.player,{x:kind==='passagem'?215:kind==='apoio'?270:190,y:kind==='apoio'?28:kind==='salto'?75:0,velocity:kind==='salto'?20:0,grounded:kind!=='salto',supportY:kind==='apoio'?28:kind==='salto'?null:0,crouchHeld:kind==='passagem',crouching:kind==='passagem',sliding:kind==='passagem',slideRemaining:.7,slideLatched:true,moveHeld:kind==='passagem'?1:kind==='escudo'?-1:0});
+    r.terrain.active={kind:'gap-platform',age:2,speed:270,warningFor:2.3,ceilings:[],gaps:[{x:145,width:125}],platforms:[{x:235,width:140,y:28}]};
+    if(kind==='escudo'||kind==='deslize')r.terrain.active=null;
+    Object.assign(r.player,{x:kind==='deslize'?215:kind==='apoio'?270:190,y:kind==='apoio'?28:kind==='salto'?75:0,velocity:kind==='salto'?20:0,grounded:kind!=='salto',supportY:kind==='apoio'?28:kind==='salto'?null:0,crouchHeld:kind==='deslize',crouching:kind==='deslize',sliding:kind==='deslize',slideRemaining:.7,slideLatched:true,moveHeld:kind==='deslize'?1:kind==='escudo'?-1:0});
     __previewFrame();
    },kind);
    await page.locator('#runner-canvas').screenshot({path:path.join(root,`tanahoraflavio/docs/travessia-${viewport.width}-${kind}-2026-11-16.png`)});

@@ -6,6 +6,7 @@ const DT=1/120;
 function isolatedRoute(){
  const run=core.createRun();core.startRun(run);
  run.nextObstacle=run.nextRaid=run.nextPassport=run.nextPower=run.nextPickup=run.nextAllyAt=run.nextSupportAt=Infinity;
+ run.terrain.nextAt=Infinity; // Este ensaio isola somente a ordem e as janelas dos chefes.
  run.shieldFor=Infinity;
  return run;
 }

@@ -16,7 +16,7 @@ before(async()=>{
 });
 after(async()=>{await browser?.close();});
 
-test('terrain shows a physical low opening, raised landing surface and visible gap at their shared coordinates',async()=>{
+test('terrain never paints the old hanging panel, but still shows the raised landing and visible gap',async()=>{
  const result=await page.evaluate(async()=>{
   const {drawTerrain}=await import('/runner-terrain-art.mjs');
   const canvas=document.createElement('canvas');canvas.width=900;canvas.height=300;const c=canvas.getContext('2d');
@@ -25,15 +25,15 @@ test('terrain shows a physical low opening, raised landing surface and visible g
   drawTerrain(c,{terrain,ground:246,width:900});
   const firstUnmutated=before===JSON.stringify(terrain);
   const pixel=(x,y)=>[...c.getImageData(x,y,1,1).data];
-  const passage={roof:pixel(350,180),opening:pixel(350,220)};
+  const passage={roof:pixel(350,180),arrow:pixel(272,192)};
   c.clearRect(0,0,900,300);
   active.kind='gap-platform';active.ceilings=[];active.gaps=[{x:300,width:125}];active.platforms=[{x:390,width:140,y:28}];
   const beforeLanding=JSON.stringify(terrain);drawTerrain(c,{terrain,ground:246,width:900});
   const landing={gap:pixel(350,260),top:pixel(450,220),unblocked:pixel(450,205)};
   return {passage,landing,unmutated:firstUnmutated&&beforeLanding===JSON.stringify(terrain)};
  });
- assert.ok(result.passage.roof[3]>220,'solid low ceiling is visible');
- assert.equal(result.passage.opening[3],0,'opening has enough empty room for the 42px crouch');
+ assert.equal(result.passage.roof[3],0,'the removed panel is not drawn');
+ assert.equal(result.passage.arrow[3],0,'its down arrow is not drawn');
  assert.ok(result.landing.gap[3]>220,'missing road is visibly cut into the ground');
  assert.ok(result.landing.top[3]>220,'landing platform begins at its physical height');
  assert.equal(result.landing.unblocked[3],0,'space above the landing remains clear');
@@ -56,10 +56,10 @@ test('a leftward solid projectile has its wake behind the body, without generic 
 test('a terrain obstacle beyond a narrow screen still has an immediate action cue at the visible edge',async()=>{
  const count=await page.evaluate(async()=>{
   const {drawTerrain}=await import('/runner-terrain-art.mjs');const canvas=document.createElement('canvas');canvas.width=480;canvas.height=300;const c=canvas.getContext('2d');
-  drawTerrain(c,{width:480,terrain:{active:{kind:'passage',age:0,warningFor:2.3,gaps:[],platforms:[],ceilings:[{x:700,width:110,bottom:46,top:122}]}}});
+  drawTerrain(c,{width:480,terrain:{active:{kind:'gap-platform',age:0,warningFor:2.3,gaps:[{x:700,width:145}],platforms:[{x:819,width:180,y:28}],ceilings:[]}}});
   const data=c.getImageData(438,150,42,55).data;let filled=0;for(let i=3;i<data.length;i+=4)if(data[i]>100)filled++;return filled;
  });
- assert.ok(count>120,'upcoming low passage has a visible edge cue before its body enters');
+ assert.ok(count>120,'upcoming gap has a visible jump cue before it enters');
 });
 
 

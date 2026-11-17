@@ -4,7 +4,7 @@ import {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
 // above WORLD.ground. Resizing translates shapes with the hero, never stretches
 // a jump or replaces an active hole with invisible ground.
 export const TERRAIN = Object.freeze({speed:270,warningFor:2.3,slideFor:.85,slideSpeed:310,clearance:46,platformY:28});
-export function createTerrain(){return {active:null,nextAt:6,nextKind:'passage',completed:0,spawned:0,lessonCompleted:false,flightCompleted:false};}
+export function createTerrain(){return {active:null,nextAt:6,completed:0,spawned:0,lessonCompleted:false,flightCompleted:false};}
 const BASIC_ROUTE=Object.freeze({id:'basic',gapTime:.39,platformOffsetTime:.30,platformTime:.54,platformY:28,requiresDoubleJump:false});
 // The earned jump is an alternative, never the entry ticket to a compulsory bar.
 const ADVANCED_ROUTE=Object.freeze({id:'earned-jump-optional',gapTime:.45,platformOffsetTime:.37,platformTime:.57,platformY:40,requiresDoubleJump:false});
@@ -14,15 +14,13 @@ export const terrainProfileFor=(run,speed=TERRAIN.speed)=>{
 };
 export function terrainReservationFor(run,speed=TERRAIN.speed){
  const p=terrainProfileFor(run,speed);
- return (run.player.x+31+speed*TERRAIN.warningFor+Math.max(p.gapWidth,p.platformOffset+p.platformWidth,110))/speed+.8;
+ return (run.player.x+31+speed*TERRAIN.warningFor+Math.max(p.gapWidth,p.platformOffset+p.platformWidth))/speed+.8;
 }
 export function beginTerrain(run,speed=TERRAIN.speed){
- const profile=terrainProfileFor(run,speed),state=run.terrain,kind=state.nextKind,x=run.player.x+31+speed*TERRAIN.warningFor;
- state.active={id:++state.spawned,kind,age:0,speed,warningFor:TERRAIN.warningFor,clearance:TERRAIN.clearance,requiresDoubleJump:false,
-  gaps:kind==='gap-platform'?[{x,width:profile.gapWidth}]:[],
-  platforms:kind==='gap-platform'?[{x:x+profile.platformOffset,width:profile.platformWidth,y:profile.platformY}]:[],
-  ceilings:kind==='passage'?[{x,width:110,bottom:TERRAIN.clearance,top:122}]:[]};
- state.nextKind=kind==='passage'?'gap-platform':'passage';return state.active;
+ const profile=terrainProfileFor(run,speed),state=run.terrain,x=run.player.x+31+speed*TERRAIN.warningFor;
+ state.active={id:++state.spawned,kind:'gap-platform',age:0,speed,warningFor:TERRAIN.warningFor,requiresDoubleJump:false,
+  gaps:[{x,width:profile.gapWidth}],platforms:[{x:x+profile.platformOffset,width:profile.platformWidth,y:profile.platformY}],ceilings:[]};
+ return state.active;
 }
 // A first bar above solid ground teaches the same edge and jump timing before
 // the São Paulo duels and without a lethal hole beneath the lesson.
@@ -37,12 +35,12 @@ export function beginGroundLesson(run,speed,{routeStart,routeEnd}){
 // surfaces. Widths are distances at the actual departure speed; acceleration
 // never changes geometry after takeoff, including during viewport changes.
 const AIR_BARS=Object.freeze([[3.6,16],[3.4,34],[3.7,52],[3.4,36],[3.5,16]]);
-export function beginAirTransfer(run,speed,{routeStart,routeEnd}){
+export function beginAirTransfer(run,speed,{routeStart,routeEnd,from='sao-paulo',to='argentina',fromName='São Paulo',toName='Argentina'}){
  const state=run.terrain,center=run.player.x+18,first=center+1.6*speed,space=.24*speed;
  const platforms=[];let end=first;
  for(const [seconds,y] of AIR_BARS){const x=end+space,width=seconds*speed;platforms.push({x,width,y});end=x+width;}
  end+=space;
- const flight={from:'sao-paulo',to:'argentina',phase:'boarding',progress:0,traveled:0,nominalSpeed:speed,
+ const flight={from,to,fromName,toName,phase:'boarding',progress:0,traveled:0,nominalSpeed:speed,
   routeStart,routeEnd,length:end-center,phasesAt:[first-center,platforms[1].x-center,platforms.at(-1).x-center],aircraft:[]};
  // Quiet silhouettes teach the aircraft vocabulary before any armed crossing.
  for(const [kind,barIndex,offset] of [['flyby',0,platforms[0].width*.47],['high',1,platforms[1].width*.50],['lane',2,platforms[2].width-speed*.21]]){

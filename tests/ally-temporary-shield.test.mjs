@@ -54,7 +54,7 @@ test('another ally refreshes three seconds without stacking or shortening a long
  step(r,3.1);assert.equal(r.allyShieldFor,0);assert.ok(r.shieldFor>2.8&&r.shieldFor<3);
 });
 test('falling into a terrain gap remains fatal while the ally shield is active',()=>{
- const r=isolated();r.routeDistance=2*core.SCENE_DISTANCE+1000;r.terrain.nextAt=0;r.terrain.nextKind='gap-platform';r.nextObstacle=0;core.advanceRun(r,DT);r.nextObstacle=Infinity;
+ const r=isolated();r.routeDistance=2*core.SCENE_DISTANCE+1300;r.terrain.nextAt=0;r.nextObstacle=0;core.advanceRun(r,DT);r.nextObstacle=Infinity;
  assert.equal(r.terrain.active.kind,'gap-platform');
  let collected=false;
  for(let i=0;i<600&&r.status==='running';i++){

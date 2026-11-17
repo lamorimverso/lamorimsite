@@ -1,4 +1,4 @@
-import {aircraftPoseFor} from './runner-terrain.mjs?v=31b5bc51e6b0';
+import {aircraftPoseFor} from './runner-terrain.mjs?v=65a410e5d235';
 // Shapes use the same logical x and height-above-ground as traversal physics.
 // No collision state is changed here, and no asset allocation is needed per frame.
 const INK='#303747',STONE='#aebbb9',EDGE='#e7e8d8',SHADE='#657985';
@@ -24,6 +24,7 @@ function drawPlane(c,x,y,kind){
  polygon(c,[[x-27,y],[x-17,y-4],[x+16,y-4],[x+27,y-9],[x+31,y-7],[x+25,y+4],[x-18,y+5]],paint);
  polygon(c,[[x-8,y+1],[x+6,y-14],[x+14,y-12],[x+7,y+2],[x+14,y+12],[x+3,y+13]],paint);
  polygon(c,[[x-21,y-2],[x-10,y-7],[x-5,y-3]],shield,'#31485b',1);
+ c.beginPath();c.arc(x-12,y-4.7,1.8,0,2*Math.PI);c.fillStyle='#31485b';c.fill();
  if(!quiet){rect(c,x+5,y-1,7,5,'#fff2c4','#583d37',1);line(c,x-27,y+4,x-33,y+4,'#583d37',2);}
 }
 function drawAirTerrain(c,a,ground,width){
@@ -48,7 +49,7 @@ function drawAirTerrain(c,a,ground,width){
  if(gap.x+gap.width>=-15&&gap.x+gap.width<width+15){
   line(c,gap.x+gap.width,ground-1,gap.x+gap.width+30,ground-1,'#fff5ce',4);
   rect(c,gap.x+gap.width+16,ground+11,72,20,'#eef1df','#426176',2);
-  c.font='700 9px system-ui';c.textAlign='center';c.fillStyle='#29475e';c.fillText('ARGENTINA',gap.x+gap.width+52,ground+24);
+  c.font='700 9px system-ui';c.textAlign='center';c.fillStyle='#29475e';c.fillText((f.toName??'Argentina').toUpperCase(),gap.x+gap.width+52,ground+24,66);
  }
  for(const p of a.platforms){
   const y=ground-p.y,edge=p.x+p.width;if(edge<-10||p.x>width+16)continue;
@@ -80,19 +81,20 @@ function drawAirTerrain(c,a,ground,width){
  }
  if(f.phase==='boarding'&&f.traveled<f.nominalSpeed*.9){
   rect(c,width/2-93,ground+12,186,21,'#f6f0dc','#557184',4);
-  c.font='700 10px system-ui';c.textAlign='center';c.fillStyle='#314e63';c.fillText('SÃO PAULO → ARGENTINA',width/2,ground+26);
+  const route=(f.fromName??'São Paulo')+' → '+(f.toName??'Argentina');
+  c.font='700 10px system-ui';c.textAlign='center';c.fillStyle='#314e63';c.fillText(route.toUpperCase(),width/2,ground+26,174);
  }
 }
 export function drawTerrain(c,{terrain,ground=246,width=900}={}){
  const active=terrain?.active;if(!active)return;
  c.save();
  if(active.flight){drawAirTerrain(c,active,ground,width);c.restore();return;}
- const upcoming=active.ceilings?.[0]||active.gaps?.[0]||(active.lesson?active.platforms?.[0]:null);
+ const upcoming=active.gaps?.[0]||(active.lesson?active.platforms?.[0]:null);
  if(upcoming&&upcoming.x>width-18){
-  const action=active.kind==='passage'?'slide':'jump',x=width-22,y=ground-70;
-  routeMarker(c,x,y,action,1);
+  const x=width-22,y=ground-70;
+  routeMarker(c,x,y,'jump',1);
   c.font='700 9px system-ui';c.textAlign='right';c.fillStyle='#38586a';
-  c.fillText(action==='slide'?'DESLIZE':'PULE',width-8,y+25);
+  c.fillText('PULE',width-8,y+25);
  }
  for(const gap of active.gaps||[]){
   const x=gap.x,w=gap.width;if(x>width+12||x+w< -12)continue;
@@ -115,19 +117,6 @@ export function drawTerrain(c,{terrain,ground=246,width=900}={}){
   line(c,x+6,y+9,x+w-6,y+9,SHADE,1);
   for(let dx=14;dx<w-6;dx+=30){line(c,x+dx,y+12,x+dx-5,y+Math.min(23,platform.y-3),'#708786');}
   for(const dx of [7,w-7]){c.beginPath();c.arc(x+dx,y+15,1.5,0,Math.PI*2);c.fillStyle='#dbe0c9';c.fill();}
- }
- for(const ceiling of active.ceilings||[]){
-  const x=ceiling.x,w=ceiling.width,top=ground-ceiling.top,bottom=ground-ceiling.bottom;
-  if(x>width+12||x+w< -12)continue;
-  // Recessed backwork belongs above the opening, never across the walkable lane.
-  rect(c,x,top,w,bottom-top,'#82979a',INK,3);
-  rect(c,x+5,top+6,w-10,Math.max(8,bottom-top-16),'#98aca9',null,2);
-  line(c,x+7,top+8,x+w-7,top+8,'#dce0cf',2);
-  for(let dx=13;dx<w-10;dx+=27){line(c,x+dx,top+18,x+dx+10,bottom-15,'#738c8f',1);}
-  rect(c,x-3,bottom-9,w+6,9,'#e1c17c',INK,1);
-  for(let dx=0;dx<w-8;dx+=17)polygon(c,[[x+dx,bottom-8],[x+dx+6,bottom-8],[x+dx+12,bottom-2],[x+dx+6,bottom-2]],'#46515a',null);
-  line(c,x+2,bottom+1,x+w-2,bottom+1,'#d3ded030',2);
-  routeMarker(c,x-28,bottom-8,'slide',1);
  }
  c.restore();
 }

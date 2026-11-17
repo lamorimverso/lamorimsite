@@ -9,7 +9,7 @@ function step(r,s,pilot,dt=DT){for(let t=0;t<s&&r.status==='running';t+=dt){pilo
 function sorayaScene(){const r=isolated();r.mode='story';r.bossesDefeated=6;r.distance=r.routeDistance=nextStoryBossDistance(6);r.nextBossAt=0;core.advanceRun(r,DT);assert.equal(r.boss.type,'soraya');return r;}
 function finishBoss(r){const count=r.bossesDefeated;for(let i=0;i<120*100&&r.status==='running'&&r.bossesDefeated===count;i++){pilotCounter(r);core.advanceRun(r,DT);}assert.equal(r.status,'running',JSON.stringify(r.lastHit));assert.equal(r.bossesDefeated,count+1);}
 function skilled(width=900){const r=isolated(width);r.movementSkills.doubleJump=true;return r;}
-function terrain(r){r.routeDistance=2*core.SCENE_DISTANCE+1000;r.terrain.nextAt=0;r.terrain.nextKind='gap-platform';r.nextObstacle=0;core.advanceRun(r,DT);r.nextObstacle=Infinity;assert.ok(r.terrain.active);return r.terrain.active;}
+function terrain(r){r.routeDistance=2*core.SCENE_DISTANCE+1300;r.terrain.nextAt=0;r.nextObstacle=0;core.advanceRun(r,DT);r.nextObstacle=Infinity;assert.equal(r.terrain.active?.kind,'gap-platform');return r.terrain.active;}
 
 test('locked runs reject air jumps; starting or losing Soraya grants no movement skill',()=>{
  const r=isolated();assert.equal(core.jumpRun(r),true);step(r,.2);assert.equal(core.jumpRun(r),false);assert.equal(r.player.airJumpsUsed,0);

@@ -6,10 +6,10 @@ const DT=1/120;
 function isolated(width=900){
  const r=core.createRun({seed:3});core.startRun(r);core.resizeRun(r,width);
  for(const key of ['nextObstacle','nextRaid','nextBossAt','nextAllyAt','nextSupportAt','nextPassport','nextPower','nextPickup'])r[key]=Infinity;
- assert.ok(r.terrain,'route has its own physical terrain state');r.terrain.nextAt=Infinity;r.routeDistance=2*core.SCENE_DISTANCE+1000;return r;
+ assert.ok(r.terrain,'route has its own physical terrain state');r.terrain.nextAt=Infinity;r.terrain.lessonCompleted=true;r.routeDistance=2*core.SCENE_DISTANCE+1000;return r;
 }
 function step(r,s,control){for(let i=0;i<Math.round(s/DT)&&r.status==='running';i++){control?.(r);core.advanceRun(r,DT);}}
-function encounter(kind,width=900){const r=isolated(width);r.terrain.nextAt=0;r.terrain.nextKind=kind;r.nextObstacle=0;core.advanceRun(r,DT);r.nextObstacle=Infinity;assert.equal(r.terrain.active?.kind,kind);return r;}
+function encounter(kind,width=900){const r=isolated(width);r.terrain.nextAt=0;r.nextObstacle=0;core.advanceRun(r,DT);r.nextObstacle=Infinity;assert.equal(r.terrain.active?.kind,kind);return r;}
 
 test('grounded crouch-forward produces bounded momentum with release, reverse, jump and clear exits',()=>{
  const r=isolated();core.crouchRun(r,true);core.moveRun(r,1);step(r,.2);
@@ -21,9 +21,12 @@ test('grounded crouch-forward produces bounded momentum with release, reverse, j
  step(r,.1);assert.equal(r.player.crouching,false,'diagonal air input cannot shrink the jumping body');
  core.clearRunInput(r);assert.equal(r.player.sliding,false);
 });
-test('visible low opening hits standing, while crouch-forward slides beneath it',()=>{
- for(const crouch of [false]){const r=encounter('passage');core.crouchRun(r,crouch);step(r,5);assert.equal(r.player.hp,1);assert.equal(r.lastHit.type,'terrain-ceiling');}
- for(const width of [480,900]){const r=encounter('passage',width);step(r,5,pilotDodge);assert.equal(r.status,'running');assert.ok(r.terrain.completed>=1);}
+test('é possível deslizar sobre a barra de treino sem encolher a forma',()=>{
+ for(const width of [480,900]){
+  const r=isolated(width);r.terrain.active={kind:'ground-lesson',age:0,speed:270,gaps:[],ceilings:[],platforms:[{x:r.player.x-40,width:430,y:24}],lesson:{routeStart:r.routeDistance,routeEnd:r.routeDistance+430,traveled:0,length:430}};
+  Object.assign(r.player,{y:24,supportY:24,grounded:true});core.crouchRun(r,true);core.moveRun(r,1);step(r,.14);
+  assert.equal(r.player.sliding,true);assert.equal(r.player.y,24);assert.equal(r.player.hp,2);
+ }
 });
 test('gap removes ground support and defeats even with shield or an unused continuation',()=>{
  const r=encounter('gap-platform');r.shieldFor=Infinity;step(r,5);assert.equal(r.status,'over');assert.equal(r.lastHit.type,'terrain-gap');
@@ -71,13 +74,13 @@ test('stale ground flags never permit an airborne jump or crouch',()=>{
  const r=isolated();r.player.y=55;assert.equal(core.jumpRun(r),false);assert.equal(core.crouchRun(r,true),false);assert.equal(r.player.velocity,0);
 });
 test('a transformation pickup is deferred during committed terrain without repeated collection credit',()=>{
- const r=encounter('passage');r.pickups=[{type:'ze-gotinha',x:r.player.x+17,y:20,speed:0}];
+ const r=encounter('gap-platform');r.pickups=[{type:'ze-gotinha',x:r.player.x+17,y:20,speed:0}];
  step(r,.1);assert.equal(r.player.isJacare,false);assert.equal(r.collected,0);assert.equal(r.pickups.length,1);
 });
 test('holding forward before a terrain announcement preserves at least 820ms of physical reaction',()=>{
  for(const width of [480,900])for(const crouch of [false,true]){
-  const r=isolated(width);r.aid={kind:'encourage',remaining:10};core.crouchRun(r,crouch);core.moveRun(r,1);r.terrain.nextAt=0;r.terrain.nextKind='passage';r.nextObstacle=0;core.advanceRun(r,DT);r.nextObstacle=Infinity;
-  const announced=r.elapsed,roof=r.terrain.active.ceilings[0];while(r.player.x+31<roof.x&&r.status==='running'&&r.elapsed-announced<4)core.advanceRun(r,DT);
+  const r=isolated(width);r.aid={kind:'encourage',remaining:10};core.crouchRun(r,crouch);core.moveRun(r,1);r.terrain.nextAt=0;r.nextObstacle=0;core.advanceRun(r,DT);r.nextObstacle=Infinity;
+  const announced=r.elapsed,gap=r.terrain.active.gaps[0];while(r.player.x+31<gap.x&&r.status==='running'&&r.elapsed-announced<4)core.advanceRun(r,DT);
   assert.ok(r.elapsed-announced>=.82,`reaction ${r.elapsed-announced}`);
  }
 });

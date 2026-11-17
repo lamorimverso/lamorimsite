@@ -1,9 +1,9 @@
 import {HERO_MAX_HP,playerBodyFor} from './runner-body.mjs?v=f32e9999b4fb';
 import {createMovementSkills,movementProfileFor,rewardMovementVictory} from './runner-movement-skills.mjs?v=d0ad734b4838';
 export {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
-export {terrainProfileFor} from './runner-terrain.mjs?v=31b5bc51e6b0';
-import {TERRAIN,createTerrain,beginTerrain,beginGroundLesson,beginAirTransfer,aircraftHitFor,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer} from './runner-terrain.mjs?v=31b5bc51e6b0';
-export {terrainSupportAt} from './runner-terrain.mjs?v=31b5bc51e6b0';
+export {terrainProfileFor} from './runner-terrain.mjs?v=65a410e5d235';
+import {TERRAIN,createTerrain,beginTerrain,beginGroundLesson,beginAirTransfer,aircraftHitFor,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer} from './runner-terrain.mjs?v=65a410e5d235';
+export {terrainSupportAt} from './runner-terrain.mjs?v=65a410e5d235';
 import {stageRosterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 import {groundRhythmFor,groundStyleFor} from './runner-ground-rhythm.mjs?v=c282904db6c6';
 import {ROUTE_AMMO,advanceAmmo,addShieldPart} from './runner-supplies.mjs?v=44c67e8a5802';
@@ -130,17 +130,19 @@ export const campaignRouteDistance = run => Math.max(0,run.routeDistance-(run.mo
 const routeClock = run => campaignRouteDistance(run) / SCENE_DISTANCE * SCENE_SECONDS;
 export const routeStagesFor=run=>run.mode==='story'?STORY_STAGES:STAGES;
 export const routeStageFor=run=>stageAt(routeClock(run),routeStagesFor(run));
-const GROUND_LESSON_DISTANCE=STORY_OPENING_DISTANCE+2*SCENE_DISTANCE+760;
-const GROUND_LESSON_EXIT=STORY_OPENING_DISTANCE+2*SCENE_DISTANCE+1180;
-const lessonPending=run=>run.mode==='story'&&!run.practice&&!run.terrain?.lessonCompleted&&Number.isFinite(run.terrain?.nextAt);
-const FLIGHT_BOARD_DISTANCE=STORY_OPENING_DISTANCE+3*SCENE_DISTANCE-1400;
-const FLIGHT_ARRIVAL_DISTANCE=STORY_OPENING_DISTANCE+3*SCENE_DISTANCE;
-const flightPending=run=>run.mode==='story'&&!run.practice&&!run.terrain?.flightCompleted&&Number.isFinite(run.terrain?.nextAt);
+function traversalRoute(stages,offset,arrivalIndex){
+ return Object.freeze({lessonAt:offset+2*SCENE_DISTANCE+760,lessonExit:offset+2*SCENE_DISTANCE+1180,lessonStage:stages[2],
+  boardAt:offset+arrivalIndex*SCENE_DISTANCE-1400,arrival:offset+arrivalIndex*SCENE_DISTANCE,from:stages[arrivalIndex-1],to:stages[arrivalIndex]});
+}
+const STORY_TRAVERSAL=traversalRoute(STORY_STAGES,STORY_OPENING_DISTANCE,3),ENDLESS_TRAVERSAL=traversalRoute(STAGES,0,4);
+const traversalFor=run=>run.mode==='story'?STORY_TRAVERSAL:ENDLESS_TRAVERSAL;
+const lessonPending=run=>!run.practice&&!run.terrain?.lessonCompleted&&Number.isFinite(run.terrain?.nextAt);
+const flightPending=run=>!run.practice&&!run.terrain?.flightCompleted&&Number.isFinite(run.terrain?.nextAt);
 export function routeTransitionFor(run){
- const flight=run.terrain?.active?.flight;
- if(flight)return {from:STORY_STAGES[2],to:STORY_STAGES[3],progress:flight.progress,active:true,kind:'air-transfer',phase:flight.phase};
- if(run.mode==='story'&&run.terrain?.flightCompleted&&run.routeDistance>=FLIGHT_ARRIVAL_DISTANCE&&run.routeDistance<FLIGHT_ARRIVAL_DISTANCE+SCENE_DISTANCE*.1){
-  return {from:STORY_STAGES[3],to:STORY_STAGES[3],progress:1,active:false};
+ const flight=run.terrain?.active?.flight,{from,to,arrival}=traversalFor(run);
+ if(flight)return {from,to,progress:flight.progress,active:true,kind:'air-transfer',phase:flight.phase};
+ if(run.terrain?.flightCompleted&&run.routeDistance>=arrival&&run.routeDistance<arrival+SCENE_DISTANCE*.1){
+  return {from:to,to,progress:1,active:false};
  }
  return stageTransitionAt(routeClock(run),routeStagesFor(run));
 }
@@ -965,21 +967,23 @@ function rehearseStoryBoss(run,balance){
  run.cameo={type:b.type,remaining:1.4};return o;
 }
 function prepareGroundLesson(run,balance){
- if(!lessonPending(run)||run.terrain.active||run.routeDistance<GROUND_LESSON_DISTANCE||run.routeDistance>=GROUND_LESSON_EXIT||run.boss||run.raid||run.player.isJacare||run.nextBossAt<=run.routeDistance)return false;
+ const {lessonAt,lessonExit,lessonStage}=traversalFor(run);
+ if(!lessonPending(run)||run.terrain.active||run.routeDistance<lessonAt||run.routeDistance>=lessonExit||run.boss||run.raid||run.player.isJacare||run.nextBossAt<=run.routeDistance)return false;
  if(run.obstacles.some(o=>!o.passed&&!o.counted&&!o.destroyed)||!run.player.grounded||run.player.y!==0)return true;
- beginGroundLesson(run,balance.speed*assistance(run),{routeStart:run.routeDistance,routeEnd:GROUND_LESSON_EXIT});
- announce(run,'São Paulo: pule quando a barra se aproximar; ainda há chão sob o exercício.');
+ beginGroundLesson(run,balance.speed*assistance(run),{routeStart:run.routeDistance,routeEnd:lessonExit});
+ announce(run,lessonStage.short+': pule quando a barra se aproximar; ainda há chão sob o exercício.');
  return true;
 }
 function prepareFlight(run,balance){
- if(!flightPending(run)||run.terrain.active||run.routeDistance<FLIGHT_BOARD_DISTANCE||run.routeDistance>=FLIGHT_ARRIVAL_DISTANCE||run.boss||run.raid||run.player.isJacare||run.nextBossAt<=run.routeDistance)return false;
+ const {boardAt,arrival,from,to}=traversalFor(run);
+ if(!flightPending(run)||run.terrain.active||run.routeDistance<boardAt||run.routeDistance>=arrival||run.boss||run.raid||run.player.isJacare||run.nextBossAt<=run.routeDistance)return false;
  // Let previously committed warnings resolve. No extra terrestrial waves
  // enter the runway, but world time and controls keep moving while it clears.
  if(run.nextRaid!==Infinity&&!run.raidStageCoverage?.[raidStageKey(run)])return false;
  if(run.obstacles.some(o=>!o.passed&&!o.counted&&!o.destroyed)||!run.player.grounded||run.player.y!==0)return true;
- beginAirTransfer(run,balance.speed*assistance(run),{routeStart:run.routeDistance,routeEnd:FLIGHT_ARRIVAL_DISTANCE});
+ beginAirTransfer(run,balance.speed*assistance(run),{routeStart:run.routeDistance,routeEnd:arrival,from:from.id,to:to.id,fromName:from.short,toName:to.short});
  run.obstacles=[];run.pickups=[];
- announce(run,'Embarque: São Paulo → Argentina. Pule entre as plataformas aéreas até a pista de pouso.');
+ announce(run,'Embarque: '+from.short+' → '+to.short+'. Pule entre as plataformas aéreas até a pista de pouso.');
  return true;
 }
 function prepareTerrain(run,balance){
@@ -987,12 +991,15 @@ function prepareTerrain(run,balance){
  if(campaignRouteDistance(run)<2*SCENE_DISTANCE)return false;
  const speed=balance.speed*assistance(run),reserve=terrainReservationFor(run,speed),travel=speed*reserve;
  const local=campaignRouteDistance(run)%SCENE_DISTANCE;
- if(flightPending(run)&&run.routeDistance<FLIGHT_BOARD_DISTANCE&&run.routeDistance+travel>=FLIGHT_BOARD_DISTANCE)return false;
+ const {boardAt,lessonAt}=traversalFor(run);
+ const end=run.routeDistance+travel;
+ if((flightPending(run)&&run.routeDistance<boardAt&&end>=boardAt)||
+    (lessonPending(run)&&run.routeDistance<lessonAt&&end>=lessonAt))return false;
  if(run.nextRaid<=reserve||run.nextBossAt-run.routeDistance<=travel+(run.mode==='story'?1000:0)||local+travel>SCENE_DISTANCE*.9||run.pickups.some(p=>p.type==='ze-gotinha'))return false;
  // Stop introducing waves while the last announced attack clears. Existing
  // attacks complete with their original contact times before terrain appears.
  if(run.obstacles.some(o=>!o.passed&&!o.counted&&!o.destroyed))return true;
- const a=beginTerrain(run,speed);announce(run,a.kind==='passage'?'Passagem baixa à frente: abaixe e avance para deslizar.':'Vão à frente: pule e pouse na plataforma elevada.');return true;
+ beginTerrain(run,speed);announce(run,'Vão à frente: pule e pouse na plataforma elevada.');return true;
 }
 export function advanceRun(run,seconds,rng){
  if(run.status!=='running'||!Number.isFinite(seconds)||seconds<=0)return;
@@ -1020,8 +1027,9 @@ export function advanceRun(run,seconds,rng){
   // Keep an unmet local encounter before the scenery transition. Physical
   // distance still advances while a duel, cooldown or Jacaré finishes.
   const raidStop=missingRaid&&local<=6200?run.routeDistance-local+6200:Infinity;
-  const flightStop=flightPending(run)&&run.routeDistance<=FLIGHT_BOARD_DISTANCE?FLIGHT_BOARD_DISTANCE:Infinity;
-  const lessonStop=lessonPending(run)&&run.routeDistance<=GROUND_LESSON_DISTANCE?GROUND_LESSON_DISTANCE:Infinity;
+  const {boardAt,lessonAt}=traversalFor(run);
+  const flightStop=flightPending(run)&&run.routeDistance<=boardAt?boardAt:Infinity;
+  const lessonStop=lessonPending(run)&&run.routeDistance<=lessonAt?lessonAt:Infinity;
   run.routeDistance=Math.min(stop,raidStop,flightStop,lessonStop,run.routeDistance+travel);
  }
  run.bossCooldown=Math.max(0,run.bossCooldown-dt);

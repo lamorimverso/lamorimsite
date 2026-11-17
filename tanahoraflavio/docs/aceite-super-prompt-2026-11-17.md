@@ -1,6 +1,10 @@
 # Corre, Flávio! — aceite do super-prompt
 
-Esta revisão reúne a jogabilidade do #59, o acabamento do #60 e a checagem final. A base anterior à eventual integração pública é `ede05c5e765770dfdff6e10d08f2937adfacf712`. A última revisão funcional comparada no modo Infinito é `fb4ab727f61e3d4b501a3c9d7abf0dde16a32b18`. Esta etapa acrescenta cobertura e fecha um teste antigo, sem mudar a física ou o conteúdo do jogo.
+Esta revisão reúne a jogabilidade do #59, o acabamento do #60 e a checagem final. A base anterior à eventual integração pública é `ede05c5e765770dfdff6e10d08f2937adfacf712`.
+
+**Correção pela captura do usuário.** O teto retangular cinza com faixa listrada e a seta junto dele foram retirados da partida nos dois modos. A geração não cria o obstáculo nem sua colisão. O Canvas também não pinta mais aquele teto. Agachamento e deslize continuam disponíveis no chão e sobre os apoios.
+
+**Travessia no Infinito.** O terceiro cenário, Argentina, agora ensina a barra em solo firme. Paraguai → Flórida recebe a viagem real, separada de São Paulo → Argentina na História. Cada viagem tem rampa, plataformas sobre vazio e avisos de aproximação visual e sonoro para aviões armados. O avião de passagem não ataca. Ao desembarcar, o jogador continua com a forma que tinha, sem precisar disparar ou usar salto duplo.
 
 | Requisito | Verificação e referência |
 | --- | --- |
@@ -15,12 +19,12 @@ Use `node tools/check-endless-release.mjs` para repetir o ensaio. Cada corrida c
 
 | Largura lógica e semente | Ainda em jogo aos 35 min | Chefes concluídos | Voltas completas | Terrenos especiais | Decisões perto do teto |
 | --- | --- | ---: | ---: | ---: | ---: |
-| 480 / 17 | 3 de 3 cadências | 67 | 22 | 1 | 6 formas de ameaça terrestre observadas |
-| 900 / 417 | 3 de 3 cadências | 66 | 22 | 3 | 6 formas de ameaça terrestre observadas |
+| 480 / 17 | 3 de 3 cadências | 65 | 22 | 4 | 6 formas de ameaça terrestre observadas |
+| 900 / 417 | 3 de 3 cadências | 65 | 22 | 3 | 6 formas de ameaça terrestre observadas |
 
-A velocidade final do mundo foi 534,751 unidades lógicas/s nas seis corridas, próxima do teto de 535. As formas observadas foram frente, retaguarda, queda, marca, rolante e emissão alta. O comando também registra as três janelas de 30 s, sem juntar terreno, pista comum e duelo na mesma contagem. A baixa frequência de terreno especial é um dado desta amostra do Infinito; não é a frequência da viagem obrigatória na História. As 20 corridas da História são verificadas separadamente com `node tools/check-story-campaign.mjs`.
+A velocidade final do mundo foi 534,751 unidades lógicas/s nas seis corridas, próxima do teto de 535. As formas observadas foram frente, retaguarda, queda, marca, rolante e emissão alta. Todas as seis completaram o treino e a travessia do Infinito. O comando também registra as três janelas de 30 s, sem juntar terreno, pista comum e duelo na mesma contagem. As 20 corridas da História são verificadas separadamente com `node tools/check-story-campaign.mjs`.
 
-A amostragem local dos passos do núcleo em Node teve P95 de 0,0033–0,0068 ms e P99 de 0,0080–0,0270 ms, nas condições do ensaio. O relatório também registra o heap do processo inteiro a cada cinco minutos. Isso **não** mede pintura, som, compositor, memória do navegador, latência física do controle ou FPS de um celular. A comparação no Chrome desktop e celular usa os replays guardados pela suíte, sem afirmar FPS físico. O playtest com participantes continua pendente.
+A amostragem local dos passos do núcleo em Node teve P95 de 0,0045–0,0105 ms e P99 de 0,0114–0,0308 ms, nas condições do ensaio. O relatório também registra o heap do processo inteiro a cada cinco minutos. Isso **não** mede pintura, som, compositor, memória do navegador, latência física do controle ou FPS de um celular. A comparação no Chrome desktop e celular usa os replays guardados pela suíte, sem afirmar FPS físico. O playtest com participantes continua pendente.
 
 ## Ponto de retorno e publicação
 

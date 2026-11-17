@@ -78,7 +78,7 @@ test('a route gap has visible terrain and its own outcome instead of a police ca
   await begin(page);
   await page.evaluate(async()=>{
    const r=__testRun;for(const key of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[key]=Infinity;
-   r.obstacles=[];r.pickups=[];r.terrain.nextAt=Infinity;r.terrain.nextKind='gap-platform';const {beginTerrain}=await import('./runner-terrain.mjs');beginTerrain(r);
+   r.obstacles=[];r.pickups=[];r.terrain.nextAt=Infinity;const {beginTerrain}=await import('./runner-terrain.mjs');beginTerrain(r);
   });
   await page.waitForFunction(()=>__testRun.status==='over',null,{timeout:5000});
   assert.equal(await page.locator('#game-overlay-title').textContent(),'Caiu no vão!');
@@ -88,19 +88,34 @@ test('a route gap has visible terrain and its own outcome instead of a police ca
  }finally{await context.close();}
 });
 
-test('crouch-forward input performs the low passage as a real slide in the browser',async()=>{
+test('crouch-forward still performs a real slide without the suspended panel',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:900,height:720}});
  try{
   await begin(page);
-  await page.evaluate(async()=>{
+  await page.evaluate(()=>{
    const r=__testRun;for(const key of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[key]=Infinity;
-   r.obstacles=[];r.pickups=[];r.terrain.nextAt=Infinity;r.terrain.nextKind='passage';const {beginTerrain}=await import('./runner-terrain.mjs');beginTerrain(r);
+   r.obstacles=[];r.pickups=[];r.terrain.nextAt=Infinity;
   });
   await page.locator('#runner-canvas').focus();await page.keyboard.down('s');await page.keyboard.down('d');
   await page.waitForFunction(()=>__testRun.player.sliding&&__testRun.player.x>200);
   await page.keyboard.up('d');
-  await page.waitForFunction(()=>__testRun.terrain.completed>0,null,{timeout:5000});
+  await page.waitForFunction(()=>!__testRun.player.sliding&&__testRun.terrain.active===null);
   await page.keyboard.up('s');assert.equal(await page.evaluate(()=>__testRun.status),'running');
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('Infinito opens its own air corridor on the narrow screen without the suspended panel',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844},hasTouch:true,isMobile:true});
+ try{
+  await page.getByRole('radio',{name:'Modo Infinito',exact:true}).check();await begin(page);
+  await page.evaluate(()=>{
+   const r=__testRun;for(const key of ['nextBossAt','nextRaid','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[key]=Infinity;
+   r.obstacles=[];r.pickups=[];r.nextObstacle=2;r.routeDistance=r.distance=26600-1;r.terrain.lessonCompleted=true;
+  });
+  await page.waitForFunction(()=>__testRun.terrain.active?.flight?.to==='florida');
+  const state=await page.evaluate(()=>({from:__testRun.terrain.active.flight.from,ceilings:__testRun.terrain.active.ceilings.length,obstacles:__testRun.obstacles.length}));
+  assert.deepEqual(state,{from:'paraguai',ceilings:0,obstacles:0});
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
