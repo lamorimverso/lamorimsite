@@ -1,8 +1,8 @@
 import {createPresentationDOM} from './runner-presentation-cache.mjs?v=4712d27109dc';
 import {ammoCapacityFor} from './runner-supplies.mjs?v=44c67e8a5802';
 import {heroPowerFor} from './runner-earned-powers.mjs?v=432ca45a76e4';
-import {drawSpriteHead,drawCombatSprite} from './runner-sprites.mjs?v=29b3f8b7b3c1';
-import {drawHeroProjectile} from './runner-hero-shot.mjs?v=1f3d3b135228';
+import {drawSpriteHead,drawCombatSprite} from './runner-sprites.mjs?v=4083e612e6fd';
+import {drawHeroProjectile} from './runner-hero-shot.mjs?v=193a1325edec';
 
 import {drawCampaignPortrait} from './runner-campaign-art.mjs?v=311bd72684f6';
 

@@ -22,28 +22,31 @@ function line(c,color,width,...points){
 }
 const coat='#592a69',highlight='#7c4692',shade='#371d47',ink='#211523';
 
-// Interpolate joints between upright, bent knees and the extended skid.
-// Both shoe soles keep the same height as the actual collision support.
-export function drawHeroLowPose(c,{image,factor,x,y,scale,pose=1,slide=0,phase=0,alpha=1,facing,shot}){
+// Run, crouch and slide use one opaque silhouette. The run cycles the limbs
+// until the bend takes over. In the low poses both soles stay on the support.
+export function drawHeroLowPose(c,{image,factor,x,y,scale,pose=1,slide=0,phase=0,stride=0,alpha=1,facing,shot}){
  const clamp=t=>Math.max(0,Math.min(1,t)),skid=clamp(slide),bend=Math.max(clamp(pose),skid);
  const blend=(a,b,t)=>a+(b-a)*t,mix=(a,b,d)=>blend(blend(a,b,bend),d,skid);
- const push=Math.sin(Math.PI*clamp(phase));
- const hip=[mix(-5,-11,-18),mix(-29,-13,-10)],neck=[mix(1,8,12+push),mix(-49,-20,-10)];
+ const push=Math.sin(Math.PI*clamp(phase)),swing=Math.sin(stride*Math.PI/4),step=Math.cos(stride*Math.PI/4);
+ const strideWeight=(1-bend)*(1-skid),bob=1.9*step*step;
+ const hip=[mix(-4,-11,-14),mix(-31-bob,-13,-11)],neck=[mix(4,8,8+push),mix(-49-bob,-20,-11)];
  const shoulder=[neck[0]-mix(4,4,10),neck[1]+mix(2,2,-3)];
- const rearFoot=mix(-14,-16,-29),frontFoot=mix(10,12,27+5*push);
- const rearKnee=[mix(-13,-21,-28),mix(-16,-11,-10)],frontKnee=[mix(5,16,8+4*push),mix(-16,-13,-8)];
- const elbow=[shoulder[0]-mix(13,13,19),shoulder[1]+mix(5,5,-1)],hand=[shoulder[0]-mix(17,17,31),shoulder[1]+mix(14,14,4)];
+ const rearFoot=mix(-21*swing,-16,-25),frontFoot=mix(23*swing,12,29+5*push);
+ const rearLift=14*Math.max(0,-step)*strideWeight,frontLift=14*Math.max(0,step)*strideWeight;
+ const rearKnee=[mix(-3-10*swing,-21,-26),mix(-17,-11,-12)-rearLift*.4],frontKnee=[mix(3+12*swing,16,8+4*push),mix(-17,-13,-8)-frontLift*.4];
+ const elbow=[shoulder[0]-mix(11+3*swing,13,19),shoulder[1]+mix(7,5,-1)],hand=[shoulder[0]-mix(15+7*swing,17,31),shoulder[1]+mix(16-4*step,14,4)];
  const atlasFactor=factor/scale;
- const fire=shot&&shot.state!=='recover',aimX=fire?Math.abs(shot.muzzle.x)/scale-(shot.state==='recoil'?shot.kick*.7:0):mix(23,27,27),aimY=fire?shot.muzzle.y/scale:mix(-35,-22,-13);
+ const fire=shot&&shot.state!=='recover',aimX=fire?Math.abs(shot.muzzle.x)/scale-(shot.state==='recoil'?shot.kick*.7:0):mix(22+4*swing,27,27),aimY=fire?shot.muzzle.y/scale:mix(-35+2*step,-22,-13);
  c.save();c.globalAlpha*=alpha;c.imageSmoothingEnabled=true;
  c.translate(x,y);c.scale(facing===-1?-scale:scale,scale);
- for(const [foot,knee,fill] of [[rearFoot,rearKnee,shade],[frontFoot,frontKnee,coat]]){
-  part(c,image,'shoe',foot,0,atlasFactor*1.28);
-  line(c,ink,11,hip,knee,[foot,-6]);
-  line(c,fill,8.5,hip,knee,[foot,-6]);
-  line(c,highlight,1.15,[hip[0]+2,hip[1]-2],[knee[0]+2,knee[1]-2],[foot+2,-7]);
+ for(const [foot,knee,lift,fill] of [[rearFoot,rearKnee,rearLift,shade],[frontFoot,frontKnee,frontLift,coat]]){
+  part(c,image,'shoe',foot,-lift,atlasFactor*1.28);
+  line(c,ink,11,hip,knee,[foot,-6-lift]);
+  line(c,fill,8.5,hip,knee,[foot,-6-lift]);
+  line(c,highlight,1.15,[hip[0]+2,hip[1]-2],[knee[0]+2,knee[1]-2],[foot+2,-7-lift]);
  }
  shape(c,coat,p=>{p.moveTo(hip[0]-8,hip[1]+3);p.quadraticCurveTo(hip[0]-12,hip[1]-8,shoulder[0]-6,shoulder[1]-3);p.quadraticCurveTo(shoulder[0]+1,shoulder[1]-7,neck[0]+6,neck[1]+3);p.quadraticCurveTo(neck[0]+10,neck[1]+12,hip[0]+8,hip[1]+4);p.quadraticCurveTo(hip[0]+1,hip[1]+8,hip[0]-8,hip[1]+3);});
+ line(c,highlight,1.2,[hip[0]-5,hip[1]+2],[hip[0]-5,hip[1]-4],[shoulder[0]-4,shoulder[1]+3]);
  line(c,ink,8,shoulder,elbow,hand);
  line(c,shade,6.4,shoulder,elbow,hand);
  const [hx,hy]=hand;
@@ -52,9 +55,10 @@ export function drawHeroLowPose(c,{image,factor,x,y,scale,pose=1,slide=0,phase=0
  line(c,'#ffd3a2',.9,[hx-2,hy-2],[hx-.6,hy-2.7],[hx+1,hy-2.4]);
  shape(c,'#fff2dc',p=>{p.moveTo(neck[0]-3,neck[1]-2);p.lineTo(neck[0]+5,neck[1]+3);p.lineTo(hip[0]+5,hip[1]+2);p.lineTo(neck[0]-3,neck[1]+5);});
  shape(c,'#ffd448',p=>{p.moveTo(neck[0]-1,neck[1]+3);p.lineTo(neck[0]+1,neck[1]+7);p.quadraticCurveTo(hip[0]+7,hip[1]+2,hip[0]-1,hip[1]+6);p.quadraticCurveTo(hip[0]+2,hip[1]+1,neck[0]-1,neck[1]+3);},'#74502a',.6);
- const forearm=[neck[0]+6,neck[1]+mix(11,11,1)];
- line(c,ink,8,[neck[0]+2,neck[1]+4],forearm,[aimX-7,aimY+4]);
- line(c,coat,6,[neck[0]+2,neck[1]+4],forearm,[aimX-7,aimY+4]);
+ const forearm=[neck[0]+6,neck[1]+mix(12,11,1)],wrist=shot?[aimX-11,aimY+6]:[aimX+2,aimY-1];
+ line(c,ink,8,[neck[0]+2,neck[1]+4],forearm,wrist);
+ line(c,coat,6,[neck[0]+2,neck[1]+4],forearm,wrist);
+ line(c,'#f7e9db',2,[wrist[0]-2,wrist[1]+1],wrist);
  if(shot)part(c,image,'weapon',aimX,aimY,atlasFactor*1.27);
  else part(c,image,'passport',aimX,aimY,atlasFactor*1.35);
  part(c,image,'head',neck[0],neck[1],atlasFactor*1.70);
