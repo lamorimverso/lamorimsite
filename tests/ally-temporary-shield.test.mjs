@@ -34,7 +34,7 @@ test('the pickup shield counts down once and blocks normal collision only for it
  assert.ok(Math.abs(r.allyShieldFor-2.5)<1e-8);assert.ok(Math.abs(r.shieldFor-2.5)<1e-8);
  step(r,2.4);collide(r);assert.equal(r.status,'running');assert.equal(r.lives,1);
  r.obstacles=[];step(r,.15);assert.equal(r.allyShieldFor,0);assert.equal(r.shieldFor,0);
- collide(r);assert.equal(r.status,'over');assert.equal(r.lastHit.type,'pf');
+ collide(r);assert.equal(r.status,'running');assert.equal(r.player.hp,1);assert.equal(r.lastHit.type,'pf');
 });
 test('boss damage is blocked during ally protection and resumes after expiry',()=>{
  const r=isolated('story');r.bossesDefeated=1;r.distance=r.routeDistance=nextStoryBossDistance(1);r.nextBossAt=0;core.advanceRun(r,DT);
@@ -54,7 +54,7 @@ test('another ally refreshes three seconds without stacking or shortening a long
  step(r,3.1);assert.equal(r.allyShieldFor,0);assert.ok(r.shieldFor>2.8&&r.shieldFor<3);
 });
 test('falling into a terrain gap remains fatal while the ally shield is active',()=>{
- const r=isolated();r.terrain.nextAt=0;r.terrain.nextKind='gap-platform';r.nextObstacle=0;core.advanceRun(r,DT);r.nextObstacle=Infinity;
+ const r=isolated();r.routeDistance=2*core.SCENE_DISTANCE+1300;r.terrain.nextAt=0;r.nextObstacle=0;core.advanceRun(r,DT);r.nextObstacle=Infinity;
  assert.equal(r.terrain.active.kind,'gap-platform');
  let collected=false;
  for(let i=0;i<600&&r.status==='running';i++){

@@ -17,12 +17,12 @@ test('uma parte não protege; seis partes guardam proteção manual',()=>{
 });
 test('o escudo conquistado termina depois de 6 segundos',()=>{
  const r=running();for(let i=0;i<6;i++)collect(r,'shield');core.activateReserveShield(r);r.obstacles=[];r.nextObstacle=100;
- step(r,6.1);assert.equal(r.shieldFor,0);collide(r);core.advanceRun(r,1/120);assert.equal(r.status,'over');
+ step(r,6.1);assert.equal(r.shieldFor,0);collide(r);core.advanceRun(r,1/120);assert.equal(r.status,'running');assert.equal(r.player.hp,1);
 });
-test('100 passaportes ainda concedem uma vida e protegem no mesmo frame',()=>{
+test('100 passaportes ainda concedem continuação, sem neutralizar o impacto do mesmo frame',()=>{
  const r=running();r.passports=99;collide(r);collect(r,'passport');
- assert.equal(r.status,'running');assert.equal(r.passports,100);assert.equal(r.lives,1);
- r.obstacles=[];collect(r,'passport');assert.equal(r.lives,1);
+ assert.equal(r.status,'running');assert.equal(r.passports,100);assert.equal(r.lives,2);assert.equal(r.player.hp,1);
+ r.obstacles=[];collect(r,'passport');assert.equal(r.lives,2);
 });
 test('pista gera passaportes, escudos e aliado úteis sem armas do protagonista',()=>{
  const r=running(),rng=seeded(54),types=new Set();r.nextBossAt=Infinity;r.nextRaid=Infinity;

@@ -15,14 +15,15 @@ test('suspensão interna congela física, placar e temporizadores',()=>{
  const r=running();core.jumpRun(r);frames(r,.1);core.togglePause(r);const copy=structuredClone(r);
  frames(r,2);assert.deepEqual(r,copy);core.togglePause(r);frames(r,.1);assert.ok(r.elapsed>copy.elapsed);
 });
-test('uma colisão sem proteção encerra imediatamente a corrida',()=>{
+test('uma colisão sem proteção machuca e abre respiro antes do segundo impacto',()=>{
  const r=running();r.obstacles=[{x:125,width:34,height:44,type:'pf'}];frames(r,.02);
- assert.equal(r.status,'over');assert.equal(r.lives,0);assert.equal(r.graceFor,0);
+ assert.equal(r.status,'running');assert.equal(r.player.hp,1);assert.equal(r.lives,1);assert.ok(r.graceFor>1);
 });
-test('vida extra suporta um impacto e recuperação evita dano duplicado da mesma onda',()=>{
+test('proteção evita dano duplicado e passe só é gasto em continuação explícita',()=>{
  const r=running();r.lives=2;r.obstacles=[{x:125,width:34,height:44,type:'pf'},{x:133,width:34,height:44,type:'pf'}];
- frames(r,.02);assert.equal(r.status,'running');assert.equal(r.lives,1);assert.ok(r.graceFor>1);
- frames(r,.2);assert.equal(r.lives,1);r.graceFor=0;r.obstacles=[{x:125,width:34,height:44,type:'pf'}];frames(r,.02);assert.equal(r.status,'over');
+ frames(r,.02);assert.equal(r.status,'running');assert.equal(r.lives,2);assert.ok(r.graceFor>1);
+ frames(r,.2);assert.equal(r.player.hp,1);r.graceFor=0;r.obstacles=[{x:125,width:34,height:44,type:'pf'}];frames(r,.02);assert.equal(r.status,'over');
+ assert.equal(r.lives,2);assert.equal(core.continueRun(r),true);assert.equal(r.lives,1);
 });
 test('saltar sobre inimigo não gera colisão',()=>{
  const r=running();r.player.y=95;r.obstacles=[{x:125,width:40,height:44,type:'pf'}];frames(r,.02);assert.equal(r.status,'running');

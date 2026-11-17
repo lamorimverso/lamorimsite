@@ -39,6 +39,11 @@ test('passaportes vinculados seguem o disparo durante preparação, voo e resize
  }
 });
 test('resize conserva também o instante físico da colisão durante o voo',()=>{
- function impact(resize){const r=isolated();core.advanceRun(r,1/120,()=>0);r.nextObstacle=Infinity;const o=r.obstacles.find(o=>o.cast);while(o.cast.flightAge<.3)core.advanceRun(r,1/120,()=>0);if(resize)core.resizeRun(r,480);while(r.status==='running'&&o.cast.flightAge<1)core.advanceRun(r,1/120,()=>0);assert.equal(r.status,'over');return o.cast.flightAge;}
+ function impact(resize){const r=isolated();core.advanceRun(r,1/120,()=>0);r.nextObstacle=Infinity;const o=r.obstacles.find(o=>o.cast);
+  for(let i=0;i<360&&o.cast.flightAge<.3;i++)core.advanceRun(r,1/120,()=>0);
+  assert.ok(o.cast.flightAge>=.3);if(resize)core.resizeRun(r,480);
+  for(let i=0;i<240&&!r.lastHit;i++)core.advanceRun(r,1/120,()=>0);
+  assert.equal(r.player.hp,1);assert.equal(r.lastHit?.type,o.type);return o.cast.flightAge;
+ }
  assert.ok(Math.abs(impact(false)-impact(true))<=1/120);
 });

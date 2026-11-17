@@ -174,7 +174,7 @@ const chain=(signature,type,beats,extra={})=>{
 const late=(signature,type,beats,extra={})=>chain(signature,type,beats,{telegraph:1.14,recover:1.58,...extra});
 const newBosses=Object.freeze({
  'ana-elisa':Object.freeze([
-  chain('network-linked-panels','network-panel',[zone(-24),zone(0),zone(24)]),
+  chain('network-link-intro','network-panel',[zone(-24),low(wave(18))]),
   s('network-low-data','network-panel','jump','sweep',wave(18)),
   s('network-top-row','network-panel','crouch','diagonal',wave(14)),
   chain('network-zigzag','network-panel',[zone(24),zone(-24),zone(0)]),
@@ -183,7 +183,7 @@ const newBosses=Object.freeze({
   late('network-four-corners','network-panel',[zone(-23),zone(20),zone(-20),zone(25)]),
   late('network-mid-row','network-panel',[high(wave(22,2)),low(),high()])]),
  rick:Object.freeze([
-  chain('pulse-six-count','signal-pulse',[low(),high(),low(),high(),low(),high()],{burstGap:.98}),
+  chain('pulse-six-count','signal-pulse',[low(),high(),low(),high(),low(),high()],{burstGap:.98,finishBeforeVictory:.85}),
   s('pulse-ping','signal-pulse','jump','sweep',wave(13)),
   s('pulse-high-ping','signal-pulse','crouch','diagonal',wave(20)),
   chain('pulse-pair','signal-pulse',[high(),low()]),
@@ -210,7 +210,7 @@ const newBosses=Object.freeze({
   late('planters-long-row','garden-box',[low(roll(39,3)),high(),low(roll(36,4)),high()]),
   late('planters-pot-hop','garden-box',[high(),low(roll(37,3)),high()])]),
  erika:Object.freeze([
-  chain('spotlight-crossed-stage','stage-spotlight',[zone(-25),zone(25)]),
+  chain('spotlight-stage-intro','stage-spotlight',[zone(-25),high(wave(17)),zone(25)]),
   s('spotlight-balcony','stage-spotlight','crouch','diagonal',{...wave(17),widthScale:1.2}),
   s('spotlight-floor','stage-spotlight','jump','sweep',wave(20,2)),
   chain('spotlight-cross-right','stage-spotlight',[zone(24),zone(-24)]),
@@ -275,6 +275,16 @@ const newBosses=Object.freeze({
 });
 export const BOSS_MECHANICS=Object.freeze({...Object.fromEntries(Object.entries(introductions).map(([type,patterns])=>
  [type,Object.freeze([...patterns,...returns[type],...(finalPatrols[type]||returns[type])])])),...newBosses});
+// Na História, a primeira sequência já apresenta a assinatura do chefe.
+// Os repertórios do Infinito e das revanches não herdam essas aberturas.
+const campaignOpenings=Object.freeze({
+ dilma:s('wind-opening-gust','wind','crouch','diagonal',{
+  ...wave(20,1.5),projectileSpeedScale:.85,gust:gust(-1,21,.64)}),
+ haddad:chain('tax-audit-opening','receipts',[
+  high({arcHeight:20,widthScale:.85}),{...zone(0),type:'stamp'}],{telegraph:1.15}),
+ simone:chain('budget-opening-grid','budget-sheets',[
+  low({widthScale:1.2}),zone(0),high({widthScale:1.1})],{telegraph:1.15})
+});
 // The tell and the counter belong to the attack, not to the boss class.
 // An evasive volley must finish without any physical hit, even behind a shield.
 const counter=(applies,label,counterHint,{delay=0,window=.94,damage=3.8,trigger='evade'}={})=>
@@ -286,19 +296,19 @@ const counters=Object.freeze({
  joice:counter(p=>p.action==='crouch','SEM VOZ','Abaixe até a nota passar',{delay:.14,damage:3.5}),
  soraya:counter(p=>p.approach==='drop','POUSOU','Desvie e espere a cruz pousar',{delay:.18,damage:4.2}),
  boulos:counter(p=>p.curve==='bounce'&&p.action==='jump','MALA PASSOU','Pule a mala até o último quique',{damage:4.2}),
- haddad:counter(p=>p.type==='stamp','CARIMBO BAIXOU','Escape do carimbo TAXA',{delay:.13,damage:4.4}),
- simone:counter(p=>p.approach==='vertical','COLUNA LIVRE','Saia da coluna travada',{damage:4.4}),
+ haddad:counter(p=>p.type==='stamp'||p.sequence?.some(beat=>beat.type==='stamp'),'CARIMBO BAIXOU','Escape do carimbo TAXA',{delay:.13,damage:4.4}),
+ simone:counter(p=>p.approach==='vertical'||p.sequence?.some(beat=>beat.approach==='vertical'),'COLUNA LIVRE','Saia da coluna travada',{damage:4.4}),
  dino:counter(p=>p.action==='move'||p.approach==='drop','SELO NO CHÃO','Desvie e espere o selo baixar',{delay:.24,damage:4.4}),
  xandao:counter(p=>p.type==='hammer'&&p.burst<=2,'MARTELO BAIXOU','Pule a martelada e espere',{delay:.22,damage:4.5}),
  lula:counter(p=>p.curve==='boomerang','O L VOLTOU','Desvie na ida e espere o retorno',{trigger:'return',window:1.1,damage:4.5}),
  dilma:counter(p=>!!p.gust,'CALMARIA','Desvie da rajada até o vento parar',{trigger:'gust',delay:.18,damage:4.6}),
  bossonari:counter(p=>p.type==='ivermectina-prop','FRASCOS EM PAUSA','Desvie dos dois tipos seguidos',{trigger:'alternate',window:1.06,damage:4.8}),
  'meme-army':counter(p=>p.action==='move'||p.signature==='ghost-low-charge','RECUOU','Escape da marca ou da investida',{delay:.25,window:.95,damage:4.9}),
- 'ana-elisa':counter(p=>p.sequence?.every(step=>step.action==='move'),'REDE APAGADA','Limpe as marcas em sequência',{delay:.11,damage:4.4}),
+ 'ana-elisa':counter(p=>p.signature==='network-link-intro'||p.sequence?.every(step=>step.action==='move'),'REDE APAGADA','Desvie das marcas e dos painéis',{delay:.11,damage:4.4}),
  rick:counter(p=>p.burst===6,'SÉTIMO TEMPO','Conte seis pulsos e espere a pausa',{delay:.35,window:1.16,damage:5.4}),
  sofia:counter(p=>p.burstMode==='sequence','PAINEL LIVRE','Siga a ordem das setas',{delay:.11,damage:4.5}),
  guilherme:counter(p=>p.sequence?.some(step=>step.curve==='bounce'),'ÚLTIMO VASO','Alterne salto e agachamento',{delay:.15,damage:4.7}),
- erika:counter(p=>p.sequence?.every(step=>step.action==='move'),'PALCO ESCURO','Saia dos dois refletores',{delay:.18,damage:4.9}),
+ erika:counter(p=>p.signature==='spotlight-stage-intro'||p.sequence?.every(step=>step.action==='move'),'PALCO ESCURO','Desvie das marcas e dos refletores',{delay:.18,damage:4.9}),
  'renato-freitas':counter(p=>p.burstMode==='sequence','PLACAS LIBERADAS','Desvie até o fim do giro',{trigger:'clear-only',delay:.18}),
  jones:counter(p=>p.sequence?.every(step=>!!step.gust),'FIM DO DEBATE','Desvie nos dois sentidos',{delay:.19,damage:4.9}),
  maestro:counter(p=>p.sequence?.some(step=>step.gap>.95),'FIM DA FINTA','A batuta atrasa uma batida',{delay:.12,damage:4.8}),
@@ -320,7 +330,8 @@ export function bossMechanicFor(boss,fired=0){
  const phase=Number.isFinite(boss.maxHp)&&boss.maxHp>0&&boss.hp<=boss.maxHp/2?1:0;
  const order=orders[Math.min(rematch,orders.length-1)][phase];
  const index=Math.max(0,Math.floor(Number(fired)||0));
- const pattern=patterns[order[index%order.length]%patterns.length],rule=counters[boss.type];
+ const firstDuel=index===0&&rematch===0&&phase===0&&boss.role==='map-boss';
+ const pattern=(firstDuel?campaignOpenings[boss.type]:null)||patterns[order[index%order.length]%patterns.length],rule=counters[boss.type];
  const stage=Math.max(0,Number(boss.stageIndex)||0),rank=Math.max(1,Number(boss.rank)||1);
  const pressure=stage*.055+(rank-1)*.035+Math.min(rematch,2)*.065+phase*.15;
  const contactFor=Math.max(.82,1.11/(pattern.projectileSpeedScale||1)-pressure*.5);

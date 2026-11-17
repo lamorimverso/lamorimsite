@@ -1,4 +1,4 @@
-import {pilotDodge as pilotTerrain} from '../tools/story-pilot.mjs';
+import {pilotDodge as pilotTerrain,pilotJacare} from '../tools/story-pilot.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
@@ -40,20 +40,6 @@ test('resize preserva proporção lateral e prazos em ambos os sentidos, incluin
  }
 });
 
-test('jacaré dura dez segundos lógicos e retorna automaticamente',()=>{
- const r=isolated();transform(r);r.shieldFor=Infinity;
- assert.equal(core.JACARE_DURATION_SECONDS,10);
- assert.ok(r.graceFor>=3&&r.nextObstacle>=3);
- for(let i=0;i<8;i++)assert.equal(core.jumpRun(r),false);
- step(r,9.9);
- assert.equal(r.player.isJacare,true);
- assert.ok(r.distance>100);
- step(r,.2);
- assert.equal(r.player.isJacare,false);
- assert.ok(r.player.restoreFlashFor>=0);
- assert.equal(core.jumpRun(r),true);
-});
-
 test('semente reproduz a aleatoriedade interna sem depender de Math.random',()=>{
  assert.equal(typeof core.createSeededRandom,'function');
  const a=core.createSeededRandom(7),b=core.createSeededRandom(7),c=core.createSeededRandom(8);
@@ -71,20 +57,19 @@ test('bueiro compromete o alvo, avisa e permite saída com comandos em ambas as 
   assert.equal(core.spawnManholeThreat(r),null,'uma única zona de impacto por vez');
   const target=o.x;step(r,.3);assert.equal(r.status,'running','aviso ainda não causa dano');
   core.moveRun(r,edge==='min'?1:-1);step(r,2.5);assert.equal(o.x,target);assert.equal(r.status,'running');assert.ok(!r.obstacles.includes(o));
-  const waiting=isolated(width);waiting.player.x=bounds[edge];core.spawnManholeThreat(waiting,{rng:()=>.5});step(waiting,2);assert.equal(waiting.status,'over','acampar na borda não neutraliza o perigo');
+  const waiting=isolated(width);waiting.player.x=bounds[edge];core.spawnManholeThreat(waiting,{rng:()=>.5});step(waiting,2);assert.equal(waiting.player.hp,1,'acampar na borda não neutraliza o perigo');
  }
 });
 
-test('ampolas da Pfizer aparecem e são evitadas com deslocamento lateral',()=>{
- const r=isolated();transform(r);step(r,3.1);
+test('ampolas da Pfizer são anunciadas na coleta e exigem desvio lateral',()=>{
+ const r=isolated();transform(r);
  const o=r.obstacles.find(o=>o.falling&&o.owner==='pfizer');
- assert.ok(o,'a ampola deve aparecer após o respiro inicial');
- assert.equal(o.type,'pfizer-ampoule');
- assert.ok(o.warningFor>=1.2);
- core.moveRun(r,-1);step(r,1.9);
- assert.equal(r.status,'running','deslocamento lateral evita a ampola');
- const stationary=isolated();transform(stationary);step(stationary,5.2);
- assert.equal(stationary.status,'over','ficar imóvel permite colisão após o aviso');
+ assert.ok(o);assert.equal(o.age,0);assert.equal(o.type,'pfizer-ampoule');assert.ok(o.warningFor>=.9);
+ step(r,.30);
+ for(let n=0;n<240;n++){pilotJacare(r,{recover:false});core.advanceRun(r,DT,()=>.5);}
+ assert.equal(r.status,'running','deslocamento lateral após ver o aviso evita a onda');
+ const stationary=isolated();transform(stationary);step(stationary,1.8);
+ assert.equal(stationary.player.hp,1);assert.equal(stationary.lastHit.type,'pfizer-ampoule');
 });
 
 test('chefões respeitam o contato real quando Flávio ocupa a extremidade direita',()=>{
@@ -92,7 +77,7 @@ test('chefões respeitam o contato real quando Flávio ocupa a extremidade direi
   const r=isolated(width);r.player.x=core.playerBounds(r).max;r.routeDistance=23000;r.bossBag=[type];r.nextBossAt=0;
   core.advanceRun(r,DT,()=>.5);r.boss.nextAttack=0;core.advanceRun(r,DT,()=>.5);
   const o=r.obstacles.at(-1);assert.ok(o.bossAttack);assert.ok(o.x>r.player.x+core.PLAYER.width,'arma não nasce na hitbox ou atrás do herói');
-  assert.ok(core.threatTimeToContact(r,o)>=.84);step(r,2);assert.equal(r.status,'over','ameaça atravessa a borda ocupada');
+  assert.ok(core.threatTimeToContact(r,o)>=.84);step(r,2);assert.equal(r.player.hp,1,'ameaça atravessa a borda ocupada');
  }
 });
 
@@ -121,10 +106,12 @@ test('jacaré termina o minigame antes de iniciar outro encontro pendente',()=>{
   const r=isolated();transform(r);r.routeDistance=23000;if(kind==='boss')r.nextBossAt=0;else r.nextRaid=0;
   r.shieldFor=Infinity;
   step(r,.2);assert.equal(r.boss,null);assert.equal(r.raid,null);
-  step(r,9.7);assert.equal(r.player.isJacare,true,'encontro espera terminar os dez segundos');
-  step(r,.2);
-  assert.equal(r.player.isJacare,false,'restauração automática');
-  assert.ok(kind==='boss'?r.boss:r.raid,'encontro pendente inicia após o relógio do jacaré');
+  step(r,10);assert.equal(r.player.isJacare,true,'encontro continua aguardando depois de dez segundos');
+  for(let i=0;i<4;i++)core.recoverJacareRun(r);
+  step(r,.2);assert.equal(r.boss,null);assert.equal(r.raid,null);
+  core.recoverJacareRun(r);step(r,.2);
+  assert.equal(r.player.isJacare,false);
+  assert.ok(kind==='boss'?r.boss:r.raid,'encontro pendente inicia após a recuperação');
  }
 });
 
@@ -145,6 +132,7 @@ test('espera adicional do resize não mira novamente um projétil já lançado',
 // Apenas comandos públicos durante o percurso. Não injeta proteção, teleporte,
 // vidas, coletas nem muda o estado dos perigos para forçar uma aprovação.
 function pilot(r){
+ if(pilotJacare(r))return;
  if(r.terrain?.active)return pilotTerrain(r);
  const local=r.obstacles.find(o=>(o.falling||o.groundHazard)&&o.age<o.warningFor+(o.fallFor??o.activeFor));
  let evade=0;
@@ -153,7 +141,6 @@ function pilot(r){
   const leftPossible=r.player.x+toLeft>=bounds.min,rightPossible=r.player.x+toRight<=bounds.max;
   if(!(r.player.x+31<local.x-10||r.player.x+5>local.x+local.width+10))evade=leftPossible&&(!rightPossible||Math.abs(toLeft)<Math.abs(toRight))?-1:1;
  }
- if(r.player.isJacare)core.jumpRun(r);
  const danger=r.obstacles.filter(o=>!o.falling&&!o.groundHazard&&!o.passed&&!o.counted&&
   (o.approach==='rear'?o.x<r.player.x+31:o.x+o.width-3>r.player.x+5))
   .sort((a,b)=>core.threatTimeToContact(r,a)-core.threatTimeToContact(r,b))[0];
@@ -173,10 +160,13 @@ test('2.000 sequências com sementes e entradas reais mantêm rotas vencíveis p
   const width=[480,612,900][seed%3],r=isolated(width),rng=core.createSeededRandom(seed);
   r.elapsed=40;r.distance=r.routeDistance=(seed%8)*35000;r.nextObstacle=0;r.terrain.nextAt=6;
   const bounds=core.playerBounds(r);r.player.x=[bounds.min,(bounds.min+bounds.max)/2,bounds.max][Math.floor(seed/3)%3];
-  let count=0;const sequence=[];
-  for(let i=0;i<24*60&&r.status==='running';i++){
+  let count=0,groundSteps=0;const sequence=[];
+  // Cada amostra precisa dos mesmos 24 s de pista para comparar as ondas.
+  // O piloto continua reportando qualquer derrota, inclusive no voo.
+  for(let i=0;i<80*60&&groundSteps<24*60&&r.status==='running';i++){
    if(seed%5===0&&i===12*60)core.resizeRun(r,[612,900,480][seed%3]);
    pilot(r);core.advanceRun(r,1/60,rng);
+   if(!r.terrain.active?.flight)groundSteps++;
    if(r.spawnedObstacles>count){
     count=r.spawnedObstacles;waves++;const o=r.obstacles.at(-1);styles.add(o.approach||'overhead');sequence.push(o.type+'/'+o.approach);
     assert.ok(!o.falling&&!o.groundHazard||o.age<o.warningFor,'zona nasce como aviso sem hitbox ativa');
@@ -185,6 +175,7 @@ test('2.000 sequências com sementes e entradas reais mantêm rotas vencíveis p
    }
   }
   assert.equal(r.status,'running',`semente ${seed}/${width}, x=${r.player.x}: ${JSON.stringify(r.lastHit)} em ${r.elapsed}`);
+  assert.equal(groundSteps,24*60,'o voo não elimina a amostra terrestre');
   signatures.add(sequence.join('|'));
  }
  assert.ok(waves>15000);assert.ok(signatures.size>1900,'combinações não formam ciclo memorizável');

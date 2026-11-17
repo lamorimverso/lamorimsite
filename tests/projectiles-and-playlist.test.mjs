@@ -36,10 +36,10 @@ test('objeto sai da mão do chefão e viaja em linha reta até o Flávio',()=>{
  const progress=(shot.launchX-(shot.x+shot.width/2))/(shot.launchX-landingX);
  assert.ok(Math.abs(shot.y-(shot.launchY+(shot.targetY-shot.launchY)*progress))<.0001);
 });
-test('projétil acertando tira vida e derruba jogador desprotegido',()=>{
+test('projétil acertando machuca o jogador desprotegido',()=>{
  const r=bossRun();step(r,120*2);
- assert.equal(r.status,'over');
- assert.equal(r.lives,0);
+ assert.equal(r.status,'running');
+ assert.equal(r.player.hp,1);
 });
 test('o salto depois do lançamento realmente evita o projétil direcionado',()=>{
  const r=bossRun(),first=r.obstacles[0];
@@ -73,7 +73,7 @@ test('segurar Abaixar protege contra a mão em L do Lula, mas não contra martel
  assert.equal(high.lives,1);
  const low=bossRun('xandao');crouchRun(low,true);
  step(low,120*1.4);
- assert.equal(low.status,'over','martelo baixo exige salto');
+ assert.equal(low.player.hp,1,'martelo baixo exige salto');
 });
 test('pular sai do agachamento sem permitir abaixar em pleno salto',()=>{
  const r=createRun();startRun(r);

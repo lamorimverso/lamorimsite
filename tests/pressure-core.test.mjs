@@ -4,7 +4,7 @@ import * as core from '../tanahoraflavio/runner-core.mjs';
 const dt=1/120;
 const make=()=>{const r=core.createRun();core.startRun(r);r.terrain.nextAt=Infinity;r.shieldFor=1000;r.nextRaid=r.nextBossAt=r.nextSupportAt=Infinity;return r;};
 const seeded=seed=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/2**32;};
-function simulate(r,seconds,rng=seeded(103)){for(let i=0;i<Math.ceil(seconds/dt);i++){if(r.player.isJacare)core.jumpRun(r);core.advanceRun(r,dt,rng);}}
+function simulate(r,seconds,rng=seeded(103)){for(let i=0;i<Math.ceil(seconds/dt);i++){if(r.player.isJacare&&r.player.jacareAge>=(r.player.jacareProgress+1)*.2)core.recoverJacareRun(r);core.advanceRun(r,dt,rng);}}
 
 test('pressão cresce pelo tempo e distância até limites explícitos',()=>{
  const a=core.difficultyAt(0,0),b=core.difficultyAt(0,70),c=core.difficultyAt(20000,70),z=core.difficultyAt(1e12,1e9);
@@ -43,7 +43,7 @@ test('Joice vencida espera chefe e tem dez segundos de ameaças mistas sem fome'
 test('Zé Gotinha recolhido limpa perigos comuns e abre respiro sem vencer chefe',()=>{
  const r=make();r.shieldFor=0;r.obstacles=[{x:400,width:34,height:44,type:'pf',speed:200},{x:450,width:40,height:40,type:'hammer',bossAttack:true,projectile:true,y:60,speed:200}];
  r.pickups=[{type:'ze-gotinha',x:137,y:20,speed:0}];core.advanceRun(r,dt);
- assert.equal(r.lastPickup,'ze-gotinha');assert.equal(r.obstacles.length,1);assert.equal(r.obstacles[0].bossAttack,true);assert.ok(r.nextObstacle>=2.5-dt);assert.equal(r.shieldFor,0);
+ assert.equal(r.lastPickup,'ze-gotinha');assert.equal(r.obstacles.filter(o=>o.bossAttack).length,1);assert.ok(!r.obstacles.some(o=>o.type==='pf'));assert.equal(r.obstacles.filter(o=>o.type==='pfizer-ampoule').length,3);assert.ok(r.nextObstacle>=1.2);assert.equal(r.shieldFor,0);
 });
 test('transição de Joice e aceleração preservam .82s entre contatos previstos em todas telas',()=>{
  for(const width of [480,612,900])for(const assisted of [false,true]){

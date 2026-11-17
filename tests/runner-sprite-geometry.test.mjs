@@ -67,3 +67,16 @@ test('efeitos secundários da postura interpolam ativação e retorno sem revers
  assert.equal(crouchAnimationStep(.9,false,1/60,true),0);
  assert.equal(crouchAnimationStep(.4,true,-1),.4,'não avança com dt negativo');
 });
+
+test('a interpolação da postura usa tempo, sem acelerar a 30 ou 120 quadros',()=>{
+ const sample=(fps,target)=>{
+  let value=target?0:1;
+  for(let i=0;i<fps*.2;i++)value=crouchAnimationStep(value,target,1/fps);
+  return value;
+ };
+ for(const target of [true,false]){
+  const a=sample(30,target);
+  assert.ok(Math.abs(a-sample(60,target))<1e-9);
+  assert.ok(Math.abs(a-sample(120,target))<1e-9);
+ }
+});

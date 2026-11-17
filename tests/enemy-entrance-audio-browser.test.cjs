@@ -64,3 +64,30 @@ test('todos os 14 inimigos renderizam sinais nativos distintos, audíveis e sem 
   for(const row of rendered){assert.equal(row.accepted,true,row.actor);assert.ok(row.rms>.003,row.actor+' audível: '+row.rms);assert.ok(row.peak>.04&&row.peak<.07,row.actor+' reserva volume para avisos');}
  }finally{await page.close();}
 });
+
+test('os 11 novos encontros geram sinais audíveis de entrada, preparo, lançamento e contato em Web Audio real',async()=>{
+ const page=await browser.newPage();try{
+  await page.goto(base);
+  const rendered=await page.evaluate(async()=>{
+   const {createGameAudio}=await import('/tanahoraflavio/runner-audio.mjs'),Native=window.AudioContext;
+   const fixtures=[['ana-elisa','network-panel'],['rick','signal-pulse'],['sofia','arrow-panel'],['guilherme','garden-box'],
+    ['erika','stage-spotlight'],['renato-freitas','rotating-sign',true],['jones','debate-card'],['maestro','baton-wave'],
+    ['capita','wind-flag'],['fiscal','inspection-gate',true],['povo','crowd-lane',true]];
+   const rows=[],rate=22050;
+   try{for(const [actor,weapon,passage] of fixtures)for(const phase of ['entrance','windup','release','contact']){
+    const offline=new OfflineAudioContext(1,Math.round(rate*.4),rate);
+    const adapter={currentTime:0,state:'running',destination:offline.destination,createGain:()=>offline.createGain(),createOscillator:()=>offline.createOscillator()};
+    window.AudioContext=class{constructor(){return adapter;}};
+    const audio=createGameAudio();audio.prime();
+    const accepted=phase==='entrance'?audio.enemyEntrance(actor):phase==='windup'?audio.enemyWindup(actor):
+     phase==='release'?audio.enemyShot(actor,weapon):passage?audio.traversalBlock(actor,weapon):audio.enemyImpact(actor,weapon);
+    const samples=(await offline.startRendering()).getChannelData(0);let peak=0,sum=0,hash=0;
+    for(const sample of samples){peak=Math.max(peak,Math.abs(sample));sum+=sample*sample;hash=(Math.imul(hash,31)+Math.round(sample*100000))|0;}
+    rows.push({id:`${actor}/${phase}`,accepted,peak,rms:Math.sqrt(sum/samples.length),hash});
+   }}finally{window.AudioContext=Native;}
+   return rows;
+  });
+  assert.equal(rendered.length,44);assert.equal(new Set(rendered.map(row=>row.hash)).size,44);
+  for(const row of rendered){assert.equal(row.accepted,true,row.id);assert.ok(row.rms>.002,`${row.id}: RMS ${row.rms}`);assert.ok(row.peak>.02&&row.peak<.2,`${row.id}: pico ${row.peak}`);}
+ }finally{await page.close();}
+});

@@ -129,6 +129,23 @@ function paletteAlongRoute(location,stageFor=stageAt){
  return blendPalette(paletteChannels[stageFor(index-1)],paletteChannels[stageFor(index)],amount);
 }
 
+// A pequena placa mostra o marco do próximo lugar ainda fora do enquadramento.
+function routeWaypoint(route,width,stageFor,reducedMotion,flightLift){
+ const segmentIndex=Math.round(route/segmentLength),offset=route-segmentIndex*segmentLength;
+ const stageId=stageFor(segmentIndex);
+ if(segmentIndex<=0||stageId===stageFor(segmentIndex-1))return null;
+ const alpha=smooth((offset+1250)/700)*(1-smooth((offset-250)/850))*(1-flightLift);
+ if(alpha<=0)return null;
+ return {segmentIndex,stageId,alpha,x:width*(reducedMotion?.72:.85-.24*smooth((offset+1250)/2350))};
+}
+function flightMood(flight,reducedMotion){
+ if(!flight||!Object.hasOwn(palettes,flight.from)||!Object.hasOwn(palettes,flight.to)||!Number.isFinite(flight.progress))return null;
+ const p=Math.max(0,Math.min(1,flight.progress));
+ // Weights depend on the same simulation progress as boarding and landing,
+ // not on painting/render frequency or a second animation clock.
+ const lift=smooth((p-.09)/.24)*(1-smooth((p-.72)/.28));
+ return {lift,shift:reducedMotion?0:42*lift,palette:blendPalette(paletteChannels[flight.from],paletteChannels[flight.to],smooth((p-.18)/.68))};
+}
 /**
  * Pure, unbounded route geometry shared by rendering and continuity tests.
  * Each segmentIndex is an occurrence on the journey (never modulo a route lap); only its
@@ -141,7 +158,7 @@ function paletteAlongRoute(location,stageFor=stageAt){
  * the final 1,000 m of each place, so the route still communicates its next stop.
  * Palette channels are floating RGB triples; paletteStops offsets run from 0 to 1.
  */
-export function journeySceneryGeometry({routeDistance=0,distance=routeDistance,width=900,reducedMotion=false,openingDistance=0,campaignStages}={}){
+export function journeySceneryGeometry({routeDistance=0,distance=routeDistance,width=900,reducedMotion=false,openingDistance=0,campaignStages,flight}={}){
  const opening=Number.isFinite(openingDistance)?Math.max(0,openingDistance):0;
  const route=(Number.isFinite(routeDistance)?Math.max(0,routeDistance):0)-opening;
  // Abertura contínua: ocorrências anteriores à campanha também são Brasília.
@@ -164,9 +181,13 @@ export function journeySceneryGeometry({routeDistance=0,distance=routeDistance,w
  const landmarks=reducedMotion?identities.map(identity=>({...identity,x:w*.70})):
   layers[2].segments.map(segment=>({segmentIndex:segment.segmentIndex,stageId:segment.stageId,alpha:1,x:segment.x+2500*layers[2].scale}));
  const uniform=reducedMotion?blendPalette(paletteChannels[stageFor(index)],paletteChannels[stageFor(index+1)],amount):null;
- const paletteStops=Array.from({length:25},(_,i)=>({offset:i/24,palette:uniform||paletteAlongRoute(route+(w*i/24-anchor)/planeScales[2],stageFor)}));
+ const mood=flightMood(flight,reducedMotion),flightLift=mood?.lift??0;
+ const paletteStops=Array.from({length:25},(_,i)=>{
+  const palette=uniform||paletteAlongRoute(route+(w*i/24-anchor)/planeScales[2],stageFor);
+  return {offset:i/24,palette:flightLift>0?blendPalette(palette,mood.palette,flightLift):palette};
+ });
  const decorativeDistance=reducedMotion?0:travelled;
- return {width:w,layers,landmarks,paletteStops,roadOffset:wrap(decorativeDistance,98),clouds:[
+ return {width:w,layers,landmarks,paletteStops,flight:mood,waypoint:routeWaypoint(route,w,stageFor,reducedMotion,flightLift),roadOffset:wrap(decorativeDistance,98),clouds:[
   {x:wrap(145-decorativeDistance*.016,w+140)-70,y:65,scale:.73},
   {x:wrap(510-decorativeDistance*.019,w+160)-80,y:91,scale:.48}
  ]};
@@ -290,6 +311,56 @@ function drawAmbientDetails(c,geometry,{distance=0,reducedMotion=false}={}){
  }
 }
 
+function waypointGlyph(c,stageId,x,y){
+ const ink='#365664';
+ if(stageId==='argentina'){
+  shape(c,ink,null,()=>{c.moveTo(x-4,y+8);c.lineTo(x-2,y-11);c.lineTo(x,y-16);c.lineTo(x+2,y-11);c.lineTo(x+4,y+8);c.closePath();});
+ }else if(stageId==='rio'){
+  shape(c,ink,null,()=>{c.moveTo(x-25,y+8);c.quadraticCurveTo(x-18,y-8,x-11,y-7);c.quadraticCurveTo(x-5,y-7,x,y+8);c.quadraticCurveTo(x+8,y-9,x+14,y-9);c.quadraticCurveTo(x+20,y-8,x+25,y+8);c.closePath();});
+  line(c,[[x-11,y-15],[x-11,y-4]],ink,1.7);line(c,[[x-15,y-12],[x-7,y-12]],ink,1.7);
+ }else if(stageId==='sao-paulo'){
+  rect(c,x-21,y-10,42,9,'#923d38',null,2);rect(c,x-20,y-2,4,10,ink);rect(c,x+16,y-2,4,10,ink);
+ }else if(stageId==='brasilia'||stageId==='brasilia-final'){
+  rect(c,x-4,y-16,3,24,ink);rect(c,x+1,y-16,3,24,ink);
+  shape(c,ink,null,()=>{c.moveTo(x-22,y+8);c.bezierCurveTo(x-20,y-2,x-8,y-2,x-7,y+8);c.closePath();});
+  shape(c,ink,null,()=>{c.moveTo(x+7,y+8);c.quadraticCurveTo(x+15,y+2,x+23,y+8);c.closePath();});
+ }else if(stageId==='florida'){
+  rect(c,x-24,y-3,17,11,ink);rect(c,x-4,y-11,10,19,'#923d38');rect(c,x+9,y-2,17,10,ink);
+ }else if(stageId==='paraguai'){
+  rect(c,x-22,y-3,44,11,ink);rect(c,x-6,y-10,12,10,ink);
+  shape(c,'#923d38',null,()=>{c.moveTo(x-7,y-10);c.lineTo(x,y-16);c.lineTo(x+7,y-10);c.closePath();});
+ }else{
+  shape(c,ink,null,()=>{c.moveTo(x-22,y-5);c.lineTo(x,y-15);c.lineTo(x+22,y-5);c.closePath();});
+  for(const dx of [-15,-7,1,9])rect(c,x+dx,y-3,4,11,ink);
+ }
+ line(c,[[x-25,y+9],[x+25,y+9]],ink,1.7);
+}
+function drawWaypoint(c,waypoint,quiet){
+ if(!waypoint)return;
+ const {x,alpha,stageId}=waypoint,p=palettes[stageId];
+ c.save();c.globalAlpha*=alpha*(1-.55*quiet);
+ // In the verge, behind threats. Teal/gold and a framed silhouette are
+ // deliberately different from the directional danger warnings.
+ line(c,[[x-14,233],[x-14,217]],'#365664',2);
+ line(c,[[x+14,233],[x+14,217]],'#365664',2);
+ rect(c,x-37,180,74,40,'#e8ede2','#365664',5);
+ rect(c,x-33,184,66,31,'#f9f5e7',null,4);
+ waypointGlyph(c,stageId,x,202);
+ line(c,[[x-23,217],[x+23,217]],p.near,1.5);c.restore();
+}
+function drawFlightHorizon(c,geometry){
+ const lift=geometry.flight?.lift??0;
+ if(lift<=0)return;
+ c.save();c.globalAlpha*=lift;
+ const width=geometry.width;
+ c.fillStyle=daylightGradient(c,geometry,146,248,.86);c.fillRect(0,146,width,102);
+ for(let n=0;n<3;n++){
+  const x=width*(.18+n*.32),y=224-(n%2)*19;
+  c.save();c.globalAlpha*=.53;cloud(c,x,y,1.08+width/2400);c.restore();
+ }
+ c.restore();
+}
+
 /** Draw a continuous journey without changing the caller's Canvas state or alpha. */
 export function drawJourneyScenery(c,options={}){
  const geometry=journeySceneryGeometry(options),width=geometry.width;
@@ -301,17 +372,21 @@ export function drawJourneyScenery(c,options={}){
   c.fillStyle=daylightGradient(c,geometry,0,246,1);c.fillRect(0,skyTop,width,246-skyTop);
   oval(c,width-66,55,29,29,'#fff7d838');oval(c,width-66,55,21,21,'#fff9e5d9');
   for(const item of geometry.clouds)cloud(c,item.x,item.y,item.scale);
-  c.save();c.globalAlpha*=1-.45*quiet;
+  const flightLift=geometry.flight?.lift??0;
+  c.save();c.globalAlpha*=(1-.45*quiet)*(1-flightLift*.92);c.translate(0,geometry.flight?.shift??0);
   drawFarPlane(c,geometry.layers[0],width);
   // One translucent wash separates distant silhouettes from the greener middle
   // plane. It never crosses the arena floor and adds no animated particles.
   c.fillStyle=daylightGradient(c,geometry,132,238,.42);c.fillRect(0,132,width,106);
   drawMiddlePlane(c,geometry.layers[1],width);c.restore();
-  c.save();c.globalAlpha*=1-.6*quiet;drawAmbientDetails(c,geometry,options);c.restore();
-  for(const item of geometry.landmarks){
-   if(item.alpha<=0||item.x<-180||item.x>width+180)continue;
-   c.save();c.globalAlpha*=item.alpha;landmark(c,{id:item.stageId},palettes[item.stageId],item.x);c.restore();
+  if(flightLift<1){
+   c.save();c.globalAlpha*=(1-.6*quiet)*(1-flightLift);drawAmbientDetails(c,geometry,options);c.restore();
   }
+  if(flightLift<1)for(const item of geometry.landmarks){
+   if(item.alpha<=0||item.x<-180||item.x>width+180)continue;
+   c.save();c.globalAlpha*=item.alpha*(1-flightLift);landmark(c,{id:item.stageId},palettes[item.stageId],item.x);c.restore();
+  }
+  drawFlightHorizon(c,geometry);drawWaypoint(c,geometry.waypoint,quiet);
   // Geography crosses the verge with a soft color band; the collision floor stays y=246.
   rect(c,0,234,width,12,paletteGradient(c,geometry,'near',.36));
   line(c,[[0,234],[width,234]],paletteGradient(c,geometry,'ink',.33),1);

@@ -19,7 +19,7 @@ test('lateral coexiste com salto e intenção de abaixar, e clear limpa todos os
 });
 test('coleta e colisão acompanham a posição real fora da coluna original',()=>{
  const r=isolated();r.player.x=240;r.pickups=[{type:'passport',x:257,y:20,speed:0}];core.advanceRun(r,dt);assert.equal(r.passports,1);
- r.obstacles=[{x:245,width:30,height:44,type:'barrier',speed:0}];core.advanceRun(r,dt);assert.equal(r.status,'over');
+ r.obstacles=[{x:245,width:30,height:44,type:'barrier',speed:0}];core.advanceRun(r,dt);assert.equal(r.player.hp,1);assert.equal(r.lastHit.type,'barrier');
  const safe=isolated();safe.player.x=240;safe.obstacles=[{x:120,width:30,height:44,type:'barrier',speed:0}];core.advanceRun(safe,dt);assert.equal(safe.status,'running');
 });
 test('recuar depois de uma evasão não ressuscita o perigo já ultrapassado',()=>{
@@ -32,7 +32,7 @@ test('a margem real da hitbox encerrada também permanece evadida ao recuar',()=
 });
 test('queda avisa sem dano antes de cair e acerta quem permanece no alvo',()=>{
  const r=isolated();assert.equal(typeof core.spawnFallingThreat,'function');const o=core.spawnFallingThreat(r);assert.ok(o);
- r.player.x=o.x+o.width/2-17;step(r,1.19);assert.equal(r.status,'running');step(r,.5);assert.equal(r.status,'over');assert.equal(r.lastHit.action,'move');
+ r.player.x=o.x+o.width/2-17;step(r,1.19);assert.equal(r.player.hp,2);step(r,.5);assert.equal(r.player.hp,1);assert.equal(r.lastHit.action,'move');
 });
 test('a mesma queda permite duas fugas laterais com comandos reais e alvo comprometido',()=>{
  for(const direction of [-1,1]){

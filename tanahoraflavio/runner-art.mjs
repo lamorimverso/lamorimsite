@@ -1,8 +1,8 @@
-import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=03e5eaf9ccb0';
-import {drawSpecialRunner} from './runner-character-art.mjs?v=09f7c2621823';
-export {drawHeroShot} from './runner-character-art.mjs?v=09f7c2621823';
-import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=75f5261a8955";
-import {CAMPAIGN_PROP_COLORS,drawCampaignProp} from './runner-campaign-art.mjs?v=9cc4e669f36d';
+import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=b01f79600c3b';
+import {drawSpecialRunner} from './runner-character-art.mjs?v=553a6e165333';
+export {drawHeroShot} from './runner-character-art.mjs?v=553a6e165333';
+import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=dbf70764579c";
+import {CAMPAIGN_PROP_COLORS,drawCampaignProp} from './runner-campaign-art.mjs?v=311bd72684f6';
 // Personagens em atlas WebP; itens e perigos continuam vetoriais em Canvas.
 const INK='#292337',CREAM='#fff6e5';
 function oval(c,x,y,rx,ry,fill,stroke=INK,w=1.8){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=w;c.stroke();}}
@@ -11,7 +11,7 @@ function path(c,points,fill,stroke=INK){c.beginPath();points.forEach(([x,y],i)=>
 function line(c,points,color=INK,width=2){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.strokeStyle=color;c.lineWidth=width;c.lineCap='round';c.lineJoin='round';c.stroke();}
 function text(c,value,x,y,size=7,color=CREAM){c.fillStyle=color;c.font='900 '+size+'px system-ui';c.textAlign='center';c.fillText(value,x,y);}
 
-export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT,CORE_SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=75f5261a8955";
+export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT,CORE_SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=dbf70764579c";
 // Figuras vetoriais articuladas preservam a silhueta original do meme.
 // Silhueta original do meme: chapéu vermelho, emblema dourado e pernas longas.
 export function drawMemeArmy(c,{x=0,y=0,phase=0,scale=1,reducedMotion=false,standing=false,running=false}={}){
@@ -134,6 +134,10 @@ export function drawItem(c,{type,x,y,scale=1}){
   path(c,[[-7,-11],[-1,-14],[5,-10],[2,-6],[4,-2],[0,0],[-3,-4],[-6,-5]],'#e9c776',null);
   path(c,[[2,0],[7,3],[5,8],[1,12],[-1,7],[0,3]],'#e9c776',null);
   oval(c,0,-17,1.4,1.4,CREAM,null);
+ }else if(type==='rachadinha'){
+  box(c,-17,-13,34,26,'#37536d',4);box(c,-15,-11,30,22,'#fff0bb',3);
+  line(c,[[-14,-9],[-14,9]],'#bf8a57',2);
+  box(c,-4,-8,8,16,'#237d71',2);box(c,-8,-4,16,8,'#237d71',2);
  }else{
   const bible=type==='biblia';box(c,-12,-17,24,34,bible?'#70428e':'#274d80',3);box(c,8,-14,3,28,CREAM,1,null);
   if(bible){line(c,[[0,-11],[0,7]],'#f2cf77',3);line(c,[[-6,-5],[6,-5]],'#f2cf77',3);}
@@ -192,7 +196,7 @@ export function crouchAnimationStep(pose,target,seconds,reducedMotion=false){
  if(reducedMotion)return to;
  const current=Number.isFinite(pose)?Math.min(1,Math.max(0,pose)):0;
  const dt=Number.isFinite(seconds)?Math.min(.05,Math.max(0,seconds)):0;
- const amount=Math.min(1,dt/.13);
+ const amount=1-Math.exp(-dt/.12);
  const next=current+(to-current)*amount;
  return Math.abs(to-next)<.002?to:next;
 }

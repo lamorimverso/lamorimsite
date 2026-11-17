@@ -122,3 +122,35 @@ test('mobile scenery has bounded work, no text and preserves the caller Canvas s
   assert.ok(operations.filter(op=>op.kind==='rect'&&op.y>=246).every(op=>op.y+op.height<=300),'ground stays within the existing arena');
  }
 });
+
+test('o próximo destino aparece antes da divisa e o mesmo marco continua depois dela',()=>{
+ for(const width of [480,900])for(const reducedMotion of [false,true]){
+  const campaignStages=['brasilia','rio','sao-paulo','argentina','paraguai','florida','casa-branca','brasilia-final'];
+  const openingDistance=8000,boundary=openingDistance+3*7000;
+  const at=offset=>journeySceneryGeometry({routeDistance:boundary+offset,width,reducedMotion,openingDistance,campaignStages}).waypoint;
+  assert.equal(at(-1800),null,'a placa não ocupa a pista inteira');
+  const previous=at(-.001),next=at(.001),lead=at(-550),arriving=at(400);
+  assert.equal(lead?.stageId,'argentina');assert.ok(lead.alpha>.7&&lead.x<width-36,'miniatura chega antes do destino na janela estreita');
+  assert.equal(previous.segmentIndex,next.segmentIndex);assert.ok(Math.abs(previous.alpha-next.alpha)<1e-5);
+  assert.ok(Math.abs(previous.x-next.x)<.001,'o marco não reaparece do outro lado ao cruzar a divisa');
+  if(reducedMotion)assert.equal(lead.x,arriving.x,'sem deslocar o marco em movimento reduzido');
+  else assert.ok(arriving.x<lead.x,'o marco acompanha o avanço da rota');
+  assert.equal(at(1800),null);
+ }
+});
+
+test('o fundo aéreo acompanha a viagem física e respeita o movimento reduzido',()=>{
+ const base={routeDistance:29000,width:480,campaignStages:['brasilia','rio','sao-paulo','argentina'],openingDistance:8000};
+ const flight={from:'sao-paulo',to:'argentina'};
+ const at=(progress,phase,options={})=>journeySceneryGeometry({...base,...options,flight:{...flight,progress,phase}});
+ const boarding=at(0,'boarding'),crossing=at(.52,'crossing'),landing=at(1,'landing');
+ assert.equal(boarding.flight.lift,0);assert.equal(landing.flight.lift,0);
+ assert.ok(crossing.flight.lift>.85,'deixa o skyline no fundo durante a travessia');
+ assert.equal(crossing.waypoint,null,'não empilha uma placa terrestre na rota aérea');
+ assert.notDeepEqual(crossing.paletteStops,boarding.paletteStops);
+ assert.deepEqual(landing.paletteStops,boarding.paletteStops,'sem corte de paleta na saída da travessia');
+ assert.equal(at(.52,'crossing',{reducedMotion:true}).flight.shift,0,'fundo reduzido não desliza decorativamente');
+ const trace=render({...base,flight:{...flight,progress:.52,phase:'crossing'}});
+ assert.equal(trace.stack.length,0,'as camadas aéreas não deixam transformações pendentes');
+ assert.ok(trace.operations.some(op=>op.kind==='fill'&&op.path.some(cmd=>cmd[0]==='rect'&&cmd[2]===246&&cmd[4]===54)),'o chão real continua sendo responsabilidade do renderer da pista');
+});

@@ -47,7 +47,8 @@ test('Rick uses six alternating pulses before the delayed seventh beat opening',
 });
 
 test('Ana Elisa commits staggered marked zones, Érika crosses two sides of the stage',()=>{
- const ana=authored('ana-elisa').find(p=>p?.counter),erika=authored('erika').find(p=>p?.counter);
+ const marked=p=>p.counter&&p.sequence?.every(beat=>beat.action==='move');
+ const ana=authored('ana-elisa').find(marked),erika=authored('erika').find(marked);
  assert.ok(ana&&erika);
  assert.deepEqual(actions(ana),['move','move','move']);
  assert.equal(new Set(ana.sequence.map(s=>s.laneOffset)).size,3);

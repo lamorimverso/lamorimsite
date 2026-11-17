@@ -1,4 +1,4 @@
-import {pilotDodge as pilotTerrain} from '../tools/story-pilot.mjs';
+import {pilotDodge as pilotTerrain,pilotJacare} from '../tools/story-pilot.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
@@ -59,14 +59,14 @@ test('padrão público mistura salto e abaixar usando as armas de cada chefão',
  }
 });
 
-test('o impacto registra a ação que teria evitado o perigo real',()=>{
+test('o impacto registra a ação que teria evitado o perigo real e seu autor quando explícito',()=>{
  const common=running();common.obstacles=[{x:125,width:34,height:44,type:'pf'}];
  core.advanceRun(common,DT,()=>0);
  assert.deepEqual(common.lastHit,{type:'pf',action:'jump'});
  const high=isolatedBoss('lula',900,0,false,1);step(high,2);
- assert.equal(high.status,'over');assert.deepEqual(high.lastHit,{type:'lhand',action:'crouch'});
+ assert.equal(high.player.hp,1);assert.deepEqual(high.lastHit,{type:'lhand',action:'crouch',actor:'lula'});
  const low=isolatedBoss('haddad',900,0,false,1);core.crouchRun(low,true);step(low,2);
- assert.equal(low.status,'over');assert.deepEqual(low.lastHit,{type:'receipts',action:'jump'});
+ assert.equal(low.player.hp,1);assert.deepEqual(low.lastHit,{type:'receipts',action:'jump',actor:'haddad'});
 });
 
 function commonContact(width,distance,assisted=false){
@@ -74,16 +74,17 @@ function commonContact(width,distance,assisted=false){
  run.nextBossAt=run.nextRaid=Infinity;run.nextObstacle=0;
  core.advanceRun(run,DT,()=>0);run.nextObstacle=Infinity;
  let visible;
- for(let i=0;i<120*5&&run.status==='running';i++){
+ for(let i=0;i<120*5&&!run.lastHit;i++){
   core.advanceRun(run,DT,()=>0);
   if(visible===undefined&&run.obstacles[0]?.x<=width)visible=run.elapsed;
  }
- assert.equal(run.status,'over');assert.ok(visible!==undefined);
+ assert.equal(run.player.hp,1);assert.ok(visible!==undefined);
  return run.elapsed-visible;
 }
 function bossContact(width,distance,assisted=false){
  const run=isolatedBoss('xandao',width,distance,assisted),launch=run.elapsed;
- step(run,5);assert.equal(run.status,'over');return run.elapsed-launch;
+ for(let i=0;i<120*5&&!run.lastHit;i++)core.advanceRun(run,DT,()=>0);
+ assert.equal(run.player.hp,1);return run.elapsed-launch;
 }
 
 test('primeira visibilidade de inimigos comuns dá a mesma janela em celular e desktop',()=>{
@@ -156,13 +157,15 @@ function lateralDestination(run,zones){
 }
 export function legalPilot(seed,{width=900,assisted=false,limit=340,resize=false}={}){
  const run=running({assisted}),rng=seeded(seed);run.viewportWidth=width;
- let jumps=0,crouches=0,peak=0,shieldFrames=0,widthChanges=0;
+ let jumps=0,crouches=0,peak=0,takeoffY=0,shieldFrames=0,widthChanges=0;
+ const measureJump=()=>{if(run.player.grounded)takeoffY=run.player.y;else peak=Math.max(peak,run.player.y-takeoffY);};
  for(let i=0;i<120*limit&&run.status==='running'&&run.passports<100;i++){
   if(resize&&i>0&&i%(120*12)===0){const width=[480,900,612,900][(i/(120*12)-1)%4];if(width!==run.viewportWidth){core.resizeRun(run,width);widthChanges++;}}
   if(run.terrain?.active){
    pilotTerrain(run);if(run.reserveShields&&run.shieldFor<=0)core.activateReserveShield(run);
-   core.advanceRun(run,DT,rng);peak=Math.max(peak,run.player.y);if(run.shieldFor>0)shieldFrames++;continue;
+   core.advanceRun(run,DT,rng);measureJump();if(run.shieldFor>0)shieldFrames++;continue;
   }
+  if(pilotJacare(run)){core.advanceRun(run,DT,rng);if(run.shieldFor>0)shieldFrames++;continue;}
   // O piloto considera o alerta de retaguarda antes de o inimigo entrar na tela.
   const eta=o=>core.threatTimeToContact(run,o);
   const drops=run.obstacles.filter(o=>(o.falling||o.groundHazard)&&o.age<o.warningFor+(o.fallFor??o.activeFor));
@@ -192,7 +195,7 @@ export function legalPilot(seed,{width=900,assisted=false,limit=340,resize=false
   const jumpAhead=danger?.approach==='rear'?.22:(danger ? .35-(danger.width+20)/(2*speed) : 0);
   if(danger&&action==='jump'&&until<=jumpAhead&&until>-.1&&(!run.movementSkills?.doubleJump||run.player.grounded)&&core.jumpRun(run))jumps++;
   if(run.reserveShields&&run.shieldFor<=0)core.activateReserveShield(run);
-  core.advanceRun(run,DT,rng);peak=Math.max(peak,run.player.y);
+  core.advanceRun(run,DT,rng);measureJump();
   if(run.shieldFor>0)shieldFrames++;
  }
  return {run,jumps,crouches,peak,shieldFrames,widthChanges};
@@ -206,7 +209,7 @@ test('piloto legal coleta cem passaportes em 150–330 s sem imunidade ou telepo
   assert.ok(run.elapsed>=150&&run.elapsed<=330,`${run.elapsed}s na sequência ${seed}/${width}`);
   assert.equal(run.lives,2);assert.equal(run.lastHit,null,'coletas naturais sem consumo de vida');
   assert.ok(jumps>20&&crouches>0,'usa as duas ações em encontros reais');
-  assert.ok(peak>95&&peak<110,'respeita o alcance físico do salto');
+  assert.ok(peak>95&&peak<110,'respeita o alcance físico do salto acima do apoio de que partiu');
   assert.ok(shieldFrames>0&&shieldFrames/run.elapsed/120<.3,'apenas escudos conquistados e ativados pelo piloto');
   assert.ok(run.bossesDefeated>=3,'a economia inclui os chefões da rota');
  }

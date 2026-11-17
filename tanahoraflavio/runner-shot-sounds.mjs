@@ -1,3 +1,4 @@
+import {getEncounterSoundBank} from './runner-encounter-sounds.mjs?v=bd72b7e481c5';
 // Efeitos não verbais originais, sem amostras, falas ou imitação de pessoas.
 // Cada nota: atraso, frequência inicial/final, duração, onda, volume, ataque.
 const n=(delay,start,end,length,wave,volume=.055,attack=.006)=>({delay,start,end,length,wave,volume,attack});
@@ -109,6 +110,7 @@ const defaults={dilma:'dilma',simone:'simone',soraya:'soraya',janones:'janones',
 const weapons={haddad:{stamp:'haddad-stamp'},xandao:{mandado:'xandao-mandado'},pf:{handcuffs:'pf-cuffs'},
  joice:{microphone:'joice-mic'},santiago:{'harp-note':'santiago-harp'},bossonari:{'ivermectina-prop':'bossonari-bottle-alt'}};
 export function getEnemyShotBank(actor,weapon){
+ const encounter=getEncounterSoundBank(actor,'launch',weapon);if(encounter)return encounter;
  const type=typeof actor==='string'?actor:actor?.type;
  const attack=typeof weapon==='string'?weapon:weapon?.attackType||weapon?.type;
  if(!Object.hasOwn(defaults,type))return null;

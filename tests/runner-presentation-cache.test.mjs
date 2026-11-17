@@ -62,13 +62,13 @@ test('presentation updates stay immediate without repeatedly mutating unchanged 
    const observer=new MutationObserver(()=>{});observer.observe(fixture,{subtree:true,attributes:true,childList:true,characterData:true});
    updateCombatHUD(run,options);observer.takeRecords();for(let n=0;n<120;n++)updateCombatHUD(run,options);
    const repeated=observer.takeRecords().length;
-   run.player.hp=3;run.ammo=2;run.reserveShields=1;run.boss.hp=11;
+   run.player.hp=1;run.ammo=2;run.reserveShields=1;run.boss.hp=11;
    updateCombatHUD(run,{controlLabels:{power:'Q',shield:'R'}});
    const get=id=>document.getElementById(id);
    const result={repeated,hp:get('game-hero-health').getAttribute('aria-valuenow'),ammo:get('game-power-charge').getAttribute('aria-valuenow'),bossHp:get('game-boss-health').getAttribute('aria-valuenow'),weapon:get('game-weapon-level').textContent,power:get('game-power-loadout').title.includes('Q troca'),shield:get('game-reserve-shield').getAttribute('aria-label').includes('R ou toque')};
    run.status='over';updateCombatHUD(run);result.hidden=get('game-combat-hud').hidden;
    return result;
   });
-  assert.deepEqual(result,{repeated:0,hp:'3',ammo:'2',bossHp:'11',weapon:'2/12',power:true,shield:true,hidden:true});
+  assert.deepEqual(result,{repeated:0,hp:'1',ammo:'2',bossHp:'11',weapon:'2/12',power:true,shield:true,hidden:true});
  });
 });

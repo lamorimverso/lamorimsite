@@ -1,6 +1,6 @@
 // Original vector caricatures for the campaign. Neutral props communicate each
 // encounter's rhythm, with the same outline style as the runner's art atlas.
-const INK='#292337',CREAM='#fff5de';
+const INK='#292337',CREAM='#fff5de',RIM='#ffe7bd74';
 const CAST=Object.freeze({
  'ana-elisa':{suit:'#386c72',shade:'#285056',accent:'#87e0c3',skin:'#a76448',lit:'#d69068',hair:'#2f2534',cut:'curls',emblem:'network'},
  rick:{suit:'#315479',shade:'#223a57',accent:'#ffd083',skin:'#b97552',lit:'#e6a471',hair:'#392a34',cut:'short',face:'stubble',emblem:'pulse'},
@@ -13,6 +13,31 @@ const CAST=Object.freeze({
  capita:{suit:'#286986',shade:'#254a61',accent:'#93e0e4',skin:'#b56b4b',lit:'#e49c72',hair:'#3a2e48',cut:'scarf',emblem:'flag'},
  fiscal:{suit:'#62623c',shade:'#414936',accent:'#ffe08d',skin:'#b67b50',lit:'#e3ac7e',hair:'#38353e',cut:'cap',face:'moustache',emblem:'check'}
 });
+// Torso outlines are authored in local coordinates from the neck. The shapes,
+// cuffs and stance read at game size without using the palette as an identifier.
+const CHARACTER_DESIGN=Object.freeze({
+ 'ana-elisa':{outline:[[-12,0],[-24,4],[-23,13],[-15,28],[-12,33],[-20,45],[-6,49],[7,46],[20,42],[12,30],[17,11],[13,1]],leg:[13,10,12,9],arm:11,face:[1.07,.91,1.1],wear:'peplum',
+  keys:[[-23,-54,23,-46,1,0,-.03],[-24,-91,37,-74,4,-4,.09],[-51,-56,33,-73,-6,-3,-.12],[-30,-61,15,-43,-2,3,.04]]},
+ rick:{outline:[[-13,2],[-24,6],[-28,18],[-24,43],[-15,46],[18,46],[24,39],[25,11],[9,3]],leg:[16,13,14,10],arm:15,face:[1.14,1.05,1.12],wear:'hoodie',
+  keys:[[-30,-43,13,-56,3,2,.05],[-15,-63,30,-39,7,3,.17],[-49,-49,34,-51,-9,2,-.21],[-36,-40,6,-53,-4,4,.09]]},
+ sofia:{outline:[[-13,0],[-26,6],[-18,24],[-14,34],[-25,51],[-6,47],[13,52],[25,43],[15,31],[18,11],[12,1]],leg:[11,10,10,7],arm:11,face:[.91,1.12,.9],wear:'crosscoat',
+  keys:[[-18,-66,29,-41,-2,0,-.02],[-27,-82,5,-67,4,-3,.16],[-57,-61,25,-39,-6,2,-.13],[-34,-68,17,-42,-4,1,-.04]]},
+ guilherme:{outline:[[-12,0],[-19,2],[-24,12],[-18,39],[-13,43],[16,43],[21,36],[24,9],[10,1]],leg:[14,11,12,12],arm:13,face:[.92,1.08,1.24],wear:'apron',
+  keys:[[-24,-36,27,-38,1,3,.06],[-31,-54,5,-52,4,6,.21],[-55,-49,34,-37,-7,2,-.12],[-21,-35,22,-33,-1,7,.09]]},
+ erika:{outline:[[-13,0],[-30,3],[-28,13],[-16,22],[-12,33],[-14,44],[9,43],[22,49],[16,36],[13,24],[23,10],[25,4],[12,0]],leg:[12,11,10,7],arm:12,face:[.9,1.18,.98],wear:'stagecoat',
+  keys:[[-12,-52,33,-57,2,0,-.07],[-38,-94,42,-88,0,-5,.01],[-52,-64,48,-62,-4,-5,-.08],[-36,-74,32,-48,3,-2,.13]]},
+ 'renato-freitas':{outline:[[-15,-1],[-30,4],[-29,17],[-27,42],[-16,48],[10,45],[25,50],[25,35],[30,12],[17,2]],leg:[18,13,14,11],arm:15,face:[1.12,.91,1.24],wear:'blazer',
+  keys:[[-28,-42,8,-54,0,1,.03],[-12,-77,31,-58,4,-2,.10],[-48,-54,27,-79,-6,-1,-.12],[-32,-39,12,-52,-3,1,-.05]]},
+ jones:{outline:[[-21,2],[-28,8],[-29,35],[-19,54],[-5,53],[11,56],[26,50],[28,22],[26,5],[18,0]],leg:[15,12,15,10],arm:13,face:[1.16,.99,.94],wear:'overcoat',
+  keys:[[-15,-54,28,-38,3,1,.07],[-18,-70,26,-52,6,-1,.19],[-49,-52,17,-70,-8,0,-.13],[-25,-52,8,-46,-2,4,.05]]},
+ maestro:{outline:[[-12,0],[-20,4],[-21,16],[-15,30],[-16,39],[-24,54],[-13,58],[-3,48],[8,45],[17,56],[24,48],[16,29],[20,9],[12,0]],leg:[12,9,9,10],arm:10,face:[.83,1.13,1.09],wear:'tails',
+  keys:[[-25,-67,24,-43,1,-3,-.11],[-26,-103,39,-62,4,-4,.12],[-49,-53,40,-79,-4,0,-.16],[-36,-65,29,-44,-2,1,.07]]},
+ capita:{outline:[[-15,0],[-27,4],[-30,10],[-20,18],[-15,28],[-18,47],[2,43],[26,53],[34,46],[26,29],[21,13],[27,5],[14,0]],leg:[15,12,13,12],arm:14,face:[1,1.02,1.05],wear:'cape',
+  keys:[[-30,-40,14,-58,2,1,-.07],[-22,-91,42,-49,8,-3,.10],[-51,-57,48,-39,-7,1,-.16],[-40,-60,28,-51,-4,2,-.05]]},
+ fiscal:{outline:[[-14,1],[-25,5],[-26,16],[-20,32],[-21,39],[-8,42],[19,41],[24,33],[22,13],[23,6],[12,1]],leg:[17,13,15,14],arm:14,face:[1.06,.99,1.33],wear:'vest',
+  keys:[[-26,-49,5,-50,0,0,.03],[-33,-78,15,-56,0,-1,-.03],[-52,-53,11,-59,-4,-1,-.10],[-33,-53,16,-54,2,2,.06]]}
+});
+
 export const CAMPAIGN_PROP_COLORS=Object.freeze({
  'network-panel':'#54ab9b','signal-pulse':'#d19354','arrow-panel':'#bb77c1','garden-box':'#83ae75',
  'stage-spotlight':'#d9aa64','rotating-sign':'#d27c70','debate-card':'#be8970','baton-wave':'#9c88c7',
@@ -103,17 +128,23 @@ export function drawCampaignProp(c,{type,x=0,y=0,width=60,height=48,phase=0,redu
 function curls(c,a,points){
  for(const [x,y,r] of points){oval(c,x,y,r,r*.95,a.hair);line(c,[[x-r*.45,y-r*.4],[x,y-r*.62],[x+r*.34,y-r*.44]],'#ffffff3a',.9);}
 }
-function head(c,a){
- const {cut,skin,lit,hair,face,accent}=a;
+function head(c,a,features=[1,1,1],expression='idle'){
+ const {cut,skin,lit,hair,face,accent}=a,[width,length,nose]=features;
+ const intent=expression==='charge'?1:expression==='release'?2:expression==='recoil'?-1:0;
+ c.save();c.scale(width,length);
  if(['sleek','parted','scarf'].includes(cut))paint(c,hair,()=>{c.moveTo(-17,-25);c.bezierCurveTo(-21,-41,-3,-49,11,-44);c.bezierCurveTo(25,-40,19,-14,23,1);c.bezierCurveTo(6,6,-6,1,-22,3);c.bezierCurveTo(-18,-7,-20,-14,-17,-25);c.closePath();});
  if(cut==='curls')curls(c,a,[[-16,-22,7],[-16,-31,8],[-11,-39,8],[-2,-42,8],[8,-42,8],[16,-37,8],[18,-27,8],[17,-16,7]]);
  if(cut==='afro'){
   oval(c,0,-34,24,18,hair);
   curls(c,a,[[-19,-35,7],[-16,-44,7],[-5,-48,6],[5,-49,6],[15,-44,8],[21,-36,7],[-22,-28,4],[21,-27,5]]);
  }
- oval(c,-15,-18,4,5,skin);oval(c,15,-18,4,5,skin);
- paint(c,lit,()=>{c.moveTo(-15,-23);c.quadraticCurveTo(-17,-35,-7,-38);c.bezierCurveTo(4,-41,16,-35,16,-26);c.bezierCurveTo(17,-11,10,-4,4,-2);c.bezierCurveTo(-6,0,-14,-7,-15,-23);c.closePath();});
- paint(c,skin,()=>{c.moveTo(15,-28);c.quadraticCurveTo(19,-12,6,-4);c.quadraticCurveTo(1,-1,-5,-4);c.quadraticCurveTo(9,-6,10,-19);c.quadraticCurveTo(10,-24,15,-28);c.closePath();},null);
+ oval(c,-14,-18,2.6,4.5,skin);oval(c,15,-18,4.8,5.6,skin);
+ loop(c,'#ffeabd69',1.35,()=>{c.moveTo(16,-21);c.quadraticCurveTo(19,-18,16,-16);});
+ paint(c,lit,()=>{c.moveTo(-16,-24);c.quadraticCurveTo(-17,-35,-7,-38);c.bezierCurveTo(4,-41,16,-35,16,-26);c.bezierCurveTo(17,-11,10,-4,2,-2);c.bezierCurveTo(-9,0,-14,-7,-16,-11);c.bezierCurveTo(-19,-18,-17,-19,-16,-24);c.closePath();},INK,1.7);
+ loop(c,'#ffe4bc65',1.6,()=>{c.moveTo(-12,-21);c.quadraticCurveTo(-11,-14,-7,-12);});
+ paint(c,skin,()=>{c.moveTo(14,-31);c.quadraticCurveTo(18,-21,15,-14);c.quadraticCurveTo(13,-6,4,-3);c.quadraticCurveTo(0,-2,-6,-5);c.quadraticCurveTo(7,-7,9,-19);c.quadraticCurveTo(10,-25,14,-31);c.closePath();},null);
+ paint(c,'#ffdcbd58',()=>{c.moveTo(-13,-23);c.bezierCurveTo(-11,-30,-2,-30,1,-25);c.quadraticCurveTo(-8,-24,-10,-15);c.quadraticCurveTo(-14,-17,-13,-23);c.closePath();},null);
+ line(c,[[2,-7],[7,-9],[11,-15]],skin,1.35);
  if(cut==='quiff'||cut==='short'||cut==='buzz'||cut==='wisps'){
   const peak=cut==='quiff'?-49:cut==='wisps'?-47:cut==='buzz'?-39:-43;
   paint(c,hair,()=>{c.moveTo(-16,-24);c.bezierCurveTo(-18,-36,-14,peak+4,-5,peak+3);c.lineTo(cut==='quiff'?1:-1,peak);c.bezierCurveTo(12,peak-2,18,-38,16,-26);c.lineTo(10,-31);c.quadraticCurveTo(-1,-37,-11,-32);c.lineTo(-13,-24);c.closePath();});
@@ -128,24 +159,28 @@ function head(c,a){
    box(c,-17,-38,34,12,5,'#357997');line(c,[[-15,-29],[14,-29]],accent,2.8);
    oval(c,0,-33,2.8,2.8,CREAM,null);
   }else{
-   box(c,-16,-42,31,12,5,'#85845b');poly(c,[[-18,-31],[17,-31],[24,-27],[13,-25],[-18,-26]],'#4c523d');box(c,-4,-39,8,6,1,accent,null);
+   box(c,-16,-42,31,13,5,'#85845b');poly(c,[[-17,-33],[15,-32],[20,-29],[10,-27],[-27,-27],[-29,-30]],'#4c523d');box(c,-6,-39,8,6,1,accent,null);
   }
  }else if(cut==='curls')curls(c,a,[[-12,-35,6],[-5,-39,7],[4,-40,6],[11,-37,5]]);
  else if(cut==='afro')curls(c,a,[[-13,-34,5],[-7,-38,6],[1,-39,6],[10,-35,5]]);
  if(face==='stubble'||face==='glasses')paint(c,face==='glasses'?hair:'#986143',()=>{c.moveTo(-14,-15);c.quadraticCurveTo(-12,-11,-8,-9);c.quadraticCurveTo(0,-14,7,-9);c.lineTo(14,-15);c.quadraticCurveTo(12,-1,0,-1);c.quadraticCurveTo(-10,-1,-14,-15);c.closePath();},null);
  for(const side of [-1,1]){
-  const x=side*6.4;line(c,[[x-3,-26],[x+1,-27],[x+3,-26]],hair,1.4);
-  oval(c,x,-21.2,face==='liner'?3:2.5,1.65,CREAM,null);oval(c,x-.7,-21.3,1.4,1.5,INK,null);
+  const x=side<0?-9:3.5,angle=intent>0?side*1.3:intent;
+  line(c,[[x-3,-26-angle],[x+1,-27],[x+3,-26+angle]],hair,1.5);
+  oval(c,x,-21.2,(face==='liner'?3:2.5)*(side<0?.83:1),intent===1?1.15:intent<0?2.25:1.65,CREAM,null);
+  oval(c,x-(intent>0?1:.5),-21.3,1.4,1.5,INK,null);
   if(face==='liner')line(c,[[x-3,-21],[x-2,-23],[x+2,-23]],hair,1.15);
  }
- line(c,[[0,-21],[-1,-16],[2,-15]],skin,1.8);
+ line(c,[[-3.5,-21],[-4.5-2.4*nose,-16],[-2,-15]],skin,1.8);
  const smile=face==='glasses'||face==='stubble'?CREAM:face==='lip'||face==='liner'?'#8a385c':'#884d50';
- loop(c,smile,1.5,()=>{c.moveTo(-4,-10);c.quadraticCurveTo(0,-7,4,-10.5);});
+ if(intent===2||intent<0)oval(c,-3,-10,3.6,intent<0?2.5:1.7,smile,null);
+ else loop(c,smile,1.5,()=>{c.moveTo(-7,-10);c.quadraticCurveTo(-3,-7,2,-10.5);});
  if(face==='glasses'){
-  for(const x of [-7,7])box(c,x-5.5,-25,11,8,2,null,'#f5dccb');line(c,[[-1,-22],[1,-22]],'#f5dccb',1.6);
- }else if(face==='moustache')line(c,[[-7,-13],[-3,-15],[0,-13],[3,-15],[7,-13]],hair,2.8);
+  for(const x of [-9,3.8])box(c,x-5.1,-25,10.2,8,2,null,'#f5dccb');line(c,[[-4,-22],[0,-22]],'#f5dccb',1.6);line(c,[[9,-23],[16,-24]],'#f5dccb',1.4);
+ }else if(face==='moustache')line(c,[[-10,-13],[-6,-15],[-3,-13],[0,-15],[4,-13]],hair,2.8);
  if(['curls','sleek','parted'].includes(cut))for(const side of [-1,1])oval(c,side*15,-13,1.6,2.4,accent,'#73545e',.65);
  if(face==='liner')for(const side of [-1,1])oval(c,side*15,-10,2.7,3.6,null,'#f8d694',1.35);
+ c.restore();
 }
 function emblem(c,kind,x,y,tone){
  c.save();c.translate(x,y);
@@ -164,72 +199,223 @@ function emblem(c,kind,x,y,tone){
 
 export function campaignAccentFor(type){return Object.hasOwn(CAST,type)?CAST[type].accent:null;}
 
-/** Art only. Draws an articulated boss around the same deck anchor as atlas bosses. */
-export function drawCampaignBoss(c,{type,pose:p}={}){
- if(!Object.hasOwn(CAST,type)||!p)return false;
- const a=CAST[type];
+// Same deck-relative fallback emission used by bossProjectileOrigin in runner-core.
+export const CAMPAIGN_CAST_POINT=Object.freeze({x:-48,y:-52});
+const clamp01=n=>Math.max(0,Math.min(1,n));
+const smooth=n=>n*n*(3-2*n);
+const mix=(a,b,t)=>a.map((value,i)=>value+(b[i]-value)*t);
+
+/** Presentation only. The deck, player and projectile keep the engine's anchors. */
+export function campaignBossPoseFor(type,p,{phase=0,action='jump',progress,reducedMotion=false}={}){
+ const d=CHARACTER_DESIGN[type];if(!Object.hasOwn(CHARACTER_DESIGN,type)||!p)return null;
+ const t=Number.isFinite(phase)?phase:0;
+ const breath=reducedMotion?0:Math.sin(t*.31),u=Number.isFinite(progress)?clamp01(progress):1;
+ const [ready,windup,release,settle]=d.keys;
+ const [frontX,frontY,backX,backY,lean,lift,tilt]=p.state==='charge'?mix(ready,windup,smooth(u)):
+  p.state==='release'?mix(windup,release,smooth(Math.min(1,u/.32))):
+  p.state==='recover'?(u<.50?mix(release,settle,smooth(u/.50)):mix(settle,ready,smooth((u-.50)/.50))):
+  p.state==='recoil'?mix(ready,settle,.6).map((n,i)=>n+[-1,5,-8,7,5,3,.17][i]):ready;
+ const bob=lift+breath*.8,active=p.state==='charge'||p.state==='release',projectile=action==='jump'||action==='crouch';
+ const signalWeight=p.state==='charge'?u:p.state==='release'?1:projectile&&p.state==='recover'?1-smooth(clamp01(u/.5)):0;
+ const signal=(action==='crouch'?-5:action==='move'?3:2)*signalWeight;
+ // Bring the palm in late, hold it during the first frames of flight, and
+ // release back into the unique gesture. Marked zones keep their own pose.
+ const guide=!projectile?0:p.state==='charge'?smooth(clamp01((u-.72)/.28)):
+  p.state==='release'?1-smooth(clamp01((u-.12)/.43)):0;
+ const origin={x:lean,y:-69+bob},angle=tilt+breath*.019;
+ const arms={};
+ for(const [side,x,y,sign] of [['left',frontX,frontY+signal,-1],['right',backX,backY+signal*.28,1]]){
+  const shoulder={x:lean+sign*(d.arm*.42+10),y:origin.y+12};
+  const hand={x:x+breath*(sign===-1?1.6:-1),y:y+bob*.23+breath*1.25};
+  if(side==='left'&&guide){
+   hand.x+=(CAMPAIGN_CAST_POINT.x-hand.x)*guide;
+   hand.y+=(CAMPAIGN_CAST_POINT.y-hand.y)*guide;
+  }
+  const elbow={x:shoulder.x+(hand.x-shoulder.x)*.45+sign*8,y:shoulder.y+(hand.y-shoulder.y)*.48+(hand.y<shoulder.y?7:4)};
+  arms[side]={shoulder,elbow,hand,open:active&&(d.wear!=='tails'||side==='right')};
+ }
+ return {...p,arms,origin,angle,campaignPose:true};
+}
+
+function drawBoot(c,x,width,side,a,long){
+ const y=long?-13:-8;
+ poly(c,[[x-width*.31,y],[x+width*.40,y],[x+width*.42,-5],[x+width*.55,-4],[x+width*.49,-.6],[x-width*.79,-.6],[x-width*.87,-3],[x-width*.61,-5],[x-width*.33,-5]],side>0?a.shade:a.suit,INK,1.55);
+ poly(c,[[x-width*.7,-3.8],[x-width*.42,-5],[x-width*.12,-4.2],[x-width*.33,-2.9],[x-width*.63,-2.8]],RIM,null);
+ line(c,[[x-width*.64,-1.9],[x+width*.38,-1.9]],a.accent+'9c',1.1);
+ if(long)line(c,[[x-width*.4,-8],[x+width*.35,-8]],a.accent+'70',1.25);
+}
+
+function drawBossLegs(c,p,a,d){
+ const [span,width,shoe,knee]=d.leg,long=['vest','cape','apron'].includes(d.wear);
+ for(const side of [1,-1]){
+  const x=side*span,hip=side*(span*.67)+p.origin.x*.4,guide=x+side*1.5;
+  const tone=side<0?a.suit:a.shade;
+  poly(c,[[hip-width*.58,-33],[hip+width*.58,-34],[guide+width*.48,-knee],[x+width*.4,-6],[x-width*.46,-6],[guide-width*.5,-knee]],tone,INK,1.7);
+  poly(c,[[hip+width*.39,-30],[guide+width*.39,-knee],[x+width*.28,-7],[x+.8,-7],[guide+.4,-knee],[hip+width*.12,-23]],side<0?a.shade:'#18132469',null);
+  line(c,[[hip-width*.23,-29],[guide-width*.22,-knee-3],[x-width*.19,-9]],a.accent+'67',1.25);
+  drawBoot(c,x,shoe,side,a,long);
+ }
+}
+
+function drawOutfit(c,p,a,d){
+ const {x,y}=p.origin;
+ c.save();c.translate(x,y);
+ poly(c,d.outline,a.suit,INK,2);
+ const [start,end]=[d.outline[0],d.outline.at(-2)];
+ poly(c,[[4,3],[end[0]-3,end[1]+4],[end[0]-4,end[1]+11],[8,25],[13,35],[10,40],[5,40],[4,25],[-1,17]],a.shade,null);
+ poly(c,[[start[0]-2,4],[-8,5],[-6,12],[-10,21],[-13,18],[-15,11]],a.accent+'2d',null);
+ line(c,[[start[0]-2,4],[-13,18],[-10,29]],a.accent+'78',1.7);
+ switch(d.wear){
+ case 'peplum':
+  poly(c,[[-20,37],[-4,31],[10,29],[17,40],[5,43],[-5,43],[-19,47]],a.shade);
+  poly(c,[[-13,3],[-2,9],[5,9],[15,3],[6,17],[-3,19]],a.accent);
+  emblem(c,a.emblem,8,18,CREAM);break;
+ case 'hoodie':
+  poly(c,[[-17,4],[0,14],[12,3],[18,8],[12,18],[2,23],[-7,20],[-21,9]],a.shade);
+  line(c,[[-6,12],[-8,26]],CREAM,1.4);line(c,[[5,13],[8,24]],CREAM,1.4);
+  poly(c,[[-14,33],[-5,29],[8,29],[16,34],[14,40],[-13,40]],a.shade);
+  emblem(c,a.emblem,1,34,a.accent);break;
+ case 'crosscoat':
+  poly(c,[[-16,4],[0,9],[12,4],[5,21],[-12,33],[-17,36],[-9,22]],a.accent);
+  line(c,[[-14,36],[12,29]],CREAM,1.5);oval(c,7,26,2,2,a.accent);break;
+ case 'apron':
+  poly(c,[[-13,3],[-4,3],[-3,16],[7,16],[9,5],[14,5],[11,21],[16,39],[-15,39],[-10,19]],'#806f55');
+  box(c,-7,26,14,9,2,a.shade);emblem(c,a.emblem,0,29,a.accent);break;
+ case 'stagecoat':
+  poly(c,[[-24,6],[-14,4],[-4,13],[-15,19],[-21,14]],a.accent);
+  poly(c,[[20,6],[11,4],[5,13],[14,20],[19,15]],a.accent);
+  line(c,[[-8,17],[-4,38],[7,41]],'#ffe6af',2);
+  emblem(c,a.emblem,9,23,a.accent);break;
+ case 'blazer':
+  poly(c,[[-15,4],[0,13],[13,4],[7,13],[9,17],[0,35],[-10,18],[-6,13]],CREAM);
+  poly(c,[[-1,13],[3,15],[2,31],[0,34],[-4,28]],a.accent);
+  box(c,11,24,10,4,1,a.shade);line(c,[[12,24],[19,24]],a.accent,1.3);break;
+ case 'overcoat':
+  box(c,-12,5,25,7,2,a.shade);
+  poly(c,[[-21,10],[-7,13],[-7,21],[1,30],[-11,28],[-18,17]],a.shade);
+  poly(c,[[19,10],[8,13],[7,21],[1,30],[12,27],[16,19]],a.shade);
+  line(c,[[0,28],[1,48]],INK,1.8);for(const yy of [33,41,47])oval(c,6,yy,1.6,1.6,a.accent,null);break;
+ case 'tails':
+  poly(c,[[-12,5],[11,5],[6,17],[0,38],[-6,17]],CREAM);
+  poly(c,[[-8,6],[-1,9],[7,6],[7,14],[-1,12],[-8,14]],a.accent);
+  for(const yy of [19,23,27])oval(c,0,yy,1,1,a.shade,null);
+  emblem(c,a.emblem,11,15,a.accent);break;
+ case 'cape':
+  poly(c,[[8,7],[18,7],[20,18],[22,31],[30,44],[23,46],[12,40],[9,25],[1,14]],a.shade);
+  line(c,[[15,14],[16,27],[24,41]],a.accent+'a0',1.9);
+  poly(c,[[-24,8],[-16,5],[-7,8],[-9,13],[-20,14]],a.accent);oval(c,7,10,3,3,CREAM);break;
+ case 'vest':
+  poly(c,[[-15,3],[-4,5],[0,13],[5,6],[14,3],[17,29],[14,36],[-15,36],[-17,26]],'#9d8056');
+  line(c,[[-11,14],[-11,29]],a.accent,2.8);line(c,[[12,14],[12,29]],a.accent,2.8);
+  line(c,[[-15,31],[14,31]],CREAM,2);emblem(c,a.emblem,7,18,a.accent);break;
+ }
+ c.restore();
+}
+
+function drawBossArm(c,a,d,arm,back){
+ const {shoulder:s,elbow:e,hand:h,open}=arm;
+ const tone=back?a.shade:a.suit,width=d.arm*(back?.82:1);
+ const length=Math.max(1,Math.hypot(h.x-e.x,h.y-e.y));
+ const vx=(h.x-e.x)/length,vy=(h.y-e.y)/length;
+ const path=[[s.x,s.y],[e.x,e.y],[h.x,h.y]];
+ line(c,path,INK,width+2.3);line(c,path,tone,width);
+ loop(c,back?'#17142261':a.shade,width*.28,()=>{c.moveTo(s.x,s.y+width*.23);c.quadraticCurveTo(e.x,e.y+width*.32,h.x-vx*8,h.y-vy*8+width*.24);});
+ const cuff=[h.x-vx*5,h.y-vy*5];
+ line(c,[[h.x-vx*9,h.y-vy*9],cuff],a.accent,width*.67);
+ line(c,[[s.x+1,s.y-2],[e.x+1,e.y-2]],a.accent+'63',1.25);
+ c.save();c.translate(h.x,h.y);c.rotate(Math.atan2(vy,vx));
+ if(open){
+  poly(c,[[-4,-3],[-1,-4],[1,-7],[3,-6],[2,-3],[6,-3],[8,-1],[7,3],[3,5],[-4,3]],a.lit,INK,1.25);
+  line(c,[[2,-2],[6,-1]],a.skin,1.1);line(c,[[1,2],[5,2]],a.skin,1.05);
+ }else{
+  oval(c,1,0,5,4.5,a.lit,INK,1.25);line(c,[[1,-2],[4,-1]],a.skin,1.15);line(c,[[-1,2],[2,2]],a.skin,1);
+ }
+ c.restore();
+}
+
+function drawStageAccessory(c,d,p,a){
+ if(d.wear==='tails'){
+  const {hand,elbow}=p.arms.left,angle=Math.atan2(hand.y-elbow.y,hand.x-elbow.x);
+  c.save();c.translate(hand.x,hand.y);c.rotate(angle-.30);
+  line(c,[[0,0],[21,0]],INK,3.1);line(c,[[5,0],[22,0]],CREAM,1.3);c.restore();
+ }else if(d.wear==='vest'){
+  const {x,y}=p.arms.right.hand;
+  c.save();c.translate(x,y);c.rotate(-.21);
+  box(c,-4,-11,17,22,2,'#5a4543');box(c,-2,-9,13,17,1,'#e9d8a9',null);
+  line(c,[[0,-5],[8,-5]],a.shade,1.3);line(c,[[0,0],[7,0]],a.shade,1.3);c.restore();
+ }
+}
+
+/** Draws a complete original figure around the same deck anchor as atlas bosses. */
+export function drawCampaignBoss(c,{type,pose:p,...options}={}){
+ if(!Object.hasOwn(CHARACTER_DESIGN,type)||!p)return false;
+ const a=CAST[type],d=CHARACTER_DESIGN[type];
+ if(!p.campaignPose)p=campaignBossPoseFor(type,p,options);
  c.save();
- for(const side of ['right','left']){
-  const leg=p[side],{hip,knee,foot}=leg;
-  const path=[[hip.x,hip.y],[knee.x,knee.y],[foot.x,-4]];
-  line(c,path,INK,12);line(c,path,side==='left'?a.suit:a.shade,9);
-  box(c,foot.x-8,-6,15,6,2,a.shade);line(c,[[foot.x-6,-2],[foot.x+4,-2]],a.accent+'a6',1);
- }
- const torso=p.shoulders.x,top=p.shoulders.y;
- for(const side of ['right','left']){
-  const {shoulder,elbow,hand,open}=p.arms[side];
-  const path=[[shoulder.x,shoulder.y],[elbow.x,elbow.y],[hand.x,hand.y]];
-  line(c,path,INK,12);line(c,path,side==='left'?a.suit:a.shade,8.7);
-  const ratio=.60,cuffX=elbow.x+(hand.x-elbow.x)*ratio,cuffY=elbow.y+(hand.y-elbow.y)*ratio;
-  line(c,[[cuffX,cuffY],[hand.x,hand.y]],a.accent,3.8);
-  oval(c,hand.x,hand.y,open?5:4.6,open?4.6:4,a.lit);
-  line(c,[[hand.x-1.5,hand.y-1.8],[hand.x-3,hand.y]],a.skin,1.2);
- }
- const waist=-33+p.bob;
- poly(c,[[torso-16,top-6],[torso+16,top-6],[torso+21,top+4],[torso+14,waist+2],[torso-14,waist+2],[torso-19,top+4]],a.suit);
- poly(c,[[torso+8,top-4],[torso+17,top-5],[torso+19,top+5],[torso+13,waist],[torso+5,waist+1]],a.shade,null);
- const formal=['tie','bow'].includes(a.face);
- if(formal){
-  poly(c,[[torso-9,top-6],[torso+10,top-6],[torso,top+14]],CREAM);
-  if(a.face==='bow')poly(c,[[torso-6,top-4],[torso,top-1],[torso+6,top-4],[torso+6,top+3],[torso,top],[torso-6,top+3]],a.accent);
-  else poly(c,[[torso,top-4],[torso+3,top],[torso+2,top+11],[torso,top+14],[torso-2,top+9]],a.accent,a.shade,1);
- }else loop(c,a.accent,2.2,()=>{c.moveTo(torso-7,top-5);c.quadraticCurveTo(torso,top+5,torso+7,top-5);});
- emblem(c,a.emblem,torso+10,top+10,a.accent);
- line(c,[[torso-11,waist-2],[torso+11,waist-2]],a.accent+'88',1.4);
- c.save();c.translate(p.neck.x,p.neck.y+1);c.rotate(p.headTilt);head(c,a);c.restore();
+ drawBossLegs(c,p,a,d);
+ drawBossArm(c,a,d,p.arms.right,true);
+ drawOutfit(c,p,a,d);
+ c.save();c.translate(p.origin.x,p.origin.y+1);c.rotate(p.angle);
+ head(c,a,d.face,p.state);c.restore();
+ drawBossArm(c,a,d,p.arms.left,false);
+ drawStageAccessory(c,d,p,a);
  c.restore();return true;
 }
 
 const CROWD=[
- {suit:'#dba66c',shade:'#9f6d52',accent:'#fff3cb',hair:'#332b3b',skin:'#a9694d',lit:'#d49267',cut:'afro'},
- {suit:'#6c8f8b',shade:'#527676',accent:'#bee2bb',hair:'#5d3c3c',skin:'#ba7858',lit:'#e1a67d',cut:'short'},
- {suit:'#8b7293',shade:'#655977',accent:'#f6d4ac',hair:'#e7dbc0',skin:'#884e43',lit:'#b87a66',cut:'wisps'},
- {suit:'#b67f79',shade:'#98625e',accent:'#fce0ac',hair:'#40354a',skin:'#c88f73',lit:'#eab397',cut:'parted'},
- {suit:'#617e9c',shade:'#4c6880',accent:'#d0dfe2',hair:'#372e3d',skin:'#99624c',lit:'#bd8562',cut:'scarf'}
+ {x:-60,height:54,span:6,shape:[[-10,-1],[-17,7],[-16,27],[-10,34],[11,33],[16,21],[13,0]],suit:'#dba66c',shade:'#9f6d52',accent:'#fff3cb',hair:'#332b3b',skin:'#a9694d',lit:'#d49267',cut:'afro',motion:'welcome'},
+ {x:-32,height:65,span:8,shape:[[-11,-3],[-17,2],[-14,33],[13,32],[16,7],[11,-1]],suit:'#6c8f8b',shade:'#527676',accent:'#bee2bb',hair:'#5d3c3c',skin:'#ba7858',lit:'#e1a67d',cut:'short',motion:'placard'},
+ {x:0,height:55,span:7,shape:[[-10,-1],[-14,4],[-17,25],[-13,35],[16,34],[16,10],[8,-1]],suit:'#8b7293',shade:'#655977',accent:'#f6d4ac',hair:'#e7dbc0',skin:'#884e43',lit:'#b87a66',cut:'wisps',motion:'wave'},
+ {x:27,height:68,span:8,shape:[[-14,-2],[-18,4],[-12,18],[-15,34],[-10,39],[9,37],[15,26],[13,6],[9,-2]],suit:'#b67f79',shade:'#98625e',accent:'#fce0ac',hair:'#40354a',skin:'#c88f73',lit:'#eab397',cut:'parted',motion:'placard'},
+ {x:60,height:53,span:7,shape:[[-12,0],[-17,5],[-13,24],[-17,33],[-10,37],[12,36],[18,31],[13,14],[13,0]],suit:'#617e9c',shade:'#4c6880',accent:'#d0dfe2',hair:'#372e3d',skin:'#99624c',lit:'#bd8562',cut:'scarf',motion:'guide'}
 ];
 
-/** Deliberately no ship, recoil, magic or weapon for the friendly crowd. */
-export function drawCampaignCrowd(c,{x=0,y=0,scale=1,phase=0,reducedMotion=false}={}){
+/** Grounded crowd. The optional presentation poses describe a passage, never an attack. */
+export function drawCampaignCrowd(c,{x=0,y=0,scale=1,phase=0,reducedMotion=false,preparing=false,attacking=false,recovering=false,progress}={}){
  if(![x,y,scale].every(Number.isFinite)||scale<=0)return false;
+ const t=reducedMotion?0:(Number.isFinite(phase)?phase:0),u=Number.isFinite(progress)?smooth(clamp01(progress)):1;
+ const signal=attacking?.81+u*.19:preparing?u*.70:recovering?(1-u)*.76:0;
  c.save();c.translate(x,y);c.scale(scale,scale);
- oval(c,0,1,75,5,'#40536022',null);
- for(const [i,xx,h] of [[0,-58,57],[1,-31,69],[2,0,63],[3,28,71],[4,56,57]]){
-  const a=CROWD[i],stride=reducedMotion?0:Math.sin((Number(phase)||0)*.18+i)*1.2;
-  c.save();c.translate(xx,-h+stride);
+ oval(c,0,1.2,77,4,'#40536028',null);
+ for(const [i,a] of CROWD.entries()){
+  const swing=reducedMotion?0:Math.sin(t*(1.4+i*.11)+i*1.2);
+  const h=-a.height+swing*.95;
+  const spread=(a.x<=0?-1:1)*signal*(i===2?1.2:4.5);
+  c.save();c.translate(a.x,0);
   for(const side of [-1,1]){
-   line(c,[[side*7,25],[side*7,h-6]],INK,8);
-   line(c,[[side*7,25],[side*7,h-6]],a.shade,5.5);
-   box(c,side*7-5,h-6,10,5,2,a.suit);
+   const foot=side*a.span;
+   poly(c,[[spread+side*7-4,h+25],[spread+side*7+4,h+24],[foot+4,-7],[foot+3,-4],[foot-4,-4],[foot-4,-9]],a.shade,INK,1.3);
+   drawBoot(c,foot,i%2===0?8:9,side,a,false);
   }
-  box(c,-13,-1,26,29,8,a.suit);
-  line(c,[[-8,23],[8,23]],a.accent,1.4);
-  if(i===1||i===3){
-   const dir=i===1?-1:1;
-   line(c,[[dir*10,5],[dir*16,-12],[dir*17,-46]],a.shade,4);
-   box(c,dir*17-9,-52,18,11,3,CREAM,a.shade);
-   line(c,[[dir*17-5,-46],[dir*17+5,-46]],a.suit,1.5);
-  }else for(const side of [-1,1]){line(c,[[side*10,6],[side*16,19]],a.shade,5);oval(c,side*16,20,2.9,3.4,a.lit);}
-  c.save();c.scale(.65,.65);head(c,a);c.restore();c.restore();
+  c.translate(spread,h);
+  const dir=a.x<0?-1:1;
+  const wave=a.motion==='wave',sign=a.motion==='placard',guide=a.motion==='guide';
+  const reach=signal*(guide?10:wave?8:5);
+  for(const side of [-1,1]){
+   const active=side===dir;
+   const hx=side*(active&&sign?20:active&&guide?24+reach:active?17+reach:15);
+   const hy=active&&sign?-14-swing*3-signal*7:active&&wave?5-swing*7-reach:
+    active&&guide?11+swing*3-reach*.4:19+swing*(active?3:1)-(active?reach:0);
+   const path=[[side*9,5],[side*16,active&&sign?-2:12],[hx,hy]];
+   line(c,path,INK,7);line(c,path,side<0?a.suit:a.shade,5);
+   oval(c,hx,hy,3.3,active&&wave?4:3.4,a.lit,INK,1);
+   if(active&&sign){
+    c.save();c.translate(hx,hy);c.rotate(swing*.06-dir*.07);
+    line(c,[[0,0],[0,-18]],a.shade,3);
+    poly(c,[[-12,-28],[10,-29],[12,-17],[-11,-17]],CREAM,a.shade);
+    line(c,[[-7,-22],[6,-22]],a.suit,1.7);
+    line(c,[[-7,-25],[2,-25]],a.shade,1.2);
+    c.restore();
+   }
+  }
+  poly(c,a.shape,a.suit,INK,1.65);
+  poly(c,[[6,1],[10,4],[10,15],[7,30],[1,32],[4,15]],a.shade,null);
+  line(c,[[-9,5],[-7,19],[-6,25]],a.accent+'82',1.45);
+  if(wave)poly(c,[[-10,0],[12,0],[9,7],[3,8],[-6,6]],a.accent);
+  else if(guide)poly(c,[[-14,3],[-9,-1],[5,0],[7,4],[-6,10],[-15,9]],a.accent);
+  else if(sign){line(c,[[0,9],[-1,29]],a.accent,1.2);oval(c,6,14,2,2,a.accent);}
+  else loop(c,a.accent,1.5,()=>{c.moveTo(-8,3);c.quadraticCurveTo(0,11,7,3);});
+  c.save();c.rotate((swing*.033+dir*signal*.06));c.scale(.66,.66);head(c,a);c.restore();c.restore();
  }
  c.restore();return true;
 }
@@ -241,5 +427,5 @@ export function drawCampaignPortrait(c,{type,x=0,y=0,size=48}={}){
  const a=CAST[type];
  c.save();c.translate(x,y-size*.13);c.scale(size/56,size/56);
  poly(c,[[-20,5],[-16,-1],[-6,-3],[5,-3],[17,-1],[21,5],[14,9],[-14,9]],a.suit);
- head(c,a);emblem(c,a.emblem,10,4,a.accent);c.restore();return true;
+ head(c,a,CHARACTER_DESIGN[type].face);emblem(c,a.emblem,10,4,a.accent);c.restore();return true;
 }

@@ -6,10 +6,10 @@ const DT=1/120;
 function isolated(width=900){
  const r=core.createRun({seed:3});core.startRun(r);core.resizeRun(r,width);
  for(const key of ['nextObstacle','nextRaid','nextBossAt','nextAllyAt','nextSupportAt','nextPassport','nextPower','nextPickup'])r[key]=Infinity;
- assert.ok(r.terrain,'route has its own physical terrain state');r.terrain.nextAt=Infinity;return r;
+ assert.ok(r.terrain,'route has its own physical terrain state');r.terrain.nextAt=Infinity;r.terrain.lessonCompleted=true;r.routeDistance=2*core.SCENE_DISTANCE+1000;return r;
 }
 function step(r,s,control){for(let i=0;i<Math.round(s/DT)&&r.status==='running';i++){control?.(r);core.advanceRun(r,DT);}}
-function encounter(kind,width=900){const r=isolated(width);r.terrain.nextAt=0;r.terrain.nextKind=kind;r.nextObstacle=0;core.advanceRun(r,DT);r.nextObstacle=Infinity;assert.equal(r.terrain.active?.kind,kind);return r;}
+function encounter(kind,width=900){const r=isolated(width);r.terrain.nextAt=0;r.nextObstacle=0;core.advanceRun(r,DT);r.nextObstacle=Infinity;assert.equal(r.terrain.active?.kind,kind);return r;}
 
 test('grounded crouch-forward produces bounded momentum with release, reverse, jump and clear exits',()=>{
  const r=isolated();core.crouchRun(r,true);core.moveRun(r,1);step(r,.2);
@@ -21,13 +21,16 @@ test('grounded crouch-forward produces bounded momentum with release, reverse, j
  step(r,.1);assert.equal(r.player.crouching,false,'diagonal air input cannot shrink the jumping body');
  core.clearRunInput(r);assert.equal(r.player.sliding,false);
 });
-test('visible low opening hits standing, while crouch-forward slides beneath it',()=>{
- for(const crouch of [false]){const r=encounter('passage');core.crouchRun(r,crouch);step(r,5);assert.equal(r.status,'over');assert.equal(r.lastHit.type,'terrain-ceiling');}
- for(const width of [480,900]){const r=encounter('passage',width);step(r,5,pilotDodge);assert.equal(r.status,'running');assert.ok(r.terrain.completed>=1);}
+test('é possível deslizar sobre a barra de treino sem encolher a forma',()=>{
+ for(const width of [480,900]){
+  const r=isolated(width);r.terrain.active={kind:'ground-lesson',age:0,speed:270,gaps:[],ceilings:[],platforms:[{x:r.player.x-40,width:430,y:24}],lesson:{routeStart:r.routeDistance,routeEnd:r.routeDistance+430,traveled:0,length:430}};
+  Object.assign(r.player,{y:24,supportY:24,grounded:true});core.crouchRun(r,true);core.moveRun(r,1);step(r,.14);
+  assert.equal(r.player.sliding,true);assert.equal(r.player.y,24);assert.equal(r.player.hp,2);
+ }
 });
-test('gap removes ground support and consumes a life even under shields, with stable recovery on extra life',()=>{
+test('gap removes ground support and defeats even with shield or an unused continuation',()=>{
  const r=encounter('gap-platform');r.shieldFor=Infinity;step(r,5);assert.equal(r.status,'over');assert.equal(r.lastHit.type,'terrain-gap');
- const extra=encounter('gap-platform');extra.lives=2;for(let i=0;i<600&&extra.lives===2;i++)core.advanceRun(extra,DT);assert.equal(extra.status,'running');assert.equal(extra.lives,1);assert.equal(extra.player.y,0);assert.equal(extra.terrain.active,null);assert.ok(extra.graceFor>0);
+ const extra=encounter('gap-platform');extra.lives=2;step(extra,5);assert.equal(extra.status,'over');assert.equal(extra.lives,2);assert.equal(extra.lastHit.type,'terrain-gap');assert.equal(core.continueRun(extra),false);
 });
 test('legal jump lands on raised support before returning to floor, at both viewport widths',()=>{
  for(const width of [480,900]){const r=encounter('gap-platform',width);let landed=false,maxY=0;step(r,6,run=>{pilotDodge(run);maxY=Math.max(maxY,run.player.y);if(run.player.supportY===28&&run.player.velocity===0)landed=true;});assert.equal(r.status,'running');assert.ok(maxY>70);assert.ok(landed,'platform supplies real elevated support');assert.equal(r.player.y,0);assert.ok(r.terrain.completed>=1);}
@@ -42,12 +45,12 @@ test('resize preserves terrain contact time and active support coordinates witho
 });
 test('terrain waits for threats and protected scenes in both modes and reserves an active traversal',()=>{
  for(const mode of ['story','endless'])for(const scene of ['boss','raid','jacare','transition','rehearsal','threat']){
-  const r=isolated();r.mode=mode;r.terrain.nextAt=0;r.nextObstacle=0;
+  const r=isolated();r.mode=mode;if(mode==='story')r.routeDistance+=core.STORY_OPENING_DISTANCE;r.terrain.nextAt=0;r.nextObstacle=0;
   if(scene==='boss')r.boss={combat:true,phase:'intro',remaining:100,type:'haddad',introFor:100,attacks:0};
   if(scene==='raid')r.raid={phase:'warning',remaining:100};
   if(scene==='jacare'){r.player.isJacare=true;r.player.jacareAge=0;}
-  if(scene==='transition')r.routeDistance=(mode==='story'?core.STORY_OPENING_DISTANCE:0)+7000;
-  if(scene==='rehearsal'){if(mode==='endless')continue;r.nextBossAt=core.STORY_OPENING_DISTANCE;r.routeDistance=r.nextBossAt-200;}
+  if(scene==='transition')r.routeDistance=(mode==='story'?core.STORY_OPENING_DISTANCE:0)+14000;
+  if(scene==='rehearsal'){if(mode==='endless')continue;r.bossesDefeated=4;r.nextBossAt=core.STORY_OPENING_DISTANCE+2*core.SCENE_DISTANCE+2200;r.routeDistance=r.nextBossAt-200;}
   if(scene==='threat')r.obstacles=[{x:850,width:34,height:40,type:'barrier',speed:180}];
   core.advanceRun(r,DT);assert.equal(r.terrain.active,null,`${mode} ${scene}`);
  }
@@ -63,35 +66,37 @@ test('fixed seeded terrain route is independent of viewport and simulation step 
 });
 test('raised support has solid entry faces in both lateral directions',()=>{
  for(const direction of [-1,1]){
-  const r=encounter('gap-platform'),a=r.terrain.active;a.gaps=[];a.platforms=[{x:direction===1?r.player.x+32:r.player.x+4-140,width:140,y:28}];
-  core.moveRun(r,direction);step(r,.1);assert.equal(r.status,'over');assert.equal(r.lastHit.type,'terrain-platform');
+  const r=encounter('gap-platform'),a=r.terrain.active;r.assisted=direction===-1;a.gaps=[];a.platforms=[{x:direction===1?r.player.x+32:r.player.x+4-140,width:140,y:28}];
+  core.moveRun(r,direction);step(r,.25);assert.equal(r.player.hp,1);assert.equal(r.lastHit.type,'terrain-platform');
  }
 });
 test('stale ground flags never permit an airborne jump or crouch',()=>{
  const r=isolated();r.player.y=55;assert.equal(core.jumpRun(r),false);assert.equal(core.crouchRun(r,true),false);assert.equal(r.player.velocity,0);
 });
 test('a transformation pickup is deferred during committed terrain without repeated collection credit',()=>{
- const r=encounter('passage');r.pickups=[{type:'ze-gotinha',x:r.player.x+17,y:20,speed:0}];
+ const r=encounter('gap-platform');r.pickups=[{type:'ze-gotinha',x:r.player.x+17,y:20,speed:0}];
  step(r,.1);assert.equal(r.player.isJacare,false);assert.equal(r.collected,0);assert.equal(r.pickups.length,1);
 });
 test('holding forward before a terrain announcement preserves at least 820ms of physical reaction',()=>{
  for(const width of [480,900])for(const crouch of [false,true]){
-  const r=isolated(width);r.aid={kind:'encourage',remaining:10};core.crouchRun(r,crouch);core.moveRun(r,1);r.terrain.nextAt=0;r.terrain.nextKind='passage';r.nextObstacle=0;core.advanceRun(r,DT);r.nextObstacle=Infinity;
-  const announced=r.elapsed,roof=r.terrain.active.ceilings[0];while(r.player.x+31<roof.x&&r.status==='running'&&r.elapsed-announced<4)core.advanceRun(r,DT);
+  const r=isolated(width);r.aid={kind:'encourage',remaining:10};core.crouchRun(r,crouch);core.moveRun(r,1);r.terrain.nextAt=0;r.nextObstacle=0;core.advanceRun(r,DT);r.nextObstacle=Infinity;
+  const announced=r.elapsed,gap=r.terrain.active.gaps[0];while(r.player.x+31<gap.x&&r.status==='running'&&r.elapsed-announced<4)core.advanceRun(r,DT);
   assert.ok(r.elapsed-announced>=.82,`reaction ${r.elapsed-announced}`);
  }
 });
 test('natural endless and story routes actually deliver terrain without starving it behind reserved events',()=>{
  for(const mode of ['endless','story'])for(const width of [480,900]){
   const r=core.createRun({mode,seed:1});core.startRun(r);core.resizeRun(r,width);r.nextAllyAt=Infinity;
-  step(r,65,pilotDodge);assert.equal(r.status,'running');assert.ok(r.terrain.completed>=1,`${mode}/${width} completed terrain`);
+  r.routeDistance=(mode==='story'?core.STORY_OPENING_DISTANCE:0)+2*core.SCENE_DISTANCE+1000;r.distance=r.routeDistance;r.nextBossAt=Infinity;
+  if(mode==='story')r.bossesDefeated=4;
+  step(r,50,pilotDodge);assert.equal(r.status,'running');assert.ok(r.terrain.completed>=1,`${mode}/${width} completed terrain`);
  }
 });
 
 test('descending onto the leading edge lands on solid support before the center reaches the platform',()=>{
  for(const width of [480,900])for(const jumpEta of [.20,.24,.26]){
   const r=encounter('gap-platform',width),gap=r.terrain.active.gaps[0];
-  while((gap.x-(r.player.x+17))/200>jumpEta)core.advanceRun(r,DT);
+  while((gap.x-(r.player.x+17))/r.terrain.active.speed>jumpEta)core.advanceRun(r,DT);
   assert.equal(core.jumpRun(r),true);let landed=false;
   step(r,3,run=>{if(run.player.grounded&&run.player.supportY===28)landed=true;});
   assert.equal(r.status,'running',`edge jump ${width}/${jumpEta}`);assert.ok(landed,'body cannot pass through the visible top');

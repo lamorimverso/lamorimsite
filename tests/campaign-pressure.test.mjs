@@ -7,7 +7,7 @@ test('Joice tem entrada garantida em todos os oito mapas, sem depender do sortei
  for(let stage=0;stage<8;stage++){const r=make(stage);tick(r);assert.equal(r.raid?.phase,'warning',STORY_STAGE_IDS[stage]);assert.equal(r.raid.stageId,STORY_STAGE_IDS[stage]);assert.equal(r.raidStages[STORY_STAGE_IDS[stage]],1);assert.equal(r.raids,1);}
 });
 test('entrada obrigatória espera um chefe/transformação e não reinicia sem parar na mesma fase',()=>{
- const r=make(2);r.player.isJacare=true;r.player.jacareAge=0;tick(r);assert.equal(r.raid,null);
+ const r=make(2);r.player.isJacare=true;r.player.nextJacareThreat=Infinity;tick(r);assert.equal(r.raid,null);
  r.player.isJacare=false;r.boss={type:'lula',combat:false,hp:10,maxHp:10,total:10,remaining:10,fired:0,nextAttack:100};tick(r);assert.equal(r.raid,null,'Joice não interrompe o duelo');r.boss=null;tick(r);assert.equal(r.raid?.stageId,'sao-paulo');
  r.raid=null;r.nextRaid=999;tick(r);assert.equal(r.raid,null,'fase já teve seu encontro garantido');
  r.routeDistance+=SCENE_DISTANCE;tick(r);assert.equal(r.raid?.stageId,'argentina');
@@ -54,7 +54,11 @@ test('no Infinito a travessia reserva a entrada pendente antes de trocar de mapa
  const r=make();r.mode='endless';r.elapsed=200;r.routeDistance=r.distance=5900;r.player.isJacare=true;r.player.jacareAge=0;r.shieldFor=Infinity;
  let saw=false;
  for(let i=0;i<120*14&&!saw;i++){
-  tick(r);if(r.player.isJacare)assert.equal(core.routeStageFor(r).id,'brasilia','jacaré não consome a oportunidade do mapa');
+  if(i>=1200&&i%24===0)core.recoverJacareRun(r);
+  tick(r);if(r.player.isJacare){
+   assert.equal(core.routeStageFor(r).id,'brasilia','jacaré não consome a oportunidade do mapa');
+   assert.equal(r.raid,null,'a perseguição aguarda a recuperação');
+  }
   if(r.raid){saw=true;assert.equal(r.raid.stageId,'brasilia');assert.equal(core.routeTransitionFor(r).active,false,'aviso respeita a transição');}
  }
  assert.equal(saw,true);assert.ok(r.distance>r.routeDistance,'movimento e pontuação continuam durante a reserva');

@@ -1,8 +1,9 @@
 import {createVoiceSelector} from './runner-voice-selector.mjs?v=ad3200a88cd4';
-import {getMovementSoundBank} from './runner-movement-audio.mjs?v=324263bcd025';
+import {getMovementSoundBank} from './runner-movement-audio.mjs?v=31522b0ccc1e';
 import {createGameSoundtrack} from './runner-soundtrack.mjs?v=eef47a2a323c';
-import {getCastSoundBank} from './runner-cast-sounds.mjs?v=2af8b6ef13d0';
-import {getEnemyShotBank} from './runner-shot-sounds.mjs?v=fd84e4e83e32';
+import {getCastSoundBank} from './runner-cast-sounds.mjs?v=89e1ec80db9a';
+import {getEnemyShotBank} from './runner-shot-sounds.mjs?v=14f254e2ad3e';
+import {getEncounterSoundBank} from './runner-encounter-sounds.mjs?v=bd72b7e481c5';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
 // Efeitos locais e recorte de arquivo identificado; nenhuma imitação de voz.
 export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelector()}={}) {
@@ -152,6 +153,9 @@ export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelecto
   for(const [node,release] of entranceNodes){try{node.stop();}catch{/* Já encerrado. */}release();}
   return playBank(bank);
  };
+ const enemyWindup=actor=>playBank(getEncounterSoundBank(actor,'windup'));
+ const enemyImpact=(actor,weapon)=>playBank(getEncounterSoundBank(actor,'impact',weapon));
+ const traversalBlock=(actor,weapon)=>playBank(getEncounterSoundBank(actor,'blocked',weapon),{alert:false});
  const flushEntrance=()=>{
   if(!pendingEntrance)return;
   if(!enabled||!primed||!context||context.state!=='running'||context.currentTime>pendingEntrance.expires){pendingEntrance=null;return;}
@@ -179,7 +183,7 @@ export function createGameAudio({onVoice=()=>{},voiceSelector=createVoiceSelecto
  };
  // Não há sintetizador de voz: só trechos identificados e efeitos originais.
  // Ausência de clipe não é preenchida por uma voz inventada.
- return {get enabled(){return enabled;},prime,stop,effect,heroShot,enemyShot,enemyEntrance,actorCue,voice,voiceSelector,movement,
+ return {get enabled(){return enabled;},prime,stop,effect,heroShot,enemyShot,enemyEntrance,enemyWindup,enemyImpact,traversalBlock,actorCue,voice,voiceSelector,movement,
   background(state={}){
    if(state.active===false){stop();return;}
    if(!enabled||!primed)return;
