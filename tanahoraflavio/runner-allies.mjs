@@ -28,6 +28,9 @@ export function allyForStage(stageIndex,visits={},rng=Math.random){
 }
 export function collectAlly(run,id){
  const ally=allyById(id);if(run.status!=='running'||!ally||id==='vorcaro'&&run.creditCooldown>0)return false;
+ // Item protection is immediate and refreshes without spending a reserve or
+ // shortening the six-second shield the player may already have activated.
+ run.allyShieldFor=3;run.shieldFor=Math.max(run.shieldFor||0,3);
  run.ally={id,remaining:2.8};run.aid={id,kind:ally.kind,label:ally.label,remaining:ally.duration,warningBonus:ally.warningBonus,startPassports:run.passports};
  run.lastAllyId=id;run.allyVisits??={};run.allyVisits[id]=(run.allyVisits[id]||0)+1;
  run.allyHelpCount=(run.allyHelpCount||0)+1;
@@ -45,6 +48,9 @@ export function collectAlly(run,id){
  run.event=ally.name+' · '+run.aid.label+'. Participação fictícia.';run.events++;return true;
 }
 export function advanceAllies(run,dt){
+ // The core owns shieldFor's countdown; this separate clock only controls
+ // the pickup's presentation and must not subtract collision protection twice.
+ run.allyShieldFor=Math.max(0,(run.allyShieldFor||0)-dt);
  run.creditCooldown=Math.max(0,(run.creditCooldown||0)-dt);
  for(const field of ['ally','aid','clearedAt','lastSupply'])if(run[field]){run[field].remaining-=dt;if(run[field].remaining<=0)run[field]=null;}
  const aid=run.aid;if(!aid)return;

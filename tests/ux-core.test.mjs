@@ -1,3 +1,4 @@
+import {pilotDodge as pilotTerrain} from '../tools/story-pilot.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
@@ -158,6 +159,10 @@ export function legalPilot(seed,{width=900,assisted=false,limit=340,resize=false
  let jumps=0,crouches=0,peak=0,shieldFrames=0,widthChanges=0;
  for(let i=0;i<120*limit&&run.status==='running'&&run.passports<100;i++){
   if(resize&&i>0&&i%(120*12)===0){const width=[480,900,612,900][(i/(120*12)-1)%4];if(width!==run.viewportWidth){core.resizeRun(run,width);widthChanges++;}}
+  if(run.terrain?.active){
+   pilotTerrain(run);if(run.reserveShields&&run.shieldFor<=0)core.activateReserveShield(run);
+   core.advanceRun(run,DT,rng);peak=Math.max(peak,run.player.y);if(run.shieldFor>0)shieldFrames++;continue;
+  }
   // O piloto considera o alerta de retaguarda antes de o inimigo entrar na tela.
   const eta=o=>core.threatTimeToContact(run,o);
   const drops=run.obstacles.filter(o=>(o.falling||o.groundHazard)&&o.age<o.warningFor+(o.fallFor??o.activeFor));
@@ -185,7 +190,7 @@ export function legalPilot(seed,{width=900,assisted=false,limit=340,resize=false
   if(crouch&&!run.player.crouchHeld)crouches++;
   core.crouchRun(run,crouch);
   const jumpAhead=danger?.approach==='rear'?.22:(danger ? .35-(danger.width+20)/(2*speed) : 0);
-  if(danger&&action==='jump'&&until<=jumpAhead&&until>-.1&&core.jumpRun(run))jumps++;
+  if(danger&&action==='jump'&&until<=jumpAhead&&until>-.1&&(!run.movementSkills?.doubleJump||run.player.grounded)&&core.jumpRun(run))jumps++;
   if(run.reserveShields&&run.shieldFor<=0)core.activateReserveShield(run);
   core.advanceRun(run,DT,rng);peak=Math.max(peak,run.player.y);
   if(run.shieldFor>0)shieldFrames++;

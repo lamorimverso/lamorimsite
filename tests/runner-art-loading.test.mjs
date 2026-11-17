@@ -38,6 +38,7 @@ function drawingContext(){
  return {drawn,transforms,globalAlpha:1,save(){},restore(){},
   translate(...args){transforms.push(['translate',...args]);},
   scale(...args){transforms.push(['scale',...args]);},
+  rotate(...args){transforms.push(['rotate',...args]);},
   drawImage(...args){drawn.push(args);}};
 }
 
@@ -130,20 +131,35 @@ test('atlas com dimensões incompatíveis é rejeitado e pode ser tentado de nov
 test('corrida base carrega antes dos apoios e falha opcional não descarta os personagens prontos',async t=>{
  const {sprites,images,load}=await browserEvents(t);
  const core=sprites.loadSprites(()=>{},{coreOnly:true});
- assert.equal(images.length,14,'folhas essenciais incluem combate e o novo atlas completo de agachamento');
+ assert.equal(images.length,16,'folhas essenciais incluem combate, agachamento e objetos ilustrados');
  for(const image of images)load(image);await core;
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'pf'}),true,'PF usa seu próprio desenho original enquanto a expansão carrega');
  for(const type of ['army-run','army-rio-run','army-argentina-run','army-florida-run','army-casa-branca-run'])assert.equal(sprites.drawCombatSprite(drawingContext(),{type,frame:2}),true,'uniforme inteiro é essencial: '+type);
  const extras=sprites.loadSprites(),error=extras.then(()=>null,e=>e);
- assert.equal(images.length,18,'as quatro folhas de apoio não baixam novamente as catorze prontas');
- images[14].onerror();assert.ok(await error);
+ assert.equal(images.length,20,'as quatro folhas de apoio não baixam novamente as dezesseis prontas');
+ images[16].onerror();assert.ok(await error);
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'flavio'}),true);
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'pf'}),true);
- const retry=sprites.loadSprites();for(const image of images.slice(18))load(image);await retry;
+ const retry=sprites.loadSprites();for(const image of images.slice(20))load(image);await retry;
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'boulos'}),true);
 });
 test('rostos de todos os chefes normais estão nos atlas essenciais',async t=>{
  const {sprites,images,load}=await browserEvents(t);const pending=sprites.loadSprites(()=>{},{coreOnly:true});for(const image of images)load(image);await pending;
  const c=new Proxy({globalAlpha:1},{get(o,k){return k in o?o[k]:()=>{};}});
  for(const type of ['boulos','dino','pf','janones','haddad','lula','xandao','joice','dilma','simone','soraya'])assert.equal(sprites.drawSpriteHead(c,{type,x:30,y:45,size:40}),true,type+' possui rosto mesmo sem os apoios');
+});
+
+test('falha no objeto ilustrado essencial descarta a tentativa inteira e aceita retry',async t=>{
+ const {sprites,images,load}=await browserEvents(t),progress=[];
+ const first=sprites.loadSprites((n,total)=>progress.push([n,total]),{coreOnly:true}),result=first.catch(error=>error);
+ const prop=images.find(image=>image.src.includes('signature-props-a-v1'));
+ assert.ok(prop,'algemas são essenciais para a primeira partida');
+ for(const image of images)if(image!==prop)load(image);
+ assert.equal(sprites.drawSpriteActor(drawingContext()),false,'não publica personagens antes dos objetos essenciais');
+ prop.onerror();assert.match((await result).message,/carregar/i);
+ assert.equal(sprites.drawIllustratedProp(drawingContext(),{type:'handcuffs'}),false);
+ const previous=images.length,retry=sprites.loadSprites(()=>{},{coreOnly:true});
+ for(const image of images.slice(previous))load(image);await retry;
+ assert.equal(sprites.drawIllustratedProp(drawingContext(),{type:'handcuffs',width:46,height:72}),true);
+ assert.equal(sprites.drawSpriteActor(drawingContext()),true);
 });

@@ -70,7 +70,7 @@ test('Infinito segue depois de cinco chefões e não chama a vitória da Histór
  assert.ok(!seen.includes('bossonari'),'o ciclo original do Infinito permanece válido');
 });
 test('Exército de Memes gera perigos altos e não altera a física de movimento do jogador',()=>{
- const r=isolated();r.elapsed=40;r.nextObstacle=0;r.nextBossAt=Infinity;r.shieldFor=Infinity;
+ const r=isolated();r.terrain.nextAt=Infinity;r.elapsed=40;r.nextObstacle=0;r.nextBossAt=Infinity;r.shieldFor=Infinity;
  const seen=new Set();
  for(let i=0;i<120*110;i++){
   core.advanceRun(r,DT,core.createSeededRandom(i+11));

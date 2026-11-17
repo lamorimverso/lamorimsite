@@ -1,3 +1,4 @@
+import {pilotDodge as pilotTerrain} from '../tools/story-pilot.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
@@ -5,7 +6,7 @@ import {frames} from '../tanahoraflavio/runner-sprite-data.mjs';
 
 const DT=1/120;
 function isolated(width=900){
- const r=core.createRun();core.startRun(r);core.resizeRun(r,width);
+ const r=core.createRun();core.startRun(r);r.terrain.nextAt=Infinity;core.resizeRun(r,width);
  for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport','nextPickup'])r[k]=Infinity;
  return r;
 }
@@ -144,6 +145,7 @@ test('espera adicional do resize não mira novamente um projétil já lançado',
 // Apenas comandos públicos durante o percurso. Não injeta proteção, teleporte,
 // vidas, coletas nem muda o estado dos perigos para forçar uma aprovação.
 function pilot(r){
+ if(r.terrain?.active)return pilotTerrain(r);
  const local=r.obstacles.find(o=>(o.falling||o.groundHazard)&&o.age<o.warningFor+(o.fallFor??o.activeFor));
  let evade=0;
  if(local){
@@ -162,14 +164,14 @@ function pilot(r){
  core.moveRun(r,local&&r.player.y===0&&(!danger||until>localEta+.2)?evade:0);
  core.crouchRun(r,danger?.action==='crouch'&&until<.65);
  const jumpAhead=danger?.approach==='rear'?.22:.35-((danger?.width||40)+20)/(2*speed);
- if(danger?.action==='jump'&&until<=jumpAhead&&until>-.1)core.jumpRun(r);
+ if(danger?.action==='jump'&&until<=jumpAhead&&until>-.1&&(!r.movementSkills?.doubleJump||r.player.grounded))core.jumpRun(r);
 }
 
 test('2.000 sequências com sementes e entradas reais mantêm rotas vencíveis pela arena',()=>{
  const signatures=new Set(),styles=new Set();let waves=0;
  for(let seed=1;seed<=2000;seed++){
   const width=[480,612,900][seed%3],r=isolated(width),rng=core.createSeededRandom(seed);
-  r.elapsed=40;r.distance=r.routeDistance=(seed%8)*35000;r.nextObstacle=0;
+  r.elapsed=40;r.distance=r.routeDistance=(seed%8)*35000;r.nextObstacle=0;r.terrain.nextAt=6;
   const bounds=core.playerBounds(r);r.player.x=[bounds.min,(bounds.min+bounds.max)/2,bounds.max][Math.floor(seed/3)%3];
   let count=0;const sequence=[];
   for(let i=0;i<24*60&&r.status==='running';i++){

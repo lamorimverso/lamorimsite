@@ -5,7 +5,7 @@ const dt=1/120;
 const seeded=seed=>()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/2**32);
 function running(width=900){
  const r=core.createRun();core.startRun(r);
- r.viewportWidth=width;r.shieldFor=Infinity;r.nextBossAt=r.nextRaid=r.nextAllyAt=r.nextSupportAt=Infinity;
+ r.viewportWidth=width;r.shieldFor=Infinity;r.terrain.nextAt=Infinity;r.nextBossAt=r.nextRaid=r.nextAllyAt=r.nextSupportAt=Infinity;
  r.elapsed=80;r.distance=r.routeDistance=35000;return r;
 }
 

@@ -68,6 +68,107 @@ async function begin(page){
  await page.evaluate(()=>{if(globalThis.__testRun)__testRun.nextObstacle=1000;});
 }
 
+test('a route gap has visible terrain and its own outcome instead of a police capture',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:900,height:720}});
+ try{
+  await begin(page);
+  await page.evaluate(async()=>{
+   const r=__testRun;for(const key of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[key]=Infinity;
+   r.obstacles=[];r.pickups=[];r.terrain.nextAt=Infinity;r.terrain.nextKind='gap-platform';const {beginTerrain}=await import('./runner-terrain.mjs');beginTerrain(r);
+  });
+  await page.waitForFunction(()=>__testRun.status==='over',null,{timeout:5000});
+  assert.equal(await page.locator('#game-overlay-title').textContent(),'Caiu no vão!');
+  assert.equal(await page.locator('#game-captured').isVisible(),false);
+  assert.match(await page.locator('#game-overlay-copy').textContent(),/pule.*plataforma/i);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('crouch-forward input performs the low passage as a real slide in the browser',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:900,height:720}});
+ try{
+  await begin(page);
+  await page.evaluate(async()=>{
+   const r=__testRun;for(const key of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[key]=Infinity;
+   r.obstacles=[];r.pickups=[];r.terrain.nextAt=Infinity;r.terrain.nextKind='passage';const {beginTerrain}=await import('./runner-terrain.mjs');beginTerrain(r);
+  });
+  await page.locator('#runner-canvas').focus();await page.keyboard.down('s');await page.keyboard.down('d');
+  await page.waitForFunction(()=>__testRun.player.sliding&&__testRun.player.x>200);
+  await page.keyboard.up('d');
+  await page.waitForFunction(()=>__testRun.terrain.completed>0,null,{timeout:5000});
+  await page.keyboard.up('s');assert.equal(await page.evaluate(()=>__testRun.status),'running');
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('an ally pickup holds Flávio facing forward with a visible three-second shield while reserves stay cumulative',async()=>{
+ const {context,page,errors}=await open({instrument:true,instrumentSprites:true,viewport:{width:900,height:720}});
+ try{
+  await begin(page);await page.evaluate(()=>{const r=__testRun;for(const key of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[key]=Infinity;r.terrain.nextAt=Infinity;r.obstacles=[];r.pickups=[];});
+  await page.locator('#runner-canvas').focus();await page.keyboard.down('a');
+  await page.waitForFunction(()=>__actorMotion.filter(p=>p.type==='flavio').at(-1)?.facing===-1);
+  await page.evaluate(()=>{const r=__testRun;r.pickups=[{type:'ally',allyId:'michelle',x:r.player.x+17,y:25,speed:0}];});
+  await page.waitForFunction(()=>__testRun.allyShieldFor>0);
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  assert.equal(await page.evaluate(()=>__actorMotion.filter(p=>p.type==='flavio').at(-1)?.facing),1,'temporary shield faces the route even when moving backward');
+  const state=await page.evaluate(()=>({shield:__testRun.shieldFor,parts:__testRun.allyShieldProgress,reserves:__testRun.reserveShields}));
+  assert.ok(state.shield>2.5&&state.shield<=3);assert.equal(state.parts,1);assert.equal(state.reserves,0);
+  await page.waitForFunction(()=>__testRun.allyShieldFor===0,null,{timeout:4500});
+  await page.waitForFunction(()=>__actorMotion.filter(p=>p.type==='flavio').at(-1)?.facing===-1);
+  await page.keyboard.up('a');assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('Soraya victory announces the earned double jump using the remapped key and held input never adds air jumps',async()=>{
+ const {context,page,errors}=await open({instrument:true,instrumentAudio:true,viewport:{width:900,height:720},init:()=>localStorage.setItem('tanahoraflavio.runner.preferences.v1',JSON.stringify({controls:{keyboard:{jump:['KeyK']}}}))});
+ try{
+  await begin(page);await page.evaluate(async()=>{
+   const r=__testRun,{storyBossAt,nextStoryBossDistance}=await import('./runner-bosses.mjs');
+   for(const key of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[key]=Infinity;
+   r.terrain.nextAt=Infinity;r.obstacles=[];r.pickups=[];r.bossesDefeated=6;r.routeDistance=r.distance=nextStoryBossDistance(6);
+   r.boss={...storyBossAt(6),combat:true,hp:0,maxHp:32,phase:'recover',phaseFor:100,fired:0,total:32,remaining:0,nextAttack:100};
+  });
+  await page.waitForFunction(()=>__testRun.movementSkills.doubleJump);
+  assert.match(await page.locator('#game-power-reward').textContent(),/Duplo pulo.*K de novo no ar/);
+  await page.locator('#runner-canvas').focus();await page.keyboard.down('k');await page.waitForFunction(()=>__testRun.player.y>50);
+  assert.equal(await page.evaluate(()=>__testRun.player.airJumpsUsed),0,'holding the first press cannot perform the second leap');
+  await page.keyboard.up('k');await page.keyboard.press('k');await page.waitForFunction(()=>__testRun.player.airJumpsUsed===1);
+  await page.keyboard.press('k');assert.equal(await page.evaluate(()=>__testRun.player.airJumpsUsed),1,'third air press cannot add an impulse');
+  await page.waitForFunction(()=>__testRun.player.grounded&&__testRun.player.y===0,null,{timeout:3000});
+  assert.equal(await page.evaluate(()=>__testRun.player.airJumpsUsed),0);assert.equal(await page.evaluate(()=>__testEffects.filter(id=>id==='jump').length),2);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('a double jump from a raised platform keeps the complete hero inside the camera without changing the jump',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:900,height:720}});
+ try{
+  await begin(page);
+  const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner.mjs'),'utf8'),corePath=source.match(/from ["']([^"']*runner-core[^"']*)["']/)[1];
+  await page.evaluate(async corePath=>{
+   const core=await import(corePath),r=__testRun;
+   for(const key of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[key]=Infinity;
+   r.obstacles=[];r.pickups=[];r.terrain.nextAt=Infinity;r.movementSkills.doubleJump=true;
+   r.terrain.active={kind:'gap-platform',age:2,speed:0,warningFor:2.3,gaps:[],ceilings:[],platforms:[{x:40,width:360,y:40}]};
+   Object.assign(r.player,{x:120,y:40,velocity:0,supportY:40,grounded:true,airJumpsUsed:0});
+   core.jumpRun(r);while(r.player.velocity>0)core.advanceRun(r,1/120);core.jumpRun(r);while(r.player.velocity>0)core.advanceRun(r,1/120);
+   globalThis.__platformJumpPeak=r.player.y;globalThis.__heroRenderedTop=null;
+   const original=CanvasRenderingContext2D.prototype.drawImage;
+   CanvasRenderingContext2D.prototype.drawImage=function(...a){
+    if(this.canvas.id==='runner-canvas'&&a.length===9&&a[0]?.src?.includes('flavio-motion')){
+     __heroRenderedTop=this.getTransform().transformPoint(new DOMPoint(a[5],a[6])).y/(this.canvas.height/300);
+    }
+    return original.apply(this,a);
+   };
+  },corePath);
+  await page.waitForFunction(()=>__heroRenderedTop!==null);
+  assert.ok(await page.evaluate(()=>__platformJumpPeak>190),'camera fix preserves full jump strength');
+  assert.ok(await page.evaluate(()=>__heroRenderedTop>=6),'hair and face remain inside the visible canvas');
+  const alpha=await page.locator('#runner-canvas').evaluate(c=>c.getContext('2d').getImageData(c.width/2,2,1,1).data[3]);
+  assert.equal(alpha,255,'camera exposes painted sky, without stale or transparent strips');assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
 test('jacaré mantém dez segundos sem depender de teclado e permite esquiva lateral',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844},hasTouch:true,isMobile:true});
  try{
@@ -807,7 +908,7 @@ for(const [viewport,reducedMotion] of [[{width:900,height:720},'no-preference'],
   await page.evaluate(async corePath=>{
    const core=await import(corePath),r=__testRun;
    for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
-   r.elapsed=11;r.obstacles=[];r.pickups=[];r.cameo=null;r.nextObstacle=0;r.shieldFor=Infinity;
+   r.elapsed=11;r.terrain.nextAt=Infinity;r.obstacles=[];r.pickups=[];r.cameo=null;r.nextObstacle=0;r.shieldFor=Infinity;
    core.advanceRun(r,1/120,()=>0);r.nextObstacle=Infinity;globalThis.__castPoses=[];globalThis.__enemyShotCalls=[];
   },corePath);
   await page.waitForFunction(()=>__castPoses.some(p=>p.preparing));
@@ -966,7 +1067,8 @@ test('seis ajudantes liberam escudo guardado, ativável por E e pelo botão no c
     const c=await import('./runner-core.mjs'),r=__testRun;for(const k of ['nextRaid','nextBossAt','nextObstacle','nextPower','nextPassport','nextAllyAt','nextSupportAt'])r[k]=Infinity;r.obstacles=[];
     for(let i=0;i<6;i++){r.pickups=[{type:'ally',allyId:i===5?'santiago':'jair',x:r.player.x+17,y:20,speed:0}];c.advanceRun(r,1/120);}
    });
-   const shield=page.locator('#game-reserve-shield');await page.waitForFunction(()=>!document.getElementById('game-reserve-shield').disabled);
+   assert.ok(await page.evaluate(()=>__testRun.shieldFor>0&&__testRun.shieldFor<=3),'ally pickup grants the requested temporary guard');
+   const shield=page.locator('#game-reserve-shield');await page.waitForFunction(()=>!document.getElementById('game-reserve-shield').disabled,null,{timeout:4500});
    assert.equal(await page.evaluate(()=>__testRun.shieldFor),0);assert.match(await page.locator('#game-aid-status').textContent(),/Santiago Peña/);
    await page.locator('#runner-canvas').focus();await page.keyboard.press('e');await page.waitForFunction(()=>__testRun.shieldFor>0&&__testRun.reserveShields===0);
    await page.evaluate(async()=>{const {collectAlly}=await import('./runner-allies.mjs');for(let i=0;i<6;i++)collectAlly(__testRun,'jair');});
@@ -1125,7 +1227,8 @@ test('munição escassa e escudos acumulados funcionam pelos controles reais sem
   assert.equal(await page.locator('#game-attack').isVisible(),false);assert.equal(await page.locator('#game-power-charge').getAttribute('aria-valuenow'),'0');
   await page.waitForTimeout(1300);assert.equal(await page.evaluate(()=>__testRun.ammo),0,'corrida não recarrega sozinha');
   await page.evaluate(async()=>{const c=await import('./runner-core.mjs'),r=__testRun;for(let i=0;i<14;i++){r.pickups=[{type:'ally',allyId:'jair',x:r.player.x+17,y:20,speed:0}];c.advanceRun(r,1/120);}});
-  await page.waitForFunction(()=>document.getElementById('game-shield-count').textContent==='×2');assert.equal(await page.evaluate(()=>__testRun.shieldFor),0);assert.equal(await page.evaluate(()=>__testRun.ammo),6);
+  await page.waitForFunction(()=>document.getElementById('game-shield-count').textContent==='×2');assert.ok(await page.evaluate(()=>__testRun.shieldFor>0&&__testRun.shieldFor<=3));assert.equal(await page.evaluate(()=>__testRun.ammo),6);
+  await page.waitForFunction(()=>!document.getElementById('game-reserve-shield').disabled,null,{timeout:4500});
   await page.locator('#game-reserve-shield').click();assert.equal(await page.evaluate(()=>__testRun.reserveShields),1);assert.equal(await page.evaluate(()=>__testRun.player.y),0);
   await page.evaluate(async()=>{const r=__testRun,{storyBossAt}=await import('./runner-bosses.mjs');r.boss={...storyBossAt(0),combat:true,hp:18,maxHp:18,total:18,remaining:18,fired:0,age:0,phase:'recover',phaseFor:100,nextAttack:100};r.ammo=0;r.ammoIdleFor=0;r.ammoReloadFor=0;});
   await page.locator('#runner-canvas').focus();await page.keyboard.down('j');await page.waitForTimeout(1300);assert.equal(await page.evaluate(()=>__testRun.ammo),0,'segurar vazio impede recarga');
@@ -1393,7 +1496,7 @@ for(const width of [390,900])test(`atacantes regionais soltam suas próprias arm
   for(let stage=0;stage<rows.length;stage++){
    const expected=rows[stage];await page.evaluate(async stage=>{
     const c=await import('./runner-core.mjs'),r=__testRun;for(const k of ['nextBossAt','nextRaid','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
-    r.elapsed=40;r.routeDistance=r.distance=c.STORY_OPENING_DISTANCE+stage*c.SCENE_DISTANCE+3100;r.obstacles=[];r.pickups=[];r.raid=null;r.boss=null;r.cameo=null;r.lastAction=null;r.actionStreak=0;r.nextObstacle=0;c.crouchRun(r,true);__castPoses=[];
+    r.elapsed=40;r.terrain.nextAt=Infinity;r.routeDistance=r.distance=c.STORY_OPENING_DISTANCE+stage*c.SCENE_DISTANCE+3100;r.obstacles=[];r.pickups=[];r.raid=null;r.boss=null;r.cameo=null;r.lastAction=null;r.actionStreak=0;r.nextObstacle=0;c.crouchRun(r,true);__castPoses=[];
     const rolls=[.1,.99,.5,.5];c.advanceRun(r,1/120,()=>rolls.shift()??.5);r.nextObstacle=Infinity;
    },stage);
    await page.waitForFunction(actor=>__castPoses.some(p=>p.type===actor&&p.attacking),expected.actor);

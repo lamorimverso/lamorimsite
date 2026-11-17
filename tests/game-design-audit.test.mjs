@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import * as core from '../tanahoraflavio/runner-core.mjs';
 import {fireBindingFor} from '../tanahoraflavio/runner-input.mjs';
 import {nextStoryBossDistance} from '../tanahoraflavio/runner-bosses.mjs';
+import {createPresentationDOM} from '../tanahoraflavio/runner-presentation-cache.mjs';
 const dt=1/120;
 const ui=readFileSync(new URL('../tanahoraflavio/runner.mjs',import.meta.url),'utf8');
 function arena(mode='story',index=0,width=480){
@@ -43,8 +44,8 @@ test('atalhos de disparo funcionam com o próprio botão Disparar focado',()=>{
 });
 test('HUD do Infinito apresenta energia restante quando Flávio pode atirar',()=>{
  const r=arena('endless',0,900);r.boss.hp--;
- const nodes=new Map(),$=id=>{if(!nodes.has(id))nodes.set(id,{style:{setProperty(){}},setAttribute(){}});return nodes.get(id);};
- const start=ui.indexOf('    if(run.boss){',ui.indexOf('$("game-boss").hidden')),end=ui.indexOf('    const liveAttack=',start);
- Function('env','const {run,$,section,bossCue,attackCueFor,updateCombatHUD,spritesReady,controlLabels,healthText}=env;'+ui.slice(start,end))({run:r,$,section:{dataset:{}},bossCue:()=>r.boss.plannedAttack,attackCueFor:core.attackCueFor,updateCombatHUD(){},spritesReady:false,controlLabels:()=>({power:'Q',shield:'E'}),healthText:value=>Number(value).toLocaleString('pt-BR',{maximumFractionDigits:1})});
+ const nodes=new Map(),$=id=>{if(!nodes.has(id)){const styles=new Map(),attrs=new Map();nodes.set(id,{textContent:'',style:{getPropertyValue:name=>styles.get(name)||'',setProperty:(name,value)=>styles.set(name,value)},getAttribute:name=>attrs.get(name)||null,setAttribute:(name,value)=>attrs.set(name,value)});}return nodes.get(id);};
+ const start=ui.indexOf('    if(run.boss){',ui.indexOf('const hideAttack=')),end=ui.indexOf('    const liveAttack=',start);
+ Function('env','const {run,$,ui,section,bossCue,attackCueFor,updateCombatHUD,spritesReady,controlLabels,healthText}=env;const labels=controlLabels();'+ui.slice(start,end))({run:r,$,ui:createPresentationDOM({getElementById:$}),section:{dataset:{}},bossCue:()=>r.boss.plannedAttack,attackCueFor:core.attackCueFor,updateCombatHUD(){},spritesReady:false,controlLabels:()=>({power:'Q',shield:'E'}),healthText:value=>Number(value).toLocaleString('pt-BR',{maximumFractionDigits:1})});
  assert.match($('game-boss-weapon').textContent,/PV 17\/18/,'acertos precisam de feedback de vida visível');
 });

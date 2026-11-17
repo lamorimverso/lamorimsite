@@ -6,9 +6,10 @@ const make=()=>{const r=core.createRun();core.startRun(r);for(const k of ['nextR
 const step=(r,t)=>{for(let i=0;i<t*120;i++)core.advanceRun(r,1/120,()=>.5);};
 test('seis coletas reais de ajudantes guardam um escudo manual, sem ativá-lo e preservando reservas acumuladas',()=>{
  const r=make();
- for(let n=1;n<=6;n++){r.pickups=[{type:'ally',allyId:'jair',x:r.player.x+17,y:20,speed:0}];core.advanceRun(r,1/120);assert.equal(r.reserveShields,n===6?1:0);assert.equal(r.shieldFor,0);}
+ for(let n=1;n<=6;n++){r.pickups=[{type:'ally',allyId:'jair',x:r.player.x+17,y:20,speed:0}];core.advanceRun(r,1/120);assert.equal(r.reserveShields,n===6?1:0);assert.equal(r.shieldFor,3);}
  assert.equal(r.allyShieldProgress,0);
  for(let i=0;i<7;i++)collectAlly(r,'jair');assert.equal(r.reserveShields,2);assert.equal(r.allyShieldProgress,1);
+ assert.equal(core.activateReserveShield(r),false,'proteção temporária não gasta uma reserva');step(r,3.1);
  assert.equal(core.activateReserveShield(r),true);assert.equal(r.reserveShields,1);assert.equal(r.shieldFor,6);
  assert.equal(core.activateReserveShield(r),false);assert.equal(r.shieldFor,6);
  for(let i=0;i<6;i++)collectAlly(r,'jair');assert.equal(r.reserveShields,2);
@@ -29,7 +30,7 @@ test('Eduardo adia perseguição uma vez; Tarcísio aproxima o próximo apoio',(
 });
 test('Silas melhora deslocamento lateral sem alterar velocidade da corrida ou metros',()=>{
  const r=make(),control=make();collectAlly(r,'silas');core.moveRun(r,1);core.moveRun(control,1);step(r,.4);step(control,.4);
- assert.ok(r.player.x>control.player.x+10);assert.equal(r.distance,control.distance);assert.equal(r.shieldFor,0);
+ assert.ok(r.player.x>control.player.x+10);assert.equal(r.distance,control.distance);assert.ok(Math.abs(r.shieldFor-2.6)<1e-8);
 });
 test('Renan busca um único passaporte próximo, sem criar coletas artificiais',()=>{
  const r=make();r.pickups=[{type:'passport',x:210,y:55,speed:0},{type:'passport',x:260,y:55,speed:0}];collectAlly(r,'renan');step(r,.6);

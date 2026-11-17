@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRun, startRun, advanceRun, difficultyAt } from '../tanahoraflavio/runner-core.mjs';
 
-const running = () => { const run = createRun(); startRun(run); return run; };
+const running = () => { const run = createRun(); startRun(run); run.terrain.nextAt=Infinity; return run; };
 function seeded(seed) { return () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 2 ** 32; }; }
 
 test('recompensas simultâneas ocupam um único grupo por obstáculo', () => {

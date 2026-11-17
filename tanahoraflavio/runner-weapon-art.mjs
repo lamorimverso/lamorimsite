@@ -1,4 +1,5 @@
 import {CAMPAIGN_PROP_COLORS,drawCampaignProp} from './runner-campaign-art.mjs?v=9cc4e669f36d';
+import {drawIllustratedProp} from './runner-sprites.mjs?v=75f5261a8955';
 // Complete, resolution-independent weapon bodies. Width scales uniformly;
 // height changes the actual construction (cords, handles, sheet arrangements),
 // never stretches a finished image or its lettering along one axis.
@@ -55,6 +56,7 @@ function hand(c,H,f,g){
 export function drawCompleteWeapon(c,{type,width=46,height=44,phase=0,reducedMotion=false}={}){
  if(Object.hasOwn(CAMPAIGN_PROP_COLORS,type))return drawCampaignProp(c,{type,width,height,phase,reducedMotion});
  if(!COMPLETE_WEAPONS.includes(type)||!Number.isFinite(width)||!Number.isFinite(height)||width<=0||height<=0)return false;
+ if(drawIllustratedProp(c,{type,width,height,phase,reducedMotion}))return true;
  // Casts can cross the arena in 240ms (phase = flightAge * 24).
  // These independent joint cycles must read within that short interval.
  const scale=width/46,H=Math.max(28,height/scale),t=reducedMotion?0:Number(phase)||0,f=reducedMotion?0:Math.sin(t*.72),g=reducedMotion?0:Math.sin(t*.96);

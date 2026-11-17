@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
-const running=()=>{const r=core.createRun();core.startRun(r);return r;};
+const running=()=>{const r=core.createRun();core.startRun(r);r.terrain.nextAt=Infinity;return r;};
 const seeded=seed=>()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/2**32);
 function step(r,seconds,rng=()=>.5){for(let i=0;i<Math.ceil(seconds*120)&&r.status==='running';i++)core.advanceRun(r,1/120,rng);}
 const collect=(r,type)=>{r.pickups.push({x:136,y:35,type,value:0});core.advanceRun(r,1/120,()=>.5);};
