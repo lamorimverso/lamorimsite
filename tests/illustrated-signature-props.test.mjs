@@ -4,8 +4,8 @@ import * as sprites from '../tanahoraflavio/runner-sprites.mjs';
 
 const types=['handcuffs','microphone','hammer','mandado','receipts','budget-sheets','parachute-cross','lhand'];
 test('eight signature objects have complete four-pose artwork in the essential load',()=>{
- assert.equal(sprites.CORE_SPRITE_SHEET_COUNT,16);
- assert.equal(sprites.SPRITE_SHEET_COUNT,20);
+ assert.equal(sprites.CORE_SPRITE_SHEET_COUNT,17);
+ assert.equal(sprites.SPRITE_SHEET_COUNT,21);
  assert.equal(typeof sprites.drawIllustratedProp,'function');
 });
 

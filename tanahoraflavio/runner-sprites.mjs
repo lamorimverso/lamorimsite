@@ -1,18 +1,19 @@
 // Atlas e recortes gerados dos desenhos escolhidos, preservando os PNGs fontes.
 import {definitions} from './runner-sprite-data.mjs?v=4a931cb52b80';
 import {drawHeroLowPose} from './runner-slide-art.mjs?v=f0043535e452';
+import {heroActionsDefinition,heroActionFrameFor,drawHeroAction} from './runner-hero-actions.mjs?v=8a43cb56b0a6';
 import {combatDefinitions} from './runner-combat-sprite-data.mjs?v=85a6343e5d39';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=043d40fd8ef2';
 import {signatureDefinitions,signatureProps} from './runner-signature-sprite-data.mjs?v=8340feb630e5';
-export const spriteDefinitions={...definitions,...combatDefinitions,...signatureDefinitions};
+export const spriteDefinitions={...definitions,...combatDefinitions,...signatureDefinitions,heroActions:heroActionsDefinition};
 const sheets=new Map();let activeAttempt=null;
 const actorGroups={flavio:[0,1,2,3,4,5,6,7],xandao:[0,1,2],haddad:[4,5,6],lula:[8,9,10],pf:[3,13],janones:[7,14],army:[11,15],joice:[12]};
 const runningGroups={haddad:{sheet:'chase',start:0},lula:{sheet:'chase',start:4},xandao:{sheet:'chase',start:8},joice:{sheet:'chase',start:12},dilma:{sheet:'cameos',start:0},simone:{sheet:'cameos',start:4},soraya:{sheet:'cameos',start:8},'ze-gotinha':{sheet:'cameos',start:12}};
 for(const [sheet,definition] of Object.entries(definitions))for(const [row,type] of (definition.actors||[]).entries())runningGroups[type]={sheet,start:row*4};
 export const SPRITE_SHEET_COUNT=Object.keys(spriteDefinitions).length;
-export const CORE_SPRITE_SHEET_COUNT=16;
+export const CORE_SPRITE_SHEET_COUNT=17;
 export function loadSprites(onProgress=()=>{},{coreOnly=false}={}){
- const base=['hero','cast','cameos','chase','pursuers',...Object.keys(combatDefinitions),...Object.keys(signatureDefinitions)];
+ const base=['hero','cast','cameos','chase','pursuers','heroActions',...Object.keys(combatDefinitions),...Object.keys(signatureDefinitions)];
  const entries=Object.entries(spriteDefinitions).filter(([name])=>(!coreOnly||base.includes(name))&&!sheets.has(name)),total=entries.length;
  if(!total)return Promise.resolve();
  if(activeAttempt)return activeAttempt.coreOnly===coreOnly?activeAttempt.promise:activeAttempt.promise.then(()=>loadSprites(onProgress,{coreOnly}));
@@ -92,13 +93,18 @@ export function portraitCropFor(frame){
  // Preservar toda a largura, recortando somente a parte inferior para retrato.
  return {x:frame.x,y:frame.y,width:frame.width,height:frame.height*.76};
 }
-export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,airborne=false,falling=false,groundedStride=false,reducedMotion=false,landing=false,crouchPose=landing?1:0,sliding=false,slidePose=sliding?1:0,slidePhase=0,slideShot,attacking=false,preparing=false,hurt=false,alpha=1,facing}={}){
+export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,airborne=false,falling=false,reducedMotion=false,landing=false,crouchPose=landing?1:0,sliding=false,slidePose=sliding?1:0,slidePhase=sliding?.45:0,slideShot,attacking=false,preparing=false,hurt=false,alpha=1,facing}={}){
  // Santiago is a friendly support. Use complete neutral poses on the ground,
  // with a small breathing motion; neither charging nor firing frames are used.
  if(type==='santiago')return drawCombatSprite(context,{type,x,y:y-Math.sin(phase*Math.PI/2)*.8*scale,scale,frame:Math.floor(Math.max(0,phase))%2?3:0,alpha,facing:facing??1});
- const ground=type==='flavio'&&(groundedStride||sliding||landing||crouchPose>0||slidePose>0)&&!airborne&&!hurt&&sheets.get('heroCrouch');
- if(ground&&scale>0)return drawHeroLowPose(context,{image:ground.image,factor:spriteScaleFor(type,'heroCrouch',ground.frames,scale),x,y,scale,alpha,facing,shot:slideShot,pose:crouchPose,slide:slidePose,phase:slidePhase,stride:phase,reducedMotion});
- let selected=spriteFrameFor(type,{phase,airborne,falling,landing,attacking,preparing,hurt});
+ const action=heroActionFrameFor({type,airborne,hurt,landing,crouchPose,sliding,slidePose,slidePhase,slideShot,reducedMotion});
+ if(action!==null&&scale>0){
+  const illustrated=sheets.get('heroActions');
+  if(illustrated){drawHeroAction(context,illustrated.image,illustrated.frames[action],{x,y,scale,alpha,facing});return true;}
+  const ground=sheets.get('heroCrouch');
+  if(ground)return drawHeroLowPose(context,{image:ground.image,factor:spriteScaleFor(type,'heroCrouch',ground.frames,scale),x,y,scale,alpha,facing,shot:slideShot,pose:crouchPose,slide:slidePose,phase:slidePhase,stride:phase,reducedMotion});
+ }
+ let selected=spriteFrameFor(type,{phase,airborne,falling,landing:type!=='flavio'&&landing,attacking,preparing,hurt});
  if(!selected)return false;
  let sheet=sheets.get(selected.sheet);
  // PF/Janones conservam sua identidade do atlas original até a expansão chegar.

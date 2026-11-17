@@ -59,11 +59,11 @@ drawSpriteActor=(c,args)=>{
  if(globalThis.__measureHero&&args.type==='flavio'){
   const p=globalThis.__testRun?.player,last=rows.at(-1);
   row.stance=p?.sliding?'slide':p?.crouching?'crouch':'run';row.y=args.y;row.shooting=!!args.slideShot;
-  row.bend=args.crouchPose??0;row.skid=args.slidePose??0;row.travel=args.slidePhase??0;
+  row.bend=args.crouchPose??0;row.skid=args.slidePose??0;row.travel=args.slidePhase??0;row.action=heroActionFrameFor(args);
   row.sample=row.stance==='slide'?(row.skid>.91?'slide':row.skid>=.38?'slide-in':'unstable'):
    row.stance==='crouch'?(row.skid>.14?'slide-out':row.bend>.9?'crouch':row.bend>=.32?'crouch-in':'unstable'):
    row.bend<=.12&&row.skid<=.12?'run':'rise';
-  if(row.sample!==last?.sample||row.shooting!==last?.shooting)readHeroPixels(args,row);
+  if(row.sample!==last?.sample||row.shooting!==last?.shooting||row.action!==last?.action)readHeroPixels(args,row);
  }
  rows.push(row);if(rows.length>1000)rows.shift();return drawOriginal(c,args);
 };`}));
@@ -127,8 +127,11 @@ for(const remapped of [false,true])test(`crouch-forward draws a distinct extende
   await page.keyboard.down(down);
   await page.waitForFunction(()=>__actorMotion.some(p=>p.sample==='crouch'&&p.width>0));
   await page.keyboard.down(forward);
-  await page.waitForFunction(()=>__testRun.player.sliding&&__testRun.player.x>200&&__actorMotion.some(p=>p.sample==='slide'&&p.width>0));
-  const [running,descending,crouch,slideIn,slide]=await page.evaluate(()=>['run','crouch-in','crouch','slide-in','slide'].map(s=>__actorMotion.find(p=>p.sample===s&&p.width>0)));
+  await page.waitForFunction(()=>__testRun.player.sliding&&__testRun.player.x>200&&__actorMotion.some(p=>p.sample==='slide'&&p.action===6&&p.width>0));
+  const [running,descending,crouch,slideIn,slide]=await page.evaluate(()=>['run','crouch-in','crouch','slide-in','slide'].map(s=>__actorMotion.find(p=>p.sample===s&&p.width>0&&(s!=='slide'||p.action===6))));
+  assert.equal(running.action,null,'corrida mantém suas ilustrações originais');
+  assert.ok(descending.action>=0&&descending.action<2&&crouch.action>=2&&crouch.action<=3,'abaixar tem uma sequência própria');
+  assert.ok([4,5].includes(slideIn.action)&&slide.action===6,'deslizar tem carga, extensão e chegada ao quadro comprido');
   assert.ok(crouch.height>=51&&running.height>crouch.height+12,'o joelho dobra sem encolher o herói: '+JSON.stringify({running,crouch}));
   assert.ok(descending.height>crouch.height+4&&descending.height<running.height,'a queda passa pela dobra intermediária: '+JSON.stringify({running,descending,crouch}));
   assert.ok(slide.height>=38&&slide.height<=51&&slide.height<crouch.height-5,'o deslize baixa mais que o agachamento: '+JSON.stringify({slide,crouch}));
@@ -142,7 +145,7 @@ for(const remapped of [false,true])test(`crouch-forward draws a distinct extende
   assert.ok(shot.height<=51&&shot.y===slide.y&&Math.abs(shot.sole)<=1.5,'disparar preserva a postura e o contato com o solo');
   await page.keyboard.up(forward);
   await page.waitForFunction(()=>!__testRun.player.sliding&&__testRun.terrain.active===null&&__actorMotion.at(-1)?.sample==='crouch');
-  assert.ok(await page.evaluate(()=>__actorMotion.some(p=>p.sample==='slide-out'&&p.travel>0&&p.width>0)),'a perna não volta para o primeiro quadro quando solta frente');
+  assert.ok(await page.evaluate(()=>__actorMotion.some(p=>p.sample==='slide-out'&&p.action===7&&p.travel>0&&p.width>0)),'a perna não volta para o primeiro quadro quando solta frente');
   await page.keyboard.up(down);
   await page.waitForFunction(()=>__testRun.status==='running'&&__actorMotion.at(-1)?.sample==='run');
   assert.deepEqual(errors,[]);
