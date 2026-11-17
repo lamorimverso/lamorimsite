@@ -74,6 +74,23 @@ test('o pacote raro só aparece depois de um intervalo seguro e não se repete a
  r.pickups=[];step(r,601);assert.ok(r.pickups.every(o=>o.type!=='rachadinha'));
 });
 
+test('a cura não é gerada na entrada do jacaré nem durante a onda já marcada',()=>{
+ for(const dodge of [false,true]){
+  const r=scene();r.viewportWidth=480;r.player.hp=1;r.recoveryReadyAt=0;
+  r.pickups=[{type:'ze-gotinha',x:r.player.x+17,y:20,speed:0}];
+  step(r);assert.equal(r.player.isJacare,true);
+  assert.ok(!r.pickups.some(p=>p.type==='rachadinha'));
+  for(let i=0;i<5;i++)core.recoverJacareRun(r);
+  if(dodge)core.moveRun(r,1);
+  step(r,164);assert.ok(!r.pickups.some(p=>p.type==='rachadinha'));
+  if(!dodge){assert.equal(r.status,'over');assert.equal(r.lastHit.type,'pfizer-ampoule');continue;}
+  core.moveRun(r,0);
+  for(let i=0;i<120&&!r.pickups.some(p=>p.type==='rachadinha');i++)step(r);
+  assert.equal(r.status,'running');assert.equal(r.player.hp,1);
+  assert.equal(r.pickups.filter(p=>p.type==='rachadinha').length,1);
+ }
+});
+
 test('a mesma passagem baixa não consome os dois impactos enquanto durar o contato',()=>{
  const r=scene();r.terrain.active={id:1,kind:'passage',age:0,speed:0,gaps:[],platforms:[],ceilings:[{x:96,width:900,bottom:40,top:110}]};
  step(r,201);assert.equal(r.status,'running');assert.equal(r.player.hp,1);

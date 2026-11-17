@@ -850,7 +850,7 @@ function rewardForObstacle(run,obstacle,balance,rng){
 // A pack offers an optional level route; it is not paired with an imminent threat.
 function maybeSpawnRecoveryPickup(run,balance){
  const p=run.player,b=run.boss;
- if(p.hp!==1||p.recoveryPending||p.isJacare||run.elapsed<run.recoveryReadyAt||run.terrain.active||run.raid||b?.traversal||b?.combat&&b.phase!=='recover'||run.pickups.some(o=>o.type==='rachadinha'))return;
+ if(p.hp!==1||p.recoveryPending||p.isJacare||hasJacareVolley(run)||run.elapsed<run.recoveryReadyAt||run.terrain.active||run.raid||b?.traversal||b?.combat&&b.phase!=='recover'||run.pickups.some(o=>o.type==='rachadinha'))return;
  const speed=balance.speed*assistance(run),x=Math.max(playerX(run)+145,visibleWidth(run)+10),arrival=(x-playerX(run)-17)/speed;
  if(run.obstacles.some(o=>!o.counted&&!o.passed&&Math.abs(threatTimeToContact(run,o)-arrival)<.6))return;
  run.recoveryReadyAt=run.elapsed+36;
@@ -1199,7 +1199,6 @@ export function advanceRun(run,seconds,rng){
  }
  run.nextPickup-=dt;run.nextPassport-=dt;run.nextPower-=dt;
  if(!anchor?.rehearsal&&anchor?.approach!=='rear'&&!anchor?.falling&&!anchor?.groundHazard)rewardForObstacle(run,anchor,balance,rng);
- maybeSpawnRecoveryPickup(run,balance);
  const body=playerBodyFor(run.player),x=playerX(run),left=x+Math.max(5,body.left),right=x+Math.min(31,body.right),bottom=run.player.y+3,top=run.player.y+body.height;
  // Coleta antes do impacto. Recuperação pendente só aumenta a forma se couber no cenário.
  run.pickups=run.pickups.filter(p=>{
@@ -1230,6 +1229,8 @@ export function advanceRun(run,seconds,rng){
    if(p.type==='passport'&&++run.passports%PASSPORTS_PER_LIFE===0){run.lives++;announce(run,'100 passaportes! Continuação guardada para depois da derrota.');}
   }return !hit;
  });
+ // A coleta do Zé Gotinha pode comprometer uma onda neste mesmo passo.
+ maybeSpawnRecoveryPickup(run,balance);
  applyPendingRecovery(run);
  // O vazio não é contato comum: não se recupera no ar, nem com escudo.
  if(terrainHit?.type==='terrain-gap'){finishImpact(run,terrainHit,true);return;}

@@ -758,7 +758,7 @@ for(const viewport of [{width:390,height:844},{width:1440,height:900}])test(`are
   });
   await page.waitForFunction(()=>__testRun.boss?.combat===true);
   assert.match(await page.locator('#game-boss-name').textContent(),/Ana Elisa.*Subchefe/);
-  assert.match(await page.locator('#game-power').textContent(),/Energia 5\/5/);
+  assert.match(await page.locator('#game-power').textContent(),/Energia 2\/2/);
   assert.equal(await page.locator('#game-attack').isVisible(),true);
   assert.equal((await page.locator('#game-attack').textContent()).trim(),'','tiro na arena usa apenas um ícone');
   const hp=await incomingProjectile(page);
@@ -968,12 +968,16 @@ for(const [viewport,reducedMotion] of [[{width:900,height:720},'no-preference'],
  try{
   await begin(page);
   const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner.mjs'),'utf8'),corePath=source.match(/from ["']([^"']*runner-core[^"']*)["']/)[1];
-  await page.evaluate(async corePath=>{
+  const casts=await page.evaluate(async corePath=>{
    const core=await import(corePath),r=__testRun;
    for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
    r.elapsed=11;r.terrain.nextAt=Infinity;r.obstacles=[];r.pickups=[];r.cameo=null;r.nextObstacle=0;r.shieldFor=Infinity;
+   // O ataque alto é a segunda lição da abertura de Brasília.
+   r.groundRhythm={stageId:'brasilia',lap:0,beat:1,lessonCursor:1};
    core.advanceRun(r,1/120,()=>0);r.nextObstacle=Infinity;globalThis.__castPoses=[];globalThis.__enemyShotCalls=[];
+   return r.obstacles.filter(o=>o.cast).length;
   },corePath);
+  assert.equal(casts,1,'a lição alta precisa gerar exatamente um ataque com emissor');
   await page.waitForFunction(()=>__castPoses.some(p=>p.preparing));
   assert.equal(await page.evaluate(()=>__enemyShotCalls.length),0,'preparação não dispara som');
   assert.equal(await page.evaluate(()=>__testRun.obstacles.find(o=>o.cast).launched),undefined);
