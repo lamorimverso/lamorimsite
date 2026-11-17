@@ -244,6 +244,8 @@ test('100 passaportes concedem +1 vida e a corrida permanece infinita', async ()
     await page.evaluate(() => {
       const run=globalThis.__testRun;
       run.elapsed=85;run.routeDistance=29000;run.nextBossAt=Infinity;
+      // O salto artificial de rota testa passaportes e continuidade, sem iniciar minigames ou terreno atrasados.
+      run.nextAllyAt=run.terrain.nextAt=Infinity;
       run.distance=90000;
       run.shieldFor=1000;
       run.obstacles=[];
