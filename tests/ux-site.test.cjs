@@ -173,7 +173,7 @@ test('jacaré soma teclado, toque, mouse e controle sem salto, tiro ou repetiç�
  const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844},hasTouch:true,isMobile:true,init:()=>{window.__pads=[];Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>window.__pads});}});
  try{
   await begin(page);
-  await page.evaluate(()=>{const r=__testRun;for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport','nextPickup'])r[k]=Infinity;r.obstacles=[];r.pickups=[{type:'ze-gotinha',x:r.player.x+17,y:20,speed:0}];window.__pads=[{connected:true,id:'Controle de teste',index:0,axes:[0,0],buttons:[{pressed:false,value:0}]}];});
+  await page.evaluate(()=>{const r=__testRun;for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport','nextPickup'])r[k]=Infinity;r.obstacles=[];r.shieldFor=Infinity;r.pickups=[{type:'ze-gotinha',x:r.player.x+17,y:20,speed:0}];window.__pads=[{connected:true,id:'Controle de teste',index:0,axes:[0,0],buttons:[{pressed:false,value:0}]}];});
   const canvas=page.locator('#runner-canvas'),hud=page.locator('#game-jacare-progress');
   const progress=n=>page.waitForFunction(n=>document.getElementById('game-jacare-progress').getAttribute('aria-valuenow')===String(n),n);
   await canvas.focus();await hud.waitFor();await progress(0);
@@ -203,11 +203,29 @@ test('um clique de mouse não duplica recuperação sem PointerEvent',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:900,height:720},init:()=>{delete window.PointerEvent;}});
  try{
   await begin(page);
-  await page.evaluate(()=>{const r=__testRun;for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport','nextPickup'])r[k]=Infinity;r.obstacles=[];r.pickups=[{type:'ze-gotinha',x:r.player.x+17,y:20,speed:0}];});
+  await page.evaluate(()=>{const r=__testRun;for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport','nextPickup'])r[k]=Infinity;r.obstacles=[];r.shieldFor=Infinity;r.pickups=[{type:'ze-gotinha',x:r.player.x+17,y:20,speed:0}];});
   const hud=page.locator('#game-jacare-progress');await hud.waitFor();
-  assert.match(await hud.textContent(),/Protegido/);
   await page.locator('#runner-canvas').click();
   assert.equal(await hud.getAttribute('aria-valuenow'),'1');
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+test('recuperar a forma humana rapidamente não evita a ampola já sinalizada',async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844},hasTouch:true,isMobile:true});
+ try{
+  await begin(page);
+  await page.evaluate(()=>{const r=__testRun;for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport','nextPickup'])r[k]=Infinity;r.obstacles=[];r.pickups=[{type:'ze-gotinha',x:r.player.x+17,y:20,speed:0}];});
+  const hud=page.locator('#game-jacare-progress'),canvas=page.locator('#runner-canvas');
+  await canvas.focus();await hud.waitFor();
+  assert.equal(await page.evaluate(()=>__testRun.obstacles.filter(o=>o.type==='pfizer-ampoule').length),3);
+  await canvas.evaluate(c=>{for(let i=0;i<5;i++)for(const type of ['keydown','keyup'])c.dispatchEvent(new KeyboardEvent(type,{code:'ArrowUp',key:'ArrowUp',bubbles:true}));});
+  assert.equal(await page.evaluate(()=>__testRun.player.isJacare),false);
+  await page.waitForFunction(()=>__testRun.player.restoreFlashFor===0);
+  assert.match(await hud.textContent(),/Desvie da última onda/);
+  assert.equal(await hud.isVisible(),true);
+  await page.getByText('A ampola acertou Flávio!',{exact:true}).waitFor();
+  assert.equal(await page.locator('#game-captured').isVisible(),false);
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
@@ -1317,7 +1335,7 @@ test('engrenagem lista todas as ações, remapeia teclado sem executar o jogo e 
   await page.locator('#game-settings summary').click();await page.locator('#runner-canvas').scrollIntoViewIfNeeded();await page.locator('#runner-canvas').focus();
   await page.keyboard.down('d');await page.waitForTimeout(130);await page.keyboard.up('d');assert.equal(await page.evaluate(()=>__testRun.player.x),before.x);
   await page.keyboard.down('l');await page.waitForFunction(x=>__testRun.player.x>x+10,before.x);await page.keyboard.up('l');
-  await page.evaluate(()=>{const r=__testRun;r.pickups=[{type:'ze-gotinha',x:r.player.x+17,y:20,speed:0}];});
+  await page.evaluate(()=>{const r=__testRun;r.shieldFor=Infinity;r.pickups=[{type:'ze-gotinha',x:r.player.x+17,y:20,speed:0}];});
   await page.waitForFunction(()=>__testRun.player.isJacare);
   await page.keyboard.press('ArrowUp');assert.equal(await page.evaluate(()=>__testRun.player.jacareProgress),0);
   for(let i=0;i<5;i++)await page.keyboard.press('h');

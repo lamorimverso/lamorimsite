@@ -13,45 +13,37 @@ function newJacare(width,x,age=3.1){
 function step(run,seconds){
  for(let i=0;i<Math.ceil(seconds/DT)&&run.status==='running';i++)core.advanceRun(run,DT,()=>.5);
 }
-test('jacaré mostra duas ampolas dispersas em celular e desktop, com tempos distintos',()=>{
- for(const width of [480,612,900])for(const edge of ['min','center','max']){
-  const sample=newJacare(width,120),bounds=core.playerBounds(sample);
+test('cada onda anuncia três ou quatro impactos escalonados e não acumula outra chuva simultânea',()=>{
+ for(const age of [0,6])for(const width of [480,612,900])for(const edge of ['min','center','max']){
+  const sample=newJacare(width,120,age),bounds=core.playerBounds(sample);
   sample.player.x=edge==='center'?(bounds.min+bounds.max)/2:bounds[edge];
   const group=core.spawnJacareVolley(sample,{rng:()=>.5});
-  assert.equal(group.length,2,`${width} ${edge}: duas ampolas no mesmo momento`);
-  assert.equal(sample.obstacles.length,2);
+  assert.equal(group.length,age===0?3:4);
   assert.ok(group.every(o=>o.owner==='pfizer'&&o.type==='pfizer-ampoule'));
-  assert.ok(group.every(o=>o.age===0&&o.y===310&&o.warningFor>=1.2));
-  assert.ok(group.every(o=>o.x>=0&&o.x+o.width<=width));
-  assert.ok(Math.abs(group[0].x-group[1].x)>=150);
-  assert.ok(group[1].warningFor-group[0].warningFor>=.34,'as ampolas caem em momentos diferentes');
-  assert.deepEqual(core.spawnJacareVolley(sample,{rng:()=>.5}),[],'aguardar a primeira onda terminar');
+  assert.ok(group.every(o=>o.age===0&&o.y===310&&o.warningFor>=.78&&o.fallFor<=.5));
+  assert.ok(group.every((o,i)=>i===0||o.warningFor>group[i-1].warningFor));
+  assert.deepEqual(core.spawnJacareVolley(sample,{rng:()=>.5}),[]);
  }
 });
-test('depois das ondas iniciais surgem três ampolas com corredores livres',()=>{
- const run=newJacare(480,240,6);
- const group=core.spawnJacareVolley(run,{rng:()=>.5});
- assert.equal(group.length,3,'o volume cresce conforme o tempo ativo');
- assert.ok(group.some(o=>o.x<group[0].x));
- assert.ok(group.some(o=>o.x>group[0].x));
- const ordered=group.slice().sort((a,b)=>a.x-b.x);
- for(let i=1;i<ordered.length;i++)assert.ok(ordered[i].x-ordered[i-1].x>=150,'corredor de evasão');
- assert.ok(group[1].warningFor>group[0].warningFor&&group[2].warningFor>group[1].warningFor,'ordem temporal escalonada');
- run.graceFor=0;
- core.moveRun(run,-1);
- step(run,.35);
- core.moveRun(run,0);
- step(run,1.9);
- assert.equal(run.status,'running','o jogador pode chegar ao corredor sem teleporte ou escudo');
- assert.equal(run.lives,1);
-});
-test('recuperação cancela somente saraivadas próprias e não gera outra após a forma humana',()=>{
- const run=newJacare(480,240,6);
- run.shieldFor=Infinity;
- assert.ok(core.spawnJacareVolley(run,{rng:()=>.5}).length>0);
+test('recuperação preserva o último aviso e impede uma nova onda na forma humana',()=>{
+ const run=newJacare(480,240,6);run.shieldFor=Infinity;
+ const wave=core.spawnJacareVolley(run,{rng:()=>.5});
  const other={x:600,width:40,height:40,type:'barrier',speed:45};run.obstacles.push(other);
  for(let i=0;i<5;i++)core.recoverJacareRun(run);
  assert.equal(run.player.isJacare,false);
- assert.deepEqual(run.obstacles,[other]);
+ assert.deepEqual(run.obstacles,[...wave,other]);
  assert.deepEqual(core.spawnJacareVolley(run,{rng:()=>0}),[]);
+ step(run,2.5);
+ assert.deepEqual(run.obstacles,[other]);
+});
+test('ondas consecutivas disparam no ponto atual, sem mudar os alvos já anunciados',()=>{
+ const run=newJacare(480,240,6);run.shieldFor=Infinity;run.player.nextJacareThreat=0;
+ step(run,.01);const first=run.obstacles.slice(),locations=first.map(o=>o.x),before=run.player.x;
+ core.moveRun(run,1);step(run,.5);core.moveRun(run,0);assert.ok(run.player.x>before+70);
+ assert.deepEqual(first.map(o=>o.x),locations);
+ const firstFall=first.at(-1).warningFor+first.at(-1).fallFor;
+ while(run.obstacles.every(o=>first.includes(o))&&run.elapsed<3)step(run,DT);
+ const next=run.obstacles.find(o=>!first.includes(o));assert.ok(next);
+ assert.ok(run.elapsed<firstFall+.52,'nova onda vem pouco depois da última queda');
+ assert.ok(Math.abs(next.x+next.width/2-(run.player.x+17))<=25,'nova onda mira a posição já deslocada');
 });

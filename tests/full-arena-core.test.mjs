@@ -1,4 +1,4 @@
-import {pilotDodge as pilotTerrain} from '../tools/story-pilot.mjs';
+import {pilotDodge as pilotTerrain,pilotJacare} from '../tools/story-pilot.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
@@ -61,16 +61,15 @@ test('bueiro compromete o alvo, avisa e permite saída com comandos em ambas as 
  }
 });
 
-test('ampolas da Pfizer aparecem e são evitadas com deslocamento lateral',()=>{
- const r=isolated();transform(r);step(r,3.1);
+test('ampolas da Pfizer são anunciadas na coleta e exigem desvio lateral',()=>{
+ const r=isolated();transform(r);
  const o=r.obstacles.find(o=>o.falling&&o.owner==='pfizer');
- assert.ok(o,'a ampola deve aparecer após o respiro inicial');
- assert.equal(o.type,'pfizer-ampoule');
- assert.ok(o.warningFor>=1.2);
- core.moveRun(r,-1);step(r,1.9);
- assert.equal(r.status,'running','deslocamento lateral evita a ampola');
- const stationary=isolated();transform(stationary);step(stationary,5.2);
- assert.equal(stationary.status,'over','ficar imóvel permite colisão após o aviso');
+ assert.ok(o);assert.equal(o.age,0);assert.equal(o.type,'pfizer-ampoule');assert.ok(o.warningFor>=.9);
+ step(r,.30);
+ for(let n=0;n<240;n++){pilotJacare(r,{recover:false});core.advanceRun(r,DT,()=>.5);}
+ assert.equal(r.status,'running','deslocamento lateral após ver o aviso evita a onda');
+ const stationary=isolated();transform(stationary);step(stationary,1.8);
+ assert.equal(stationary.status,'over');assert.equal(stationary.lastHit.type,'pfizer-ampoule');
 });
 
 test('chefões respeitam o contato real quando Flávio ocupa a extremidade direita',()=>{
@@ -133,6 +132,7 @@ test('espera adicional do resize não mira novamente um projétil já lançado',
 // Apenas comandos públicos durante o percurso. Não injeta proteção, teleporte,
 // vidas, coletas nem muda o estado dos perigos para forçar uma aprovação.
 function pilot(r){
+ if(pilotJacare(r))return;
  if(r.terrain?.active)return pilotTerrain(r);
  const local=r.obstacles.find(o=>(o.falling||o.groundHazard)&&o.age<o.warningFor+(o.fallFor??o.activeFor));
  let evade=0;
@@ -141,7 +141,6 @@ function pilot(r){
   const leftPossible=r.player.x+toLeft>=bounds.min,rightPossible=r.player.x+toRight<=bounds.max;
   if(!(r.player.x+31<local.x-10||r.player.x+5>local.x+local.width+10))evade=leftPossible&&(!rightPossible||Math.abs(toLeft)<Math.abs(toRight))?-1:1;
  }
- if(r.player.isJacare&&r.player.jacareAge>=(r.player.jacareProgress+1)*.2)core.recoverJacareRun(r);
  const danger=r.obstacles.filter(o=>!o.falling&&!o.groundHazard&&!o.passed&&!o.counted&&
   (o.approach==='rear'?o.x<r.player.x+31:o.x+o.width-3>r.player.x+5))
   .sort((a,b)=>core.threatTimeToContact(r,a)-core.threatTimeToContact(r,b))[0];

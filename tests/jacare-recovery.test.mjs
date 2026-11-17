@@ -21,7 +21,7 @@ test('o relógio não recupera o jacaré, e a corrida e as ondas seguem após de
  const deadline=r.elapsed+5;
  while(!r.obstacles.some(o=>o.type==='pfizer-ampoule'&&o.age<.1)&&r.elapsed<deadline)step(r,1/120);
  const wave=r.obstacles.filter(o=>o.type==='pfizer-ampoule');
- assert.ok(wave.length>=2&&wave.every(o=>o.warningFor>=1.2),'uma onda nova ainda tem aviso e desvio');
+ assert.ok(wave.length===4&&wave.every(o=>o.warningFor>=.78),'uma onda nova ainda tem aviso e desvio');
 });
 
 test('quinto comando retorna sem salto, preservando velocidade, vida e proteção já existente',()=>{
@@ -54,6 +54,7 @@ test('uma coleta sobreposta não apaga o progresso e um novo evento começa em z
  assert.equal(r.player.jacareProgress,1);
  assert.equal(r.collected,1);
  for(let n=0;n<4;n++)core.recoverJacareRun(r);
+ r.shieldFor=Infinity;step(r,2.5);
  collect(r);
  assert.equal(r.player.isJacare,true);
  assert.equal(r.player.jacareProgress,0);
@@ -74,4 +75,30 @@ test('um salto antes do pouso não conta sozinho como recuperação',()=>{
  step(r,.04);
  assert.equal(r.player.jacareProgress,0);
  assert.equal(r.player.velocity,0);
+});
+
+test('a coleta avisa a primeira onda imediatamente e cinco comandos não apagam a ameaça',()=>{
+ for(const finishImmediately of [false,true]){
+  const r=isolated();collect(r);
+  const wave=r.obstacles.filter(o=>o.type==='pfizer-ampoule');
+  assert.equal(wave.length,3,'primeira pressão começa com a coleta');
+  assert.ok(wave.every(o=>o.age===0&&o.warningFor>=.78));
+  if(finishImmediately){
+   for(let n=0;n<5;n++)assert.equal(core.recoverJacareRun(r),true);
+   assert.equal(r.player.isJacare,false);
+   assert.deepEqual(r.obstacles,wave,'sinais já exibidos continuam valendo');
+  }
+  step(r,1.8);
+  assert.equal(r.status,'over','ficar parado perde mesmo depois de restaurar a forma');
+  assert.equal(r.lastHit.type,'pfizer-ampoule');
+ }
+});
+
+test('Joice e chefes não sobrepõem a última onda depois da forma humana voltar',()=>{
+ for(const pending of ['nextBossAt','nextRaid']){
+  const r=isolated();collect(r);r[pending]=0;r.shieldFor=Infinity;
+  for(let n=0;n<5;n++)core.recoverJacareRun(r);
+  step(r,.9);assert.ok(r.obstacles.some(o=>o.type==='pfizer-ampoule'));assert.equal(r.boss,null);assert.equal(r.raid,null);
+  step(r,1.7);assert.ok(pending==='nextBossAt'?r.boss:r.raid);
+ }
 });

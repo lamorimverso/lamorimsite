@@ -12,7 +12,7 @@ import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from 
 import {createShotSoundTracker} from './runner-shot-events.mjs?v=a3769f250d68';
 import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=245ba013c167';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_PRESSES, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, recoverJacareRun, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=209315258931";
+import { WORLD, PLAYER, JACARE_RECOVERY_PRESSES, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, recoverJacareRun, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=0eb15a8f2472";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=01fa5c1830b5';
 import {drawCampaignCrowd} from './runner-campaign-art.mjs?v=9cc4e669f36d';
 import {bossCounterWindow} from './runner-bosses.mjs?v=245ba013c167';
@@ -199,11 +199,12 @@ function initRunner() {
     const recovery=$("game-jacare-progress");
     if(recovery){
       const recovering=run.player.isJacare;
-      ui.prop(recovery,'hidden',run.status!=="running"||!(recovering||run.player.restoreFlashFor>0));
+      const ampoulesPending=!recovering&&recoveryCount===JACARE_RECOVERY_PRESSES&&run.obstacles.some(o=>o.type==='pfizer-ampoule');
+      ui.prop(recovery,'hidden',run.status!=="running"||!(recovering||ampoulesPending||run.player.restoreFlashFor>0));
       ui.text("game-jacare-count",jacareProgress);
-      ui.text("game-jacare-hint",recovering?labels.jump+" ou toque"+(entryProtected?" · Protegido":""):"Recuperado");
+      ui.text("game-jacare-hint",recovering?labels.jump+" ou toque"+(entryProtected?" · Protegido":""):ampoulesPending?"Desvie da última onda":"Recuperado");
       ui.attr(recovery,"aria-valuenow",String(recoveryCount));
-      ui.attr(recovery,"aria-valuetext",recovering?jacareProgress+". Pressione "+labels.jump+" ou toque na pista. Desvie de lado."+(entryProtected?" Proteção inicial ativa.":""):jacareProgress+". Forma humana recuperada.");
+      ui.attr(recovery,"aria-valuetext",recovering?jacareProgress+". Pressione "+labels.jump+" ou toque na pista. Desvie de lado."+(entryProtected?" Proteção inicial ativa.":""):jacareProgress+". Forma humana recuperada."+(ampoulesPending?" Desvie da última onda.":""));
     }
     ui.prop($("game-ammo").parentElement,'hidden',!run.boss);
     const fireLabel=labels.fire;
@@ -304,10 +305,10 @@ function initRunner() {
     const controls=$("game-controls"),inside=run.status==="over"||run.status==="won";
     const actionsHost=$(inside?"game-result-actions":"game-ready-actions");
     if(controls.parentNode!==actionsHost)actionsHost.append(controls);
-    const terrainOutcome=run.lastHit?.type?.startsWith('terrain-');
-    const outcomeTitle=terrainOutcome?(run.lastHit.type==='terrain-gap'?'Caiu no vão!':run.lastHit.type==='terrain-ceiling'?'Bateu na passagem baixa!':'Bateu na borda da plataforma!'):'Foi pego pela Polícia Federal!';
-    const outcomeHint=terrainOutcome?(run.lastHit.type==='terrain-ceiling'?'Abaixe e avance para deslizar pela abertura.':'Pule antes da borda e pouse na plataforma.'):dodgeHint();
-    ui.prop("game-captured",'hidden',run.status==='over'?terrainOutcome:!prison);
+    const terrainOutcome=run.lastHit?.type?.startsWith('terrain-'),ampouleOutcome=run.lastHit?.type==='pfizer-ampoule';
+    const outcomeTitle=terrainOutcome?(run.lastHit.type==='terrain-gap'?'Caiu no vão!':run.lastHit.type==='terrain-ceiling'?'Bateu na passagem baixa!':'Bateu na borda da plataforma!'):ampouleOutcome?'A ampola acertou Flávio!':'Foi pego pela Polícia Federal!';
+    const outcomeHint=terrainOutcome?(run.lastHit.type==='terrain-ceiling'?'Abaixe e avance para deslizar pela abertura.':'Pule antes da borda e pouse na plataforma.'):ampouleOutcome?'Desvie de lado assim que os alvos aparecerem, inclusive após voltar à forma humana.':dodgeHint();
+    ui.prop("game-captured",'hidden',run.status==='over'?terrainOutcome||ampouleOutcome:!prison);
     if(ballotOpen&&lastStatus!=="ballot"){
       clearControls();$("game-ballot").focus({preventScroll:true});
     }
@@ -326,7 +327,7 @@ function initRunner() {
     if(run.status==="over"){
       ui.text("game-overlay-title",outcomeTitle);
       ui.text("game-overlay-copy",outcomeHint+" "+score.toLocaleString("pt-BR")+" m · "+run.passports+" passaportes.");
-      ui.text("game-overlay-badge","Perseguição fictícia");audio.stop();
+      ui.text("game-overlay-badge",ampouleOutcome?"Transformação fictícia":"Perseguição fictícia");audio.stop();
       if(lastStatus!=="over")section.dispatchEvent(new Event("runner:over"));
     }
     if(renderedRoute!==stages||lastStatus!==run.status||lastStage!==stage.index||lastCollected!==run.collected||lastPower!==power||lastLives!==run.lives||lastEvents!==run.events){

@@ -7,7 +7,7 @@ test('Joice tem entrada garantida em todos os oito mapas, sem depender do sortei
  for(let stage=0;stage<8;stage++){const r=make(stage);tick(r);assert.equal(r.raid?.phase,'warning',STORY_STAGE_IDS[stage]);assert.equal(r.raid.stageId,STORY_STAGE_IDS[stage]);assert.equal(r.raidStages[STORY_STAGE_IDS[stage]],1);assert.equal(r.raids,1);}
 });
 test('entrada obrigatória espera um chefe/transformação e não reinicia sem parar na mesma fase',()=>{
- const r=make(2);r.player.isJacare=true;r.player.jacareAge=0;tick(r);assert.equal(r.raid,null);
+ const r=make(2);r.player.isJacare=true;r.player.nextJacareThreat=Infinity;tick(r);assert.equal(r.raid,null);
  r.player.isJacare=false;r.boss={type:'lula',combat:false,hp:10,maxHp:10,total:10,remaining:10,fired:0,nextAttack:100};tick(r);assert.equal(r.raid,null,'Joice não interrompe o duelo');r.boss=null;tick(r);assert.equal(r.raid?.stageId,'sao-paulo');
  r.raid=null;r.nextRaid=999;tick(r);assert.equal(r.raid,null,'fase já teve seu encontro garantido');
  r.routeDistance+=SCENE_DISTANCE;tick(r);assert.equal(r.raid?.stageId,'argentina');

@@ -183,4 +183,4 @@ O sprite de cada inimigo não desenha mais uma cópia de sua arma. Chefões e co
 ## Recuperação do jacaré — 17/11/2026
 
 - A regra de dez segundos descrita no histórico foi substituída. Zé Gotinha inicia a transformação fictícia. Pressione e solte cinco vezes a ação de pular (↑ por padrão), ou use toques/gestos para cima na pista. Mouse e controle seguem o remapeamento. O progresso de 0/5 a 5/5 é compartilhado.
-- Na forma quadrúpede, a corrida e o deslocamento lateral continuam. A proteção inicial dura três segundos. Enquanto a transformação persistir, as ampolas cenográficas vêm em ondas espaçadas e anunciadas. O quinto comando recupera a forma humana sem saltar, disparar ou restaurar vida.
+- Na forma quadrúpede, a corrida e o deslocamento lateral continuam. O primeiro aviso aparece na coleta e a proteção inicial dura 0,6 s. As ondas de três a quatro ampolas cenográficas miram a posição atual e bloqueiam saídas próximas, mantendo um corredor que pode ser alcançado. O quinto comando recupera a forma humana sem saltar, disparar ou restaurar vida. A última onda já anunciada ainda precisa ser desviada.

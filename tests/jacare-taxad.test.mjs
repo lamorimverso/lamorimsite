@@ -53,7 +53,7 @@ test('coleta cria margem segura de transformação e mantém escudo e vidas',()=
  r.pickups=[{type:'ze-gotinha',x:136,y:20,speed:0}];
  core.advanceRun(r,1/120,()=>.5);
  assert.equal(r.player.isJacare,true);
- assert.ok(r.graceFor>=3&&r.graceFor<=3.01);
+ assert.ok(r.graceFor>=.59&&r.graceFor<=.61);
  assert.ok(r.shieldFor>2.9);
  assert.equal(r.lives,2);
  assert.equal(r.player.jacareAge,0);
