@@ -40,20 +40,6 @@ test('resize preserva proporção lateral e prazos em ambos os sentidos, incluin
  }
 });
 
-test('jacaré dura dez segundos lógicos e retorna automaticamente',()=>{
- const r=isolated();transform(r);r.shieldFor=Infinity;
- assert.equal(core.JACARE_DURATION_SECONDS,10);
- assert.ok(r.graceFor>=3&&r.nextObstacle>=3);
- for(let i=0;i<8;i++)assert.equal(core.jumpRun(r),false);
- step(r,9.9);
- assert.equal(r.player.isJacare,true);
- assert.ok(r.distance>100);
- step(r,.2);
- assert.equal(r.player.isJacare,false);
- assert.ok(r.player.restoreFlashFor>=0);
- assert.equal(core.jumpRun(r),true);
-});
-
 test('semente reproduz a aleatoriedade interna sem depender de Math.random',()=>{
  assert.equal(typeof core.createSeededRandom,'function');
  const a=core.createSeededRandom(7),b=core.createSeededRandom(7),c=core.createSeededRandom(8);
@@ -121,10 +107,12 @@ test('jacaré termina o minigame antes de iniciar outro encontro pendente',()=>{
   const r=isolated();transform(r);r.routeDistance=23000;if(kind==='boss')r.nextBossAt=0;else r.nextRaid=0;
   r.shieldFor=Infinity;
   step(r,.2);assert.equal(r.boss,null);assert.equal(r.raid,null);
-  step(r,9.7);assert.equal(r.player.isJacare,true,'encontro espera terminar os dez segundos');
-  step(r,.2);
-  assert.equal(r.player.isJacare,false,'restauração automática');
-  assert.ok(kind==='boss'?r.boss:r.raid,'encontro pendente inicia após o relógio do jacaré');
+  step(r,10);assert.equal(r.player.isJacare,true,'encontro continua aguardando depois de dez segundos');
+  for(let i=0;i<4;i++)core.recoverJacareRun(r);
+  step(r,.2);assert.equal(r.boss,null);assert.equal(r.raid,null);
+  core.recoverJacareRun(r);step(r,.2);
+  assert.equal(r.player.isJacare,false);
+  assert.ok(kind==='boss'?r.boss:r.raid,'encontro pendente inicia após a recuperação');
  }
 });
 
@@ -153,7 +141,7 @@ function pilot(r){
   const leftPossible=r.player.x+toLeft>=bounds.min,rightPossible=r.player.x+toRight<=bounds.max;
   if(!(r.player.x+31<local.x-10||r.player.x+5>local.x+local.width+10))evade=leftPossible&&(!rightPossible||Math.abs(toLeft)<Math.abs(toRight))?-1:1;
  }
- if(r.player.isJacare)core.jumpRun(r);
+ if(r.player.isJacare&&r.player.jacareAge>=(r.player.jacareProgress+1)*.2)core.recoverJacareRun(r);
  const danger=r.obstacles.filter(o=>!o.falling&&!o.groundHazard&&!o.passed&&!o.counted&&
   (o.approach==='rear'?o.x<r.player.x+31:o.x+o.width-3>r.player.x+5))
   .sort((a,b)=>core.threatTimeToContact(r,a)-core.threatTimeToContact(r,b))[0];

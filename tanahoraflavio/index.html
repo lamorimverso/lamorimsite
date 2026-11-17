@@ -26,9 +26,9 @@
   <title>Tá na hora, Flávio! · Contagem e minigame</title>
 
   <link rel="stylesheet" href="control-settings.css?v=1c20042497ae">
-  <link rel="stylesheet" href="game.css?v=b2b53280fa44">
+  <link rel="stylesheet" href="game.css?v=6fc291aed35e">
   <script defer src="page-layout.js?v=69f225a085c7"></script>
-  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=d871950ba62a"></script>
+  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=2158696f9b60"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -111,7 +111,7 @@
         </details>
         <div class="game-viewport">
           <p id="game-voice-note" class="game-voice-note sr-only" role="status" aria-live="polite" hidden></p>
-          <div id="game-jacare-progress" class="game-jacare-progress" role="timer" aria-label="Jacaré: 10 segundos restantes" hidden><span id="game-jacare-seconds" aria-hidden="true">10 s</span></div>
+          <div id="game-jacare-progress" class="game-jacare-progress" role="progressbar" aria-label="Recuperação do jacaré" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" hidden><span id="game-jacare-count" aria-hidden="true">0/5</span><span id="game-jacare-hint" class="game-jacare-hint" aria-hidden="true">↑ ou toque</span></div>
                             <canvas id="runner-canvas" width="900" height="300" tabindex="0" role="img" aria-label="Pista do jogo Corre, Flávio!" aria-describedby="game-instructions">Seu navegador não oferece Canvas. A contagem regressiva continua disponível acima.</canvas>
           <div id="game-battle-cue" class="game-battle-cue" hidden><small id="game-battle-attack"></small><strong id="game-battle-action"></strong></div>
           <div class="game-combat-hud" id="game-combat-hud" hidden>

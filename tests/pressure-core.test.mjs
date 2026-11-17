@@ -4,7 +4,7 @@ import * as core from '../tanahoraflavio/runner-core.mjs';
 const dt=1/120;
 const make=()=>{const r=core.createRun();core.startRun(r);r.terrain.nextAt=Infinity;r.shieldFor=1000;r.nextRaid=r.nextBossAt=r.nextSupportAt=Infinity;return r;};
 const seeded=seed=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/2**32;};
-function simulate(r,seconds,rng=seeded(103)){for(let i=0;i<Math.ceil(seconds/dt);i++){if(r.player.isJacare)core.jumpRun(r);core.advanceRun(r,dt,rng);}}
+function simulate(r,seconds,rng=seeded(103)){for(let i=0;i<Math.ceil(seconds/dt);i++){if(r.player.isJacare&&r.player.jacareAge>=(r.player.jacareProgress+1)*.2)core.recoverJacareRun(r);core.advanceRun(r,dt,rng);}}
 
 test('pressão cresce pelo tempo e distância até limites explícitos',()=>{
  const a=core.difficultyAt(0,0),b=core.difficultyAt(0,70),c=core.difficultyAt(20000,70),z=core.difficultyAt(1e12,1e9);

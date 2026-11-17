@@ -28,10 +28,10 @@ test('jacaré mostra duas ampolas dispersas em celular e desktop, com tempos dis
   assert.deepEqual(core.spawnJacareVolley(sample,{rng:()=>.5}),[],'aguardar a primeira onda terminar');
  }
 });
-test('perto do fim da transformação surgem três ampolas com corredores livres',()=>{
+test('depois das ondas iniciais surgem três ampolas com corredores livres',()=>{
  const run=newJacare(480,240,6);
  const group=core.spawnJacareVolley(run,{rng:()=>.5});
- assert.equal(group.length,3,'o volume cresce dentro dos dez segundos');
+ assert.equal(group.length,3,'o volume cresce conforme o tempo ativo');
  assert.ok(group.some(o=>o.x<group[0].x));
  assert.ok(group.some(o=>o.x>group[0].x));
  const ordered=group.slice().sort((a,b)=>a.x-b.x);
@@ -45,11 +45,13 @@ test('perto do fim da transformação surgem três ampolas com corredores livres
  assert.equal(run.status,'running','o jogador pode chegar ao corredor sem teleporte ou escudo');
  assert.equal(run.lives,1);
 });
-test('nenhuma nova saraivada acontece após recuperar a forma humana',()=>{
- const run=newJacare(480,240,9.99);
- run.shieldFor=Infinity;run.player.nextJacareThreat=0;
- step(run,.03);
+test('recuperação cancela somente saraivadas próprias e não gera outra após a forma humana',()=>{
+ const run=newJacare(480,240,6);
+ run.shieldFor=Infinity;
+ assert.ok(core.spawnJacareVolley(run,{rng:()=>.5}).length>0);
+ const other={x:600,width:40,height:40,type:'barrier',speed:45};run.obstacles.push(other);
+ for(let i=0;i<5;i++)core.recoverJacareRun(run);
  assert.equal(run.player.isJacare,false);
+ assert.deepEqual(run.obstacles,[other]);
  assert.deepEqual(core.spawnJacareVolley(run,{rng:()=>0}),[]);
- assert.equal(run.obstacles.filter(o=>o.owner==='pfizer').length,0);
 });

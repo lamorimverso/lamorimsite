@@ -12,7 +12,7 @@ import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from 
 import {createShotSoundTracker} from './runner-shot-events.mjs?v=a3769f250d68';
 import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=245ba013c167';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_DURATION_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=9153f328da15";
+import { WORLD, PLAYER, JACARE_RECOVERY_PRESSES, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, recoverJacareRun, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=209315258931";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=01fa5c1830b5';
 import {drawCampaignCrowd} from './runner-campaign-art.mjs?v=9cc4e669f36d';
 import {bossCounterWindow} from './runner-bosses.mjs?v=245ba013c167';
@@ -32,7 +32,7 @@ function initRunner() {
   if (!canvas || !section) return;
   // Uma aba pode ter conservado o HTML anterior enquanto os módulos já
   // mudaram. Atualizar a página uma vez evita inicializar sobre IDs antigos.
-  if(!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-cycle")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-effects")||!$("game-assist")||$("game-options-panel")||!$("game-attack")||!$("game-jacare-progress")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-battle-cue")||!$("game-practice")||!$("game-route")||!$("game-result-actions")||!$("game-ready-actions")||!$("game-controls")||$("game-expand")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
+  if(!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-cycle")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-effects")||!$("game-assist")||$("game-options-panel")||!$("game-attack")||!$("game-jacare-progress")||!$("game-jacare-count")||!$("game-jacare-hint")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-battle-cue")||!$("game-practice")||!$("game-route")||!$("game-result-actions")||!$("game-ready-actions")||!$("game-controls")||$("game-expand")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
     const url=new URL(location.href);
     if(url.searchParams.get("ui")!=="20261115-campaign-hierarchy"){
       url.searchParams.set("ui","20261115-campaign-hierarchy");location.replace(url.href);
@@ -193,13 +193,17 @@ function initRunner() {
     ui.data(section,'art',spritesReady?"loaded":spritesFailed?"error":"loading");
     const power=run.shieldFor>0?"shield":run.graceFor>0?"recovery":"none";
     ui.data(section,'power',run.player.isJacare?"jacare":power);ui.data(section,'ammo',"none");
-    const remainingJacareSeconds=Math.max(0,Math.ceil(JACARE_DURATION_SECONDS-run.player.jacareAge));
-    ui.text("game-power",run.player.isJacare?"Jacaré · "+remainingJacareSeconds+" s":run.boss?.combat?"Energia "+run.player.hp+"/"+run.player.maxHp+(power==='shield'?" · Escudo":""):power==="shield"?"Escudo de reserva · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo");
+    const recoveryCount=run.player.jacareProgress,jacareProgress=recoveryCount+"/"+JACARE_RECOVERY_PRESSES;
+    const entryProtected=run.player.isJacare&&run.graceFor>0;
+    ui.text("game-power",run.player.isJacare?"Jacaré · "+jacareProgress:run.boss?.combat?"Energia "+run.player.hp+"/"+run.player.maxHp+(power==='shield'?" · Escudo":""):power==="shield"?"Escudo de reserva · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo");
     const recovery=$("game-jacare-progress");
     if(recovery){
-      ui.prop(recovery,'hidden',run.status!=="running"||!run.player.isJacare);
-      ui.text("game-jacare-seconds",remainingJacareSeconds+" s");
-      ui.attr(recovery,"aria-label","Jacaré: "+remainingJacareSeconds+" segundos restantes; desvie lateralmente das ampolas");
+      const recovering=run.player.isJacare;
+      ui.prop(recovery,'hidden',run.status!=="running"||!(recovering||run.player.restoreFlashFor>0));
+      ui.text("game-jacare-count",jacareProgress);
+      ui.text("game-jacare-hint",recovering?labels.jump+" ou toque"+(entryProtected?" · Protegido":""):"Recuperado");
+      ui.attr(recovery,"aria-valuenow",String(recoveryCount));
+      ui.attr(recovery,"aria-valuetext",recovering?jacareProgress+". Pressione "+labels.jump+" ou toque na pista. Desvie de lado."+(entryProtected?" Proteção inicial ativa.":""):jacareProgress+". Forma humana recuperada.");
     }
     ui.prop($("game-ammo").parentElement,'hidden',!run.boss);
     const fireLabel=labels.fire;
@@ -365,7 +369,7 @@ function initRunner() {
     gamepadDriver?.poll();
     const timing=advanceFrameClock(frameClock,now),wasAirborne=run.player.y>0;
     const before={hp:run.player.hp,lives:run.lives,collected:run.collected,boss:run.boss?.type,
-      passports:run.passports,spawned:run.spawnedObstacles,attacks:run.boss?.fired||0,jacare:run.player.isJacare};
+      passports:run.passports,spawned:run.spawnedObstacles,attacks:run.boss?.fired||0};
     let bufferedTakeoff=false;
     for(let i=0;i<timing.steps&&run.status==="running";i++){
       const pending=run.player.jumpBufferedUntil>0&&run.player.velocity<=0;
@@ -375,7 +379,6 @@ function initRunner() {
     if(wasAirborne&&run.player.y===0)landingUntil=run.elapsed+.12;
     updateUI();
     if(run.status==="running"&&(run.lives<before.lives||run.player.hp<before.hp))audio.effect("hit");
-    else if(before.jacare&&!run.player.isJacare)audio.effect("restore");
     else if(before.boss&&!run.boss)audio.effect("victory");
     else if(!before.boss&&run.boss){audio.enemyEntrance(run.boss);voices.event("boss",run);}
     else if(run.collected>before.collected)audio.effect(run.lastPickup==="ze-gotinha"?"transform":run.lastPickup==="ally"?"ally":"pickup");
@@ -457,6 +460,10 @@ function initRunner() {
     if(controlsOpen())return;
     resumeFromGesture();
     if(["ready","over"].includes(run.status))begin();
+    if(recoverJacareRun(run)){
+      if(!run.player.isJacare)audio.effect("restore");
+      updateUI();draw();return;
+    }
     if(jumpRun(run)){movementSounds.update(run);draw();}
   }
   function crouch(active){
@@ -537,7 +544,7 @@ function initRunner() {
     if(!action||mouseHeld.has(event.button))return;
     event.preventDefault();lastPointerAt=performance.now();canvas.focus({preventScroll:true});resumeFromGesture();
     const source='mouse:'+event.button;
-    if(action==='jump')jump();
+    if(action==='jump'){mouseHeld.set(event.button,action);jump();}
     else if(action==='power')switchWeapon();
     else if(action==='shield')useReserveShield();
     else if(action==='start'){if(['ready','over','won'].includes(run.status))begin();}
@@ -553,7 +560,7 @@ function initRunner() {
     mouseHeld.delete(event.button);const source='mouse:'+event.button;
     if(action==='fire')fire(source,false);
     else if(action==='crouch'){crouchSources.set(source,false);crouch(crouchSources.active);}
-    else updateMovement();
+    else if(action!=='jump')updateMovement();
   });
   for(const type of ['contextmenu','auxclick'])canvas.addEventListener(type,event=>{
     if(!controlsOpen()&&mouseActionFor(preferences.controls,type==='contextmenu'?2:event.button))event.preventDefault();
@@ -599,8 +606,8 @@ function initRunner() {
   canvas.addEventListener("pointercancel",releaseTrackPointer);
   canvas.addEventListener("click",event=>{
     // Alguns navegadores enviam click de toque com detail0; o pointer já o tratou.
-    const physical=!!event.pointerType||performance.now()-lastPointerAt<500;
-    if(!("PointerEvent" in window)||event.detail===0&&!physical)jump();
+    const justHandledPointer=performance.now()-lastPointerAt<500;
+    if(!justHandledPointer&&(!("PointerEvent" in window)||event.detail===0&&!event.pointerType))jump();
   });
   section.addEventListener("keydown", event => {
     if(controlsOpen())return;

@@ -54,7 +54,11 @@ test('no Infinito a travessia reserva a entrada pendente antes de trocar de mapa
  const r=make();r.mode='endless';r.elapsed=200;r.routeDistance=r.distance=5900;r.player.isJacare=true;r.player.jacareAge=0;r.shieldFor=Infinity;
  let saw=false;
  for(let i=0;i<120*14&&!saw;i++){
-  tick(r);if(r.player.isJacare)assert.equal(core.routeStageFor(r).id,'brasilia','jacaré não consome a oportunidade do mapa');
+  if(i>=1200&&i%24===0)core.recoverJacareRun(r);
+  tick(r);if(r.player.isJacare){
+   assert.equal(core.routeStageFor(r).id,'brasilia','jacaré não consome a oportunidade do mapa');
+   assert.equal(r.raid,null,'a perseguição aguarda a recuperação');
+  }
   if(r.raid){saw=true;assert.equal(r.raid.stageId,'brasilia');assert.equal(core.routeTransitionFor(r).active,false,'aviso respeita a transição');}
  }
  assert.equal(saw,true);assert.ok(r.distance>r.routeDistance,'movimento e pontuação continuam durante a reserva');

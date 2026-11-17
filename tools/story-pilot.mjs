@@ -21,7 +21,7 @@ export function pilotDodge(r){
   const leftPossible=r.player.x+toLeft>=bounds.min,rightPossible=r.player.x+toRight<=bounds.max;
   if(!(r.player.x+31<local.x-10||r.player.x+5>local.x+local.width+10))evade=leftPossible&&(!rightPossible||Math.abs(toLeft)<Math.abs(toRight))?-1:1;
  }
- if(r.player.isJacare)core.jumpRun(r);
+ if(r.player.isJacare&&r.player.jacareAge>=(r.player.jacareProgress+1)*.2)core.recoverJacareRun(r);
  const danger=r.obstacles.filter(o=>!o.falling&&!o.groundHazard&&!o.passed&&!o.counted&&
   (o.approach==='rear'?o.x<r.player.x+31:o.x+o.width-3>r.player.x+5))
   .sort((a,b)=>core.threatTimeToContact(r,a)-core.threatTimeToContact(r,b))[0];

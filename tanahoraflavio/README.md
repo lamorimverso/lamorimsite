@@ -179,3 +179,8 @@ A referência visual original foi revisitada: o fantasma é uma silhueta surreal
 ## Combate: projéteis independentes — 10/11/2026
 
 O sprite de cada inimigo não desenha mais uma cópia de sua arma. Chefões e coadjuvantes ficam em uma camada elevada, com antecipação existente e efeitos de preparação; cada ataque é desenhado exclusivamente a partir da entidade física. A origem física, velocidades, janelas de esquiva e colisões da versão estável foram preservadas após a primeira tentativa detectar regressões. Rastros, rotação discreta e partículas variam por família; o modo de efeitos reduzidos permanece disponível.
+
+## Recuperação do jacaré — 17/11/2026
+
+- A regra de dez segundos descrita no histórico foi substituída. Zé Gotinha inicia a transformação fictícia. Pressione e solte cinco vezes a ação de pular (↑ por padrão), ou use toques/gestos para cima na pista. Mouse e controle seguem o remapeamento. O progresso de 0/5 a 5/5 é compartilhado.
+- Na forma quadrúpede, a corrida e o deslocamento lateral continuam. A proteção inicial dura três segundos. Enquanto a transformação persistir, as ampolas cenográficas vêm em ondas espaçadas e anunciadas. O quinto comando recupera a forma humana sem saltar, disparar ou restaurar vida.

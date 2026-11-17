@@ -163,6 +163,7 @@ export function legalPilot(seed,{width=900,assisted=false,limit=340,resize=false
    pilotTerrain(run);if(run.reserveShields&&run.shieldFor<=0)core.activateReserveShield(run);
    core.advanceRun(run,DT,rng);peak=Math.max(peak,run.player.y);if(run.shieldFor>0)shieldFrames++;continue;
   }
+  if(run.player.isJacare&&run.player.jacareAge>=(run.player.jacareProgress+1)*.2)core.recoverJacareRun(run);
   // O piloto considera o alerta de retaguarda antes de o inimigo entrar na tela.
   const eta=o=>core.threatTimeToContact(run,o);
   const drops=run.obstacles.filter(o=>(o.falling||o.groundHazard)&&o.age<o.warningFor+(o.fallFor??o.activeFor));
