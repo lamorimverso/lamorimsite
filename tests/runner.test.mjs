@@ -55,7 +55,7 @@ test('movimento e pontuação continuam durante a transição',()=>{
  assert.ok(r.distance>d);assert.ok(core.scoreFor(r)>0);assert.equal(core.stageTransitionAt(r.routeDistance/core.SCENE_DISTANCE*core.SCENE_SECONDS).active,true);
 });
 test('primeiras ondas oferecem tempo de reação e nenhuma aparece sobre o jogador',()=>{
- const r=running();r.nextBossAt=r.nextRaid=Infinity;let previous=0,saw=0;
+ const r=running();r.terrain.nextAt=Infinity;r.nextBossAt=r.nextRaid=Infinity;let previous=0,saw=0;
  for(let i=0;i<120*20;i++){const count=r.spawnedObstacles;core.advanceRun(r,1/120,()=>0);
   if(r.spawnedObstacles>count){const o=r.obstacles.at(-1);assert.ok(o.x>=900||(o.groundHazard&&o.age<o.warningFor)||(o.cast&&!o.launched&&o.waitFor>=.45),'ameaça local nasce apenas como aviso sem colisão');if(saw)assert.ok(r.elapsed-previous>=1.15);previous=r.elapsed;saw++;}
   r.obstacles=r.obstacles.filter(o=>o.x>250);

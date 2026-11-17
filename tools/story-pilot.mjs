@@ -1,6 +1,19 @@
 // Test/check pilot using only public movement and firing commands.
 import * as core from '../tanahoraflavio/runner-core.mjs';
 export function pilotDodge(r){
+ const terrain=r.terrain?.active;
+ if(terrain){
+  core.moveRun(r,0);core.crouchRun(r,false);
+  if(terrain.kind==='passage'){
+   const roof=terrain.ceilings[0],eta=(roof.x-(r.player.x+31))/terrain.speed;
+   if(roof.x+roof.width>r.player.x+5&&eta<.38){core.crouchRun(r,true);core.moveRun(r,1);}
+  }else{
+   const gap=terrain.gaps[0],eta=(gap.x-(r.player.x+17))/terrain.speed;
+   if(r.player.grounded&&r.player.supportY===0&&eta<.13&&eta>-.06)core.jumpRun(r);
+   else if(terrain.requiresDoubleJump&&!r.player.grounded&&r.player.airJumpsUsed===0&&r.player.velocity<=0&&r.player.y>30)core.jumpRun(r);
+  }
+  return;
+ }
  const local=r.obstacles.find(o=>(o.falling||o.groundHazard)&&o.age<o.warningFor+(o.fallFor??o.activeFor));
  let evade=0;
  if(local){
@@ -19,7 +32,7 @@ export function pilotDodge(r){
  core.moveRun(r,local&&r.player.y===0&&(!danger||until>localEta+.2)?evade:0);
  core.crouchRun(r,danger?.action==='crouch'&&until<.65);
  const jumpAhead=danger?.approach==='rear'?.22:.35-((danger?.width||40)+20)/(2*speed);
- if(danger?.action==='jump'&&until<=jumpAhead&&until>-.1)core.jumpRun(r);
+ if(danger?.action==='jump'&&until<=jumpAhead&&until>-.1&&(!r.movementSkills?.doubleJump||r.player.grounded))core.jumpRun(r);
 }
 export function pilotCounter(r){
  pilotDodge(r);

@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
-function isolated(width=900,x=120){const r=core.createRun({seed:2});core.startRun(r);core.resizeRun(r,width);r.player.x=x;r.elapsed=11;r.nextObstacle=0;r.nextBossAt=r.nextRaid=r.nextAllyAt=r.nextSupportAt=r.nextPower=r.nextPassport=Infinity;return r;}
+function isolated(width=900,x=120){const r=core.createRun({seed:2});core.startRun(r);r.terrain.nextAt=Infinity;core.resizeRun(r,width);r.player.x=x;r.elapsed=11;r.nextObstacle=0;r.nextBossAt=r.nextRaid=r.nextAllyAt=r.nextSupportAt=r.nextPower=r.nextPassport=Infinity;return r;}
 test('emissor comum prepara e lança com origem real na mão, não fora da tela',()=>{
  const r=isolated();core.advanceRun(r,1/120,()=>0);
  const o=r.obstacles.find(o=>o.sourceActor);assert.ok(o,'há emissor alto');assert.ok(o.cast,'ciclo de emissão explícito');assert.ok(o.waitFor>=.45);assert.equal(o.launched,undefined);

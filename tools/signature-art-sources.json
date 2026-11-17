@@ -1,0 +1,10 @@
+{
+  "references": ["combat-original-b-v1.png", "combat-original-a-v1.png"],
+  "generator": "image_gen",
+  "sourcePolicy": "Preserve original PNG bytes and alpha. Runtime WebP is a lossless encoding; no recoloring, alpha cleanup, stretching or synthesized poses.",
+  "animation": "Four complete articulated poses, 60 ms per pose (phase = flight age * 24). Reduced motion holds pose zero.",
+  "sources": [
+    {"name": "signatureA", "file": "signature-props-a-v1", "sourceGeneration": "cf063dc1-6a7f-4316-b661-cb0cc413f14c", "types": ["handcuffs", "microphone", "hammer", "mandado"]},
+    {"name": "signatureB", "file": "signature-props-b-v1", "sourceGeneration": "fd3b0806-620d-4586-89e2-62786c9ccb13", "types": ["receipts", "budget-sheets", "parachute-cross", "lhand"]}
+  ]
+}

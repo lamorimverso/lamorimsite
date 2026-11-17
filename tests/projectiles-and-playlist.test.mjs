@@ -12,7 +12,7 @@ function bossRun(type='xandao',fired=0){
  return r;
 }
 test('primeiro chefe só chega após 22 km, mesmo que a corrida já dure um minuto',()=>{
- const r=createRun();startRun(r);r.nextRaid=Infinity;r.nextObstacle=1e8;
+ const r=createRun();startRun(r);r.nextRaid=Infinity;r.nextObstacle=1e8;r.terrain.nextAt=Infinity;
  r.nextPassport=r.nextPower=r.nextPickup=r.nextAllyAt=r.nextSupportAt=1e8;r.shieldFor=100;
  advanceRun(r,1/120,()=>0);
  assert.equal(r.nextBossAt,22000);

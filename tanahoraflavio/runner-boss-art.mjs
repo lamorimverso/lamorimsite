@@ -1,10 +1,10 @@
 import {drawCharacterBody,drawCharacterArm} from './runner-body-art.mjs?v=67badae0df52';
-import {drawBossonariHead} from './runner-character-art.mjs?v=2b02f5b89e18';
+import {drawBossonariHead} from './runner-character-art.mjs?v=09f7c2621823';
 import {standingEnemyPose} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
 export {standingEnemyPose} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
-import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=532ce9f60515';
+import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=75f5261a8955';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=043d40fd8ef2';
-import {drawMemeArmy} from './runner-art.mjs?v=2090bc2c60d2';
+import {drawMemeArmy} from './runner-art.mjs?v=fb4b8afd4654';
 import {regionalEmitterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 
 import {campaignAccentFor,drawCampaignBoss,drawCampaignCrowd} from './runner-campaign-art.mjs?v=9cc4e669f36d';
@@ -49,11 +49,13 @@ function drawMagic(c,p,accent,preparing,attacking){
  const h=p.arms.left.hand;
  c.save();c.translate(h.x-7,h.y);
  if(preparing){
-  oval(c,0,0,13,13,accent+'28',accent,1.5);oval(c,0,0,5,5,CREAM,accent,1.5);
-  for(let i=0;i<4;i++){const a=i*Math.PI/2+.4;line(c,[[Math.cos(a)*16,Math.sin(a)*16],[Math.cos(a)*20,Math.sin(a)*20]],accent,2);}
+  oval(c,0,0,10,10,accent+'19',accent,1.2);oval(c,0,0,3,3,CREAM,null);
+  line(c,[[-15,-3],[-12,-2]],accent,1.5);line(c,[[11,4],[14,5]],accent,1.5);
  }else{
-  polygon(c,[[-28,0],[-17,-3],[-19,-10],[-10,-6],[-9,-15],[-3,-6],[5,-8],[2,0],[5,8],[-5,5],[-11,13],[-12,5]],CREAM,accent,2);
-  line(c,[[-34,-7],[-43,-10]],accent,2);line(c,[[-36,5],[-47,8]],accent,2);
+  // A short release accent keeps the silhouette and actual object readable.
+  // The old large repeated star covered the cuff chain and firing hand.
+  polygon(c,[[-17,0],[-8,-3],[2,-2],[4,0],[1,2],[-8,3]],CREAM,accent,1.2);
+  line(c,[[-21,-4],[-27,-5]],accent,1.4);line(c,[[-20,4],[-25,5]],accent,1.4);
  }
  c.restore();
 }

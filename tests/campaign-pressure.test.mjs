@@ -32,7 +32,7 @@ test('toc-toc também cobre os seis destinos e volta a ser garantido em novas vo
 test('o sorteio real da História usa apenas os atacantes de cima da localidade',async()=>{
  const {STORY_ROSTERS}=await import('../tanahoraflavio/runner-stage-roster.mjs');
  for(let stage=0;stage<8;stage++){
-  const r=make(stage);r.nextRaid=Infinity;r.nextObstacle=0;const rolls=[.1,.99,.5,.5];core.advanceRun(r,1/120,()=>rolls.shift()??.5);
+  const r=make(stage);r.terrain.nextAt=Infinity;r.nextRaid=Infinity;r.nextObstacle=0;const rolls=[.1,.99,.5,.5];core.advanceRun(r,1/120,()=>rolls.shift()??.5);
   const expected=STORY_ROSTERS[stage].overhead[0],shot=r.obstacles.find(o=>o.cast);
   assert.equal(shot?.sourceActor,expected.actor,STORY_STAGE_IDS[stage]);assert.equal(shot.type,expected.weapon);assert.equal(shot.stageId,STORY_STAGE_IDS[stage]);assert.equal(r.cameo.type,expected.actor);
  }

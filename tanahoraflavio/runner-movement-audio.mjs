@@ -20,14 +20,14 @@ banks.jump={id:'movement-jump',variants:[
 export const getMovementSoundBank=id=>banks[id]||null;
 export function createMovementSoundDirector({play}){
  let previous=null,lastStart=0,nextDrag=0;
- const snapshot=r=>({x:r.player.x,y:r.player.y,airborne:r.player.y>0||r.player.velocity>0,crouching:r.player.crouching,jacare:r.player.isJacare,moving:false,time:r.elapsed});
+ const snapshot=r=>({x:r.player.x,y:r.player.y,airborne:r.player.grounded===false||r.player.velocity>0||r.player.y>(r.player.supportY||0)+.5,airJumpsUsed:r.player.airJumpsUsed||0,crouching:r.player.crouching,jacare:r.player.isJacare,moving:false,time:r.elapsed});
  return {
   reset(run){previous=run?snapshot(run):null;lastStart=0;nextDrag=0;},
   update(run,{bufferedTakeoff=false}={}){
    if(run.status!=='running'){previous=null;return;}
    const current=snapshot(run),p=run.player;
    if(!previous||p.isJacare||previous.jacare){previous=current;return;}
-   if(bufferedTakeoff||!previous.airborne&&current.airborne)play('jump');
+   if(bufferedTakeoff||!previous.airborne&&current.airborne&&p.velocity>0||current.airJumpsUsed>previous.airJumpsUsed)play('jump');
    if(previous.airborne&&!current.airborne)play('land');
    if(!previous.crouching&&p.crouching&&!current.airborne){play('slide');nextDrag=run.elapsed+.35;}
    else if(previous.crouching&&!p.crouching&&!current.airborne)play('slide-stop');

@@ -1,3 +1,8 @@
+import {createMovementSkills,movementProfileFor,rewardMovementVictory} from './runner-movement-skills.mjs?v=d0ad734b4838';
+export {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
+export {terrainProfileFor} from './runner-terrain.mjs?v=6da967adb283';
+import {TERRAIN,createTerrain,beginTerrain,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer,recoverTerrain} from './runner-terrain.mjs?v=6da967adb283';
+export {terrainSupportAt} from './runner-terrain.mjs?v=6da967adb283';
 import {stageRosterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 import {ROUTE_AMMO,advanceAmmo,addShieldPart} from './runner-supplies.mjs?v=44c67e8a5802';
 import {heroPowerFor,grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=432ca45a76e4';
@@ -7,9 +12,9 @@ export {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from '.
 import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=1eda01496613';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=043d40fd8ef2';
 import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
-import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=82c942b39f83';
+import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=f973724a4ad7';
 import {regularCastMuzzle} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
-import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=17aae58c9bc9';
+import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=d3b6a81b34b9';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
 import {BOSS_ARENA_RESERVE,BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,optionalStoryBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=245ba013c167';
 export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=245ba013c167';
@@ -223,7 +228,7 @@ export function createRun({assisted=false,seed,mode='endless',practiceId}={}) {
  return {status:'ready',mode:mode==='story'?'story':'endless',assisted:assisted===true,practice,elapsed:0,distance:startDistance,routeDistance:startDistance,viewportWidth:WORLD.width,bonus:0,collected:0,passports:0,lives:1,
   randomState:seed===undefined?null:Number(seed)>>>0,
   ballot:{digits:'',message:''},
-  event:'',events:0,player:{x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareAge:0,nextJacareThreat:3,restoreFlashFor:0,jumpBufferedUntil:0,attackHeld:false,attackFor:0,attackCooldown:0,shotFacing:1,hp:5,maxHp:5},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ammo:ROUTE_AMMO,ammoIdleFor:0,ammoReloadFor:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
+  event:'',events:0,movementSkills:createMovementSkills(),lastSkillReward:null,terrain:createTerrain(),player:{airJumpsUsed:0,grounded:true,supportY:0,sliding:false,slideRemaining:0,slideLatched:false,x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareAge:0,nextJacareThreat:3,restoreFlashFor:0,jumpBufferedUntil:0,attackHeld:false,attackFor:0,attackCooldown:0,shotFacing:1,hp:5,maxHp:5},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ammo:ROUTE_AMMO,ammoIdleFor:0,ammoReloadFor:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,shieldFor:0,graceFor:0,reserveShields:0,allyShieldProgress:0,allyHelpCount:0,
   lastPickup:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,phantomCloud:null,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:practice?startDistance:null,bossCooldown:0,
@@ -240,7 +245,8 @@ export function resizeRun(run,width){
  run.viewportWidth=Math.max(480,Math.min(900,Number(width)||WORLD.width));
  if(visibleWidth(run)===previous)return;
  const bounds=playerBounds(run);run.player.x=bounds.min+position*(bounds.max-bounds.min);
- const delta=playerX(run)-oldX,contactX=frontContact(run),rear=playerX(run)+5;
+ const delta=playerX(run)-oldX;translateTerrain(run,delta);
+ const contactX=frontContact(run),rear=playerX(run)+5;
  const ratio=(visibleWidth(run)-contactX)/(previous-oldFront),rearRatio=rear/oldRear;
  const moved=new Map(),project=x=>contactX+(x-oldFront)*ratio;
  for(const shot of run.heroShots||[]){shot.x=project(shot.x);shot.previousX=project(shot.previousX);shot.vx*=ratio;}
@@ -381,11 +387,18 @@ export function jumpRun(run){
  // Durante a transformação a tecla de salto não interrompe a forma de jacaré.
  // As ampolas exigem desvio lateral e a corrida permanece ativa.
  if(run.player.isJacare)return false;
- if(run.player.y>0||run.player.velocity>0){run.player.jumpBufferedUntil=run.elapsed+JUMP_BUFFER_SECONDS;return false;}
- run.player.jumpBufferedUntil=0;run.player.crouching=false;run.player.velocity=610;return true;
+ if(run.player.grounded===false||Math.abs(run.player.y-(run.player.supportY??0))>1e-8||run.player.velocity>0){
+  const profile=movementProfileFor(run);
+  if((run.player.airJumpsUsed||0)<profile.maxAirJumps){
+   run.player.airJumpsUsed=(run.player.airJumpsUsed||0)+1;run.player.jumpBufferedUntil=0;
+   run.player.crouching=false;run.player.sliding=false;run.player.slideRemaining=0;run.player.grounded=false;run.player.velocity=profile.airJumpVelocity;return true;
+  }
+  run.player.jumpBufferedUntil=run.elapsed+JUMP_BUFFER_SECONDS;return false;
+ }
+ run.player.jumpBufferedUntil=0;run.player.crouching=false;run.player.sliding=false;run.player.slideRemaining=0;run.player.grounded=false;run.player.velocity=610;return true;
 }
 export function clearRunInput(run){
- run.player.moveHeld=0;run.player.crouchHeld=false;run.player.crouching=false;run.player.jumpBufferedUntil=0;
+ run.player.moveHeld=0;run.player.crouchHeld=false;run.player.crouching=false;run.player.sliding=false;run.player.slideRemaining=0;run.player.slideLatched=false;run.player.jumpBufferedUntil=0;
  run.player.attackHeld=false;
 }
 export function setAttackRun(run,active){
@@ -532,8 +545,8 @@ function advanceHeroShots(run,dt){
 // Soltar/cancelar limpa também uma intenção ainda aguardando o pouso.
 export function crouchRun(run,active){
  run.player.crouchHeld=!!active&&run.status==='running'&&!run.player.isJacare;
- const next=!run.player.isJacare&&run.player.crouchHeld&&run.player.y===0&&run.player.velocity===0;
- run.player.crouching=next;
+ const next=!run.player.isJacare&&run.player.crouchHeld&&run.player.grounded!==false&&Math.abs(run.player.y-(run.player.supportY??0))<1e-8&&run.player.velocity===0;
+ run.player.crouching=next;if(!next){run.player.sliding=false;run.player.slideRemaining=0;}if(!active)run.player.slideLatched=false;
  return next;
 }
 // Interno ao motor/testes; não há comando de pausa na interface.
@@ -733,7 +746,7 @@ function resolveBossDodges(run){
  const boss=run.boss;
  if(boss.combat?boss.hp>0:!(Number.isFinite(boss.hp)&&boss.hp<=0)&&(boss.fired<boss.total||boss.remaining>0))return;
  if(!boss.combat&&boss.hp>0&&run.obstacles.some(o=>o.reflected&&!o.destroyed&&o.reflection?.boss===boss))return;
- if(!boss.traversal)grantBossPower(run,boss.type);run.lastBoss=boss.type;run.boss=null;run.ammo=Math.min(ROUTE_AMMO,run.ammo);run.bossesDefeated++;run.bossCooldown=4;
+ if(!boss.traversal)grantBossPower(run,boss.type);run.lastBoss=boss.type;run.boss=null;run.ammo=Math.min(ROUTE_AMMO,run.ammo);run.bossesDefeated++;rewardMovementVictory(run,boss);run.bossCooldown=4;
  run.heroShots=[];run.player.attackHeld=false;run.obstacles=[];run.player.hp=run.player.maxHp;
  if(run.practice){run.status='won';run.nextBossAt=Infinity;clearRunInput(run);announce(run,'Desafio opcional concluído.');return;}
  if(run.mode==='story'&&run.bossesDefeated>=STORY_BOSS_COUNT){
@@ -762,7 +775,7 @@ function advanceRaid(run,dt,rng){
    else{run.raid=null;const risk=difficultyAt(run.distance,run.elapsed).pressure;run.nextRaid=28-12*risk+random(rng)*(8-3*risk);run.bossCooldown=Math.max(2.5,run.bossCooldown);}
   }return;
  }
- if(!Number.isFinite(run.nextRaid))return;
+ if(run.terrain?.active||!Number.isFinite(run.nextRaid))return;
  run.nextRaid-=dt;
  const stage=routeStageFor(run),local=campaignRouteDistance(run)%SCENE_DISTANCE;
  const dueByStage=local>=3000&&!run.raidStageCoverage?.[raidStageKey(run)];
@@ -838,15 +851,29 @@ function rehearseStoryBoss(run,balance){
  if(!o.falling)run.obstacles.push(o);run.spawnedObstacles++;run.rehearsedBoss=b.id;
  run.cameo={type:b.type,remaining:1.4};return o;
 }
+function prepareTerrain(run,balance){
+ const state=run.terrain;if(!state||state.active||run.elapsed<state.nextAt||!Number.isFinite(run.nextObstacle)||run.practice||run.boss||run.raid||run.player.isJacare||run.bossCooldown>0||routeTransitionFor(run).active||run.mode==='story'&&storyApproachAt(run.routeDistance,run.bossesDefeated))return false;
+ const reserve=terrainReservationFor(run),travel=balance.speed*assistance(run)*reserve;
+ const local=campaignRouteDistance(run)%SCENE_DISTANCE;
+ if(run.nextRaid<=reserve||run.nextBossAt-run.routeDistance<=travel+(run.mode==='story'?1000:0)||local+travel>SCENE_DISTANCE*.9||run.pickups.some(p=>p.type==='ze-gotinha'))return false;
+ // Stop introducing waves while the last announced attack clears. Existing
+ // attacks complete with their original contact times before terrain appears.
+ if(run.obstacles.some(o=>!o.passed&&!o.counted&&!o.destroyed))return true;
+ const a=beginTerrain(run);announce(run,a.kind==='passage'?'Passagem baixa à frente: abaixe e avance para deslizar.':'Vão à frente: pule e pouse na plataforma elevada.');return true;
+}
 export function advanceRun(run,seconds,rng){
  if(run.status!=='running'||!Number.isFinite(seconds)||seconds<=0)return;
  if(typeof rng!=='function')rng=run.randomState===null||run.randomState===undefined?Math.random:()=>{run.randomState=nextSeed(run.randomState);return run.randomState/4294967296;};
  const dt=Math.min(seconds,.05);run.elapsed+=dt;
+ if(run.lastSkillReward){run.lastSkillReward.remaining-=dt;if(run.lastSkillReward.remaining<=0)run.lastSkillReward=null;}
  if(run.lastPowerReward){run.lastPowerReward.remaining-=dt;if(run.lastPowerReward.remaining<=0)run.lastPowerReward=null;}
+ run.player.previousX=playerX(run);
  const bounds=playerBounds(run);
  if(run.boss?.activeGust){const gust=run.boss.activeGust;run.player.x=Math.max(bounds.min,Math.min(bounds.max,playerX(run)+gust.direction*gust.strength*dt));gust.remaining-=dt;if(gust.remaining<=0)run.boss.activeGust=null;}
+ advanceSlide(run,dt,!run.boss&&!run.raid&&!run.player.isJacare&&!(run.mode==='story'&&storyApproachAt(run.routeDistance,run.bossesDefeated)));
+ const moveSpeed=run.player.sliding?TERRAIN.slideSpeed:230*(run.aid?.kind==='encourage'?1.2:1);
  const entering=run.boss?.combat&&run.boss.phase==='intro'&&playerX(run)>visibleWidth(run)-BOSS_ARENA_RESERVE;
- run.player.x=entering?Math.max(visibleWidth(run)-BOSS_ARENA_RESERVE,playerX(run)-230*dt):Math.max(bounds.min,Math.min(bounds.max,playerX(run)+(run.player.moveHeld||0)*230*(run.aid?.kind==='encourage'?1.2:1)*dt));
+ run.player.x=entering?Math.max(visibleWidth(run)-BOSS_ARENA_RESERVE,playerX(run)-230*dt):Math.max(bounds.min,Math.min(bounds.max,playerX(run)+(run.player.moveHeld||0)*moveSpeed*dt));
  advanceAllies(run,dt);
  if(run.player.isJacare){
   run.player.jacareAge=Math.min(JACARE_DURATION_SECONDS,run.player.jacareAge+dt);
@@ -876,12 +903,9 @@ export function advanceRun(run,seconds,rng){
  if(run.cameo){run.cameo.remaining-=dt;if(run.cameo.remaining<=0)run.cameo=null;}
  // A tolerância só absorve erro de ponto flutuante no limite exato de 120ms.
  if(run.player.jumpBufferedUntil<run.elapsed-1e-8)run.player.jumpBufferedUntil=0;
- run.player.velocity-=1750*dt;run.player.y=Math.max(0,run.player.y+run.player.velocity*dt);
- if(run.player.y>0)run.player.crouching=false;
- if(run.player.y===0){
-  run.player.velocity=0;run.player.crouching=!run.player.isJacare&&!!run.player.crouchHeld;
-  if(run.player.jumpBufferedUntil>0)jumpRun(run);
- }
+ advanceTerrain(run,dt);
+ const terrainHit=stepTerrainPlayer(run,dt);
+ if(run.player.grounded&&run.player.jumpBufferedUntil>0)jumpRun(run);
  run.shieldFor=Math.max(0,run.shieldFor-dt);run.graceFor=Math.max(0,run.graceFor-dt);
  const castDeltas=new Map();
  for(const obstacle of run.obstacles){
@@ -937,9 +961,11 @@ export function advanceRun(run,seconds,rng){
  run.pickups=run.pickups.filter(p=>p.x>-30);
  // Uma Joice já vencida tem prioridade sobre o próximo marco de chefe.
  advanceRaid(run,dt,rng);
- if(!run.player.isJacare&&!run.boss&&!run.raid&&run.bossCooldown<=0&&run.routeDistance>=run.nextBossAt&&(run.mode==='story'||!routeTransitionFor(run).active))beginBoss(run);
+ if(!run.terrain?.active&&!run.player.isJacare&&!run.boss&&!run.raid&&run.bossCooldown<=0&&run.routeDistance>=run.nextBossAt&&(run.mode==='story'||!routeTransitionFor(run).active))beginBoss(run);
+ const terrainWaiting=prepareTerrain(run,balance);
  let anchor;
- if(run.player.isJacare){
+ if(run.terrain?.active||terrainWaiting){run.nextObstacle=Math.max(run.nextObstacle,1.2);}
+ else if(run.player.isJacare){
   // Sem salto normal, o evento pede reposicionamento, não obstáculos saltáveis.
   run.player.nextJacareThreat-=dt;
   if(run.player.jacareAge>=JACARE_ENTRY_GRACE&&run.player.jacareAge<=JACARE_DURATION_SECONDS-2.4&&run.player.nextJacareThreat<=0){
@@ -1028,11 +1054,11 @@ export function advanceRun(run,seconds,rng){
    run.nextObstacle+=gap+(raidActive?random(rng)*.04:random(rng)*(.16+.06*(1-balance.pressure)));
   }
  }
- if(!run.boss&&!run.raid&&run.routeDistance>=run.nextAllyAt){
+ if(!run.terrain?.active&&!run.boss&&!run.raid&&run.routeDistance>=run.nextAllyAt){
   run.pickups.push({type:'ze-gotinha',x:visibleWidth(run)+40,y:20,speed:balance.speed*assistance(run),value:0});
   run.nextAllyAt+=ROUTE_DISTANCE;run.alliesMet++;
  }
- if(run.supportAvailable!==false&&!run.boss&&!run.raid&&run.routeDistance>=run.nextSupportAt&&!run.pickups.some(p=>p.type==='ally')){
+ if(!run.terrain?.active&&run.supportAvailable!==false&&!run.boss&&!run.raid&&run.routeDistance>=run.nextSupportAt&&!run.pickups.some(p=>p.type==='ally')){
   const ally=allyForStage(run.mode==='story'?routeStageFor(run).legacyIndex:routeStageFor(run).index,run.allyVisits,rng);
   run.pickups.push({type:'ally',allyId:ally.id,x:visibleWidth(run)+40,y:20,speed:balance.speed*assistance(run),value:0});
   run.nextSupportAt=run.routeDistance+14000;
@@ -1045,6 +1071,7 @@ export function advanceRun(run,seconds,rng){
  run.pickups=run.pickups.filter(p=>{
   const hit=right>p.x-12&&left<p.x+12&&top>p.y-12&&bottom<p.y+12;
   if(hit){
+   if(p.type==='ze-gotinha'&&run.terrain?.active)return true;
    run.collected++;run.lastPickup=p.type;
    if(p.type==='ally')collectAlly(run,p.allyId);
    if(p.type==='ze-gotinha'){
@@ -1061,7 +1088,7 @@ export function advanceRun(run,seconds,rng){
  });
  // A largura visual do jacaré é de aproximadamente 70 px (120-15 a 154+17).
  // O humano mantém as margens antigas para preservar o restante da física.
- const hit=(run.boss?.traversal||run.shieldFor<=0&&run.graceFor<=0)&&run.obstacles.find(o=>!o.passed&&!o.counted&&(!o.projectile||o.launched||!(o.waitFor>0))&&(!(o.falling||o.groundHazard)||o.age>=o.warningFor)&&overlapsPlayer(run,o));
+ const hit=terrainHit||(run.boss?.traversal||run.shieldFor<=0&&run.graceFor<=0)&&run.obstacles.find(o=>!o.passed&&!o.counted&&(!o.projectile||o.launched||!(o.waitFor>0))&&(!(o.falling||o.groundHazard)||o.age>=o.warningFor)&&overlapsPlayer(run,o));
  if(hit){
   if(run.boss?.traversal){
    hit.counted=true;hit.contactHit=true;run.graceFor=1.1;
@@ -1073,6 +1100,6 @@ export function advanceRun(run,seconds,rng){
    hit.counted=true;run.graceFor=1.1;announce(run,'Atingido! Energia '+run.player.hp+'/'+run.player.maxHp+'.');return;
   }
   run.lives--;announce(run,run.lives>0?'Vida extra usada! Restam '+run.lives+'.':'Foi pego pela Polícia Federal! A fuga fictícia terminou.');
-  if(run.lives<=0){run.status='over';run.heroShots=[];clearRunInput(run);return;}run.player.hp=run.player.maxHp;run.graceFor=RECOVERY_AFTER_EXTRA;
+  if(run.lives<=0){run.status='over';run.heroShots=[];clearRunInput(run);return;}if(terrainHit)recoverTerrain(run);run.player.hp=run.player.maxHp;run.graceFor=RECOVERY_AFTER_EXTRA;
  }
 }

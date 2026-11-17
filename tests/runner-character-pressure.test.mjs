@@ -5,7 +5,7 @@ import {createVoiceDirector} from '../tanahoraflavio/runner-voice-director.mjs';
 import {createGameAudio} from '../tanahoraflavio/runner-audio.mjs';
 
 const seeded=seed=>()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/2**32);
-const running=()=>{const r=core.createRun();core.startRun(r);r.shieldFor=Infinity;r.nextBossAt=r.nextRaid=Infinity;return r;};
+const running=()=>{const r=core.createRun();core.startRun(r);r.terrain.nextAt=Infinity;r.shieldFor=Infinity;r.nextBossAt=r.nextRaid=Infinity;return r;};
 
 test('velocidade e risco continuam crescendo depois da primeira volta',()=>{
  const points=[[0,0],[35000,115],[70000,230],[120000,400],[210000,700]]

@@ -1,7 +1,7 @@
-import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=f79ef9e1d27f';
-import {drawSpecialRunner} from './runner-character-art.mjs?v=2b02f5b89e18';
-export {drawHeroShot} from './runner-character-art.mjs?v=2b02f5b89e18';
-import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=532ce9f60515";
+import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=03e5eaf9ccb0';
+import {drawSpecialRunner} from './runner-character-art.mjs?v=09f7c2621823';
+export {drawHeroShot} from './runner-character-art.mjs?v=09f7c2621823';
+import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=75f5261a8955";
 import {CAMPAIGN_PROP_COLORS,drawCampaignProp} from './runner-campaign-art.mjs?v=9cc4e669f36d';
 // Personagens em atlas WebP; itens e perigos continuam vetoriais em Canvas.
 const INK='#292337',CREAM='#fff6e5';
@@ -11,7 +11,7 @@ function path(c,points,fill,stroke=INK){c.beginPath();points.forEach(([x,y],i)=>
 function line(c,points,color=INK,width=2){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.strokeStyle=color;c.lineWidth=width;c.lineCap='round';c.lineJoin='round';c.stroke();}
 function text(c,value,x,y,size=7,color=CREAM){c.fillStyle=color;c.font='900 '+size+'px system-ui';c.textAlign='center';c.fillText(value,x,y);}
 
-export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT,CORE_SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=532ce9f60515";
+export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT,CORE_SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=75f5261a8955";
 // Figuras vetoriais articuladas preservam a silhueta original do meme.
 // Silhueta original do meme: chapéu vermelho, emblema dourado e pernas longas.
 export function drawMemeArmy(c,{x=0,y=0,phase=0,scale=1,reducedMotion=false,standing=false,running=false}={}){
@@ -413,7 +413,9 @@ export function drawProjectile(c,item,ground,phase,{reducedMotion=false}={}){
   style==='wind'?Math.sin(phase*.25)*.12:style==='ghost'?Math.sin(phase*.16)*.10:
   Math.sin(phase*.20)*.10;
  c.rotate(tilt);c.translate(-x,-y);
- drawThreat(c,item,y+item.height/2,phase,{reducedMotion});
+ // The flight layer already draws a directional wake. Extra local streaks
+ // would point ahead of leftward shots and obscure the illustrated object.
+ drawThreat(c,item,y+item.height/2,phase,{reducedMotion,weaponEffects:false});
  c.restore();
 }
 export function drawThreat(c,item,ground,phase,{reducedMotion=false,weaponEffects=true}={}){

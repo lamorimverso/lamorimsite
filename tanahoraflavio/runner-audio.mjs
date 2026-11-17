@@ -1,7 +1,7 @@
 import {createVoiceSelector} from './runner-voice-selector.mjs?v=ad3200a88cd4';
-import {getMovementSoundBank} from './runner-movement-audio.mjs?v=6411ef96c0d1';
+import {getMovementSoundBank} from './runner-movement-audio.mjs?v=324263bcd025';
 import {createGameSoundtrack} from './runner-soundtrack.mjs?v=eef47a2a323c';
-import {getCastSoundBank} from './runner-cast-sounds.mjs?v=6f3606ecd92f';
+import {getCastSoundBank} from './runner-cast-sounds.mjs?v=2af8b6ef13d0';
 import {getEnemyShotBank} from './runner-shot-sounds.mjs?v=fd84e4e83e32';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
 // Efeitos locais e recorte de arquivo identificado; nenhuma imitação de voz.

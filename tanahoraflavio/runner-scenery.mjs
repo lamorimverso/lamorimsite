@@ -294,10 +294,11 @@ function drawAmbientDetails(c,geometry,{distance=0,reducedMotion=false}={}){
 export function drawJourneyScenery(c,options={}){
  const geometry=journeySceneryGeometry(options),width=geometry.width;
  const quiet=Math.max(0,Math.min(1,Number(options.quiet)||0));
+ const skyTop=-Math.max(0,Number(options.cameraLift)||0);
  c.save();
  try{
-  c.fillStyle=paletteGradient(c,geometry,'sky');c.fillRect(0,0,width,300);
-  c.fillStyle=daylightGradient(c,geometry,0,246,1);c.fillRect(0,0,width,246);
+  c.fillStyle=paletteGradient(c,geometry,'sky');c.fillRect(0,skyTop,width,300-skyTop);
+  c.fillStyle=daylightGradient(c,geometry,0,246,1);c.fillRect(0,skyTop,width,246-skyTop);
   oval(c,width-66,55,29,29,'#fff7d838');oval(c,width-66,55,21,21,'#fff9e5d9');
   for(const item of geometry.clouds)cloud(c,item.x,item.y,item.scale);
   c.save();c.globalAlpha*=1-.45*quiet;

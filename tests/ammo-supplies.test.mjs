@@ -20,9 +20,10 @@ test('chefe tem limite de doze; segurar o tiro vazio impede recarga até soltar'
  step(r,8);assert.equal(r.ammo,12);collectAlly(r,'jair');assert.equal(r.ammo,12);
  r.boss=null;r.nextBossAt=Infinity;step(r,.02);assert.equal(r.ammo,6);r.ammo=0;step(r,4);assert.equal(r.ammo,0);
 });
-test('cada seis partes cria uma reserva acumulável sem proteção automática; E gasta só uma',()=>{
+test('cada seis ajudas cria uma reserva acumulável além dos três segundos de proteção; E gasta só uma',()=>{
  const r=make();for(let i=0;i<14;i++)collectAlly(r,'jair');
- assert.equal(r.reserveShields,2);assert.equal(r.allyShieldProgress,2);assert.equal(r.shieldFor,0);
+ assert.equal(r.reserveShields,2);assert.equal(r.allyShieldProgress,2);assert.equal(r.shieldFor,3);
+ assert.equal(core.activateReserveShield(r),false);assert.equal(r.reserveShields,2);step(r,3.1);
  assert.equal(core.activateReserveShield(r),true);assert.equal(r.reserveShields,1);assert.equal(core.activateReserveShield(r),false);assert.equal(r.reserveShields,1);
  step(r,6.1);assert.equal(core.activateReserveShield(r),true);assert.equal(r.reserveShields,0);
  assert.equal(core.createRun().ammo,6);assert.equal(core.createRun().reserveShields,0);
