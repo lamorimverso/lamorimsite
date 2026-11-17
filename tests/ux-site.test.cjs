@@ -930,7 +930,10 @@ test('engrenagem reúne comandos e preferências em um painel compacto',async()=
   await page.locator('#game-settings summary').click();
   assert.deepEqual(await page.locator('#game-settings select').evaluateAll(rows=>rows.map(e=>e.id)),['game-crouch-mode','game-effects']);
   assert.equal(await page.locator('#game-settings a').count(),1);
-  assert.equal(await page.locator('#game-control-bindings tbody tr').count(),8);assert.match(await page.locator('[data-bind-action=right][data-bind-device=keyboard]').textContent(),/D.*→/);
+  const bindings=page.locator('#game-control-bindings tbody tr');
+  // Só o HTML do painel está disponível antes do import assíncrono do jogo.
+  await bindings.nth(7).waitFor({state:'attached'});
+  assert.equal(await bindings.count(),8);assert.match(await page.locator('[data-bind-action=right][data-bind-device=keyboard]').textContent(),/D.*→/);
   const box=await page.locator('#game-settings').boundingBox();assert.ok(box.height<420,'painel de comandos compacto');
   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
   await page.locator('#game-settings').screenshot({path:path.resolve(__dirname,'../ux-captures/compact-controls-390.png')});
