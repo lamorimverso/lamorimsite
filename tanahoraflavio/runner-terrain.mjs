@@ -4,7 +4,7 @@ import {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
 // above WORLD.ground. Resizing translates shapes with the hero, never stretches
 // a jump or replaces an active hole with invisible ground.
 export const TERRAIN = Object.freeze({speed:270,warningFor:2.3,slideFor:.85,slideSpeed:310,clearance:46,platformY:28});
-export function createTerrain(){return {active:null,nextAt:6,completed:0,spawned:0,lessonCompleted:false,flightCompleted:false};}
+export function createTerrain(){return {active:null,nextAt:6,completed:0,spawned:0,lessonCompleted:false,flightCompleted:false,flightsCompleted:0,lastFlightArrival:null};}
 const BASIC_ROUTE=Object.freeze({id:'basic',gapTime:.39,platformOffsetTime:.30,platformTime:.54,platformY:28,requiresDoubleJump:false});
 // The earned jump is an alternative, never the entry ticket to a compulsory bar.
 const ADVANCED_ROUTE=Object.freeze({id:'earned-jump-optional',gapTime:.45,platformOffsetTime:.37,platformTime:.57,platformY:40,requiresDoubleJump:false});
@@ -104,7 +104,8 @@ export function advanceTerrain(run,dt,travel){
   // cross the end of the gap and touch solid ground before combat can resume.
   const end=a.gaps[0].x+a.gaps[0].width;
   if(end<=run.player.x+5&&run.player.grounded&&run.player.y===0){
-   f.progress=1;run.routeDistance=f.routeEnd;state.active=null;state.completed++;state.nextAt=run.elapsed+18;state.flightCompleted=true;
+   f.progress=1;run.routeDistance=f.routeEnd;state.active=null;state.completed++;state.nextAt=run.elapsed+18;
+   state.flightCompleted=true;state.flightsCompleted++;state.lastFlightArrival=f.routeEnd;
   }
   return;
  }

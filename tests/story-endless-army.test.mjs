@@ -58,6 +58,7 @@ test('História conclui somente depois de derrotar Lula no retorno a Brasília',
 });
 test('Infinito segue depois de cinco chefões e não chama a vitória da História',()=>{
  const r=isolated();r.distance=r.routeDistance=57000;r.bossesDefeated=5;r.nextBossAt=0;r.shieldFor=Infinity;
+ r.terrain.nextAt=Infinity; // Este teste isola a ordem do elenco, sem pilotar a travessia.
  const seen=[];
  for(let i=0;i<120*42&&r.status==='running';i++){
   const prev=r.boss;

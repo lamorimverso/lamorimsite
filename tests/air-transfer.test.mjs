@@ -12,6 +12,35 @@ function flightReady({width=900,assisted=false,mode='story'}={}){
  r.terrain.nextAt=900;r.nextObstacle=2;return r;
 }
 function enter(r,dt=1/120){for(let i=0;i<Math.round(2/dt)&&!r.terrain.active;i++)core.advanceRun(r,dt);return r.terrain.active;}
+const beforeExit=(r,index)=>{
+ r.routeDistance=(r.mode==='story'?core.STORY_OPENING_DISTANCE:0)+index*core.SCENE_DISTANCE-1401;
+ r.nextObstacle=Infinity;
+};
+function finishFlight(r,from,to,crossings){
+ const a=enter(r);assert.equal(a?.kind,'air-transfer',`${from} → ${to}`);
+ assert.deepEqual([a.flight.from,a.flight.to],[from,to]);
+ assert.deepEqual([core.routeTransitionFor(r).from.id,core.routeTransitionFor(r).to.id],[from,to]);
+ for(let i=0;i<30*120&&r.terrain.active&&r.status==='running';i++){pilotDodge(r);core.advanceRun(r,1/120);}
+ assert.equal(r.status,'running');assert.equal(r.terrain.active,null);assert.equal(r.terrain.flightsCompleted,crossings);
+ assert.equal(core.routeStageFor(r).id,to);
+ assert.deepEqual([core.routeTransitionFor(r).active,core.routeTransitionFor(r).to.id],[false,to]);
+}
+test('depois do treino, saídas geográficas sucessivas embarcam uma vez, inclusive entre Flórida e Distrito de Colúmbia',()=>{
+ const r=flightReady({mode:'endless'});
+ for(const index of [1,2]){beforeExit(r,index);assert.equal(enter(r),null,'os dois primeiros cenários ainda são em terra');}
+ for(const [index,from,to] of [[3,'argentina','paraguai'],[4,'paraguai','florida'],[5,'florida','casa-branca'],[6,'casa-branca','brasilia'],[7,'brasilia','rio']]){
+  beforeExit(r,index);finishFlight(r,from,to,index-2);
+  assert.equal(enter(r),null,'pousar não reabre o mesmo voo');
+ }
+});
+test('História pousa no destino de cada voo, retorna a Brasília e não reinicia a rota no final',()=>{
+ const r=flightReady();
+ for(let index=3;index<core.STORY_STAGES.length;index++){
+  beforeExit(r,index);finishFlight(r,core.STORY_STAGES[index-1].id,core.STORY_STAGES[index].id,index-2);
+ }
+ beforeExit(r,core.STORY_STAGES.length);
+ assert.equal(enter(r),null);assert.equal(core.routeStageFor(r).id,'brasilia-final');
+});
 test('Infinito tem uma barra de treino no terceiro destino e viagem Paraguai → Flórida sem ameaças do solo',()=>{
  const r=flightReady({width:480,assisted:true});r.mode='endless';r.routeDistance=2*core.SCENE_DISTANCE+759;
  assert.equal(enter(r)?.kind,'ground-lesson');assert.equal(core.routeStageFor(r).id,'argentina');
@@ -39,6 +68,19 @@ test('São Paulo boards to Argentina, with movement and no ground encounters dur
  assert.ok(r.player.x>x);assert.ok(r.routeDistance>route);assert.equal(r.boss,null);assert.equal(r.raid,null);assert.equal(r.obstacles.length,0);
  assert.ok(!a.requiresDoubleJump);assert.equal(core.routeTransitionFor(r).to.id,'argentina');
  assert.equal(terrainSupportAt(r,a.gaps[0].x+30),null);
+});
+test('os passaportes normais continuam acessíveis no voo sem alterar vida, escudo ou dano',()=>{
+ const r=flightReady({mode:'endless'});r.nextPassport=0;r.player.hp=1;r.recoveryReadyAt=Infinity;
+ const a=enter(r);assert.equal(a?.kind,'air-transfer');
+ assert.equal(r.pickups.length,6);
+ for(const pickup of r.pickups){
+  assert.equal(pickup.type,'passport');
+  const bar=[a.platforms[0],a.platforms.at(-1)].find(bar=>pickup.x>=bar.x&&pickup.x<=bar.x+bar.width);
+  assert.ok(bar,'coleta não exige abandonar uma barra');assert.equal(pickup.y,bar.y+18);
+ }
+ for(let i=0;i<30*120&&r.terrain.active&&r.status==='running';i++){pilotDodge(r);core.advanceRun(r,1/120);}
+ assert.equal(r.terrain.flightCompleted,true);assert.equal(r.passports,6);
+ assert.equal(r.player.hp,1);assert.equal(r.lives,1);assert.equal(r.reserveShields,0);
 });
 test('real flight needs jumping and reaches each mode’s destination at 30/60/120 Hz',()=>{
  for(const mode of ['story','endless'])for(const hz of [30,60,120])for(const width of [480,900])for(const assisted of [false,true]){

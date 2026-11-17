@@ -42,7 +42,24 @@ async function open({instrument=false,instrumentAudio=false,instrumentCasting=fa
  }
  if(instrumentSprites){
   const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-sprites.mjs'),'utf8');
-  await context.route('**/runner-sprites.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+"\nconst drawOriginal=drawSpriteActor;drawSpriteActor=(c,args)=>{const rows=(globalThis.__actorMotion??=[]);rows.push({type:args.type,facing:args.facing,frame:spriteFrameFor(args.type,args)?.index});if(rows.length>1000)rows.shift();return drawOriginal(c,args);};"}));
+  await context.route('**/runner-sprites.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+`
+const drawOriginal=drawSpriteActor;
+const readHeroPixels=(args,output)=>{
+ const g=new OffscreenCanvas(360,360).getContext('2d'),pivot=60,floor=104;
+ g.scale(3,3);drawOriginal(g,{...args,x:pivot,y:floor});
+ const {data}=g.getImageData(0,0,360,360);let left=360,right=-1,top=360,bottom=-1;
+ for(let i=3;i<data.length;i+=4)if(data[i]>128){const x=((i-3)/4)%360,y=Math.floor((i-3)/4/360);left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}
+ output.width=(right-left+1)/3;output.height=(bottom-top+1)/3;output.sole=(bottom+1)/3-floor;
+};
+drawSpriteActor=(c,args)=>{
+ const rows=(globalThis.__actorMotion??=[]),row={type:args.type,facing:args.facing,frame:spriteFrameFor(args.type,args)?.index};
+ if(globalThis.__measureHero&&args.type==='flavio'){
+  const p=globalThis.__testRun?.player,last=rows.at(-1);
+  row.stance=p?.sliding?'slide':p?.crouching?'crouch':'run';row.y=args.y;row.shooting=!!args.slideShot;
+  if(row.stance!==last?.stance||row.shooting!==last?.shooting)readHeroPixels(args,row);
+ }
+ rows.push(row);if(rows.length>1000)rows.shift();return drawOriginal(c,args);
+};`}));
  }
  if(instrumentCrowd){
   const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-campaign-art.mjs'),'utf8');
@@ -88,19 +105,35 @@ test('a route gap has visible terrain and its own outcome instead of a police ca
  }finally{await context.close();}
 });
 
-test('crouch-forward still performs a real slide without the suspended panel',async()=>{
- const {context,page,errors}=await open({instrument:true,viewport:{width:900,height:720}});
+for(const remapped of [false,true])test(`crouch-forward draws a distinct extended grounded slide (${remapped?'remapped keys':'arrow keys'})`,async()=>{
+ const init=remapped?()=>localStorage.setItem('tanahoraflavio.runner.preferences.v1',JSON.stringify({controls:{keyboard:{crouch:['KeyH'],right:['KeyL']}}})):undefined;
+ const down=remapped?'h':'ArrowDown',forward=remapped?'l':'ArrowRight';
+ const {context,page,errors}=await open({instrument:true,instrumentSprites:true,init,viewport:{width:900,height:720}});
  try{
   await begin(page);
   await page.evaluate(()=>{
    const r=__testRun;for(const key of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[key]=Infinity;
-   r.obstacles=[];r.pickups=[];r.terrain.nextAt=Infinity;
+   r.obstacles=[];r.pickups=[];r.terrain.nextAt=Infinity;globalThis.__measureHero=true;
   });
-  await page.locator('#runner-canvas').focus();await page.keyboard.down('s');await page.keyboard.down('d');
-  await page.waitForFunction(()=>__testRun.player.sliding&&__testRun.player.x>200);
-  await page.keyboard.up('d');
-  await page.waitForFunction(()=>!__testRun.player.sliding&&__testRun.terrain.active===null);
-  await page.keyboard.up('s');assert.equal(await page.evaluate(()=>__testRun.status),'running');
+  await page.locator('#runner-canvas').focus();
+  await page.waitForFunction(()=>__actorMotion.some(p=>p.stance==='run'&&p.width>0));
+  await page.keyboard.down(down);
+  await page.waitForFunction(()=>__actorMotion.some(p=>p.stance==='crouch'&&p.width>0));
+  await page.keyboard.down(forward);
+  await page.waitForFunction(()=>__testRun.player.sliding&&__testRun.player.x>200&&__actorMotion.some(p=>p.stance==='slide'&&p.width>0));
+  const [running,crouch,slide]=await page.evaluate(()=>['run','crouch','slide'].map(s=>__actorMotion.find(p=>p.stance===s&&p.width>0)));
+  assert.ok(running.height>crouch.height+25,`a passada é alta: ${JSON.stringify(running)}`);
+  assert.ok(slide.height<=33&&slide.height<crouch.height-5,`o deslize precisa baixar mais que o agachamento: ${JSON.stringify({slide,crouch})}`);
+  assert.ok(slide.width>=crouch.width+8,`a perna projetada alonga a silhueta: ${JSON.stringify({slide,crouch})}`);
+  assert.ok(Math.abs(slide.sole)<=1.5&&slide.y===crouch.y,'as solas permanecem apoiadas no mesmo piso');
+  await page.keyboard.press('j');
+  await page.waitForFunction(()=>__actorMotion.some(p=>p.stance==='slide'&&p.shooting&&p.width>0));
+  const shot=await page.evaluate(()=>__actorMotion.find(p=>p.stance==='slide'&&p.shooting&&p.width>0));
+  assert.ok(shot.height<=33&&shot.y===slide.y&&Math.abs(shot.sole)<=1.5,'disparar preserva a postura e o contato com o solo');
+  await page.keyboard.up(forward);
+  await page.waitForFunction(()=>!__testRun.player.sliding&&__testRun.terrain.active===null&&__actorMotion.at(-1)?.stance==='crouch');
+  await page.keyboard.up(down);
+  await page.waitForFunction(()=>__testRun.status==='running'&&__actorMotion.at(-1)?.stance==='run');
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });

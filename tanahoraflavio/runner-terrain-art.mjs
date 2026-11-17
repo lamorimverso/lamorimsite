@@ -1,4 +1,4 @@
-import {aircraftPoseFor} from './runner-terrain.mjs?v=65a410e5d235';
+import {aircraftPoseFor} from './runner-terrain.mjs?v=6013f334bf91';
 // Shapes use the same logical x and height-above-ground as traversal physics.
 // No collision state is changed here, and no asset allocation is needed per frame.
 const INK='#303747',STONE='#aebbb9',EDGE='#e7e8d8',SHADE='#657985';

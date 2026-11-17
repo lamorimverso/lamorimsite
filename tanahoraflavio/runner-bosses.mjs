@@ -1,4 +1,4 @@
-import {STAGES,STORY_STAGES,SCENE_DISTANCE} from './runner-route-data.mjs?v=01fa5c1830b5';
+import {STAGES,STORY_STAGES,SCENE_DISTANCE} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {bossMechanicFor} from './runner-boss-mechanics.mjs?v=640e2bd41abb';
 import {BOSS_RANKS,bossProfileFor} from './runner-boss-profiles.mjs?v=740e8ab135c4';
 // Encontros ficcionais: quatro classes por cenário, sem mudar identidades.

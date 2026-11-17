@@ -10,9 +10,9 @@ for(const sample of ENDLESS_RELEASE_CASES){
   assert.equal(centered.steps,252000);
   assert.ok(centered.speed>530&&centered.speed<=535,'percurso real chega perto do teto da rolagem');
   assert.ok(centered.firstNearCap!==null&&Object.keys(centered.lateStyles).length>=5,'tramas terrestres seguem variadas perto do teto');
-  assert.ok(centered.rounds>=20&&centered.bosses>=40&&centered.terrain>0,'o piloto completa encontros e apoios reais ao longo de várias voltas');
+  assert.ok(centered.rounds>=6&&centered.bosses>=30&&centered.terrain>centered.flightsCompleted,'aviões, duelos e terreno não interrompem várias voltas completas');
   assert.equal(centered.lessonCompleted,true,'a corrida natural apresenta a barra de treino');
-  assert.equal(centered.flightCompleted,true,'a corrida natural entrega a travessia aérea também no Infinito');
+  assert.equal(centered.flightsCompleted,centered.mapExits-2,'cada saída geográfica depois das duas primeiras exige um pouso');
   for(const rate of [30,120])assert.deepEqual(replayEndless({...sample,rate}),centered,`${rate} FPS simulados não mudam controles, progresso ou ameaças`);
  });
 }

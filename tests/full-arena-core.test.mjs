@@ -160,10 +160,13 @@ test('2.000 sequências com sementes e entradas reais mantêm rotas vencíveis p
   const width=[480,612,900][seed%3],r=isolated(width),rng=core.createSeededRandom(seed);
   r.elapsed=40;r.distance=r.routeDistance=(seed%8)*35000;r.nextObstacle=0;r.terrain.nextAt=6;
   const bounds=core.playerBounds(r);r.player.x=[bounds.min,(bounds.min+bounds.max)/2,bounds.max][Math.floor(seed/3)%3];
-  let count=0;const sequence=[];
-  for(let i=0;i<24*60&&r.status==='running';i++){
+  let count=0,groundSteps=0;const sequence=[];
+  // Cada amostra precisa dos mesmos 24 s de pista para comparar as ondas.
+  // O piloto continua reportando qualquer derrota, inclusive no voo.
+  for(let i=0;i<80*60&&groundSteps<24*60&&r.status==='running';i++){
    if(seed%5===0&&i===12*60)core.resizeRun(r,[612,900,480][seed%3]);
    pilot(r);core.advanceRun(r,1/60,rng);
+   if(!r.terrain.active?.flight)groundSteps++;
    if(r.spawnedObstacles>count){
     count=r.spawnedObstacles;waves++;const o=r.obstacles.at(-1);styles.add(o.approach||'overhead');sequence.push(o.type+'/'+o.approach);
     assert.ok(!o.falling&&!o.groundHazard||o.age<o.warningFor,'zona nasce como aviso sem hitbox ativa');
@@ -172,6 +175,7 @@ test('2.000 sequências com sementes e entradas reais mantêm rotas vencíveis p
    }
   }
   assert.equal(r.status,'running',`semente ${seed}/${width}, x=${r.player.x}: ${JSON.stringify(r.lastHit)} em ${r.elapsed}`);
+  assert.equal(groundSteps,24*60,'o voo não elimina a amostra terrestre');
   signatures.add(sequence.join('|'));
  }
  assert.ok(waves>15000);assert.ok(signatures.size>1900,'combinações não formam ciclo memorizável');
