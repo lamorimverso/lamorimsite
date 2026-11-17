@@ -12,6 +12,10 @@ export const heroActionsDefinition={
 export function heroActionFrameFor({type='flavio',airborne=false,hurt=false,landing=false,crouchPose=landing?1:0,
  sliding=false,slidePose=sliding?1:0,slidePhase=sliding?.45:0,slideShot,reducedMotion=false}={}){
  if(type!=='flavio'||airborne||hurt)return null;
+ const leaving=!sliding&&slidePose>.12&&!reducedMotion;
+ // The held shot can keep its pose while the heel is still extended. Once
+ // the leg retracts, it must get its own frame even if recoil is still active.
+ if(leaving&&!(slidePose>.72&&slidePhase>=.24&&slidePhase<.9))return 7;
  if(slideShot&&slideShot.state!=='recover')return (sliding||slidePose>.5?10:8)+(slideShot.state==='recoil'?1:0);
  if(sliding){
   if(reducedMotion)return 6;
@@ -22,7 +26,7 @@ export function heroActionFrameFor({type='flavio',airborne=false,hurt=false,land
    return 6;
   }
  }
- if(!sliding&&slidePose>.12&&!reducedMotion)return slidePose>.72&&slidePhase>=.24&&slidePhase<.9?6:7;
+ if(leaving)return 6;
  if(crouchPose<.16)return null;
  if(reducedMotion)return 2;
  if(crouchPose<.40)return 0;

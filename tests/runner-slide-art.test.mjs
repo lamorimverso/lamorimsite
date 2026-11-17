@@ -15,6 +15,7 @@ test('agachamento, deslize e recuperação selecionam quadros próprios',()=>{
  assert.deepEqual([.2,.45,.8,1].map(crouchPose=>heroActionFrameFor({crouchPose})),[0,1,2,3]);
  assert.deepEqual([.04,.14,.52,.94].map(slidePhase=>heroActionFrameFor({sliding:true,slidePhase})),[4,5,6,7]);
  assert.equal(heroActionFrameFor({crouchPose:1,slidePose:.61,slidePhase:.52}),7);
+ assert.equal(heroActionFrameFor({crouchPose:1,slidePose:.61,slidePhase:.52,slideShot:{state:'recoil'}}),7,'o recuo não pula o recolhimento da perna');
  assert.equal(heroActionFrameFor({crouchPose:1,slidePose:.06,slidePhase:.52}),3);
  assert.equal(heroActionFrameFor({airborne:true,sliding:true}),null);
 });
