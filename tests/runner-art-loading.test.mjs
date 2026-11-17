@@ -36,6 +36,7 @@ async function browserEvents(t){
 function drawingContext(){
  const drawn=[],transforms=[];
  return {drawn,transforms,globalAlpha:1,save(){},restore(){},
+  beginPath(){},moveTo(){},lineTo(){},closePath(){},clip(){},fill(){},stroke(){},quadraticCurveTo(){},
   translate(...args){transforms.push(['translate',...args]);},
   scale(...args){transforms.push(['scale',...args]);},
   rotate(...args){transforms.push(['rotate',...args]);},
@@ -103,9 +104,15 @@ test('recortes pré-calculados conservam a orientação original à direita em t
  for(const pose of [{phase:7},{airborne:true},{airborne:true,falling:true},{landing:true},{hurt:true}]){
   const context=drawingContext();
   assert.equal(sprites.drawSpriteActor(context,{type:'flavio',x:100,y:200,...pose}),true);
-  assert.deepEqual(context.transforms,[],'corrida, salto, slide e derrota mantêm a direção do atlas');
-  assert.equal(context.drawn[0][0],images[pose.landing?Object.keys(definitions).indexOf('heroCrouch'):0],'as poses pertencem ao mesmo herói completo');
-  if(pose.landing)assert.ok(context.drawn[0][8]<=45,'slide fica abaixo do ataque alto sem deformação vertical');
+  if(pose.landing){
+   assert.deepEqual(context.transforms[0],['translate',100,200],'a pose mantém o pivô de apoio');
+   assert.ok(context.transforms.filter(call=>call[0]==='scale').every(([,x,y])=>x===y&&x>0),'o rig não inverte nem deforma a arte');
+   assert.equal(context.drawn.length,4,'usa cabeça, sapatos e item do atlas original');
+   assert.ok(context.drawn.every(([image])=>image===images[Object.keys(definitions).indexOf('heroCrouch')]));
+  }else{
+   assert.deepEqual(context.transforms,[],'corrida, salto e derrota mantêm a direção do atlas');
+   assert.equal(context.drawn[0][0],images[0]);
+  }
  }
  const boss=drawingContext();
  assert.equal(sprites.drawSpriteActor(boss,{type:'xandao',attacking:true}),true);

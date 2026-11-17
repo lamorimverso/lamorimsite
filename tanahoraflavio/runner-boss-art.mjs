@@ -1,10 +1,10 @@
 import {drawCharacterBody,drawCharacterArm} from './runner-body-art.mjs?v=67badae0df52';
-import {drawBossonariHead} from './runner-character-art.mjs?v=553a6e165333';
+import {drawBossonariHead} from './runner-character-art.mjs?v=32dc19ed6fd6';
 import {standingEnemyPose} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
 export {standingEnemyPose} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
-import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=dbf70764579c';
+import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=29b3f8b7b3c1';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=043d40fd8ef2';
-import {drawMemeArmy} from './runner-art.mjs?v=33da79295b47';
+import {drawMemeArmy} from './runner-art.mjs?v=fd9b040a589e';
 import {regionalEmitterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 
 import {CAMPAIGN_CAST_POINT,campaignAccentFor,campaignBossPoseFor,drawCampaignBoss,drawCampaignCrowd} from './runner-campaign-art.mjs?v=311bd72684f6';

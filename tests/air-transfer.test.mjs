@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
-import {aircraftPoseFor,terrainSupportAt} from '../tanahoraflavio/runner-terrain.mjs';
+import {aircraftHitFor,aircraftPoseFor,terrainSupportAt} from '../tanahoraflavio/runner-terrain.mjs';
 import {pilotDodge} from '../tools/story-pilot.mjs';
 import * as shotAudio from '../tanahoraflavio/runner-shot-events.mjs';
 const crossAt=core.STORY_OPENING_DISTANCE+3*core.SCENE_DISTANCE;
@@ -125,6 +125,16 @@ test('air transfer warns before real shots and does not count a decorative aircr
  }
  assert.equal(r.lastHit.type,'aircraft-high');assert.equal(r.lastHit.action,'crouch');
  assert.equal(r.status,'running');assert.equal(r.player.hp,1,'um avião obedece à mesma regra de dano da pista');
+});
+
+test('o voo alto passa sobre as novas poses, mas ainda acerta as duas formas em pé',()=>{
+ for(const hp of [1,2])for(const posture of ['crouching','sliding','standing']){
+  const r=flightReady(),a=enter(r),craft=a.flight.aircraft.find(c=>c.kind==='high');
+  a.flight.traveled=craft.launchAt;
+  const {shot}=aircraftPoseFor(a,craft);
+  Object.assign(r.player,{hp,x:shot.x-18,y:a.platforms[craft.barIndex].y,[posture]:true});
+  assert.equal(aircraftHitFor(r)?.type,posture==='standing'?'aircraft-high':undefined);
+ }
 });
 
 test('só aviões armados dão um aviso sonoro por aproximação, antes de disparar',()=>{
