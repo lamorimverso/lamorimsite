@@ -59,7 +59,7 @@ drawSpriteActor=(c,args)=>{
  if(globalThis.__measureHero&&args.type==='flavio'){
   const p=globalThis.__testRun?.player,last=rows.at(-1);
   row.stance=p?.sliding?'slide':p?.crouching?'crouch':'run';row.y=args.y;row.shooting=!!args.slideShot;
-  row.bend=args.crouchPose??0;row.skid=args.slidePose??0;
+  row.bend=args.crouchPose??0;row.skid=args.slidePose??0;row.travel=args.slidePhase??0;
   row.sample=row.stance==='slide'?(row.skid>.91?'slide':row.skid>=.38?'slide-in':'unstable'):
    row.stance==='crouch'?(row.skid>.14?'slide-out':row.bend>.9?'crouch':row.bend>=.32?'crouch-in':'unstable'):
    row.bend<=.12&&row.skid<=.12?'run':'rise';
@@ -142,6 +142,7 @@ for(const remapped of [false,true])test(`crouch-forward draws a distinct extende
   assert.ok(shot.height<=51&&shot.y===slide.y&&Math.abs(shot.sole)<=1.5,'disparar preserva a postura e o contato com o solo');
   await page.keyboard.up(forward);
   await page.waitForFunction(()=>!__testRun.player.sliding&&__testRun.terrain.active===null&&__actorMotion.at(-1)?.sample==='crouch');
+  assert.ok(await page.evaluate(()=>__actorMotion.some(p=>p.sample==='slide-out'&&p.travel>0&&p.width>0)),'a perna não volta para o primeiro quadro quando solta frente');
   await page.keyboard.up(down);
   await page.waitForFunction(()=>__testRun.status==='running'&&__actorMotion.at(-1)?.sample==='run');
   assert.deepEqual(errors,[]);

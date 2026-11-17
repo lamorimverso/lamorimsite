@@ -1,7 +1,7 @@
-import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=a172c40c7c54';
-import {drawSpecialRunner} from './runner-character-art.mjs?v=32dc19ed6fd6';
-export {drawHeroShot} from './runner-character-art.mjs?v=32dc19ed6fd6';
-import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=29b3f8b7b3c1";
+import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=e08a1ef4b112';
+import {drawSpecialRunner} from './runner-character-art.mjs?v=70d244c24d79';
+export {drawHeroShot} from './runner-character-art.mjs?v=70d244c24d79';
+import {drawSpriteActor as drawActor} from "./runner-sprites.mjs?v=307f5682b570";
 import {CAMPAIGN_PROP_COLORS,drawCampaignProp} from './runner-campaign-art.mjs?v=311bd72684f6';
 // Personagens em atlas WebP; itens e perigos continuam vetoriais em Canvas.
 const INK='#292337',CREAM='#fff6e5';
@@ -11,7 +11,7 @@ function path(c,points,fill,stroke=INK){c.beginPath();points.forEach(([x,y],i)=>
 function line(c,points,color=INK,width=2){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.strokeStyle=color;c.lineWidth=width;c.lineCap='round';c.lineJoin='round';c.stroke();}
 function text(c,value,x,y,size=7,color=CREAM){c.fillStyle=color;c.font='900 '+size+'px system-ui';c.textAlign='center';c.fillText(value,x,y);}
 
-export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT,CORE_SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=29b3f8b7b3c1";
+export {drawSpriteActor as drawActor,loadSprites,drawSpritePortrait,SPRITE_SHEET_COUNT,CORE_SPRITE_SHEET_COUNT} from "./runner-sprites.mjs?v=307f5682b570";
 // Figuras vetoriais articuladas preservam a silhueta original do meme.
 // Silhueta original do meme: chapéu vermelho, emblema dourado e pernas longas.
 export function drawMemeArmy(c,{x=0,y=0,phase=0,scale=1,reducedMotion=false,standing=false,running=false}={}){

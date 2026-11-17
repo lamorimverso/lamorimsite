@@ -1,6 +1,6 @@
 // Atlas e recortes gerados dos desenhos escolhidos, preservando os PNGs fontes.
 import {definitions} from './runner-sprite-data.mjs?v=4a931cb52b80';
-import {drawHeroLowPose} from './runner-slide-art.mjs?v=33a91ccd6000';
+import {drawHeroLowPose} from './runner-slide-art.mjs?v=f0043535e452';
 import {combatDefinitions} from './runner-combat-sprite-data.mjs?v=85a6343e5d39';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=043d40fd8ef2';
 import {signatureDefinitions,signatureProps} from './runner-signature-sprite-data.mjs?v=8340feb630e5';
@@ -92,12 +92,12 @@ export function portraitCropFor(frame){
  // Preservar toda a largura, recortando somente a parte inferior para retrato.
  return {x:frame.x,y:frame.y,width:frame.width,height:frame.height*.76};
 }
-export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,airborne=false,falling=false,landing=false,crouchPose=landing?1:0,sliding=false,slidePose=sliding?1:0,slidePhase=0,slideShot,attacking=false,preparing=false,hurt=false,alpha=1,facing}={}){
+export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,airborne=false,falling=false,groundedStride=false,reducedMotion=false,landing=false,crouchPose=landing?1:0,sliding=false,slidePose=sliding?1:0,slidePhase=0,slideShot,attacking=false,preparing=false,hurt=false,alpha=1,facing}={}){
  // Santiago is a friendly support. Use complete neutral poses on the ground,
  // with a small breathing motion; neither charging nor firing frames are used.
  if(type==='santiago')return drawCombatSprite(context,{type,x,y:y-Math.sin(phase*Math.PI/2)*.8*scale,scale,frame:Math.floor(Math.max(0,phase))%2?3:0,alpha,facing:facing??1});
- const low=type==='flavio'&&(sliding||landing||crouchPose>.12||slidePose>.12)&&!airborne&&!hurt&&sheets.get('heroCrouch');
- if(low&&scale>0)return drawHeroLowPose(context,{image:low.image,factor:spriteScaleFor(type,'heroCrouch',low.frames,scale),x,y,scale,alpha,facing,shot:slideShot,pose:crouchPose,slide:slidePose,phase:slidePhase});
+ const ground=type==='flavio'&&(groundedStride||sliding||landing||crouchPose>0||slidePose>0)&&!airborne&&!hurt&&sheets.get('heroCrouch');
+ if(ground&&scale>0)return drawHeroLowPose(context,{image:ground.image,factor:spriteScaleFor(type,'heroCrouch',ground.frames,scale),x,y,scale,alpha,facing,shot:slideShot,pose:crouchPose,slide:slidePose,phase:slidePhase,stride:phase,reducedMotion});
  let selected=spriteFrameFor(type,{phase,airborne,falling,landing,attacking,preparing,hurt});
  if(!selected)return false;
  let sheet=sheets.get(selected.sheet);

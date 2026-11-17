@@ -22,6 +22,30 @@ test('o deslize desenha uma silhueta baixa, estendida e apoiada, inclusive ao di
  t.after(()=>prior?Object.defineProperty(globalThis,'Image',prior):delete globalThis.Image);
  await loadSprites(()=>{},{coreOnly:true});
  const ratio=3,x=60;
+ function alphaMask(args){
+  const c=canvas.createCanvas(360,360).getContext('2d');c.scale(ratio,ratio);
+  assert.equal(drawActor(c,{x,y:104,scale:.95,groundedStride:true,...args}),true);
+  return c.getImageData(0,0,360,360).data;
+ }
+ function contourDelta(before,after){
+  let difference=0,union=0;
+  for(let i=3;i<before.length;i+=4){
+   difference+=Math.abs(before[i]-after[i]);union+=Math.max(before[i],after[i]);
+  }
+  return difference/union;
+ }
+ // Hold the stride frame constant to isolate the handoff from normal running.
+ for(const phase of [0,2,4,6])for(const facing of [-1,1]){
+  const a=alphaMask({phase,facing}),b=alphaMask({phase,facing,landing:true,crouchPose:.05});
+  const entry=contourDelta(a,b);
+  assert.ok(entry<.13,'o primeiro quadro não troca o corpo inteiro: '+JSON.stringify({phase,facing,entry}));
+  const c=alphaMask({phase,facing,crouchPose:.119}),d=alphaMask({phase,facing,crouchPose:.121});
+  const exit=contourDelta(c,d);
+  assert.ok(exit<.06,'não há tranco ao voltar para a passada: '+JSON.stringify({phase,facing,exit}));
+ }
+ assert.ok(contourDelta(alphaMask({phase:2}),alphaMask({phase:6}))>.15,'a passada ainda alterna os membros visivelmente');
+ assert.equal(contourDelta(alphaMask({phase:2,reducedMotion:true,landing:true,sliding:true,slidePhase:.17}),
+   alphaMask({phase:6,reducedMotion:true,landing:true,sliding:true,slidePhase:.53})),0,'movimento reduzido fixa o desenho baixo');
  function measure(draw,args,{floor=104,checkMuzzle=false}={}){
   const c=canvas.createCanvas(360,360).getContext('2d');
   c.scale(ratio,ratio);
