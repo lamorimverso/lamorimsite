@@ -7,5 +7,5 @@ export function playerBodyFor(p,{full=false}={}){
  const scale=!full&&p.hp===1?HURT_BODY_SCALE:1;
  return {left:18-13*scale,right:18+13*scale,
   height:(p.crouching||p.sliding?25:53)*scale,
-  terrainHeight:(p.sliding?32:p.crouching?42:84)*scale,scale};
+  terrainHeight:(p.sliding?50:p.crouching?58:84)*scale,scale};
 }

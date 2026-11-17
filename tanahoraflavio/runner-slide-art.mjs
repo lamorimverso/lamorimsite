@@ -1,5 +1,5 @@
-// An articulated forward skid. Face and small details come from the same
-// crouch atlas at its native gameplay scale. Coordinates are image pixels.
+// The same outlined head and limbs are used at every bend of the rig.
+// The body lowers by moving joints, never by scaling the whole posture.
 const parts={
  head:{box:[132,77,197,180],anchor:[243,250],mask:[[130,77],[308,77],[321,126],[313,174],[327,203],[318,223],[299,237],[268,250],[219,253],[192,246],[181,232],[151,225],[130,195]]},
  shoe:{box:[258,352,125,61],anchor:[286,410],mask:[[258,367],[285,351],[310,355],[333,366],[358,370],[382,383],[382,410],[254,413]]},
@@ -22,38 +22,41 @@ function line(c,color,width,...points){
 }
 const coat='#592a69',highlight='#7c4692',shade='#371d47',ink='#211523';
 
-export function drawHeroSlide(c,{image,factor,x,y,scale,phase=0,alpha=1,facing,shot}){
- const push=Math.sin(Math.PI*Math.max(0,Math.min(1,phase))),front=26+4*push,back=-27+3*push;
- const hip=-16-2*push,knee=6+3*push,neck=7+2*push;
- const fire=shot&&shot.state!=='recover',aimX=fire?Math.abs(shot.muzzle.x)/scale-(shot.state==='recoil'?shot.kick*.7:0):22,aimY=fire?shot.muzzle.y/scale:-12;
+// Interpolate joints between upright, bent knees and the extended skid.
+// Both shoe soles keep the same height as the actual collision support.
+export function drawHeroLowPose(c,{image,factor,x,y,scale,pose=1,slide=0,phase=0,alpha=1,facing,shot}){
+ const clamp=t=>Math.max(0,Math.min(1,t)),skid=clamp(slide),bend=Math.max(clamp(pose),skid);
+ const blend=(a,b,t)=>a+(b-a)*t,mix=(a,b,d)=>blend(blend(a,b,bend),d,skid);
+ const push=Math.sin(Math.PI*clamp(phase));
+ const hip=[mix(-5,-11,-18),mix(-29,-13,-10)],neck=[mix(1,8,12+push),mix(-49,-20,-10)];
+ const shoulder=[neck[0]-mix(4,4,10),neck[1]+mix(2,2,-3)];
+ const rearFoot=mix(-14,-16,-29),frontFoot=mix(10,12,27+5*push);
+ const rearKnee=[mix(-13,-21,-28),mix(-16,-11,-10)],frontKnee=[mix(5,16,8+4*push),mix(-16,-13,-8)];
+ const elbow=[shoulder[0]-mix(13,13,19),shoulder[1]+mix(5,5,-1)],hand=[shoulder[0]-mix(17,17,31),shoulder[1]+mix(14,14,4)];
  const atlasFactor=factor/scale;
+ const fire=shot&&shot.state!=='recover',aimX=fire?Math.abs(shot.muzzle.x)/scale-(shot.state==='recoil'?shot.kick*.7:0):mix(23,27,27),aimY=fire?shot.muzzle.y/scale:mix(-35,-22,-13);
  c.save();c.globalAlpha*=alpha;c.imageSmoothingEnabled=true;
  c.translate(x,y);c.scale(facing===-1?-scale:scale,scale);
- // Tucked leg carries weight. The leading heel skims the same support.
- part(c,image,'shoe',back,0,atlasFactor);
- shape(c,shade,p=>{p.moveTo(hip,-14);p.quadraticCurveTo(-28,-16,-30,-10);p.quadraticCurveTo(-30,-4,-19,-4);p.lineTo(-9,-5);p.quadraticCurveTo(-3,-8,-5,-12);});
- line(c,'#543060',1,[-28,-8],[-25,-11],[-21,-10]);
- part(c,image,'shoe',front,0,atlasFactor);
- shape(c,coat,p=>{p.moveTo(hip-2,-13);p.bezierCurveTo(hip+4,-17,knee-5,-11,knee,-9);p.lineTo(front+1,-7);p.lineTo(front-2,-2);p.quadraticCurveTo(knee,-1,knee-7,-4);p.quadraticCurveTo(hip-6,-2,hip-8,-7);p.quadraticCurveTo(hip-9,-10,hip-2,-13);});
- line(c,highlight,1,[hip-2,-11],[knee-1,-7],[front-3,-5]);
- line(c,'#391f45',.75,[knee+1,-6],[knee-2,-5],[knee+1,-4]);
- // The jacket inclines from the hip to the neck. Face, shoe and hand
- // proportions do not change when the silhouette lowers.
- shape(c,coat,p=>{p.moveTo(hip-6,-11);p.quadraticCurveTo(hip-3,-17,-7,-21);p.quadraticCurveTo(-2,-23,neck+2,-15);p.quadraticCurveTo(neck+2,-10,4,-8);p.quadraticCurveTo(-3,-8,hip+1,-5);p.quadraticCurveTo(hip-6,-5,hip-6,-11);});
- shape(c,shade,p=>{p.moveTo(hip+1,-8);p.quadraticCurveTo(-2,-16,-1,-19);p.lineTo(5,-14);p.lineTo(2,-9);p.quadraticCurveTo(-8,-8,hip+1,-8);},null);
- line(c,highlight,1,[hip-3,-11],[-14,-15],[-8,-17]);
- shape(c,'#fff2dc',p=>{p.moveTo(neck-3,-17);p.lineTo(neck+1,-15);p.lineTo(neck-4,-10);p.lineTo(-4,-10);});
- shape(c,'#ffd448',p=>{p.moveTo(neck-1,-14);p.quadraticCurveTo(-1,-14,-5,-12);p.quadraticCurveTo(-10,-11,-17,-13);p.lineTo(-13,-8);p.quadraticCurveTo(0,-9,neck-1,-14);},'#74502a',.65);
- // One elbow trails behind the hip as the forward arm steadies the skid.
- line(c,ink,7,[-7,-18],[-17,-19],[-27,-14]);
- line(c,coat,5.3,[-7,-18],[-17,-19],[-27,-14]);
- line(c,highlight,.9,[-9,-20],[-17,-21],[-25,-17]);
- shape(c,'#f7b487',p=>{p.moveTo(-25,-16);p.quadraticCurveTo(-30,-17,-33,-14);p.quadraticCurveTo(-34,-11,-29,-11);p.lineTo(-25,-13);});
- line(c,ink,7,[neck-1,-14],[12,-9],[aimX-7,aimY+4]);
- line(c,coat,5.3,[neck-1,-14],[12,-9],[aimX-7,aimY+4]);
- line(c,'#f7e9db',2,[aimX-9,aimY+5],[aimX-6,aimY+3]);
- if(shot)part(c,image,'weapon',aimX,aimY,atlasFactor);
- else part(c,image,'passport',aimX,aimY+2,atlasFactor);
- part(c,image,'head',neck,-10,atlasFactor);
+ for(const [foot,knee,fill] of [[rearFoot,rearKnee,shade],[frontFoot,frontKnee,coat]]){
+  part(c,image,'shoe',foot,0,atlasFactor*1.28);
+  line(c,ink,11,hip,knee,[foot,-6]);
+  line(c,fill,8.5,hip,knee,[foot,-6]);
+  line(c,highlight,1.15,[hip[0]+2,hip[1]-2],[knee[0]+2,knee[1]-2],[foot+2,-7]);
+ }
+ shape(c,coat,p=>{p.moveTo(hip[0]-8,hip[1]+3);p.quadraticCurveTo(hip[0]-12,hip[1]-8,shoulder[0]-6,shoulder[1]-3);p.quadraticCurveTo(shoulder[0]+1,shoulder[1]-7,neck[0]+6,neck[1]+3);p.quadraticCurveTo(neck[0]+10,neck[1]+12,hip[0]+8,hip[1]+4);p.quadraticCurveTo(hip[0]+1,hip[1]+8,hip[0]-8,hip[1]+3);});
+ line(c,ink,8,shoulder,elbow,hand);
+ line(c,shade,6.4,shoulder,elbow,hand);
+ const [hx,hy]=hand;
+ shape(c,'#f5a56b',p=>{p.moveTo(hx+3,hy-3);p.quadraticCurveTo(hx+5,hy-1,hx+3,hy+1);p.quadraticCurveTo(hx+2,hy+4,hx,hy+4);p.quadraticCurveTo(hx-4,hy+4,hx-4,hy+1);p.quadraticCurveTo(hx-5,hy-2,hx-2,hy-3);p.quadraticCurveTo(hx,hy-5,hx+3,hy-3);},ink,.75);
+ line(c,'#a45e38',.6,[hx-2.6,hy+.5],[hx-1.7,hy+2],[hx,hy+2.2]);
+ line(c,'#ffd3a2',.9,[hx-2,hy-2],[hx-.6,hy-2.7],[hx+1,hy-2.4]);
+ shape(c,'#fff2dc',p=>{p.moveTo(neck[0]-3,neck[1]-2);p.lineTo(neck[0]+5,neck[1]+3);p.lineTo(hip[0]+5,hip[1]+2);p.lineTo(neck[0]-3,neck[1]+5);});
+ shape(c,'#ffd448',p=>{p.moveTo(neck[0]-1,neck[1]+3);p.lineTo(neck[0]+1,neck[1]+7);p.quadraticCurveTo(hip[0]+7,hip[1]+2,hip[0]-1,hip[1]+6);p.quadraticCurveTo(hip[0]+2,hip[1]+1,neck[0]-1,neck[1]+3);},'#74502a',.6);
+ const forearm=[neck[0]+6,neck[1]+mix(11,11,1)];
+ line(c,ink,8,[neck[0]+2,neck[1]+4],forearm,[aimX-7,aimY+4]);
+ line(c,coat,6,[neck[0]+2,neck[1]+4],forearm,[aimX-7,aimY+4]);
+ if(shot)part(c,image,'weapon',aimX,aimY,atlasFactor*1.27);
+ else part(c,image,'passport',aimX,aimY,atlasFactor*1.35);
+ part(c,image,'head',neck[0],neck[1],atlasFactor*1.70);
  c.restore();return true;
 }

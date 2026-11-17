@@ -1,4 +1,4 @@
-import {playerBodyFor} from './runner-body.mjs?v=f32e9999b4fb';
+import {playerBodyFor} from './runner-body.mjs?v=5bb5129d61ee';
 import {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
 // Shared simulation/render geometry. x is logical screen-space; y is height
 // above WORLD.ground. Resizing translates shapes with the hero, never stretches
@@ -59,7 +59,8 @@ export function aircraftPoseFor(a,craft){
  const x=bar.x+craft.offset,t=(f.traveled-craft.launchAt)/f.nominalSpeed;
  if(f.traveled<craft.warnAt||t>1.05)return null;
  if(craft.kind==='flyby')return {markerX:x,aircraftX:x+92-220*t,aircraftY:bar.y+161,warning:false,shot:null};
- const lane=craft.kind==='lane',originX=x+(lane?0:84),originY=bar.y+(lane?158:55);
+ // The high shot clears both bent poses, but still crosses the upright body.
+ const lane=craft.kind==='lane',originX=x+(lane?0:84),originY=bar.y+(lane?158:67);
  const warning=t<0,aircraftX=originX+84*t,aircraftY=originY+(lane?0:Math.max(0,-t)*42+Math.max(0,t)*82);
  const shot=t>=0&&t<=(lane?.64:.85)&&!craft.spent?{
   x:originX-(lane?0:220*t),y:lane?Math.max(bar.y+16,originY-355*t):originY,

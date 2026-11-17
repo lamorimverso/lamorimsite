@@ -50,13 +50,20 @@ const readHeroPixels=(args,output)=>{
  const {data}=g.getImageData(0,0,360,360);let left=360,right=-1,top=360,bottom=-1;
  for(let i=3;i<data.length;i+=4)if(data[i]>128){const x=((i-3)/4)%360,y=Math.floor((i-3)/4/360);left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}
  output.width=(right-left+1)/3;output.height=(bottom-top+1)/3;output.sole=(bottom+1)/3-floor;
+ let headLeft=360,headRight=-1;
+ for(let y=top+5;y<=top+38;y++)for(let x=left;x<=right;x++)if(data[(y*360+x)*4+3]>128){headLeft=Math.min(headLeft,x);headRight=Math.max(headRight,x);}
+ output.headWidth=(headRight-headLeft+1)/3;
 };
 drawSpriteActor=(c,args)=>{
  const rows=(globalThis.__actorMotion??=[]),row={type:args.type,facing:args.facing,frame:spriteFrameFor(args.type,args)?.index};
  if(globalThis.__measureHero&&args.type==='flavio'){
   const p=globalThis.__testRun?.player,last=rows.at(-1);
   row.stance=p?.sliding?'slide':p?.crouching?'crouch':'run';row.y=args.y;row.shooting=!!args.slideShot;
-  if(row.stance!==last?.stance||row.shooting!==last?.shooting)readHeroPixels(args,row);
+  row.bend=args.crouchPose??0;row.skid=args.slidePose??0;
+  row.sample=row.stance==='slide'?(row.skid>.91?'slide':row.skid>=.38?'slide-in':'unstable'):
+   row.stance==='crouch'?(row.skid>.14?'slide-out':row.bend>.9?'crouch':row.bend>=.32?'crouch-in':'unstable'):
+   row.bend<=.12&&row.skid<=.12?'run':'rise';
+  if(row.sample!==last?.sample||row.shooting!==last?.shooting)readHeroPixels(args,row);
  }
  rows.push(row);if(rows.length>1000)rows.shift();return drawOriginal(c,args);
 };`}));
@@ -116,24 +123,27 @@ for(const remapped of [false,true])test(`crouch-forward draws a distinct extende
    r.obstacles=[];r.pickups=[];r.terrain.nextAt=Infinity;globalThis.__measureHero=true;
   });
   await page.locator('#runner-canvas').focus();
-  await page.waitForFunction(()=>__actorMotion.some(p=>p.stance==='run'&&p.width>0));
+  await page.waitForFunction(()=>__actorMotion.some(p=>p.sample==='run'&&p.width>0));
   await page.keyboard.down(down);
-  await page.waitForFunction(()=>__actorMotion.some(p=>p.stance==='crouch'&&p.width>0));
+  await page.waitForFunction(()=>__actorMotion.some(p=>p.sample==='crouch'&&p.width>0));
   await page.keyboard.down(forward);
-  await page.waitForFunction(()=>__testRun.player.sliding&&__testRun.player.x>200&&__actorMotion.some(p=>p.stance==='slide'&&p.width>0));
-  const [running,crouch,slide]=await page.evaluate(()=>['run','crouch','slide'].map(s=>__actorMotion.find(p=>p.stance===s&&p.width>0)));
-  assert.ok(running.height>crouch.height+25,`a passada é alta: ${JSON.stringify(running)}`);
-  assert.ok(slide.height<=33&&slide.height<crouch.height-5,`o deslize precisa baixar mais que o agachamento: ${JSON.stringify({slide,crouch})}`);
+  await page.waitForFunction(()=>__testRun.player.sliding&&__testRun.player.x>200&&__actorMotion.some(p=>p.sample==='slide'&&p.width>0));
+  const [running,descending,crouch,slideIn,slide]=await page.evaluate(()=>['run','crouch-in','crouch','slide-in','slide'].map(s=>__actorMotion.find(p=>p.sample===s&&p.width>0)));
+  assert.ok(crouch.height>=51&&running.height>crouch.height+12,'o joelho dobra sem encolher o herói: '+JSON.stringify({running,crouch}));
+  assert.ok(descending.height>crouch.height+4&&descending.height<running.height,'a queda passa pela dobra intermediária: '+JSON.stringify({running,descending,crouch}));
+  assert.ok(slide.height>=38&&slide.height<=51&&slide.height<crouch.height-5,'o deslize baixa mais que o agachamento: '+JSON.stringify({slide,crouch}));
+  for(const low of [crouch,slide])assert.ok(low.headWidth>=running.headWidth*.83&&low.headWidth<=running.headWidth*1.20,'a cabeça mantém tamanho: '+JSON.stringify({running,low}));
+  assert.ok(slideIn.width>crouch.width+2&&slideIn.width<slide.width,'a perna estende progressivamente: '+JSON.stringify({slideIn,slide,crouch}));
   assert.ok(slide.width>=crouch.width+8,`a perna projetada alonga a silhueta: ${JSON.stringify({slide,crouch})}`);
   assert.ok(Math.abs(slide.sole)<=1.5&&slide.y===crouch.y,'as solas permanecem apoiadas no mesmo piso');
   await page.keyboard.press('j');
   await page.waitForFunction(()=>__actorMotion.some(p=>p.stance==='slide'&&p.shooting&&p.width>0));
   const shot=await page.evaluate(()=>__actorMotion.find(p=>p.stance==='slide'&&p.shooting&&p.width>0));
-  assert.ok(shot.height<=33&&shot.y===slide.y&&Math.abs(shot.sole)<=1.5,'disparar preserva a postura e o contato com o solo');
+  assert.ok(shot.height<=51&&shot.y===slide.y&&Math.abs(shot.sole)<=1.5,'disparar preserva a postura e o contato com o solo');
   await page.keyboard.up(forward);
-  await page.waitForFunction(()=>!__testRun.player.sliding&&__testRun.terrain.active===null&&__actorMotion.at(-1)?.stance==='crouch');
+  await page.waitForFunction(()=>!__testRun.player.sliding&&__testRun.terrain.active===null&&__actorMotion.at(-1)?.sample==='crouch');
   await page.keyboard.up(down);
-  await page.waitForFunction(()=>__testRun.status==='running'&&__actorMotion.at(-1)?.stance==='run');
+  await page.waitForFunction(()=>__testRun.status==='running'&&__actorMotion.at(-1)?.sample==='run');
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });

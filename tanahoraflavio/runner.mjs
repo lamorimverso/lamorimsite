@@ -1,25 +1,25 @@
-import {HURT_BODY_SCALE} from './runner-body.mjs?v=f32e9999b4fb';
+import {HURT_BODY_SCALE} from './runner-body.mjs?v=5bb5129d61ee';
 import {createPresentationDOM,createControlLabelReader} from './runner-presentation-cache.mjs?v=4712d27109dc';
 import {edgeThreatsFor,drawEdgeThreats} from './runner-edge-cues.mjs?v=b4b61c9e89df';
-import {drawTerrain,drawSlideContact} from './runner-terrain-art.mjs?v=78d7cc891433';
-import {TERRAIN,terrainSupportAt} from './runner-terrain.mjs?v=6013f334bf91';
+import {drawTerrain,drawSlideContact} from './runner-terrain-art.mjs?v=186a3b44a825';
+import {TERRAIN,terrainSupportAt} from './runner-terrain.mjs?v=49b2cbbcd7c7';
 import {normalizeControls,keyboardActionFor,mouseActionFor,keyLabel} from './runner-control-map.mjs?v=568387e3f764';
 import {createControlSettings} from './runner-control-settings.mjs?v=25524a717d9e';
 import {createGamepadDriver} from './runner-gamepad.mjs?v=18383546c2cd';
 import {HERO_POWERS,heroPowerFor,cycleHeroPower} from './runner-earned-powers.mjs?v=432ca45a76e4';
-import {updateCombatHUD} from './runner-combat-hud.mjs?v=7a64f8096c72';
+import {updateCombatHUD} from './runner-combat-hud.mjs?v=e43ad94dd992';
 import {createMovementSoundDirector,movementIsAirborne} from './runner-movement-audio.mjs?v=31522b0ccc1e';
-import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=9d1ff1ac9536';
+import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=1f3d3b135228';
 import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
 import {createAircraftWarningTracker,createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=37fd940420f1';
 import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=18365bfe1950';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_PRESSES, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, recoverJacareRun, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=7b407f144d8c";
+import { WORLD, PLAYER, JACARE_RECOVERY_PRESSES, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, recoverJacareRun, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=85e0746c7e6e";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=311bd72684f6';
 import {bossCounterWindow} from './runner-bosses.mjs?v=18365bfe1950';
-import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=67fa72f75c6c';
-import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=33da79295b47";
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=b56de1e56e6e';
+import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=fd9b040a589e";
 import { createGameAudio } from "./runner-audio.mjs?v=d93419fd0e46";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=d5e017561fd6";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=73113e4c788c";
@@ -87,7 +87,7 @@ function initRunner() {
   const frameClock=createFrameClock(performance.now());
   let spritesReady=false,spritesFailed=false,loadedSprites=0,loadingSprites=false,landingUntil=0;
   let supportReady=false,supportLoading=false,supportFailed=false;
-  let crouchPose=0,lastPoseElapsed=0;
+  let crouchPose=0,slidePose=0,lastPoseElapsed=0;
   let windowFocused = true, inView = true;
   let lastStatus = "", lastStage = -1, virtualWidth = 900, measuredWidth = 0, measuredDpr = 0;
   let lastCollected=0,lastPower="",lastPointerAt=-Infinity;
@@ -449,10 +449,10 @@ function initRunner() {
     audio.stop();audio.prime();audio.actorCue("flavio");voices.reset();lastRaidKey="";
     clearControls();
     shotSounds.reset();lastHeroShotHeard=0;
-    run=createRun({assisted:preferences.assisted,mode:practiceId?"story":selectedMode(),practiceId});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);encounterSounds.reset(run);movementSounds.reset(run);landingUntil=0;crouchPose=0;lastPoseElapsed=0;
+    run=createRun({assisted:preferences.assisted,mode:practiceId?"story":selectedMode(),practiceId});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);encounterSounds.reset(run);movementSounds.reset(run);landingUntil=0;crouchPose=slidePose=0;lastPoseElapsed=0;
     if(!supportReady)prepareSupport();
     $("game-settings").open=false;
-    crouchPose=0;
+    crouchPose=slidePose=0;
     lastCollected=0;lastPower="";lastStatus="";lastEvents=0;lastLives=1;
     resetFrameClock(frameClock,performance.now());
     updateUI();section.dispatchEvent(new Event("runner:start"));draw();resumeFromGesture();syncActivity();canvas.focus({preventScroll:true});
@@ -740,7 +740,9 @@ function initRunner() {
     const crouchTarget=run.player.crouching&&!airborne,shooting=active&&run.player.attackFor>0;
     const sliding=active&&!airborne&&run.player.sliding;
     const slidePhase=sliding&&!reduced?1-run.player.slideRemaining/TERRAIN.slideFor:0;
-    crouchPose=crouchAnimationStep(crouchPose,crouchTarget,run.elapsed-lastPoseElapsed,reduced);
+    const poseDt=run.elapsed-lastPoseElapsed;
+    crouchPose=crouchAnimationStep(crouchPose,crouchTarget,poseDt,reduced||airborne);
+    slidePose=crouchAnimationStep(slidePose,sliding,poseDt*2,reduced||airborne);
     lastPoseElapsed=run.elapsed;
     const runningStride=active&&!airborne&&!crouchTarget&&!run.player.isJacare;
     const support=terrainSupportAt(run,playerX(run)+18,13),floor=WORLD.ground-(support??0);
@@ -752,7 +754,7 @@ function initRunner() {
     }
     if(support!==null){
       ctx.save();ctx.globalAlpha=.12;ctx.fillStyle="#292337";
-      ctx.beginPath();ctx.ellipse(playerX(run)+17,floor+4,22+crouchPose*6+(sliding?6:0),4,0,0,Math.PI*2);ctx.fill();ctx.restore();
+      ctx.beginPath();ctx.ellipse(playerX(run)+17,floor+4,22+crouchPose*6+slidePose*6,4,0,0,Math.PI*2);ctx.fill();ctx.restore();
     }
     const feet=WORLD.ground-run.player.y;
     if(decorative&&!airborne&&run.elapsed<landingUntil){
@@ -763,12 +765,7 @@ function initRunner() {
     if(sliding)drawSlideContact(ctx,{x:playerX(run)+17,y:feet,age:run.elapsed,reducedMotion:reduced});
     const protection={x:playerX(run)+17,y:feet,crouching:crouchTarget||run.player.isJacare,remaining:run.shieldFor};
     ctx.save();
-    if(crouchTarget&&!sliding&&!shooting){
-      const pivot=playerX(run)+17;
-      ctx.translate(pivot,feet);
-      ctx.rotate(-.018*crouchPose);
-      ctx.translate(-pivot,-feet);
-    }else if(!shooting&&decorative&&runningStride){
+    if(!shooting&&decorative&&runningStride&&crouchPose<=.12&&slidePose<=.12){
       // Inclinação pequena e alternada para que a corrida não pareça
       // apenas o cenário rolando por trás de um personagem imóvel.
       const pivot=playerX(run)+17;
@@ -786,10 +783,10 @@ function initRunner() {
       const pivot=playerX(run)+17,scale=run.player.hp===1?HURT_BODY_SCALE:1;
       if(shooting){
         if(scale!==1){ctx.save();ctx.translate(pivot,feet);ctx.scale(scale,scale);ctx.translate(-pivot,-feet);}
-        drawHeroShot(ctx,{x:pivot,y:feet,phase,age:HERO_SHOT_DURATION-run.player.attackFor,crouching:crouchTarget,sliding,slidePhase,airborne,falling:run.player.velocity<0,facing:run.player.shotFacing||1,alpha});
+        drawHeroShot(ctx,{x:pivot,y:feet,phase,age:HERO_SHOT_DURATION-run.player.attackFor,crouching:crouchTarget,crouchPose,sliding,slidePose,slidePhase,airborne,falling:run.player.velocity<0,facing:run.player.shotFacing||1,alpha});
         if(scale!==1)ctx.restore();
       }else drawActor(ctx,{type:"flavio",x:pivot,y:feet,scale:.95*scale,phase,airborne,facing,
-        falling:run.player.velocity<0,landing:crouchTarget,sliding,slidePhase,hurt:run.status==="over",alpha});
+        falling:run.player.velocity<0,landing:crouchTarget,crouchPose,sliding,slidePose,slidePhase,hurt:run.status==="over",alpha});
       if(run.player.restoreFlashFor>0&&!prefersReducedMotion()){
         ctx.save();ctx.globalAlpha=Math.min(.55,run.player.restoreFlashFor/.48*.55);
         ctx.strokeStyle="#5ba86d";ctx.lineWidth=3;ctx.beginPath();
