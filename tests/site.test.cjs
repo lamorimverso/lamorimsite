@@ -172,7 +172,7 @@ test('sem música na página, a contagem e o jogo continuam disponíveis', async
   } finally { await context.close(); }
 });
 
-test('uma colisão sem poder encerra e reinício restaura uma vida', async () => {
+test('dois impactos encerram e nova tentativa recupera a forma normal', async () => {
   const {context,page,errors} = await openWithRun();
   try {
     await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
@@ -184,12 +184,16 @@ test('uma colisão sem poder encerra e reinício restaura uma vida', async () =>
       run.nextObstacle=run.nextPickup=run.nextPassport=1000;
       run.obstacles=[{x:125,width:34,height:44,type:'pf'}];
     });
+    await page.waitForFunction(() => document.getElementById('game').dataset.playerForm === 'hurt');
+    assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
+    await page.evaluate(()=>{const r=globalThis.__testRun;r.graceFor=0;r.obstacles=[{x:125,width:34,height:44,type:'pf'}];});
     await page.waitForFunction(() => document.getElementById('game').dataset.runState === 'over');
     assert.match(await page.locator('#game-overlay-title').textContent(), /Foi pego pela Polícia Federal!/);
     assert.equal(await page.locator('#game-lives').textContent(),'0');
     await page.getByRole('button',{name:'Tentar de novo',exact:true}).click();
     assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
-    assert.equal(await page.locator('#game-lives').textContent(),'1');
+    assert.equal(await page.locator('#game-lives').textContent(),'0');
+    assert.equal(await page.locator('#game').getAttribute('data-player-form'),'normal');
     assert.equal(await page.locator('#game-passports').textContent(),'0');
     assert.match(await page.locator('#game-threat').textContent(), /Inimigos sorteados/);
     assert.match(await page.locator('#game-power').textContent(), /Sem efeito/);
@@ -227,7 +231,7 @@ test('invisibilidade congela com aba oculta e retoma sem intervenção', async (
   }finally{await context.close();}
 });
 
-test('100 passaportes concedem +1 vida e a corrida permanece infinita', async () => {
+test('100 passaportes guardam uma continuação e a corrida permanece infinita', async () => {
   const {context,page,errors} = await openWithRun();
   try {
     await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
@@ -239,7 +243,7 @@ test('100 passaportes concedem +1 vida e a corrida permanece infinita', async ()
       run.pickups.push({x:136,y:35,type:'passport',value:50});
     });
     await page.waitForFunction(() => document.getElementById('game-passports').textContent === '100');
-    assert.equal(await page.locator('#game-lives').textContent(),'2');
+    assert.equal(await page.locator('#game-lives').textContent(),'1');
     assert.equal(await page.locator('#game-passport-next').textContent(),'100');
     await page.evaluate(() => {
       const run=globalThis.__testRun;
@@ -447,43 +451,42 @@ test('escudo conquistado protege por tempo e expiração não guarda um impacto 
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
   await page.evaluate(()=>{const r=globalThis.__testRun;r.nextObstacle=1000;r.obstacles=[{x:125,width:34,height:44,type:'pf'}];r.reserveShields=1;document.getElementById('game-reserve-shield').disabled=false;document.getElementById('game-reserve-shield').click();});
   await page.waitForFunction(()=>document.getElementById('game').dataset.power==='shield');
-  assert.equal(await page.locator('#game-lives').textContent(),'1');
+  assert.equal(await page.locator('#game-lives').textContent(),'0');
+  assert.equal(await page.locator('#game').getAttribute('data-player-form'),'normal');
   assert.match(await page.locator('#game-power').textContent(),/Escudo de reserva/);
   await page.evaluate(()=>{const r=globalThis.__testRun;r.shieldFor=0;r.graceFor=0;r.obstacles=[{x:125,width:34,height:44,type:'pf'}];});
-  await page.waitForFunction(()=>document.getElementById('game').dataset.runState==='over');
-  assert.equal(await page.locator('#game-lives').textContent(),'0');assert.deepEqual(errors,[]);
+  await page.waitForFunction(()=>document.getElementById('game').dataset.playerForm==='hurt');
+  assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
+  assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
 
-test('uma vida extra coletada permite sobreviver exatamente a mais uma colisão', async () => {
+test('passaportes oferecem continuação explícita sem jogar um terceiro impacto', async () => {
   const {context,page,errors}=await openWithRun();
   try {
     await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
     await page.evaluate(()=>{
-      const run=globalThis.__testRun;
-      run.nextObstacle=run.nextPickup=run.nextPassport=100000;
-      run.obstacles=[];
-      run.passports=99;
-      run.pickups.push({x:136,y:35,type:'passport',value:50});
-    });
-    await page.waitForFunction(()=>document.getElementById('game-lives').textContent==='2');
-    await page.evaluate(()=>{
-      const run=globalThis.__testRun;
-      run.obstacles=[{x:125,width:34,height:44,type:'pf'}];
+      const r=globalThis.__testRun;r.nextObstacle=r.nextPickup=r.nextPassport=10000;r.obstacles=[];r.passports=99;
+      r.pickups.push({x:136,y:35,type:'passport',value:50});
     });
     await page.waitForFunction(()=>document.getElementById('game-lives').textContent==='1');
-    assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
-    await page.evaluate(()=>{
-      const run=globalThis.__testRun;
-      run.graceFor=0;
-      run.obstacles=[{x:125,width:34,height:44,type:'pf'}];
-    });
+    await page.evaluate(()=>{globalThis.__testRun.obstacles=[{x:125,width:34,height:44,type:'pf'}];});
+    await page.waitForFunction(()=>document.getElementById('game').dataset.playerForm==='hurt');
+    assert.equal(await page.locator('#game-lives').textContent(),'1');
+    assert.equal(await page.getByRole('button',{name:'Usar continuação'}).isVisible(),false);
+    await page.evaluate(()=>{const r=globalThis.__testRun;r.graceFor=0;r.obstacles=[{x:125,width:34,height:44,type:'pf'}];});
     await page.waitForFunction(()=>document.getElementById('game').dataset.runState==='over');
+    assert.equal(await page.locator('#game-lives').textContent(),'1');
+    const distance=await page.evaluate(()=>globalThis.__testRun.distance);
+    await page.getByRole('button',{name:'Usar continuação'}).click();
+    assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
+    assert.equal(await page.locator('#game').getAttribute('data-player-form'),'normal');
     assert.equal(await page.locator('#game-lives').textContent(),'0');
+    assert.equal(await page.locator('#game-passports').textContent(),'100');
+    assert.ok(await page.evaluate(d=>globalThis.__testRun.distance>=d,distance));
     assert.deepEqual(errors,[]);
   } finally {await context.close();}
 });
-
 
 test('escudo aparece somente quando ativo, sem munição nem deslocamento da pista',async()=>{
  const {context,page,errors}=await openWithRun();

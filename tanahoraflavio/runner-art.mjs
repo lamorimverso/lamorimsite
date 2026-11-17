@@ -134,6 +134,10 @@ export function drawItem(c,{type,x,y,scale=1}){
   path(c,[[-7,-11],[-1,-14],[5,-10],[2,-6],[4,-2],[0,0],[-3,-4],[-6,-5]],'#e9c776',null);
   path(c,[[2,0],[7,3],[5,8],[1,12],[-1,7],[0,3]],'#e9c776',null);
   oval(c,0,-17,1.4,1.4,CREAM,null);
+ }else if(type==='rachadinha'){
+  box(c,-17,-13,34,26,'#37536d',4);box(c,-15,-11,30,22,'#fff0bb',3);
+  line(c,[[-14,-9],[-14,9]],'#bf8a57',2);
+  box(c,-4,-8,8,16,'#237d71',2);box(c,-8,-4,16,8,'#237d71',2);
  }else{
   const bible=type==='biblia';box(c,-12,-17,24,34,bible?'#70428e':'#274d80',3);box(c,8,-14,3,28,CREAM,1,null);
   if(bible){line(c,[[0,-11],[0,7]],'#f2cf77',3);line(c,[[-6,-5],[6,-5]],'#f2cf77',3);}
@@ -192,7 +196,7 @@ export function crouchAnimationStep(pose,target,seconds,reducedMotion=false){
  if(reducedMotion)return to;
  const current=Number.isFinite(pose)?Math.min(1,Math.max(0,pose)):0;
  const dt=Number.isFinite(seconds)?Math.min(.05,Math.max(0,seconds)):0;
- const amount=Math.min(1,dt/.13);
+ const amount=1-Math.exp(-dt/.12);
  const next=current+(to-current)*amount;
  return Math.abs(to-next)<.002?to:next;
 }

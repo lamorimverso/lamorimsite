@@ -89,7 +89,7 @@ test('a coleta avisa a primeira onda imediatamente e cinco comandos não apagam 
    assert.deepEqual(r.obstacles,wave,'sinais já exibidos continuam valendo');
   }
   step(r,1.8);
-  assert.equal(r.status,'over','ficar parado perde mesmo depois de restaurar a forma');
+  assert.equal(r.status,'running');assert.equal(r.player.hp,1,'ficar parado custa um dos dois impactos mesmo depois de restaurar a forma');
   assert.equal(r.lastHit.type,'pfizer-ampoule');
  }
 });

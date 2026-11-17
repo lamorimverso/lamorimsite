@@ -57,7 +57,7 @@ test('bueiro compromete o alvo, avisa e permite saída com comandos em ambas as 
   assert.equal(core.spawnManholeThreat(r),null,'uma única zona de impacto por vez');
   const target=o.x;step(r,.3);assert.equal(r.status,'running','aviso ainda não causa dano');
   core.moveRun(r,edge==='min'?1:-1);step(r,2.5);assert.equal(o.x,target);assert.equal(r.status,'running');assert.ok(!r.obstacles.includes(o));
-  const waiting=isolated(width);waiting.player.x=bounds[edge];core.spawnManholeThreat(waiting,{rng:()=>.5});step(waiting,2);assert.equal(waiting.status,'over','acampar na borda não neutraliza o perigo');
+  const waiting=isolated(width);waiting.player.x=bounds[edge];core.spawnManholeThreat(waiting,{rng:()=>.5});step(waiting,2);assert.equal(waiting.player.hp,1,'acampar na borda não neutraliza o perigo');
  }
 });
 
@@ -69,7 +69,7 @@ test('ampolas da Pfizer são anunciadas na coleta e exigem desvio lateral',()=>{
  for(let n=0;n<240;n++){pilotJacare(r,{recover:false});core.advanceRun(r,DT,()=>.5);}
  assert.equal(r.status,'running','deslocamento lateral após ver o aviso evita a onda');
  const stationary=isolated();transform(stationary);step(stationary,1.8);
- assert.equal(stationary.status,'over');assert.equal(stationary.lastHit.type,'pfizer-ampoule');
+ assert.equal(stationary.player.hp,1);assert.equal(stationary.lastHit.type,'pfizer-ampoule');
 });
 
 test('chefões respeitam o contato real quando Flávio ocupa a extremidade direita',()=>{
@@ -77,7 +77,7 @@ test('chefões respeitam o contato real quando Flávio ocupa a extremidade direi
   const r=isolated(width);r.player.x=core.playerBounds(r).max;r.routeDistance=23000;r.bossBag=[type];r.nextBossAt=0;
   core.advanceRun(r,DT,()=>.5);r.boss.nextAttack=0;core.advanceRun(r,DT,()=>.5);
   const o=r.obstacles.at(-1);assert.ok(o.bossAttack);assert.ok(o.x>r.player.x+core.PLAYER.width,'arma não nasce na hitbox ou atrás do herói');
-  assert.ok(core.threatTimeToContact(r,o)>=.84);step(r,2);assert.equal(r.status,'over','ameaça atravessa a borda ocupada');
+  assert.ok(core.threatTimeToContact(r,o)>=.84);step(r,2);assert.equal(r.player.hp,1,'ameaça atravessa a borda ocupada');
  }
 });
 

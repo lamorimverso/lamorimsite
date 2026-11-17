@@ -41,7 +41,7 @@ test('jacaré usa a largura real do desenho para colisões, humano mantém a lar
  const r=isolated();r.player.isJacare=true;r.player.jacareAge=1;r.graceFor=0;
  r.obstacles=[{x:161,width:32,height:24,type:'barrier',speed:0}];
  core.advanceRun(r,1/120,()=>.5);
- assert.equal(r.status,'over','colisão alcança a cabeça do jacaré, que aparece mais larga');
+ assert.equal(r.player.hp,1,'colisão alcança a cabeça do jacaré, que aparece mais larga');
  const human=isolated();human.graceFor=0;
  human.obstacles=[{x:161,width:32,height:24,type:'barrier',speed:0}];
  core.advanceRun(human,1/120,()=>.5);

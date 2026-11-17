@@ -16,7 +16,19 @@ export function pilotDodge(r){
  const terrain=r.terrain?.active;
  if(terrain){
   core.moveRun(r,0);core.crouchRun(r,false);
-  if(terrain.kind==='passage'){
+  if(terrain.kind==='air-transfer'){
+   const center=r.player.x+18,voidSpan=terrain.gaps[0];
+   const support=r.player.supportY>0?terrain.platforms.find(p=>p.y===r.player.supportY&&center+13>=p.x&&center-13<=p.x+p.width):null;
+   const edge=support?support.x+support.width:voidSpan.x;
+   const [,high,lane]=terrain.flight.aircraft;
+   const overhead=(terrain.flight.traveled-high.warnAt)/terrain.flight.nominalSpeed;
+   if(r.player.grounded&&support===terrain.platforms[high.barIndex]&&overhead>=0&&overhead<1.85)core.crouchRun(r,true);
+   const laneAhead=support===terrain.platforms[lane.barIndex]&&(support.x+lane.offset-center)/terrain.speed<.20;
+   if(r.player.grounded&&(support||center<voidSpan.x)&&(laneAhead||(edge-center)/terrain.speed<.17))core.jumpRun(r);
+  }else if(terrain.kind==='ground-lesson'){
+   const bar=terrain.platforms[0],eta=(bar.x-r.player.x-18)/terrain.speed;
+   if(r.player.grounded&&r.player.supportY===0&&eta<.22&&eta>-.10)core.jumpRun(r);
+  }else if(terrain.kind==='passage'){
    const roof=terrain.ceilings[0],eta=(roof.x-(r.player.x+31))/terrain.speed;
    if(roof.x+roof.width>r.player.x+5&&eta<.38){core.crouchRun(r,true);core.moveRun(r,1);}
   }else{

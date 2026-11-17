@@ -36,6 +36,15 @@ jobs:
         env:
           PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/google-chrome
         run: node --test --test-concurrency=1 tests/*.test.*
+      - name: Replay matched gameplay in desktop and mobile Chrome
+        if: success()
+        env:
+          PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/google-chrome
+        run: |
+          baseline=87831522aca06d71b51f5ed3dfbc3bd1f41e671a
+          git fetch --no-tags --depth=1 origin "$baseline"
+          git worktree add --detach "$RUNNER_TEMP/corre-flavio-base" "$baseline"
+          node tools/capture-runner-experience.cjs "$RUNNER_TEMP/corre-flavio-base" "$GITHUB_WORKSPACE" ux-captures
       - name: Capture desktop and mobile screens
         if: success()
         run: |
@@ -48,5 +57,7 @@ jobs:
         if: success()
         with:
           name: responsive-site-captures
-          path: ux-captures/*.png
+          path: |
+            ux-captures/*.png
+            ux-captures/prompt-experiencia.json
           retention-days: 7

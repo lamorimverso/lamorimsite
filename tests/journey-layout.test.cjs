@@ -24,7 +24,7 @@ async function open(viewport={width:390,height:844},options={}){
  const context=await browser.newContext({viewport,...browserOptions});
  if(instrument){
   const core=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-core.mjs'),'utf8');
-  await context.route('**/runner-core.mjs*',route=>route.fulfill({contentType:'text/javascript',body:core+'\nconst original=createRun;createRun=(...a)=>{const r=original(...a);globalThis.__journeyRun=r;return r;};\nconst originalResizeRun=resizeRun;resizeRun=(r,width)=>{const o=r.obstacles[0],before=o?threatTimeToContact(r,o):null;originalResizeRun(r,width);if(r.__resizeWatch&&width===480&&o){r.__resizeWatch.etaBefore=before;r.__resizeWatch.etaAfter=threatTimeToContact(r,o);}};const originalAdvance=advanceRun;advanceRun=(r,...a)=>{originalAdvance(r,...a);if(r.__resizeWatch){const o=r.obstacles[0];if(o&&o.x<=r.viewportWidth&&r.__resizeWatch.visible===undefined)r.__resizeWatch.visible=r.elapsed;if(r.status===\'over\')r.__resizeWatch.hit=r.elapsed;}};'}));
+  await context.route('**/runner-core.mjs*',route=>route.fulfill({contentType:'text/javascript',body:core+'\nconst original=createRun;createRun=(...a)=>{const r=original(...a);globalThis.__journeyRun=r;return r;};\nconst originalResizeRun=resizeRun;resizeRun=(r,width)=>{const o=r.obstacles[0],before=o?threatTimeToContact(r,o):null;originalResizeRun(r,width);if(r.__resizeWatch&&width===480&&o){r.__resizeWatch.etaBefore=before;r.__resizeWatch.etaAfter=threatTimeToContact(r,o);}};const originalAdvance=advanceRun;advanceRun=(r,...a)=>{originalAdvance(r,...a);if(r.__resizeWatch){const o=r.obstacles[0];if(o&&o.x<=r.viewportWidth&&r.__resizeWatch.visible===undefined)r.__resizeWatch.visible=r.elapsed;if(r.lastHit&&r.__resizeWatch.hit===undefined)r.__resizeWatch.hit=r.elapsed;}};'}));
   const art=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-sprites.mjs'),'utf8');
   await context.route('**/runner-sprites.mjs*',route=>route.fulfill({contentType:'text/javascript',body:art+'\nconst originalDraw=drawSpriteActor;drawSpriteActor=(c,args)=>{if(args.type===\'flavio\'){globalThis.__heroAlpha=args.alpha;(globalThis.__heroSteps??=[]).push(spriteFrameFor(\'flavio\',args).index);}if(args.type===\'joice\')globalThis.__joiceDrawn={x:args.x,y:args.y};return originalDraw(c,args);};const originalHead=drawSpriteHead;drawSpriteHead=(c,args)=>{const drawn=originalHead(c,args);if(drawn&&args.type===\'joice\')globalThis.__joiceDrawn={x:args.x,y:args.y};return drawn;};const originalCombat=drawCombatSprite;drawCombatSprite=(c,args)=>{const drawn=originalCombat(c,args);if(drawn&&args.type===\'joice\')globalThis.__joiceDrawn={x:args.x,y:args.y};return drawn;};'}));
   const scenery=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-scenery.mjs'),'utf8');
@@ -150,7 +150,7 @@ for(const viewport of [{width:1365,height:650},{width:390,height:844},{width:844
     const top=Math.min(110,Math.max(12,(innerHeight-track.height)/2));
     scrollTo(0,track.top+scrollY-top);
    });
-   await page.evaluate(()=>{__journeyRun.obstacles=[{x:125,width:34,height:44,type:'pf',action:'jump',speed:0}];});
+   await page.evaluate(()=>{const r=__journeyRun;r.player.hp=1;r.obstacles=[{x:125,width:34,height:44,type:'pf',action:'jump',speed:0}];});
    await page.getByRole('button',{name:'Tentar de novo',exact:true}).waitFor();
    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
    const before=await page.evaluate(()=>({scroll:scrollY,top:document.querySelector('.game-viewport').getBoundingClientRect().top}));
@@ -242,7 +242,7 @@ for(const viewport of [{width:320,height:568},{width:390,height:844},{width:568,
  const {context,page,errors}=await open(viewport,{instrument:true});
  try{
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
-  await page.evaluate(()=>{const r=__journeyRun;r.nextObstacle=r.nextBossAt=r.nextRaid=Infinity;r.obstacles=[{x:125,width:34,height:44,type:'pf',action:'jump',speed:0}];});
+  await page.evaluate(()=>{const r=__journeyRun;r.nextObstacle=r.nextBossAt=r.nextRaid=Infinity;r.player.hp=1;r.obstacles=[{x:125,width:34,height:44,type:'pf',action:'jump',speed:0}];});
   await page.getByRole('button',{name:'Tentar de novo',exact:true}).waitFor();
   const img=page.locator('#game-captured');
   assert.equal(await img.isVisible(),true,'desenho de Flávio algemado aparece na derrota');
@@ -306,7 +306,7 @@ for(const viewport of [{width:568,height:320},{width:601,height:350},{width:844,
    return [board,sound,gear].every(rect=>rect.top>=0&&rect.bottom<=track.top-2);
   });
   assert.ok(await boardInView(),'placar e comandos acima da pista na largada');
-  await page.evaluate(()=>{const r=__journeyRun;r.nextObstacle=r.nextBossAt=r.nextRaid=Infinity;r.obstacles=[{x:125,width:34,height:44,type:'pf',action:'jump',speed:0}];});await page.getByRole('button',{name:'Tentar de novo',exact:true}).waitFor();
+  await page.evaluate(()=>{const r=__journeyRun;r.nextObstacle=r.nextBossAt=r.nextRaid=Infinity;r.player.hp=1;r.obstacles=[{x:125,width:34,height:44,type:'pf',action:'jump',speed:0}];});await page.getByRole('button',{name:'Tentar de novo',exact:true}).waitFor();
   assert.ok(await boardInView(),'placar e comandos não somem ao exibir derrota');
   const retry=await page.locator('#game-start').boundingBox();assert.ok(retry.y>=0&&retry.y+retry.height<=viewport.height,'nova tentativa visível junto do placar');
  }finally{await context.close();}
@@ -318,7 +318,7 @@ for(const assisted of [false,true])test(`resize real900→480 preserva reação 
   if(assisted){await page.locator('#game-settings summary').click();await page.locator('#game-assist').check();}
   await page.locator('#game-start').click();await page.waitForFunction(()=>__journeyRun.viewportWidth===900);
   await page.evaluate(async()=>{const r=__journeyRun;Object.assign(r,{elapsed:200,distance:90000,routeDistance:90000,nextObstacle:0,nextBossAt:Infinity,nextRaid:Infinity,nextAllyAt:Infinity,nextPower:Infinity,nextPassport:Infinity,shieldFor:0,graceFor:0,boss:null,raid:null,obstacles:[],pickups:[],__resizeWatch:{}});const {advanceRun}=await import('./runner-core.mjs');advanceRun(r,1/120,()=>.9);r.nextObstacle=Infinity;});
-  await page.setViewportSize({width:390,height:844});await page.waitForFunction(()=>__journeyRun.viewportWidth===480);await page.waitForFunction(()=>__journeyRun.status==='over');
+  await page.setViewportSize({width:390,height:844});await page.waitForFunction(()=>__journeyRun.viewportWidth===480);await page.waitForFunction(()=>__journeyRun.__resizeWatch.hit!==undefined);
   const watch=await page.evaluate(()=>__journeyRun.__resizeWatch);assert.ok(Math.abs(watch.etaAfter-watch.etaBefore)<.025,'resize preserva o prazo que restava: '+JSON.stringify(watch));const delta=watch.hit-watch.visible;assert.ok(delta>=(assisted ? .95/.82 : .95)-.025,'não perde reação ao mudar de orientação: '+delta);assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });

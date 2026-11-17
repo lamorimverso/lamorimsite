@@ -1,26 +1,28 @@
+import {HURT_BODY_SCALE} from './runner-body.mjs?v=f32e9999b4fb';
 import {createPresentationDOM,createControlLabelReader} from './runner-presentation-cache.mjs?v=4712d27109dc';
-import {drawTerrain,drawSlideContact} from './runner-terrain-art.mjs?v=4c8583c1fe4b';
-import {terrainSupportAt} from './runner-terrain.mjs?v=6da967adb283';
+import {edgeThreatsFor,drawEdgeThreats} from './runner-edge-cues.mjs?v=b4b61c9e89df';
+import {drawTerrain,drawSlideContact} from './runner-terrain-art.mjs?v=22db2cd22519';
+import {terrainSupportAt} from './runner-terrain.mjs?v=31b5bc51e6b0';
 import {normalizeControls,keyboardActionFor,mouseActionFor,keyLabel} from './runner-control-map.mjs?v=568387e3f764';
 import {createControlSettings} from './runner-control-settings.mjs?v=25524a717d9e';
 import {createGamepadDriver} from './runner-gamepad.mjs?v=18383546c2cd';
 import {HERO_POWERS,heroPowerFor,cycleHeroPower} from './runner-earned-powers.mjs?v=432ca45a76e4';
 import {updateCombatHUD} from './runner-combat-hud.mjs?v=e0feb68d65fe';
-import {createMovementSoundDirector} from './runner-movement-audio.mjs?v=324263bcd025';
+import {createMovementSoundDirector,movementIsAirborne} from './runner-movement-audio.mjs?v=31522b0ccc1e';
 import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=f973724a4ad7';
 import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
 import {createShotSoundTracker} from './runner-shot-events.mjs?v=a3769f250d68';
-import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=245ba013c167';
+import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=65386943135d';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_PRESSES, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, moveRun, playerX, threatTimeToContact, recoverJacareRun, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=0eb15a8f2472";
+import { WORLD, PLAYER, JACARE_RECOVERY_PRESSES, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, recoverJacareRun, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=ee8625cb66a8";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=01fa5c1830b5';
 import {drawCampaignCrowd} from './runner-campaign-art.mjs?v=9cc4e669f36d';
-import {bossCounterWindow} from './runner-bosses.mjs?v=245ba013c167';
-import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=e6776f3e480e';
-import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=fb4b8afd4654";
-import { createGameAudio } from "./runner-audio.mjs?v=0dc3861f7c3b";
+import {bossCounterWindow} from './runner-bosses.mjs?v=65386943135d';
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=d7ea5b2830ca';
+import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=1c087f685c95";
+import { createGameAudio } from "./runner-audio.mjs?v=1d496e82860c";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=d5e017561fd6";
-import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=011c0f3b3004";
+import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=73113e4c788c";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
 
 import {allyById} from './runner-allies.mjs?v=d3b6a81b34b9';
@@ -32,7 +34,7 @@ function initRunner() {
   if (!canvas || !section) return;
   // Uma aba pode ter conservado o HTML anterior enquanto os módulos já
   // mudaram. Atualizar a página uma vez evita inicializar sobre IDs antigos.
-  if(!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-cycle")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-effects")||!$("game-assist")||$("game-options-panel")||!$("game-attack")||!$("game-jacare-progress")||!$("game-jacare-count")||!$("game-jacare-hint")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-battle-cue")||!$("game-practice")||!$("game-route")||!$("game-result-actions")||!$("game-ready-actions")||!$("game-controls")||$("game-expand")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
+  if(!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-cycle")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-effects")||!$("game-assist")||$("game-options-panel")||!$("game-attack")||!$("game-jacare-progress")||!$("game-jacare-count")||!$("game-jacare-hint")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-battle-cue")||!$("game-practice")||!$("game-route")||!$("game-result-actions")||!$("game-ready-actions")||!$("game-controls")||!$("game-continue")||!$("game-form-status")||$("game-expand")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
     const url=new URL(location.href);
     if(url.searchParams.get("ui")!=="20261115-campaign-hierarchy"){
       url.searchParams.set("ui","20261115-campaign-hierarchy");location.replace(url.href);
@@ -85,7 +87,7 @@ function initRunner() {
   const frameClock=createFrameClock(performance.now());
   let spritesReady=false,spritesFailed=false,loadedSprites=0,loadingSprites=false,landingUntil=0;
   let supportReady=false,supportLoading=false,supportFailed=false;
-  let crouchPose=0,lastPoseFrame=performance.now();
+  let crouchPose=0,lastPoseElapsed=0;
   let windowFocused = true, inView = true;
   let lastStatus = "", lastStage = -1, virtualWidth = 900, measuredWidth = 0, measuredDpr = 0;
   let lastCollected=0,lastPower="",lastPointerAt=-Infinity;
@@ -157,7 +159,9 @@ function initRunner() {
     }
     if(!run.practice&&(run.status==="over"||run.status==="won")&&score>best){best=score;try{localStorage.setItem(recordKey,String(best));}catch{}}
     ui.text("game-score",String(score).padStart(4,"0"));
-    ui.text("game-lives",String(run.lives));
+    ui.text("game-lives",String(Math.max(0,run.lives-1)));
+    ui.text("game-form-status",run.player.recoveryPending?"Cura pendente":"Machucado");
+    ui.prop("game-form-status",'hidden',run.status!=="running"||run.player.hp!==1);
     const weapon=heroPowerFor(run),cycle=$("game-weapon-cycle"),labels=controlLabels();
     ui.prop("game-power-loadout",'hidden',run.status!=="running");
     ui.prop(cycle,'hidden',run.status!=="running"||(run.ownedPowers?.length||1)<2);
@@ -181,6 +185,7 @@ function initRunner() {
     ui.text("game-stage-name",stage.name);
     const cast=characterProgressAt(run);
     ui.text("game-difficulty","Risco "+difficulty.level+" · "+cast.available+"/"+cast.total+" rivais");
+    ui.data(section,'playerForm',run.player.isJacare?'jacare':run.player.hp===1?'hurt':'normal');
     ui.text("game-stage-time",run.status==="ballot"?"Etapa final · Urna":run.status==="prison"?"Prisão fictícia":run.status==="won"?"História concluída!":run.status==="over"?"Fim da corrida":run.boss?.combat?bossRoleLabel(run.boss)+" · "+run.boss.name:run.boss?run.boss.remaining+" ataques para escapar do chefão":run.raid?"Perseguição especial":run.mode==="story"?"História "+run.bossesDefeated+"/"+STORY_BOSS_COUNT:campaignPhases[stage.index]);
     ui.text("game-best",best.toLocaleString("pt-BR"));
     ui.text("game-time",pad(Math.floor(run.elapsed/60))+":"+pad(Math.floor(run.elapsed%60)));
@@ -269,7 +274,7 @@ function initRunner() {
     ui.text("game-objective",run.status==="running"&&run.boss?
       (attackCueFor(bossCue())?.instruction||"Observe o próximo ataque."):
       run.status==="running"&&liveCue&&threatTimeToContact(run,liveAttack)<2?
-      liveCue.instruction:"Faltam "+(100-run.passports%100)+" passaportes para +1 vida");
+      liveCue.instruction:"Faltam "+(100-run.passports%100)+" passaportes para uma continuação");
     // Mantém a instrução de perigo disponível para tecnologias assistivas.
     const dangerVisible=!!(liveCue&&threatTimeToContact(run,liveAttack)<2);
     ui.prop("game-objective",'hidden',run.status!=="running"||!!run.raid||!banner.hidden||
@@ -305,10 +310,11 @@ function initRunner() {
     const controls=$("game-controls"),inside=run.status==="over"||run.status==="won";
     const actionsHost=$(inside?"game-result-actions":"game-ready-actions");
     if(controls.parentNode!==actionsHost)actionsHost.append(controls);
-    const terrainOutcome=run.lastHit?.type?.startsWith('terrain-'),ampouleOutcome=run.lastHit?.type==='pfizer-ampoule';
-    const outcomeTitle=terrainOutcome?(run.lastHit.type==='terrain-gap'?'Caiu no vão!':run.lastHit.type==='terrain-ceiling'?'Bateu na passagem baixa!':'Bateu na borda da plataforma!'):ampouleOutcome?'A ampola acertou Flávio!':'Foi pego pela Polícia Federal!';
-    const outcomeHint=terrainOutcome?(run.lastHit.type==='terrain-ceiling'?'Abaixe e avance para deslizar pela abertura.':'Pule antes da borda e pouse na plataforma.'):ampouleOutcome?'Desvie de lado assim que os alvos aparecerem, inclusive após voltar à forma humana.':dodgeHint();
-    ui.prop("game-captured",'hidden',run.status==='over'?terrainOutcome||ampouleOutcome:!prison);
+    ui.prop("game-continue",'hidden',!canContinueRun(run));
+    const terrainOutcome=run.lastHit?.type?.startsWith('terrain-'),aircraftOutcome=run.lastHit?.type?.startsWith('aircraft-'),ampouleOutcome=run.lastHit?.type==='pfizer-ampoule';
+    const outcomeTitle=terrainOutcome?(run.lastHit.type==='terrain-gap'?'Caiu no vão!':run.lastHit.type==='terrain-ceiling'?'Bateu na passagem baixa!':'Bateu na borda da plataforma!'):aircraftOutcome?'O projétil aéreo atingiu Flávio!':ampouleOutcome?'A ampola acertou Flávio!':'Foi pego pela Polícia Federal!';
+    const outcomeHint=terrainOutcome?(run.lastHit.type==='terrain-ceiling'?'Abaixe e avance para deslizar pela abertura.':'Pule antes da borda e pouse na plataforma.'):aircraftOutcome?(run.lastHit.action==='crouch'?'Abaixe sobre a barra quando o avião sinalizar o disparo alto.':'Pule antes da faixa marcada e alcance o próximo apoio.'):ampouleOutcome?'Desvie de lado assim que os alvos aparecerem, inclusive após voltar à forma humana.':dodgeHint();
+    ui.prop("game-captured",'hidden',run.status==='over'?terrainOutcome||aircraftOutcome||ampouleOutcome:!prison);
     if(ballotOpen&&lastStatus!=="ballot"){
       clearControls();$("game-ballot").focus({preventScroll:true});
     }
@@ -327,14 +333,14 @@ function initRunner() {
     if(run.status==="over"){
       ui.text("game-overlay-title",outcomeTitle);
       ui.text("game-overlay-copy",outcomeHint+" "+score.toLocaleString("pt-BR")+" m · "+run.passports+" passaportes.");
-      ui.text("game-overlay-badge",ampouleOutcome?"Transformação fictícia":"Perseguição fictícia");audio.stop();
+      ui.text("game-overlay-badge",aircraftOutcome?"Travessia aérea fictícia":ampouleOutcome?"Transformação fictícia":"Perseguição fictícia");audio.stop();
       if(lastStatus!=="over")section.dispatchEvent(new Event("runner:over"));
     }
     if(renderedRoute!==stages||lastStatus!==run.status||lastStage!==stage.index||lastCollected!==run.collected||lastPower!==power||lastLives!==run.lives||lastEvents!==run.events){
       let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="ballot"?"Etapa final: digite dois números na urna fictícia.":run.status==="prison"?"Flávio foi preso. A campanha vai recomeçar.":run.status==="won"?(run.practice?"Desafio opcional concluído.":"História concluída. Todas as "+STORY_BOSS_COUNT+" etapas foram superadas."):run.status==="over"?outcomeTitle+" "+outcomeHint+" "+score+" metros percorridos. Toque em Tentar de novo.":stage.name+" · pule ou abaixe conforme o perigo.";
       if(run.status==="running"){
         if(run.events>lastEvents)message=run.event;
-        else if(lastCollected!==run.collected)message="Passaporte coletado. Faltam "+(100-run.passports%100)+" para uma vida.";
+        else if(lastCollected!==run.collected)message="Passaporte coletado. Faltam "+(100-run.passports%100)+" para uma continuação.";
         else if(lastPower==="shield"&&power!=="shield")message="O escudo de reserva terminou. Volte a desviar!";
         if(lastStage>=0&&lastStage!==stage.index){message="Chegamos a "+stage.name+"! A corrida continua.";audio.effect("stage");}
       }
@@ -368,18 +374,19 @@ function initRunner() {
     frameId=0;if(run.status!=="running")return;
     if($("game-settings").open){resetFrameClock(frameClock,now);return;}
     gamepadDriver?.poll();
-    const timing=advanceFrameClock(frameClock,now),wasAirborne=run.player.y>0;
-    const before={hp:run.player.hp,lives:run.lives,collected:run.collected,boss:run.boss?.type,
+    const timing=advanceFrameClock(frameClock,now);
+    const before={hp:run.player.hp,hit:run.lastHit,collected:run.collected,boss:run.boss?.type,
       passports:run.passports,spawned:run.spawnedObstacles,attacks:run.boss?.fired||0};
     let bufferedTakeoff=false;
     for(let i=0;i<timing.steps&&run.status==="running";i++){
-      const pending=run.player.jumpBufferedUntil>0&&run.player.velocity<=0;
+      const wasAirborne=movementIsAirborne(run.player),pending=run.player.jumpBufferedUntil>0&&run.player.velocity<=0;
       advanceRun(run,timing.step);
+      if(wasAirborne&&!movementIsAirborne(run.player))landingUntil=run.elapsed+.12;
       if(pending&&run.player.jumpBufferedUntil===0&&run.player.velocity>0)bufferedTakeoff=true;
     }
-    if(wasAirborne&&run.player.y===0)landingUntil=run.elapsed+.12;
     updateUI();
-    if(run.status==="running"&&(run.lives<before.lives||run.player.hp<before.hp))audio.effect("hit");
+    if(run.status==="running"&&run.lastHit!==before.hit)audio.effect("hit");
+    else if(run.player.hp>before.hp)audio.effect("restore");
     else if(before.boss&&!run.boss)audio.effect("victory");
     else if(!before.boss&&run.boss){audio.enemyEntrance(run.boss);voices.event("boss",run);}
     else if(run.collected>before.collected)audio.effect(run.lastPickup==="ze-gotinha"?"transform":run.lastPickup==="ally"?"ally":"pickup");
@@ -398,7 +405,7 @@ function initRunner() {
     voices.update(run,{safe:nearest>.9});
     shotSounds.update(run.obstacles,run.boss?.type);
     audio.background({active:run.status==="running",pressure:difficultyAt(run.distance,run.elapsed).pressure,boss:!!run.boss,raid:run.raid?.phase==="active"});
-    if(run.status==="over"&&run.lives<before.lives)audio.effect("hit");
+    if(run.status==="over"&&run.lastHit!==before.hit)audio.effect("hit");
     heroShotSound();movementSounds.update(run,{bufferedTakeoff});
     draw();schedule();
   }
@@ -435,14 +442,20 @@ function initRunner() {
     audio.stop();audio.prime();audio.actorCue("flavio");voices.reset();lastRaidKey="";
     clearControls();
     shotSounds.reset();lastHeroShotHeard=0;
-    run=createRun({assisted:preferences.assisted,mode:practiceId?"story":selectedMode(),practiceId});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);movementSounds.reset(run);landingUntil=0;
+    run=createRun({assisted:preferences.assisted,mode:practiceId?"story":selectedMode(),practiceId});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);movementSounds.reset(run);landingUntil=0;crouchPose=0;lastPoseElapsed=0;
     if(!supportReady)prepareSupport();
     $("game-settings").open=false;
-    crouchPose=0;lastPoseFrame=performance.now();
+    crouchPose=0;
     lastCollected=0;lastPower="";lastStatus="";lastEvents=0;lastLives=1;
     resetFrameClock(frameClock,performance.now());
     updateUI();section.dispatchEvent(new Event("runner:start"));draw();resumeFromGesture();syncActivity();canvas.focus({preventScroll:true});
   }
+  $("game-continue").addEventListener("click",()=>{
+    if(!continueRun(run))return;
+    clearControls();audio.prime();shotSounds.reset();movementSounds.reset(run);landingUntil=0;
+    resetFrameClock(frameClock,performance.now());updateUI();draw();resumeFromGesture();
+    canvas.focus({preventScroll:true});
+  });
   function heroShotSound(){
     if(run.shotsFired<=lastHeroShotHeard)return;lastHeroShotHeard=run.shotsFired;
     audio.heroShot(({wind:'wind',receipts:'papers','budget-sheets':'papers',hammer:'metal','court-seal':'metal',handcuffs:'metal'})[heroPowerFor(run).projectile]||'magic');
@@ -709,7 +722,7 @@ function initRunner() {
     }
   }
   function character(){
-    const airborne=run.player.grounded===false||run.player.velocity>0||run.player.y>(run.player.supportY||0)+.5,reduced=prefersReducedMotion();
+    const airborne=movementIsAirborne(run.player),reduced=prefersReducedMotion();
     const active=run.status==="running",decorative=active&&!reduced;
     const facing=run.allyShieldFor>0?1:run.player.moveHeld<0?-1:1;
     // O Flávio corre em oito quadros reais. A cadência depende do tempo da
@@ -718,26 +731,27 @@ function initRunner() {
     // O herói e os perseguidores de solo usam seus ciclos de corrida.
     const phase=active?run.elapsed*(run.assisted?9:11):0;
     const crouchTarget=run.player.crouching&&!airborne,shooting=active&&run.player.attackFor>0;
-    const frameTime=performance.now();
-    crouchPose=crouchAnimationStep(crouchPose,crouchTarget,(frameTime-lastPoseFrame)/1000,reduced);
-    lastPoseFrame=frameTime;
+    crouchPose=crouchAnimationStep(crouchPose,crouchTarget,run.elapsed-lastPoseElapsed,reduced);
+    lastPoseElapsed=run.elapsed;
     const runningStride=active&&!airborne&&!crouchTarget&&!run.player.isJacare;
-    const bounce=decorative&&runningStride&&!shooting?Math.abs(Math.sin(phase*Math.PI/4))*2.6:0;
-    const support=terrainSupportAt(run,playerX(run)+18,13),floor=WORLD.ground-(support||0);
-    if(decorative&&!airborne){
-      circle(playerX(run)-8-run.distance%19,floor-2,2.8,"#a6a7aa70");
-      // Pequena poeira que acompanha o deslize, sem afetar a pista.
-      if(crouchPose>.22){
-        circle(playerX(run)-14,floor-5,2.5,"#a6a7aa60");
-        circle(playerX(run)-23,floor-8,1.5,"#a6a7aa55");
-      }
+    const support=terrainSupportAt(run,playerX(run)+18,13),floor=WORLD.ground-(support??0);
+    // Pés e efeito de impacto assumem a altura do suporte real, sem levantar
+    // o sprite inteiro para fazer a passada animada parecer mais forte.
+    if(decorative&&runningStride&&support!==null){
+      const footfall=Math.max(0,1-(phase%2)/.65);
+      if(footfall>0)circle(playerX(run)+17-facing*(9+12*(1-footfall)),floor-1-.8*(1-footfall),1.3+footfall,'#617f7f54');
     }
     if(support!==null){
       ctx.save();ctx.globalAlpha=.12;ctx.fillStyle="#292337";
       ctx.beginPath();ctx.ellipse(playerX(run)+17,floor+4,22+crouchPose*6,4,0,0,Math.PI*2);ctx.fill();ctx.restore();
     }
     // Slide desenhado na postura baixa: sem comprimir o rosto novamente.
-    const feet=WORLD.ground-run.player.y-bounce;
+    const feet=WORLD.ground-run.player.y;
+    if(decorative&&!airborne&&run.elapsed<landingUntil){
+      const fading=(landingUntil-run.elapsed)/.12;
+      ctx.save();ctx.globalAlpha*=.45*fading;ctx.strokeStyle="#536e76";ctx.lineWidth=1.1;
+      ctx.beginPath();ctx.ellipse(playerX(run)+17,feet+1,13+11*(1-fading),2.7,0,0,Math.PI*2);ctx.stroke();ctx.restore();
+    }
     if(active&&run.player.sliding)drawSlideContact(ctx,{x:playerX(run)+17,y:feet,age:run.elapsed,reducedMotion:reduced});
     const protection={x:playerX(run)+17,y:feet,crouching:crouchTarget||run.player.isJacare,remaining:run.shieldFor};
     ctx.save();
@@ -746,9 +760,6 @@ function initRunner() {
       ctx.translate(pivot,feet);
       ctx.rotate((run.player.sliding?-.065:-.018)*crouchPose);
       ctx.translate(-pivot,-feet);
-    }else if(!shooting&&active&&!airborne&&run.elapsed<landingUntil){
-      const ease=(landingUntil-run.elapsed)/.12,pivot=playerX(run)+17;
-      ctx.translate(pivot,feet);ctx.scale(1+.025*ease,1-.025*ease);ctx.translate(-pivot,-feet);
     }else if(!shooting&&decorative&&runningStride){
       // Inclinação pequena e alternada para que a corrida não pareça
       // apenas o cenário rolando por trás de um personagem imóvel.
@@ -764,8 +775,12 @@ function initRunner() {
     }
     if(blend.human>0){
       const alpha=blend.human*(run.graceFor>0&&run.shieldFor<=0?.55:1);
-      if(shooting)drawHeroShot(ctx,{x:playerX(run)+17,y:feet,phase,age:HERO_SHOT_DURATION-run.player.attackFor,crouching:crouchTarget,airborne,falling:run.player.velocity<0,facing:run.player.shotFacing||1,alpha});
-      else drawActor(ctx,{type:"flavio",x:playerX(run)+17,y:feet,scale:.95,phase,airborne,facing,
+      const pivot=playerX(run)+17,scale=run.player.hp===1?HURT_BODY_SCALE:1;
+      if(shooting){
+        if(scale!==1){ctx.save();ctx.translate(pivot,feet);ctx.scale(scale,scale);ctx.translate(-pivot,-feet);}
+        drawHeroShot(ctx,{x:pivot,y:feet,phase,age:HERO_SHOT_DURATION-run.player.attackFor,crouching:crouchTarget,airborne,falling:run.player.velocity<0,facing:run.player.shotFacing||1,alpha});
+        if(scale!==1)ctx.restore();
+      }else drawActor(ctx,{type:"flavio",x:pivot,y:feet,scale:.95*scale,phase,airborne,facing,
         falling:run.player.velocity<0,landing:crouchTarget,hurt:run.status==="over",alpha});
       if(run.player.restoreFlashFor>0&&!prefersReducedMotion()){
         ctx.save();ctx.globalAlpha=Math.min(.55,run.player.restoreFlashFor/.48*.55);
@@ -824,10 +839,6 @@ function initRunner() {
         ctx.ellipse(playerX(run)+17,WORLD.ground+3,16,4,0,0,Math.PI*2);ctx.fill();ctx.restore();
       }
     }
-    if(item.approach==='rear'&&!item.passed&&!item.counted&&item.x<playerX(run)){
-      ctx.save();ctx.fillStyle="#a23d50";ctx.font="800 12px system-ui";
-      ctx.fillText("→ !",12,WORLD.ground-96);ctx.restore();
-    }
     if(item.projectile){
       if(item.reflected){
         const x=item.x+item.width/2,y=WORLD.ground-item.y,w=Math.min(20,item.width*.42);
@@ -858,7 +869,7 @@ function initRunner() {
     // the hero's proportions. The DOM meters remain fixed above the playfield.
     const cameraLift=Math.max(0,run.player.y+94+8-WORLD.ground);
     ctx.save();ctx.translate(0,cameraLift);
-    drawJourneyScenery(ctx,{cameraLift,routeDistance:run.routeDistance,campaignStages:run.mode==='story'?STORY_STAGE_IDS:undefined,openingDistance:run.mode==="story"?STORY_OPENING_DISTANCE:0,distance:run.distance,width:virtualWidth,reducedMotion:prefersReducedMotion(),quiet:run.aid?.kind==="quiet"?Math.max(0,Math.min(1,(6-run.aid.remaining)/.35,run.aid.remaining/.35)):0});
+    drawJourneyScenery(ctx,{cameraLift,flight:run.terrain?.active?.flight,routeDistance:run.routeDistance,campaignStages:run.mode==='story'?STORY_STAGE_IDS:undefined,openingDistance:run.mode==="story"?STORY_OPENING_DISTANCE:0,distance:run.distance,width:virtualWidth,reducedMotion:prefersReducedMotion(),quiet:run.aid?.kind==="quiet"?Math.max(0,Math.min(1,(6-run.aid.remaining)/.35,run.aid.remaining/.35)):0});
     drawRaidAtmosphere(ctx,{strength:raidMoodFor(run.raid),width:virtualWidth,distance:run.distance,reducedMotion:prefersReducedMotion()});
     drawTerrain(ctx,{terrain:run.terrain,ground:WORLD.ground,width:virtualWidth});
     if(run.boss?.combat)drawBossArena(ctx,{width:virtualWidth,ground:WORLD.ground,state:run.boss});
@@ -876,6 +887,10 @@ function initRunner() {
     for(const shot of run.heroShots||[])drawHeroProjectile(ctx,shot,WORLD.ground,{reducedMotion:prefersReducedMotion()});
     character();
     ctx.restore();
+    if(run.status==='running'){
+      const cues=edgeThreatsFor(run.obstacles,virtualWidth,item=>threatTimeToContact(run,item));
+      drawEdgeThreats(ctx,cues,{width:virtualWidth,ground:WORLD.ground});
+    }
   }
   // A controller is another held-input source, with neutral rearming after menus/focus.
   let ballotFocus=0;

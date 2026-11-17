@@ -64,9 +64,9 @@ test('o impacto registra a ação que teria evitado o perigo real',()=>{
  core.advanceRun(common,DT,()=>0);
  assert.deepEqual(common.lastHit,{type:'pf',action:'jump'});
  const high=isolatedBoss('lula',900,0,false,1);step(high,2);
- assert.equal(high.status,'over');assert.deepEqual(high.lastHit,{type:'lhand',action:'crouch'});
+ assert.equal(high.player.hp,1);assert.deepEqual(high.lastHit,{type:'lhand',action:'crouch'});
  const low=isolatedBoss('haddad',900,0,false,1);core.crouchRun(low,true);step(low,2);
- assert.equal(low.status,'over');assert.deepEqual(low.lastHit,{type:'receipts',action:'jump'});
+ assert.equal(low.player.hp,1);assert.deepEqual(low.lastHit,{type:'receipts',action:'jump'});
 });
 
 function commonContact(width,distance,assisted=false){
@@ -74,16 +74,17 @@ function commonContact(width,distance,assisted=false){
  run.nextBossAt=run.nextRaid=Infinity;run.nextObstacle=0;
  core.advanceRun(run,DT,()=>0);run.nextObstacle=Infinity;
  let visible;
- for(let i=0;i<120*5&&run.status==='running';i++){
+ for(let i=0;i<120*5&&!run.lastHit;i++){
   core.advanceRun(run,DT,()=>0);
   if(visible===undefined&&run.obstacles[0]?.x<=width)visible=run.elapsed;
  }
- assert.equal(run.status,'over');assert.ok(visible!==undefined);
+ assert.equal(run.player.hp,1);assert.ok(visible!==undefined);
  return run.elapsed-visible;
 }
 function bossContact(width,distance,assisted=false){
  const run=isolatedBoss('xandao',width,distance,assisted),launch=run.elapsed;
- step(run,5);assert.equal(run.status,'over');return run.elapsed-launch;
+ for(let i=0;i<120*5&&!run.lastHit;i++)core.advanceRun(run,DT,()=>0);
+ assert.equal(run.player.hp,1);return run.elapsed-launch;
 }
 
 test('primeira visibilidade de inimigos comuns dá a mesma janela em celular e desktop',()=>{

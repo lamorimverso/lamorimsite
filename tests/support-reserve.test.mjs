@@ -21,7 +21,7 @@ test('reserva protege de dano real, respeita pausa e pode ser usada no ar',()=>{
  const r=make();r.reserveShields=1;r.player.y=40;r.player.velocity=100;r.status='paused';
  assert.equal(core.activateReserveShield(r),false);assert.equal(r.reserveShields,1);r.status='running';assert.equal(core.activateReserveShield(r),true);
  r.player.y=0;r.player.velocity=0;r.obstacles=[{type:'case',x:r.player.x,width:38,height:34,speed:0,action:'jump'}];
- core.advanceRun(r,1/120);assert.equal(r.status,'running');r.shieldFor=0;core.advanceRun(r,1/120);assert.equal(r.status,'over');
+ core.advanceRun(r,1/120);assert.equal(r.player.hp,2);r.shieldFor=0;core.advanceRun(r,1/120);assert.equal(r.status,'running');assert.equal(r.player.hp,1);
 });
 test('Eduardo adia perseguição uma vez; Tarcísio aproxima o próximo apoio',()=>{
  const r=make();r.nextRaid=10;r.nextSupportAt=18000;r.routeDistance=1000;

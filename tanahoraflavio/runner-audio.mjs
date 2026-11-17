@@ -1,5 +1,5 @@
 import {createVoiceSelector} from './runner-voice-selector.mjs?v=ad3200a88cd4';
-import {getMovementSoundBank} from './runner-movement-audio.mjs?v=324263bcd025';
+import {getMovementSoundBank} from './runner-movement-audio.mjs?v=31522b0ccc1e';
 import {createGameSoundtrack} from './runner-soundtrack.mjs?v=eef47a2a323c';
 import {getCastSoundBank} from './runner-cast-sounds.mjs?v=2af8b6ef13d0';
 import {getEnemyShotBank} from './runner-shot-sounds.mjs?v=fd84e4e83e32';

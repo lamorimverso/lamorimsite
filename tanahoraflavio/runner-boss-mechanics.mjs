@@ -174,7 +174,7 @@ const chain=(signature,type,beats,extra={})=>{
 const late=(signature,type,beats,extra={})=>chain(signature,type,beats,{telegraph:1.14,recover:1.58,...extra});
 const newBosses=Object.freeze({
  'ana-elisa':Object.freeze([
-  chain('network-linked-panels','network-panel',[zone(-24),zone(0),zone(24)]),
+  chain('network-link-intro','network-panel',[zone(-24),low(wave(18))]),
   s('network-low-data','network-panel','jump','sweep',wave(18)),
   s('network-top-row','network-panel','crouch','diagonal',wave(14)),
   chain('network-zigzag','network-panel',[zone(24),zone(-24),zone(0)]),
@@ -210,7 +210,7 @@ const newBosses=Object.freeze({
   late('planters-long-row','garden-box',[low(roll(39,3)),high(),low(roll(36,4)),high()]),
   late('planters-pot-hop','garden-box',[high(),low(roll(37,3)),high()])]),
  erika:Object.freeze([
-  chain('spotlight-crossed-stage','stage-spotlight',[zone(-25),zone(25)]),
+  chain('spotlight-stage-intro','stage-spotlight',[zone(-25),high(wave(17))]),
   s('spotlight-balcony','stage-spotlight','crouch','diagonal',{...wave(17),widthScale:1.2}),
   s('spotlight-floor','stage-spotlight','jump','sweep',wave(20,2)),
   chain('spotlight-cross-right','stage-spotlight',[zone(24),zone(-24)]),

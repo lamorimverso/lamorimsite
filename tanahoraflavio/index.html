@@ -26,9 +26,9 @@
   <title>Tá na hora, Flávio! · Contagem e minigame</title>
 
   <link rel="stylesheet" href="control-settings.css?v=1c20042497ae">
-  <link rel="stylesheet" href="game.css?v=6fc291aed35e">
+  <link rel="stylesheet" href="game.css?v=99e53c95d975">
   <script defer src="page-layout.js?v=69f225a085c7"></script>
-  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=ac8b3c679653"></script>
+  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=3d0f85d35cb3"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -75,8 +75,8 @@
         <div class="game-topline">
         <div class="game-scoreboard" aria-label="Placar">
           <div><span>Metros</span><strong id="game-score">0000</strong></div>
-          <div><span>Vidas</span><strong id="game-lives">1</strong></div>
-          <div><span>Passaportes</span><strong id="game-passports">0</strong><div class="passport-track" title="100 passaportes = +1 vida" aria-hidden="true"><span id="game-passport-progress"></span></div></div>
+          <div><span>Continuações</span><strong id="game-lives">0</strong><span id="game-form-status" role="status" aria-label="Condição de Flávio" aria-atomic="true" hidden>Machucado</span></div>
+          <div><span>Passaportes</span><strong id="game-passports">0</strong><div class="passport-track" title="100 passaportes = uma continuação explícita" aria-hidden="true"><span id="game-passport-progress"></span></div></div>
         </div>
         <div class="game-stage-header">
           <div><span id="game-phase" class="sr-only">Cenário 1 de 6</span><strong id="game-stage-name">Brasília</strong><small id="game-difficulty">Risco 1 · 0 m</small></div>
@@ -90,7 +90,7 @@
         </div>
         <details class="game-settings" id="game-settings"><summary title="Configurações de comandos"><span aria-hidden="true">⚙</span><span class="sr-only">Comandos</span></summary>
           <div class="game-settings-content">
-            <p class="game-instructions" id="game-instructions">Configure teclado, mouse e controle. Abaixe enquanto avança para deslizar sob passagens baixas. Pule os vãos e pouse nas plataformas. Vença Soraya na História ou cinco chefes no Infinito para ganhar duplo pulo: aperte pular novamente no ar. Itens de aliados dão um escudo frontal de 3 s; seis ajudas também guardam uma reserva. No toque: toque para pular, deslize para mover ou abaixar e use o ícone de mira para rebater projéteis inimigos. A corrida fica parada enquanto você ajusta os comandos.</p>
+            <p class="game-instructions" id="game-instructions">Configure teclado, mouse e controle. Abaixe enquanto avança para deslizar sob passagens baixas. Pule os vãos e pouse nas plataformas. Vença Soraya na História ou cinco chefes no Infinito para ganhar duplo pulo: aperte pular novamente no ar. Itens de aliados dão um escudo frontal de 3 s; seis ajudas também guardam uma reserva. No toque: toque para pular, deslize para mover ou abaixar e use o ícone de mira para rebater projéteis inimigos. Dois impactos encerram a tentativa. Rachadinha cenográfica cura a forma machucada. Uma continuação guardada pode ser usada no resultado, quando a pista permite. A corrida fica parada enquanto você ajusta os comandos.</p>
             <div id="game-control-bindings"></div>
             <div class="game-options">
               <label for="game-crouch-mode">Abaixar<select id="game-crouch-mode" disabled><option value="hold">Deslizar e segurar</option><option value="toggle">Deslizar para alternar</option></select></label>
@@ -117,7 +117,7 @@
           <div class="game-combat-hud" id="game-combat-hud" hidden>
             <div class="combat-player">
               <div class="combat-columns">
-                <div class="combat-column combat-life-column"><span class="combat-caption" aria-hidden="true">VIDA</span><div id="game-hero-health" class="combat-meter combat-life" role="progressbar" aria-label="Vida de Flávio" aria-valuemin="0" aria-valuemax="5" aria-valuenow="5"><span></span></div><canvas id="game-hero-portrait" class="combat-portrait" width="48" height="48" aria-hidden="true"></canvas></div>
+                <div class="combat-column combat-life-column"><span class="combat-caption" aria-hidden="true">VIDA</span><div id="game-hero-health" class="combat-meter combat-life" role="progressbar" aria-label="Vida de Flávio" aria-valuemin="0" aria-valuemax="2" aria-valuenow="2"><span></span></div><canvas id="game-hero-portrait" class="combat-portrait" width="48" height="48" aria-hidden="true"></canvas></div>
                 <div class="combat-column combat-power-column"><span class="combat-caption" aria-hidden="true">TIROS</span><div id="game-power-charge" class="combat-meter combat-charge sr-only" role="progressbar" aria-label="Munição do poder" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><span></span></div><div class="game-power-loadout" id="game-power-loadout" hidden><canvas id="game-weapon-icon" width="64" height="64" aria-hidden="true"></canvas><span id="game-weapon-effect" class="sr-only"></span><span id="game-weapon-level" aria-hidden="true">6/6</span></div><button type="button" id="game-weapon-cycle" class="game-weapon-cycle" aria-label="Trocar arma" aria-describedby="game-weapon-effect" hidden>T</button></div>
               </div>
               <div class="game-aid-bar" id="game-aid-bar" hidden><span id="game-aid-status" class="sr-only">Ajudas 0/6 para o escudo de reserva</span><button type="button" id="game-reserve-shield" disabled aria-label="Usar escudo de reserva, tecla E"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 21 6v6c0 5-9 10-9 10S3 17 3 12V6Z"/><path d="m8 12 3 3 5-6"/></svg><span id="game-shield-count" aria-hidden="true">0/6</span><span class="combat-shield-track" aria-hidden="true"><span id="game-shield-progress"></span></span></button></div>
@@ -169,6 +169,7 @@
             <label><input id="game-mode-story" type="radio" name="game-mode" value="story" checked> Modo História</label>
           </fieldset>
           <button type="button" class="game-primary" id="game-start" disabled>Carregando desenhos…</button>
+          <button type="button" class="game-primary" id="game-continue" hidden>Usar continuação</button>
         </div>
         </div>
         <p class="game-loading-note sr-only" id="game-loading-note" role="status">Preparando os personagens…</p>

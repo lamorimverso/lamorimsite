@@ -215,7 +215,7 @@ test('recuperar a forma humana rapidamente não evita a ampola já sinalizada',a
  const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844},hasTouch:true,isMobile:true});
  try{
   await begin(page);
-  await page.evaluate(()=>{const r=__testRun;for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport','nextPickup'])r[k]=Infinity;r.obstacles=[];r.pickups=[{type:'ze-gotinha',x:r.player.x+17,y:20,speed:0}];});
+  await page.evaluate(()=>{const r=__testRun;for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport','nextPickup'])r[k]=Infinity;r.obstacles=[];r.player.hp=1;r.pickups=[{type:'ze-gotinha',x:r.player.x+17,y:20,speed:0}];});
   const hud=page.locator('#game-jacare-progress'),canvas=page.locator('#runner-canvas');
   await canvas.focus();await hud.waitFor();
   assert.equal(await page.evaluate(()=>__testRun.obstacles.filter(o=>o.type==='pfizer-ampoule').length),3);
@@ -502,12 +502,36 @@ test('derrota preserva a frase e explica a evasão do ataque recebido',async()=>
  const {context,page,errors}=await open({instrument:true});
  try{
   await begin(page);
-  await page.evaluate(()=>{__testRun.obstacles=[{x:130,width:46,height:44,type:'hammer',projectile:true,y:29,launchX:150,targetX:137,launchY:29,targetY:29,action:'jump',speed:0}];});
+  await page.evaluate(()=>{__testRun.player.hp=1;__testRun.obstacles=[{x:130,width:46,height:44,type:'hammer',projectile:true,y:29,launchX:150,targetX:137,launchY:29,targetY:29,action:'jump',speed:0}];});
   await page.waitForFunction(()=>__testRun.status==='over');
   assert.equal(await page.locator('#game-overlay-title').textContent(),'Foi pego pela Polícia Federal!');
   assert.equal(await page.locator('#game-overlay-copy').isVisible(),true);
   assert.match(await page.locator('#game-overlay-copy').textContent(),/martelo.*salto/i);
   assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+for(const viewport of [{width:390,height:844},{width:1440,height:900}])test(`forma machucada e cura pendente ficam visíveis fora da pista em ${viewport.width}px`,async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport});
+ try{
+  await begin(page);
+  await page.evaluate(()=>{
+   const r=__testRun;for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt'])r[k]=Infinity;
+   r.obstacles=[];r.pickups=[];r.player.hp=1;
+  });
+  const cue=page.getByRole('status',{name:'Condição de Flávio'});
+  await cue.waitFor({state:'visible'});assert.equal(await cue.textContent(),'Machucado');
+  const [badge,board,track]=await Promise.all([cue.boundingBox(),page.locator('.game-scoreboard').boundingBox(),page.locator('#runner-canvas').boundingBox()]);
+  assert.ok(badge.x>=board.x&&badge.x+badge.width<=board.x+board.width);
+  assert.ok(badge.y+badge.height<track.y,'indicador não esconde a pista');
+  await page.evaluate(()=>{
+   const r=__testRun;r.player.recoveryPending=true;
+   r.terrain.active={id:1,kind:'passage',age:0,speed:0,gaps:[],platforms:[],ceilings:[{x:r.player.x-40,width:420,bottom:70,top:110}]};
+  });
+  await page.waitForFunction(()=>document.getElementById('game-form-status').textContent==='Cura pendente');
+  assert.equal(await cue.isVisible(),true);
+  await page.evaluate(()=>{__testRun.terrain.active=null;});
+  await cue.waitFor({state:'hidden'});assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
 
@@ -1083,10 +1107,15 @@ test('sons de pulo, pouso, avanço, frenagem e escorregão acompanham teclado e 
    assert.ok(await page.evaluate(()=>__testEffects.includes('run-start')));
    if(touch){await page.evaluate(()=>{const c=document.getElementById('runner-canvas'),r=c.getBoundingClientRect(),x=r.x+r.width*.5,y=r.y+r.height*.3;for(const [type,yy] of [['pointerdown',y],['pointermove',y+35]])c.dispatchEvent(new PointerEvent(type,{pointerId:71,pointerType:'touch',isPrimary:true,button:0,bubbles:true,clientX:x,clientY:yy}));});}
    else await page.keyboard.down('ArrowDown');
+   await page.waitForFunction(()=>__testEffects.includes('crouch'));
+   assert.equal(await page.evaluate(()=>__testEffects.includes('slide')),false);
+   await page.keyboard.down('ArrowRight');
    await page.waitForFunction(()=>__testEffects.includes('slide'));await page.waitForTimeout(150);assert.equal(await page.evaluate(()=>__testEffects.filter(x=>x==='slide').length),1);
+   await page.keyboard.up('ArrowRight');
+   await page.waitForFunction(()=>__testEffects.includes('slide-stop'));
    if(touch)await page.evaluate(()=>document.getElementById('runner-canvas').dispatchEvent(new PointerEvent('pointerup',{pointerId:71,pointerType:'touch',isPrimary:true,button:0,bubbles:true})));
    else await page.keyboard.up('ArrowDown');
-   await page.waitForFunction(()=>__testEffects.includes('slide-stop'));assert.deepEqual(errors,[]);
+   await page.waitForFunction(()=>__testEffects.includes('rise'));assert.deepEqual(errors,[]);
   }finally{await context.close();}
  }
 });
@@ -1156,10 +1185,10 @@ for(const viewport of [{width:320,height:568},{width:390,height:844},{width:1440
   await begin(page);await page.evaluate(async()=>{
    const r=__testRun,{storyBossAt}=await import('./runner-bosses.mjs');
    for(const k of ['nextRaid','nextBossAt','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
-   r.obstacles=[];r.pickups=[];r.player.hp=3;r.allyShieldProgress=4;r.ammo=12;
+   r.obstacles=[];r.pickups=[];r.player.hp=1;r.allyShieldProgress=4;r.ammo=12;
    r.boss={...storyBossAt(0),combat:true,hp:9,maxHp:18,total:18,remaining:18,fired:0,age:0,phase:'recover',phaseFor:100,nextAttack:100};
   });
-  await page.waitForFunction(()=>document.getElementById('game-hero-health')?.getAttribute('aria-valuenow')==='3');
+  await page.waitForFunction(()=>document.getElementById('game-hero-health')?.getAttribute('aria-valuenow')==='1');
   const track=await page.locator('#runner-canvas').boundingBox();
   for(const id of ['game-hero-health','game-power-loadout','game-reserve-shield','game-boss-health']){
    const box=await page.locator('#'+id).boundingBox();assert.ok(box,`${id} visível`);
@@ -1171,7 +1200,7 @@ for(const viewport of [{width:320,height:568},{width:390,height:844},{width:1440
   assert.equal(await page.locator('#game-power-charge').evaluate(e=>e.getBoundingClientRect().height),1);
   assert.equal(await page.locator('#game-weapon-level').textContent(),'12/12');
   assert.equal(await page.locator('#game-boss-health').getAttribute('aria-valuenow'),'9');
-  assert.equal(await page.locator('#game-hero-health').getAttribute('aria-valuemax'),'5');
+  assert.equal(await page.locator('#game-hero-health').getAttribute('aria-valuemax'),'2');
   assert.match(await page.locator('#game-reserve-shield').getAttribute('aria-label'),/4\/6/);
   assert.equal(await page.locator('#game-reserve-shield').isEnabled(),false);
   assert.equal(await page.locator('#game').evaluate(e=>[...e.querySelectorAll('#game-power-loadout,#game-aid-bar,#game-boss')].every(n=>n.closest('.game-viewport'))),true);
@@ -1309,9 +1338,9 @@ for(const viewport of [{width:320,height:844},{width:390,height:844},{width:844,
    assert.ok(box.y>=track.y&&box.y+box.height<track.y+track.height*.4&&box.x>=track.x&&box.x+box.width<=track.x+track.width,`${id} fica no canto superior livre`);
   }
   await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/clean-run-${viewport.width}.png`)});
-  await page.evaluate(async()=>{const r=__testRun,{storyBossAt}=await import('./runner-bosses.mjs');r.boss={...storyBossAt(0),combat:true,hp:18,maxHp:18,total:18,remaining:18,fired:0,age:0,phase:'recover',phaseFor:100,nextAttack:100};r.player.hp=3;});
+  await page.evaluate(async()=>{const r=__testRun,{storyBossAt}=await import('./runner-bosses.mjs');r.boss={...storyBossAt(0),combat:true,hp:18,maxHp:18,total:18,remaining:18,fired:0,age:0,phase:'recover',phaseFor:100,nextAttack:100};r.player.hp=1;});
   await page.waitForFunction(()=>!document.getElementById('game-hero-health').closest('[hidden]'));
-  assert.equal(await page.locator('#game-hero-health').isVisible(),true);assert.equal(await page.locator('#game-hero-health').getAttribute('aria-valuenow'),'3');
+  assert.equal(await page.locator('#game-hero-health').isVisible(),true);assert.equal(await page.locator('#game-hero-health').getAttribute('aria-valuenow'),'1');
   assert.equal(await page.locator('#game-power-charge').evaluate(e=>e.getBoundingClientRect().height),1);
   await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/clean-boss-${viewport.width}.png`)});
   const ammoBefore=await page.evaluate(()=>{const r=__testRun,ammo=r.ammo;r.boss=null;return ammo;});await page.waitForFunction(()=>!!document.getElementById('game-hero-health').closest('[hidden]'));

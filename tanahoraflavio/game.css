@@ -58,6 +58,8 @@ body.finished .counter{display:none}
 .game-scoreboard>div+div{border-left:1px solid var(--line)}
 .game-scoreboard span{font-size:10px;line-height:1.3;font-weight:500;color:var(--muted)}
 .game-scoreboard strong{font-size:20px;line-height:1.1;font-weight:700;font-variant-numeric:tabular-nums}
+#game-form-status{padding:1px 5px;border-radius:9px;background:#f9e8d2;color:#683a24;font-size:9px;font-weight:700;line-height:1.2;white-space:nowrap}
+#game-form-status[hidden]{display:none}
 .passport-track{display:none}
 .passport-track>span{display:block;height:100%;background:var(--purple);width:0}
 .game-stage-header{display:flex;justify-content:space-between;align-items:center;gap:10px;color:var(--muted);font-size:10px;min-height:16px}
@@ -358,6 +360,8 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
 #game-result-actions .game-mode-chooser label{min-height:38px;gap:4px;padding:4px 3px;font-size:clamp(10px,2.6vw,12px);white-space:nowrap}
 #game-result-actions .game-mode-chooser input{margin:0;flex:none}
 #game-result-actions #game-start{grid-column:1;grid-row:2;min-height:44px;padding:7px 8px}
+#game-result-actions #game-continue{grid-column:1;grid-row:3;min-height:44px;padding:7px 8px;background:#27544d;color:#fff}
+#game-continue[hidden]{display:none}
 .game-card[data-run-state="over"] .game-overlay{gap:5px;overflow:auto;justify-content:safe center}
 .game-card[data-run-state="over"] .game-captured{height:clamp(60px,15dvh,112px);flex:none}
 .game-card[data-run-state="over"] #game-overlay-title{font-size:clamp(17px,4vw,25px)}
@@ -369,6 +373,7 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
  #game-result-actions{width:min(100%,466px)}
  #game-result-actions .game-controls{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
  #game-result-actions #game-start{grid-column:2;grid-row:1}
+ #game-result-actions #game-continue{grid-column:1 / -1;grid-row:2;min-height:36px}
 }
 @media(max-width:479px){
  .game-card[data-run-state="over"] .game-captured{max-height:82px}
