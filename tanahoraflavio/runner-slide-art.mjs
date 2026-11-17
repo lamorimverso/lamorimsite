@@ -24,10 +24,11 @@ const coat='#592a69',highlight='#7c4692',shade='#371d47',ink='#211523';
 
 // Run, crouch and slide use one opaque silhouette. The run cycles the limbs
 // until the bend takes over. In the low poses both soles stay on the support.
-export function drawHeroLowPose(c,{image,factor,x,y,scale,pose=1,slide=0,phase=0,stride=0,alpha=1,facing,shot}){
+export function drawHeroLowPose(c,{image,factor,x,y,scale,pose=1,slide=0,phase=0,stride=0,reducedMotion=false,alpha=1,facing,shot}){
  const clamp=t=>Math.max(0,Math.min(1,t)),skid=clamp(slide),bend=Math.max(clamp(pose),skid);
  const blend=(a,b,t)=>a+(b-a)*t,mix=(a,b,d)=>blend(blend(a,b,bend),d,skid);
- const push=Math.sin(Math.PI*clamp(phase)),swing=Math.sin(stride*Math.PI/4),step=Math.cos(stride*Math.PI/4);
+ const push=reducedMotion||skid===0?0:Math.sin(Math.PI*clamp(phase));
+ const swing=reducedMotion||bend===1?0:Math.sin(stride*Math.PI/4),step=reducedMotion||bend===1?0:Math.cos(stride*Math.PI/4);
  const strideWeight=(1-bend)*(1-skid),bob=1.9*step*step;
  const hip=[mix(-4,-11,-14),mix(-31-bob,-13,-11)],neck=[mix(4,8,8+push),mix(-49-bob,-20,-11)];
  const shoulder=[neck[0]-mix(4,4,10),neck[1]+mix(2,2,-3)];

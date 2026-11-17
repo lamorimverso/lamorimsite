@@ -44,6 +44,8 @@ test('o deslize desenha uma silhueta baixa, estendida e apoiada, inclusive ao di
   assert.ok(exit<.06,'não há tranco ao voltar para a passada: '+JSON.stringify({phase,facing,exit}));
  }
  assert.ok(contourDelta(alphaMask({phase:2}),alphaMask({phase:6}))>.15,'a passada ainda alterna os membros visivelmente');
+ assert.equal(contourDelta(alphaMask({phase:2,reducedMotion:true,landing:true,sliding:true,slidePhase:.17}),
+   alphaMask({phase:6,reducedMotion:true,landing:true,sliding:true,slidePhase:.53})),0,'movimento reduzido fixa o desenho baixo');
  function measure(draw,args,{floor=104,checkMuzzle=false}={}){
   const c=canvas.createCanvas(360,360).getContext('2d');
   c.scale(ratio,ratio);
