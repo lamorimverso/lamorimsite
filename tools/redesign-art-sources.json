@@ -1,0 +1,224 @@
+[
+  {
+    "name": "combatA",
+    "input": "combat-a.png",
+    "kind": "combat",
+    "actors": [
+      "janones",
+      "joice",
+      "dilma",
+      "simone"
+    ],
+    "preserve": []
+  },
+  {
+    "name": "combatB",
+    "input": "combat-b.png",
+    "kind": "combat",
+    "actors": [
+      "haddad",
+      "lula",
+      "xandao",
+      "pf"
+    ],
+    "preserve": []
+  },
+  {
+    "name": "combatC",
+    "input": "combat-c.png",
+    "kind": "combat",
+    "actors": [
+      "soraya",
+      "boulos",
+      "dino",
+      "bossonari"
+    ],
+    "preserve": []
+  },
+  {
+    "name": "combatD",
+    "input": "combat-d.png",
+    "kind": "combat",
+    "actors": [
+      "meme-army",
+      "army",
+      "flavio",
+      "ze-gotinha"
+    ],
+    "preserve": [
+      {
+        "row": 2,
+        "file": "combat-ivermectina-d-v2.png",
+        "sourceRow": 2
+      }
+    ]
+  },
+  {
+    "name": "combatE",
+    "input": "combat-e.png",
+    "kind": "combat",
+    "actors": [
+      "army-run",
+      "bossonari-run",
+      "flavio-air-shot",
+      "flavio-slide-shot"
+    ],
+    "preserve": [
+      {
+        "row": 2,
+        "file": "combat-ivermectina-e-v2.png",
+        "sourceRow": 2
+      },
+      {
+        "row": 3,
+        "file": "combat-ivermectina-e-v2.png",
+        "sourceRow": 3
+      }
+    ]
+  },
+  {
+    "name": "combatF",
+    "input": "combat-f.png",
+    "kind": "combat",
+    "actors": [
+      "army-rio-run",
+      "army-argentina-run",
+      "army-florida-run",
+      "army-casa-branca-run"
+    ],
+    "preserve": []
+  },
+  {
+    "name": "combatG",
+    "input": "combat-g.png",
+    "kind": "combat",
+    "actors": [
+      "santiago",
+      "army-paraguai-run",
+      "army-paraguai-combat",
+      "santiago-phase2"
+    ],
+    "preserve": []
+  },
+  {
+    "name": "combatH",
+    "input": "combat-h.png",
+    "kind": "combat",
+    "actors": [
+      "army-rio-combat",
+      "army-argentina-combat",
+      "army-florida-combat",
+      "army-casa-branca-combat"
+    ],
+    "preserve": []
+  },
+  {
+    "name": "cameos",
+    "input": "cameos.png",
+    "kind": "run",
+    "actors": [
+      "dilma",
+      "simone",
+      "soraya",
+      "ze-gotinha"
+    ]
+  },
+  {
+    "name": "chase",
+    "input": "chase.png",
+    "kind": "run",
+    "actors": [
+      "haddad",
+      "lula",
+      "xandao",
+      "joice"
+    ]
+  },
+  {
+    "name": "alliesA",
+    "input": "alliesA.png",
+    "kind": "run",
+    "actors": [
+      "vorcaro",
+      "jair",
+      "michelle",
+      "eduardo"
+    ]
+  },
+  {
+    "name": "alliesB",
+    "input": "alliesB.png",
+    "kind": "run",
+    "actors": [
+      "carlos",
+      "renan",
+      "silas",
+      "magno"
+    ]
+  },
+  {
+    "name": "alliesC",
+    "input": "alliesC.png",
+    "kind": "run",
+    "actors": [
+      "nikolas",
+      "tarcisio",
+      "damares",
+      "bia"
+    ]
+  },
+  {
+    "name": "alliesD",
+    "input": "alliesD.png",
+    "kind": "run",
+    "actors": [
+      "trump",
+      "milei",
+      "bolsominion",
+      "jacare"
+    ]
+  },
+  {
+    "name": "pursuers",
+    "input": "pursuers.png",
+    "kind": "run",
+    "actors": [
+      "boulos",
+      "dino",
+      "janones",
+      "pf"
+    ]
+  },
+  {
+    "name": "campaignA",
+    "input": "campaignA.png",
+    "kind": "campaign",
+    "actors": [
+      "ana-elisa",
+      "rick",
+      "guilherme",
+      "erika"
+    ]
+  },
+  {
+    "name": "campaignB",
+    "input": "campaignB.png",
+    "kind": "campaign",
+    "actors": [
+      "fiscal",
+      "renato-freitas",
+      "jones",
+      "maestro"
+    ]
+  },
+  {
+    "name": "campaignC",
+    "input": "campaignC.png",
+    "kind": "campaign",
+    "actors": [
+      "sofia",
+      "capita",
+      "povo"
+    ]
+  }
+]

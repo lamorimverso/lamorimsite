@@ -7,19 +7,20 @@ import {normalizeControls,keyboardActionFor,mouseActionFor,keyLabel} from './run
 import {createControlSettings} from './runner-control-settings.mjs?v=25524a717d9e';
 import {createGamepadDriver} from './runner-gamepad.mjs?v=18383546c2cd';
 import {HERO_POWERS,heroPowerFor,cycleHeroPower} from './runner-earned-powers.mjs?v=432ca45a76e4';
-import {updateCombatHUD} from './runner-combat-hud.mjs?v=f310159938d8';
+import {updateCombatHUD} from './runner-combat-hud.mjs?v=c30a8a4f84a3';
 import {createMovementSoundDirector,movementIsAirborne} from './runner-movement-audio.mjs?v=31522b0ccc1e';
-import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=65ed612c9662';
-import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
+import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=f64eb9ec518e';
+import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=ad9beaec5ae2';
 import {createAircraftWarningTracker,createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=37fd940420f1';
 import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=18365bfe1950';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_PRESSES, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, recoverJacareRun, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=8a0c9aece2ea";
+import { WORLD, PLAYER, JACARE_RECOVERY_PRESSES, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, recoverJacareRun, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=08e268583a0b";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=c4fcfde513ff';
-import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=97f0d9edc458';
+import {heroStridePhase} from './runner-drawn-motion.mjs?v=f90ca65ad9d8';
+import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=396addb29e7f';
 import {bossCounterWindow} from './runner-bosses.mjs?v=18365bfe1950';
-import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=8f559b031a6b';
-import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=670c3b10ff9b";
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=186dd77ec5b9';
+import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=b0ea83e8b081";
 import { createGameAudio } from "./runner-audio.mjs?v=d93419fd0e46";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=d5e017561fd6";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=73113e4c788c";
@@ -734,7 +735,7 @@ function initRunner() {
     const facing=run.allyShieldFor>0?1:run.player.moveHeld<0?-1:1;
     // A corrida volta a usar sua passada ilustrada original. As duas ações
     // baixas selecionam quadros de sequências próprias, no mesmo apoio.
-    const phase=active?run.elapsed*(run.assisted?9:11):0;
+    const phase=heroStridePhase(run);
     const crouchTarget=run.player.crouching&&!airborne,shooting=active&&run.player.attackFor>0;
     const sliding=active&&!airborne&&run.player.sliding;
     const poseDt=run.elapsed-lastPoseElapsed;
@@ -749,7 +750,7 @@ function initRunner() {
     // Pés e efeito de impacto assumem a altura do suporte real, sem levantar
     // o sprite inteiro para fazer a passada animada parecer mais forte.
     if(decorative&&runningStride&&support!==null){
-      const footfall=Math.max(0,1-(phase%2)/.65);
+      const footfall=Math.max(0,1-(phase%4)/.65);
       if(footfall>0)circle(playerX(run)+17-facing*(9+12*(1-footfall)),floor-1-.8*(1-footfall),1.3+footfall,'#617f7f54');
     }
     if(support!==null){

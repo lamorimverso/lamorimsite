@@ -1,6 +1,6 @@
 import {soldierVariantFor} from './runner-soldier-variants.mjs?v=4bf435291c82';
-import {drawSpriteActor,drawCombatSprite} from './runner-sprites.mjs?v=71857739855e';
-import {heroShotPose} from './runner-hero-shot.mjs?v=65ed612c9662';
+import {drawSpriteActor,drawCombatSprite} from './runner-sprites.mjs?v=8daa308ff1ae';
+import {heroShotPose} from './runner-hero-shot.mjs?v=f64eb9ec518e';
 import {heroActionFrameFor} from './runner-hero-actions.mjs?v=4baecc7909c9';
 const INK='#292337';
 function line(c,points,color,width){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.lineCap='round';c.lineJoin='round';c.strokeStyle=color;c.lineWidth=width;c.stroke();}
@@ -44,5 +44,5 @@ export function specialRunnerPose(phase=0){
 /** Only identities without a complete atlas run cycle take this route. */
 export function drawSpecialRunner(c,{type,x=0,y=0,scale=.95,phase=0,facing=-1,armyVariant='brasilia'}={}){
  if(!['army','bossonari'].includes(type))return false;
- return drawCombatSprite(c,{type:type==='army'?soldierVariantFor(armyVariant).actor:type+'-run',x,y,scale,frame:Math.floor(Math.max(0,phase))%4,facing});
+ return drawCombatSprite(c,{type:type==='army'?soldierVariantFor(armyVariant).actor:type+'-run',x,y,scale,cycle:phase,frame:Math.floor(Math.max(0,phase))%4,facing});
 }

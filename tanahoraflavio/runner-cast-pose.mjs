@@ -1,4 +1,4 @@
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=043d40fd8ef2';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=6da54cb343f5';
 import {regionalEmitterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 // Pure rig shared by rendering and regular projectile launch coordinates.
 const CLASS_ALIASES={sentinela:'sentinel',artilheiro:'gunner',conjurador:'caster',soberano:'sovereign'};

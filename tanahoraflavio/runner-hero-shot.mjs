@@ -1,7 +1,7 @@
-import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=a5e1d402bbf1';
-import {drawCombatSprite} from './runner-sprites.mjs?v=71857739855e';
+import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=e84e9f026780';
+import {drawCombatSprite} from './runner-sprites.mjs?v=8daa308ff1ae';
 import {HERO_POWERS} from './runner-earned-powers.mjs?v=432ca45a76e4';
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=043d40fd8ef2';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=6da54cb343f5';
 // Essential action timing shared by the hero renderer and physical launch.
 export const HERO_SHOT_DURATION=.22;
 export function heroShotPose({age=0,crouching=false,airborne=false,facing=1}={}){
