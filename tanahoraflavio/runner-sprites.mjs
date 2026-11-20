@@ -5,15 +5,16 @@ import {heroActionsDefinition,heroActionFrameFor,drawHeroAction} from './runner-
 import {combatDefinitions} from './runner-combat-sprite-data.mjs?v=85a6343e5d39';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=043d40fd8ef2';
 import {signatureDefinitions,signatureProps} from './runner-signature-sprite-data.mjs?v=8340feb630e5';
-export const spriteDefinitions={...definitions,...combatDefinitions,...signatureDefinitions,heroActions:heroActionsDefinition};
+import {campaignDefinitions,campaignActors} from './runner-campaign-sprite-data.mjs?v=bf314ee912e5';
+export const spriteDefinitions={...definitions,...combatDefinitions,...signatureDefinitions,heroActions:heroActionsDefinition,...campaignDefinitions};
 const sheets=new Map();let activeAttempt=null;
 const actorGroups={flavio:[0,1,2,3,4,5,6,7],xandao:[0,1,2],haddad:[4,5,6],lula:[8,9,10],pf:[3,13],janones:[7,14],army:[11,15],joice:[12]};
 const runningGroups={haddad:{sheet:'chase',start:0},lula:{sheet:'chase',start:4},xandao:{sheet:'chase',start:8},joice:{sheet:'chase',start:12},dilma:{sheet:'cameos',start:0},simone:{sheet:'cameos',start:4},soraya:{sheet:'cameos',start:8},'ze-gotinha':{sheet:'cameos',start:12}};
 for(const [sheet,definition] of Object.entries(definitions))for(const [row,type] of (definition.actors||[]).entries())runningGroups[type]={sheet,start:row*4};
 export const SPRITE_SHEET_COUNT=Object.keys(spriteDefinitions).length;
-export const CORE_SPRITE_SHEET_COUNT=17;
+export const CORE_SPRITE_SHEET_COUNT=20;
 export function loadSprites(onProgress=()=>{},{coreOnly=false}={}){
- const base=['hero','cast','cameos','chase','pursuers','heroActions',...Object.keys(combatDefinitions),...Object.keys(signatureDefinitions)];
+ const base=['hero','cast','cameos','chase','pursuers','heroActions',...Object.keys(combatDefinitions),...Object.keys(signatureDefinitions),...Object.keys(campaignDefinitions)];
  const entries=Object.entries(spriteDefinitions).filter(([name])=>(!coreOnly||base.includes(name))&&!sheets.has(name)),total=entries.length;
  if(!total)return Promise.resolve();
  if(activeAttempt)return activeAttempt.coreOnly===coreOnly?activeAttempt.promise:activeAttempt.promise.then(()=>loadSprites(onProgress,{coreOnly}));
@@ -47,6 +48,24 @@ export function loadSprites(onProgress=()=>{},{coreOnly=false}={}){
   }
  }catch(error){finish(error);}
  return attempt.promise;
+}
+/** Complete campaign drawings use the deck baseline, independent of physics. */
+export function drawCampaignFigure(context,{type,x=0,y=0,scale=1,state='idle',alpha=1}={}){
+ const actor=campaignActors[type],sheet=actor&&sheets.get(actor.sheet);
+ if(!sheet||![x,y,scale].every(Number.isFinite)||scale<=0)return false;
+ const index=state==='charge'?1:state==='release'?2:state==='recover'||state==='recoil'?3:0;
+ const frame=sheet.frames[actor.row*4+index],factor=actor.logicalHeight*scale/actor.height;
+ context.save();context.globalAlpha*=alpha;context.imageSmoothingEnabled=true;
+ context.drawImage(sheet.image,frame.x,frame.y,frame.width,frame.height,x+(frame.x-frame.center)*factor,y+(frame.y-frame.groundY)*factor,frame.width*factor,frame.height*factor);
+ context.restore();return true;
+}
+export function drawCampaignFigurePortrait(context,{type,x=0,y=0,size=48}={}){
+ const actor=campaignActors[type],sheet=actor&&sheets.get(actor.sheet);
+ if(!sheet||![x,y,size].every(Number.isFinite)||size<=0)return false;
+ const f=actor.portrait,factor=size/Math.max(f.width,f.height);
+ context.save();context.imageSmoothingEnabled=true;
+ context.drawImage(sheet.image,f.x,f.y,f.width,f.height,x-f.width*factor/2,y-f.height*factor,f.width*factor,f.height*factor);
+ context.restore();return true;
 }
 /** A complete articulated object pose, centered on the existing physics envelope. */
 export function drawIllustratedProp(context,{type,width=46,height=44,phase=0,reducedMotion=false}={}){

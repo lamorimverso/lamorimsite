@@ -1,10 +1,10 @@
 import {createPresentationDOM} from './runner-presentation-cache.mjs?v=4712d27109dc';
 import {ammoCapacityFor} from './runner-supplies.mjs?v=44c67e8a5802';
 import {heroPowerFor} from './runner-earned-powers.mjs?v=432ca45a76e4';
-import {drawSpriteHead,drawCombatSprite} from './runner-sprites.mjs?v=9e242007649d';
-import {drawHeroProjectile} from './runner-hero-shot.mjs?v=276077df40b3';
+import {drawSpriteHead,drawCombatSprite} from './runner-sprites.mjs?v=71857739855e';
+import {drawHeroProjectile} from './runner-hero-shot.mjs?v=65ed612c9662';
 
-import {drawCampaignPortrait} from './runner-campaign-art.mjs?v=311bd72684f6';
+import {drawCampaignPortrait} from './runner-campaign-art.mjs?v=97f0d9edc458';
 
 // DOM meters retain keyboard/touch controls and accessible values over the track.
 const clamp=value=>Math.max(0,Math.min(1,value));

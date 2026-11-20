@@ -138,16 +138,16 @@ test('atlas com dimensões incompatíveis é rejeitado e pode ser tentado de nov
 test('corrida base carrega antes dos apoios e falha opcional não descarta os personagens prontos',async t=>{
  const {sprites,images,load}=await browserEvents(t);
  const core=sprites.loadSprites(()=>{},{coreOnly:true});
- assert.equal(images.length,17,'folhas essenciais incluem combate, as duas ações baixas e objetos ilustrados');
+ assert.equal(images.length,20,'folhas essenciais incluem combate, ações baixas, objetos e o elenco ilustrado da campanha');
  for(const image of images)load(image);await core;
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'pf'}),true,'PF usa seu próprio desenho original enquanto a expansão carrega');
  for(const type of ['army-run','army-rio-run','army-argentina-run','army-florida-run','army-casa-branca-run'])assert.equal(sprites.drawCombatSprite(drawingContext(),{type,frame:2}),true,'uniforme inteiro é essencial: '+type);
  const extras=sprites.loadSprites(),error=extras.then(()=>null,e=>e);
- assert.equal(images.length,21,'as quatro folhas de apoio não baixam novamente as dezessete prontas');
- images[17].onerror();assert.ok(await error);
+ assert.equal(images.length,24,'as quatro folhas de apoio não baixam novamente as vinte prontas');
+ images[20].onerror();assert.ok(await error);
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'flavio'}),true);
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'pf'}),true);
- const retry=sprites.loadSprites();for(const image of images.slice(21))load(image);await retry;
+ const retry=sprites.loadSprites();for(const image of images.slice(24))load(image);await retry;
  assert.equal(sprites.drawSpriteActor(drawingContext(),{type:'boulos'}),true);
 });
 test('rostos de todos os chefes normais estão nos atlas essenciais',async t=>{

@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: '22'
       - name: Install test and artwork tools
-        run: npm install --no-save --ignore-scripts playwright@1.56.1 sharp@0.35.5
+        run: npm install --no-save --ignore-scripts playwright@1.56.1 sharp@0.35.5 @napi-rs/canvas@0.1.100
       - name: Check resource versions
         run: node tools/version-runner-assets.mjs --check
       - name: Verify preinstalled Chrome
