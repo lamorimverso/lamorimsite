@@ -15,7 +15,7 @@ function browserTests(t){
  await page.route('http://campaign.test/**',async route=>{
   const path=new URL(route.request().url()).pathname;
   if(path==='/')return route.fulfill({contentType:'text/html',body:'<!doctype html>'});
-  if(/^\/assets\/[a-z0-9-]+\.webp$/.test(path)){
+  if(/^\/assets\/(?:redesign\/)?[a-z0-9-]+\.webp$/.test(path)){
    const body=await readFile(new URL(`../tanahoraflavio${path}`,import.meta.url));
    return route.fulfill({contentType:'image/webp',body});
   }
