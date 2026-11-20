@@ -56,7 +56,8 @@ test('campaign illustrations in the browser',async t=>{
  const results=await page.evaluate(async({cast,props})=>{
   const {drawHoverEnemy}=await import('/runner-boss-art.mjs');
   const {drawCampaignCrowd,drawCampaignPortrait}=await import('/runner-campaign-art.mjs');
-  const {drawThreat}=await import('/runner-art.mjs');
+  const {drawThreat,loadSprites}=await import('/runner-art.mjs');
+  await loadSprites(()=>{},{coreOnly:true});
   const canvas=document.createElement('canvas');canvas.width=180;canvas.height=180;const ctx=canvas.getContext('2d');
   function capture(draw){
    ctx.clearRect(0,0,180,180);draw();const pixels=ctx.getImageData(0,0,180,180).data;

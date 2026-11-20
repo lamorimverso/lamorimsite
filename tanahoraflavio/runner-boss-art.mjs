@@ -1,13 +1,13 @@
 import {drawCharacterBody,drawCharacterArm} from './runner-body-art.mjs?v=67badae0df52';
-import {drawBossonariHead} from './runner-character-art.mjs?v=48db2b3cea94';
+import {drawBossonariHead} from './runner-character-art.mjs?v=ec64dd582e87';
 import {standingEnemyPose} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
 export {standingEnemyPose} from './runner-cast-pose.mjs?v=4c6df0e3fe36';
-import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=9e242007649d';
+import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=71857739855e';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=043d40fd8ef2';
-import {drawMemeArmy} from './runner-art.mjs?v=20870985f6ad';
+import {drawMemeArmy} from './runner-art.mjs?v=670c3b10ff9b';
 import {regionalEmitterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 
-import {CAMPAIGN_CAST_POINT,campaignAccentFor,campaignBossPoseFor,drawCampaignBoss,drawCampaignCrowd} from './runner-campaign-art.mjs?v=311bd72684f6';
+import {CAMPAIGN_CAST_POINT,campaignAccentFor,campaignBossPoseFor,drawCampaignBoss,drawCampaignCrowd} from './runner-campaign-art.mjs?v=97f0d9edc458';
 
 // Full illustrated combat sprites share the original running artwork style.
 // Coordinates are logical game pixels; y always remains the top of the deck.

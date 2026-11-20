@@ -1,5 +1,6 @@
-// Original vector caricatures for the campaign. Neutral props communicate each
-// encounter's rhythm, with the same outline style as the runner's art atlas.
+import {drawCampaignFigure,drawCampaignFigurePortrait} from './runner-sprites.mjs?v=71857739855e';
+// Complete illustrated campaign characters. The original vectors remain a
+// loading fallback; encounter props and presentation anchors stay independent.
 const INK='#292337',CREAM='#fff5de',RIM='#ffe7bd74';
 const CAST=Object.freeze({
  'ana-elisa':{suit:'#386c72',shade:'#285056',accent:'#87e0c3',skin:'#a76448',lit:'#d69068',hair:'#2f2534',cut:'curls',emblem:'network'},
@@ -349,6 +350,7 @@ function drawStageAccessory(c,d,p,a){
 /** Draws a complete original figure around the same deck anchor as atlas bosses. */
 export function drawCampaignBoss(c,{type,pose:p,...options}={}){
  if(!Object.hasOwn(CHARACTER_DESIGN,type)||!p)return false;
+ if(drawCampaignFigure(c,{type,state:p.state}))return true;
  const a=CAST[type],d=CHARACTER_DESIGN[type];
  if(!p.campaignPose)p=campaignBossPoseFor(type,p,options);
  c.save();
@@ -373,6 +375,7 @@ const CROWD=[
 /** Grounded crowd. The optional presentation poses describe a passage, never an attack. */
 export function drawCampaignCrowd(c,{x=0,y=0,scale=1,phase=0,reducedMotion=false,preparing=false,attacking=false,recovering=false,progress}={}){
  if(![x,y,scale].every(Number.isFinite)||scale<=0)return false;
+ if(drawCampaignFigure(c,{type:'povo',x,y,scale,state:attacking?'release':preparing?'charge':recovering?'recover':'idle'}))return true;
  const t=reducedMotion?0:(Number.isFinite(phase)?phase:0),u=Number.isFinite(progress)?smooth(clamp01(progress)):1;
  const signal=attacking?.81+u*.19:preparing?u*.70:recovering?(1-u)*.76:0;
  c.save();c.translate(x,y);c.scale(scale,scale);
@@ -423,6 +426,7 @@ export function drawCampaignCrowd(c,{x=0,y=0,scale=1,phase=0,reducedMotion=false
 /** x = center, y = visible portrait baseline, matching drawSpriteHead. */
 export function drawCampaignPortrait(c,{type,x=0,y=0,size=48}={}){
  if(type!=='povo'&&!Object.hasOwn(CAST,type)||![x,y,size].every(Number.isFinite)||size<=0)return false;
+ if(drawCampaignFigurePortrait(c,{type,x,y,size}))return true;
  if(type==='povo')return drawCampaignCrowd(c,{x,y,scale:size/122,reducedMotion:true});
  const a=CAST[type];
  c.save();c.translate(x,y-size*.13);c.scale(size/56,size/56);
