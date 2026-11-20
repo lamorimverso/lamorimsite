@@ -22,7 +22,7 @@ after(async()=>{await browser?.close();await new Promise(resolve=>server?.close(
 async function open({instrument=false,instrumentAudio=false,instrumentCasting=false,instrumentHero=false,instrumentThreats=false,instrumentSprites=false,instrumentCrowd=false,init,blockEntry=false,blockSupports=false,legacyFirst=false,initialSearch='',...options}={}){
  const context=await browser.newContext(options);
  await context.route(/^https:\/\//,route=>route.abort());
- if(blockSupports)await context.route(url=>/\/assets\/(?:allies-motion-)/.test(url.pathname),route=>route.abort());
+ if(blockSupports)await context.route(url=>/\/assets\/(?:allies-motion-|redesign\/allies[a-d]\.webp)/.test(url.pathname),route=>route.abort());
  if(init)await context.addInitScript(init);
  if(instrument){
   const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-core.mjs'),'utf8');

@@ -1,4 +1,4 @@
-import {drawCampaignFigure,drawCampaignFigurePortrait} from './runner-sprites.mjs?v=71857739855e';
+import {drawCampaignFigure,drawCampaignFigurePortrait} from './runner-sprites.mjs?v=8daa308ff1ae';
 // Complete illustrated campaign characters. The original vectors remain a
 // loading fallback; encounter props and presentation anchors stay independent.
 const INK='#292337',CREAM='#fff5de',RIM='#ffe7bd74';
@@ -235,7 +235,7 @@ export function campaignBossPoseFor(type,p,{phase=0,action='jump',progress,reduc
   const elbow={x:shoulder.x+(hand.x-shoulder.x)*.45+sign*8,y:shoulder.y+(hand.y-shoulder.y)*.48+(hand.y<shoulder.y?7:4)};
   arms[side]={shoulder,elbow,hand,open:active&&(d.wear!=='tails'||side==='right')};
  }
- return {...p,arms,origin,angle,campaignPose:true};
+ return {...p,arms,origin,angle,campaignPose:true,phase:t,progress:u,reducedMotion};
 }
 
 function drawBoot(c,x,width,side,a,long){
@@ -350,7 +350,7 @@ function drawStageAccessory(c,d,p,a){
 /** Draws a complete original figure around the same deck anchor as atlas bosses. */
 export function drawCampaignBoss(c,{type,pose:p,...options}={}){
  if(!Object.hasOwn(CHARACTER_DESIGN,type)||!p)return false;
- if(drawCampaignFigure(c,{type,state:p.state}))return true;
+ if(drawCampaignFigure(c,{type,state:p.state,phase:p.phase??options.phase,progress:p.progress??options.progress,reducedMotion:p.reducedMotion??options.reducedMotion}))return true;
  const a=CAST[type],d=CHARACTER_DESIGN[type];
  if(!p.campaignPose)p=campaignBossPoseFor(type,p,options);
  c.save();
@@ -375,7 +375,7 @@ const CROWD=[
 /** Grounded crowd. The optional presentation poses describe a passage, never an attack. */
 export function drawCampaignCrowd(c,{x=0,y=0,scale=1,phase=0,reducedMotion=false,preparing=false,attacking=false,recovering=false,progress}={}){
  if(![x,y,scale].every(Number.isFinite)||scale<=0)return false;
- if(drawCampaignFigure(c,{type:'povo',x,y,scale,state:attacking?'release':preparing?'charge':recovering?'recover':'idle'}))return true;
+ if(drawCampaignFigure(c,{type:'povo',x,y,scale,phase,progress,reducedMotion,state:attacking?'release':preparing?'charge':recovering?'recover':'idle'}))return true;
  const t=reducedMotion?0:(Number.isFinite(phase)?phase:0),u=Number.isFinite(progress)?smooth(clamp01(progress)):1;
  const signal=attacking?.81+u*.19:preparing?u*.70:recovering?(1-u)*.76:0;
  c.save();c.translate(x,y);c.scale(scale,scale);

@@ -346,7 +346,7 @@ test('Flávio percorre os quadros de corrida durante a partida em ambos os modos
     for(const key of ['nextObstacle','nextBossAt','nextRaid','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[key]=Infinity;
     globalThis.__heroSteps=[];
    });
-   await page.waitForFunction(()=>new Set((globalThis.__heroSteps||[]).filter(n=>n>=0&&n<8)).size>=6,null,{timeout:3000});
+   await page.waitForFunction(()=>__journeyRun.distance>100&&new Set((globalThis.__heroSteps||[]).filter(n=>n>=0&&n<8)).size>=6,null,{timeout:3000});
    const state=await page.evaluate(()=>({frames:[...new Set(__heroSteps.filter(n=>n>=0&&n<8))],distance:__journeyRun.distance,status:__journeyRun.status,mode:__journeyRun.mode}));
    assert.ok(state.frames.length>=6,'não pode deslizar sempre na mesma pose: '+mode);
    assert.ok(state.distance>100&&state.status==='running','a corrida física continua');

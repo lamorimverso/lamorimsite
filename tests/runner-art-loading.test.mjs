@@ -116,9 +116,9 @@ test('recortes pré-calculados conservam a orientação original à direita em t
  }
  const boss=drawingContext();
  assert.equal(sprites.drawSpriteActor(boss,{type:'xandao',attacking:true}),true);
- assert.equal(boss.drawn[0][0],images[1]);
+ assert.equal(boss.drawn[0][0],images[Object.keys(definitions).indexOf('combatB')],'o ataque usa o redesenho completo do Xandão');
  assert.ok(boss.drawn[0][7]>20&&boss.drawn[0][8]>60);
- assert.deepEqual(boss.transforms,[]);
+ assert.deepEqual(boss.transforms,[['translate',0,0]],'o corpo inteiro conserva a orientação e o pivô');
  await sprites.loadSprites();
  assert.equal(images.length,sheetCount,'o atlas pronto continua em memória');
 });

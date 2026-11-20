@@ -2,11 +2,14 @@
 import {definitions} from './runner-sprite-data.mjs?v=4a931cb52b80';
 import {drawHeroLowPose} from './runner-slide-art.mjs?v=f0043535e452';
 import {heroActionsDefinition,heroActionFrameFor,drawHeroAction} from './runner-hero-actions.mjs?v=4baecc7909c9';
-import {combatDefinitions} from './runner-combat-sprite-data.mjs?v=85a6343e5d39';
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=043d40fd8ef2';
+import {combatDefinitions,combatActors} from './runner-combat-sprite-data.mjs?v=85a6343e5d39';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=6da54cb343f5';
 import {signatureDefinitions,signatureProps} from './runner-signature-sprite-data.mjs?v=8340feb630e5';
-import {campaignDefinitions,campaignActors} from './runner-campaign-sprite-data.mjs?v=bf314ee912e5';
-export const spriteDefinitions={...definitions,...combatDefinitions,...signatureDefinitions,heroActions:heroActionsDefinition,...campaignDefinitions};
+import {campaignDefinitions,campaignActors as originalCampaignActors} from './runner-campaign-sprite-data.mjs?v=bf314ee912e5';
+import {redesignDefinitions,redesignedCampaignActors} from './runner-redesign-data.mjs?v=310909996513';
+import {strideDrawing,actionDrawing} from './runner-drawn-motion.mjs?v=f90ca65ad9d8';
+const campaignActors={...originalCampaignActors,...redesignedCampaignActors};
+export const spriteDefinitions={...definitions,...combatDefinitions,...signatureDefinitions,heroActions:heroActionsDefinition,...campaignDefinitions,...redesignDefinitions};
 const sheets=new Map();let activeAttempt=null;
 const actorGroups={flavio:[0,1,2,3,4,5,6,7],xandao:[0,1,2],haddad:[4,5,6],lula:[8,9,10],pf:[3,13],janones:[7,14],army:[11,15],joice:[12]};
 const runningGroups={haddad:{sheet:'chase',start:0},lula:{sheet:'chase',start:4},xandao:{sheet:'chase',start:8},joice:{sheet:'chase',start:12},dilma:{sheet:'cameos',start:0},simone:{sheet:'cameos',start:4},soraya:{sheet:'cameos',start:8},'ze-gotinha':{sheet:'cameos',start:12}};
@@ -50,11 +53,11 @@ export function loadSprites(onProgress=()=>{},{coreOnly=false}={}){
  return attempt.promise;
 }
 /** Complete campaign drawings use the deck baseline, independent of physics. */
-export function drawCampaignFigure(context,{type,x=0,y=0,scale=1,state='idle',alpha=1}={}){
+export function drawCampaignFigure(context,{type,x=0,y=0,scale=1,state='idle',phase=0,progress=1,reducedMotion=false,alpha=1}={}){
  const actor=campaignActors[type],sheet=actor&&sheets.get(actor.sheet);
  if(!sheet||![x,y,scale].every(Number.isFinite)||scale<=0)return false;
- const index=state==='charge'?1:state==='release'?2:state==='recover'||state==='recoil'?3:0;
- const frame=sheet.frames[actor.row*4+index],factor=actor.logicalHeight*scale/actor.height;
+ const index=actionDrawing(sheet.frames,actor.row*4,{state,phase,progress,reducedMotion});
+ const frame=sheet.frames[index],factor=actor.logicalHeight*scale/actor.height;
  context.save();context.globalAlpha*=alpha;context.imageSmoothingEnabled=true;
  context.drawImage(sheet.image,frame.x,frame.y,frame.width,frame.height,x+(frame.x-frame.center)*factor,y+(frame.y-frame.groundY)*factor,frame.width*factor,frame.height*factor);
  context.restore();return true;
@@ -91,7 +94,10 @@ export function spriteFrameFor(type,{phase=0,airborne=false,falling=false,landin
   return {sheet:'hero',index:Math.floor(Math.max(0,phase))%8};
  }
  const running=runningGroups[type];
- if(running&&(!attacking&&!preparing||!actorGroups[type]))return {sheet:running.sheet,index:running.start+Math.floor(Math.max(0,phase))%4};
+ if(running&&(!attacking&&!preparing||!actorGroups[type])){
+  const index=running.start+Math.floor(Math.max(0,phase))%4;
+  return {sheet:running.sheet,index:strideDrawing(spriteDefinitions[running.sheet].frames,index,phase)};
+ }
  const group=actorGroups[type];if(!group)return null;
  return {sheet:'cast',index:group.length===3?group[attacking?2:preparing?1:0]:group[Math.floor(Math.max(0,phase))%group.length]};
 }
@@ -101,7 +107,7 @@ export function spriteScaleFor(type,sheetName,frames,scale=1){
  if(type==='flavio'&&sheetName==='heroCrouch')return 44*scale/Math.max(...frames.slice(0,4).map(f=>f.groundY-f.y));
  const running=runningGroups[type];
  const indices=running&&sheetName===running.sheet?Array.from({length:4},(_,i)=>running.start+i):actorGroups[type]||actorGroups.pf;
- const sourceHeight=Math.max(...indices.map(i=>frames[i]?.height||0));
+ const sourceHeight=Math.max(...indices.flatMap(i=>[frames[i]?.height||0,frames[frames[i]?.next]?.height||0]));
  return sourceHeight>0?(type==='jacare'?28:type==='joice'?90:94)*scale/sourceHeight:0;
 }
 // Os atlas originais já mostram Flávio olhando para o avanço (+X).
@@ -116,6 +122,8 @@ export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,a
  // Santiago is a friendly support. Use complete neutral poses on the ground,
  // with a small breathing motion; neither charging nor firing frames are used.
  if(type==='santiago')return drawCombatSprite(context,{type,x,y:y-Math.sin(phase*Math.PI/2)*.8*scale,scale,frame:Math.floor(Math.max(0,phase))%2?3:0,alpha,facing:facing??1});
+ if(type!=='flavio'&&!airborne&&(attacking||preparing)&&redesignDefinitions[combatActors[type]?.sheet]&&
+  drawCombatSprite(context,{type,x,y,scale,phase,attacking,preparing,hurt,reducedMotion,alpha,facing}))return true;
  const action=heroActionFrameFor({type,airborne,hurt,landing,crouchPose,sliding,slidePose,slidePhase,slideShot,reducedMotion});
  if(action!==null&&scale>0){
   const illustrated=sheets.get('heroActions');
@@ -180,10 +188,14 @@ export function drawSpriteHead(context,{type,x=0,y=0,size=40,phase=0}={}){
  if(!Number.isFinite(size)||size<=0||!Number.isFinite(x)||!Number.isFinite(y))return false;
  const running=runningGroups[type];
  let selected=type==='flavio'?{sheet:'hero',index:0}:running?{sheet:running.sheet,index:running.start}:actorGroups[type]?{sheet:'cast',index:actorGroups[type][0]}:null;
+ const combat=combatActors[type];
+ if(type!=='flavio'&&!running&&combat&&redesignDefinitions[combat.sheet]&&sheets.has(combat.sheet))selected={sheet:combat.sheet,index:combat.row*4};
  if(!selected)return false;
  let sheet=sheets.get(selected.sheet),crop=selected.sheet==='cast'?castHeadCrops[type]:headCrops[type];
  if(!sheet&&actorGroups[type]&&sheets.has('cast')){selected={sheet:'cast',index:actorGroups[type][0]};sheet=sheets.get('cast');crop=castHeadCrops[type];}
- const frame=sheet?.frames[selected.index];if(!frame||!crop)return false;
+ const frame=sheet?.frames[selected.index];
+ if(frame?.head)crop=[frame.head.left,frame.head.top,frame.head.width,frame.head.height,frame.head.neckX];
+ if(!frame||!crop)return false;
  const [left,top,width,height,neckX]=crop;
  if(left<0||top<0||left+width>frame.width||top+height>frame.height)return false;
  const factor=size/height,dx=x-neckX*factor,dy=y-size,dw=width*factor;
