@@ -196,9 +196,10 @@ export function crouchAnimationStep(pose,target,seconds,reducedMotion=false){
  if(reducedMotion)return to;
  const current=Number.isFinite(pose)?Math.min(1,Math.max(0,pose)):0;
  const dt=Number.isFinite(seconds)?Math.min(.05,Math.max(0,seconds)):0;
- const amount=1-Math.exp(-dt/.12);
- const next=current+(to-current)*amount;
- return Math.abs(to-next)<.002?to:next;
+ // Duração definida, independente do FPS: toda entrada percorre os quatro
+ // desenhos e termina no agachamento completo, sem cauda exponencial.
+ const duration=to?.25:.22;
+ return to?Math.min(1,current+dt/duration):Math.max(0,current-dt/duration);
 }
 export function enemyMotionFor(type,phase=0,x=0){
  if(!['pf','janones','army','boulos','dino','xandao','haddad','lula'].includes(type)
