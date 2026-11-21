@@ -14,7 +14,7 @@ import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from 
 import {createAircraftWarningTracker,createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=37fd940420f1';
 import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=18365bfe1950';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=3a0bd7eafbb6";
+import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=4c4d80cd263e";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {heroStridePhase} from './runner-drawn-motion.mjs?v=f90ca65ad9d8';
 import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=6cc1ca5a171d';
@@ -712,6 +712,17 @@ function initRunner() {
     ctx.save();ctx.translate(bossX,bossY);
     drawHoverEnemy(ctx,{type:b.type,x:0,y:0,scale:pose.scale,phase,...presentation,hurt:b.hitFlashFor>0,reducedMotion:prefersReducedMotion(),classId:b.classId,armyVariant:b.stageId||STAGES[b.stageIndex]?.id,enraged:b.enraged});
     ctx.restore();
+    if(b.lastDamage?.remaining>0){
+      const hit=b.lastDamage,progress=1-hit.remaining/.8;
+      const label=(hit.critical?"CRÍTICO! ":"")+"−"+Number(hit.amount).toLocaleString("pt-BR",{maximumFractionDigits:1})+" PV";
+      ctx.save();ctx.globalAlpha=Math.min(1,hit.remaining*5);ctx.textAlign="center";
+      ctx.font=hit.critical?"850 17px system-ui":"750 15px system-ui";
+      const w=Math.min(virtualWidth-24,ctx.measureText(label).width+16);
+      const x=Math.max(w/2+12,Math.min(virtualWidth-w/2-12,bossX));
+      const y=Math.max(24,bossY-98-(prefersReducedMotion()?0:progress*16));
+      ctx.fillStyle=hit.critical?"#6c3b16":"#163f36";ctx.beginPath();ctx.roundRect(x-w/2,y-15,w,23,5);ctx.fill();
+      ctx.fillStyle="#fff";ctx.fillText(label,x,y+2,w-12);ctx.restore();
+    }
     if(b.role)return;
     const counter=b.combat&&bossCounterWindow(b),cue=b.phase==='charge'?b.plannedAttack:bossCue();
     const showDodge=b.combat?b.phase==='charge':b.nextAttack<.65&&b.fired<b.total&&!run.obstacles.some(o=>o.bossAttack&&!o.counted);
