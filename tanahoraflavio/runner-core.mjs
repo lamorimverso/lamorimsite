@@ -1,9 +1,11 @@
+import {stageRouteTravel,RAID_HANDOFF_SECONDS} from './runner-stage-director.mjs?v=0a0adb45df4e';
+export {stagePlanFor} from './runner-stage-director.mjs?v=0a0adb45df4e';
 import {HERO_MAX_HP,playerBodyFor} from './runner-body.mjs?v=57ec474fca38';
 import {createMovementSkills,movementProfileFor,rewardMovementVictory} from './runner-movement-skills.mjs?v=d0ad734b4838';
 export {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
-export {terrainProfileFor} from './runner-terrain.mjs?v=fb8a047c0ab1';
-import {TERRAIN,createTerrain,beginTerrain,beginGroundLesson,beginAirTransfer,aircraftHitFor,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer} from './runner-terrain.mjs?v=fb8a047c0ab1';
-export {terrainSupportAt} from './runner-terrain.mjs?v=fb8a047c0ab1';
+export {terrainProfileFor} from './runner-terrain.mjs?v=c41a2baf8bbd';
+import {TERRAIN,createTerrain,beginTerrain,beginGroundLesson,beginAirTransfer,aircraftHitFor,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer} from './runner-terrain.mjs?v=c41a2baf8bbd';
+export {terrainSupportAt} from './runner-terrain.mjs?v=c41a2baf8bbd';
 import {stageRosterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 import {groundRhythmFor,groundStyleFor} from './runner-ground-rhythm.mjs?v=c282904db6c6';
 import {ROUTE_AMMO,advanceAmmo,addShieldPart} from './runner-supplies.mjs?v=44c67e8a5802';
@@ -891,10 +893,10 @@ function advanceRaid(run,dt,rng){
   if(raid.remaining<=1e-8){
    if(raid.phase==='warning'){raid.phase='active';raid.remaining=RAID_TIMING.activeFor;announce(run,'Toc, toc, toc… é a Polícia Federal! Pule a PF e abaixe dos microfones por dez segundos.');}
    else if(raid.phase==='active'){raid.phase='recovery';raid.recoveryFor=raid.recoveryFor||RAID_TIMING.recoveryFor;raid.remaining=raid.recoveryFor;announce(run,'A perseguição especial terminou. O ritmo normal está voltando.');}
-   else{run.raid=null;const risk=difficultyAt(run.distance,run.elapsed).pressure;run.nextRaid=28-12*risk+random(rng)*(8-3*risk);run.bossCooldown=Math.max(2.5,run.bossCooldown);}
+   else{run.raid=null;const risk=difficultyAt(run.distance,run.elapsed).pressure;run.nextRaid=28-12*risk+random(rng)*(8-3*risk);run.bossCooldown=Math.max(run.mode==='story'?RAID_HANDOFF_SECONDS:2.5,run.bossCooldown);}
   }return;
  }
- if(run.terrain?.active||!Number.isFinite(run.nextRaid))return;
+ if(run.terrain?.active||run.terrain?.preparing||!Number.isFinite(run.nextRaid))return;
  run.nextRaid-=dt;
  const stage=routeStageFor(run),local=campaignRouteDistance(run)%SCENE_DISTANCE;
  const dueByStage=local>=3000&&!run.raidStageCoverage?.[raidStageKey(run)];
@@ -1031,9 +1033,32 @@ function rehearseStoryBoss(run,balance){
  if(!o.falling)run.obstacles.push(o);run.spawnedObstacles++;run.rehearsedBoss=b.id;
  run.cameo={type:b.type,remaining:1.4};return o;
 }
+function terrainEntryBudget(run){
+ const p=run.player;
+ const threats=run.obstacles.filter(o=>!o.passed&&!o.counted&&!o.destroyed).map(o=>{
+  if(o.falling)return Math.max(0,o.warningFor+o.fallFor+.25-o.age);
+  if(o.groundHazard)return Math.max(0,o.warningFor+o.activeFor-o.age);
+  return Math.max(0,threatTimeToContact(run,o))+(o.width||40)/Math.max(180,Math.abs(o.speed)||180)+.3;
+ });
+ const landing=p.grounded?0:(p.velocity+Math.sqrt(p.velocity*p.velocity+3500*Math.max(0,p.y)))/1750;
+ const remaining=Math.max(0,landing,...threats.filter(Number.isFinite));
+ return remaining>0?remaining+.12:0;
+}
+function prepareTerrainEntry(run,at,kind,speed){
+ const state=run.terrain,clearing=terrainEntryBudget(run);
+ if(run.nextBossAt<at&&run.nextBossAt>run.routeDistance){
+  if(state.preparing?.kind===kind)state.preparing=null;
+  return false;
+ }
+ if(state.preparing?.kind!==kind&&run.routeDistance<at-speed*Math.max(2.4,clearing))return false;
+ state.preparing={kind,at};
+ return true;
+}
 function prepareGroundLesson(run,balance){
  const {lessonAt,lessonExit,lessonStage}=groundLessonFor(run);
- if(!lessonPending(run)||run.terrain.active||run.routeDistance<lessonAt||run.routeDistance>=lessonExit||run.boss||run.raid||run.player.isJacare||run.nextBossAt<=run.routeDistance)return false;
+ if(!lessonPending(run)||run.terrain.active||run.routeDistance>=lessonExit||run.boss||run.raid||run.player.isJacare||run.nextBossAt<=run.routeDistance)return false;
+ if(!prepareTerrainEntry(run,lessonAt,'ground-lesson',balance.speed*assistance(run)))return false;
+ if(run.routeDistance<lessonAt)return true;
  if(run.obstacles.some(o=>!o.passed&&!o.counted&&!o.destroyed)||!run.player.grounded||run.player.y!==0)return true;
  beginGroundLesson(run,balance.speed*assistance(run),{routeStart:run.routeDistance,routeEnd:lessonExit});
  announce(run,lessonStage.short+': pule quando a barra se aproximar; ainda há chão sob o exercício.');
@@ -1042,11 +1067,13 @@ function prepareGroundLesson(run,balance){
 function prepareFlight(run,balance){
  if(run.terrain?.active||run.boss||run.raid||run.player.isJacare||run.nextBossAt<=run.routeDistance)return false;
  const plan=nextAirTransfer(run);
- if(!plan||run.routeDistance<plan.boardAt)return false;
+ if(!plan)return false;
  const {arrival,from,to}=plan;
  // Let previously committed warnings resolve. No extra terrestrial waves
  // enter the runway, but world time and controls keep moving while it clears.
  if(run.nextRaid!==Infinity&&!run.raidStageCoverage?.[raidStageKey(run)])return false;
+ if(!prepareTerrainEntry(run,plan.boardAt,'air-transfer',balance.speed*assistance(run)))return false;
+ if(run.routeDistance<plan.boardAt)return true;
  if(run.obstacles.some(o=>!o.passed&&!o.counted&&!o.destroyed)||!run.player.grounded||run.player.y!==0)return true;
  const corridor=beginAirTransfer(run,balance.speed*assistance(run),{routeStart:run.routeDistance,routeEnd:arrival,from:from.id,to:to.id,fromName:from.short,toName:to.short});
  run.obstacles=[];run.pickups=[];
@@ -1115,8 +1142,8 @@ export function advanceRun(run,seconds,rng){
   const lessonStop=lessonPending(run)&&run.routeDistance<=lessonAt?lessonAt:Infinity;
   // Stretch nominal stage progress across the post-boss running interval.
   // Physical metres and road movement keep their normal speed; no checkpoint freeze.
-  const spacing=run.mode==='story'&&run.bossesDefeated>0&&run.bossCooldown>0&&Number.isFinite(run.nextBossAt);
-  const routeTravel=spacing?Math.min(travel,Math.max(0,run.nextBossAt-run.routeDistance)*dt/run.bossCooldown):travel;
+  const routeTravel=stageRouteTravel(run,travel,dt,{stageIndex:routeStageFor(run).index,missingRaid,raidTiming:RAID_TIMING,
+   jacareRecovery:JACARE_RECOVERY_SECONDS,checkpointAt:Math.min(flightStop,lessonStop,raidStop),clearanceSeconds:run.terrain.preparing?terrainEntryBudget(run):0});
   run.routeDistance=Math.min(stop,raidStop,flightStop,lessonStop,run.routeDistance+routeTravel);
  }
  run.bossCooldown=Math.max(0,run.bossCooldown-dt);

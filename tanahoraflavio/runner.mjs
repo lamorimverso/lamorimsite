@@ -1,8 +1,9 @@
+import {stageGuideFor} from './runner-stage-director.mjs?v=0a0adb45df4e';
 import {HURT_BODY_SCALE} from './runner-body.mjs?v=57ec474fca38';
 import {createPresentationDOM,createControlLabelReader} from './runner-presentation-cache.mjs?v=4712d27109dc';
 import {edgeThreatsFor,drawEdgeThreats} from './runner-edge-cues.mjs?v=b4b61c9e89df';
-import {drawTerrain,drawSlideContact} from './runner-terrain-art.mjs?v=a5bf1a80c812';
-import {TERRAIN,terrainSupportAt} from './runner-terrain.mjs?v=fb8a047c0ab1';
+import {drawTerrain,drawSlideContact} from './runner-terrain-art.mjs?v=28460eefba9b';
+import {TERRAIN,terrainSupportAt} from './runner-terrain.mjs?v=c41a2baf8bbd';
 import {normalizeControls,keyboardActionFor,mouseActionFor,keyLabel} from './runner-control-map.mjs?v=568387e3f764';
 import {createControlSettings} from './runner-control-settings.mjs?v=25524a717d9e';
 import {createGamepadDriver} from './runner-gamepad.mjs?v=18383546c2cd';
@@ -14,7 +15,7 @@ import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from 
 import {createAircraftWarningTracker,createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=37fd940420f1';
 import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=766c802dd6db';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=a7137aa8048b";
+import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, stagePlanFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=4d218c85c5cf";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {heroStridePhase,bossStopsAutoRun} from './runner-drawn-motion.mjs?v=0d1971800c55';
 import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=700c55ebad49';
@@ -35,7 +36,7 @@ function initRunner() {
   if (!canvas || !section) return;
   // Uma aba pode ter conservado o HTML anterior enquanto os módulos já
   // mudaram. Atualizar a página uma vez evita inicializar sobre IDs antigos.
-  if(!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-cycle")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-effects")||!$("game-assist")||$("game-options-panel")||!$("game-attack")||!$("game-jacare-progress")||!$("game-jacare-count")||!$("game-jacare-hint")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-battle-cue")||!$("game-practice")||!$("game-route")||!$("game-result-actions")||!$("game-ready-actions")||!$("game-controls")||!$("game-continue")||!$("game-form-status")||$("game-expand")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
+  if(!$("game-stage-progress")||!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-cycle")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-effects")||!$("game-assist")||$("game-options-panel")||!$("game-attack")||!$("game-jacare-progress")||!$("game-jacare-count")||!$("game-jacare-hint")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-battle-cue")||!$("game-practice")||!$("game-route")||!$("game-result-actions")||!$("game-ready-actions")||!$("game-controls")||!$("game-continue")||!$("game-form-status")||$("game-expand")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
     const url=new URL(location.href);
     if(url.searchParams.get("ui")!=="20261115-campaign-hierarchy"){
       url.searchParams.set("ui","20261115-campaign-hierarchy");location.replace(url.href);
@@ -141,6 +142,7 @@ function initRunner() {
         if(stages!==STAGES){
           const line=campaignRows.filter(row=>row.stageId===stage.id).map(row=>bossRoleLabel(row)+' · '+row.name).join(' / ');
           const cast=document.createElement('small');cast.textContent=line;item.append(cast);
+          const guide=stageGuideFor(stage.id),steps=document.createElement('small');steps.className='game-route-guide';steps.textContent=guide.order;steps.title=guide.lesson;item.append(steps);
         }
         return item;
       }));
@@ -191,7 +193,12 @@ function initRunner() {
     const cast=characterProgressAt(run);
     ui.text("game-difficulty","Risco "+difficulty.level+" · "+cast.available+"/"+cast.total+" rivais");
     ui.data(section,'playerForm',run.player.isJacare?'jacare':run.player.hp===1?'hurt':'normal');
-    ui.text("game-stage-time",run.status==="ballot"?"Etapa final · Urna":run.status==="prison"?"Prisão fictícia":run.status==="won"?"História concluída!":run.status==="over"?"Fim da corrida":run.boss?.combat?bossRoleLabel(run.boss)+" · "+run.boss.name:run.boss?run.boss.remaining+" ataques para escapar do chefão":run.raid?"Perseguição especial":run.mode==="story"?"História "+run.bossesDefeated+"/"+STORY_BOSS_COUNT:campaignPhases[stage.index]);
+    const stagePlan=stagePlanFor(run),stagePercent=Math.round(stagePlan.progress*100);
+    ui.text("game-stage-time",run.mode==="story"?stagePlan.label:run.boss?run.boss.remaining+" ataques para escapar do chefão":run.raid?stagePlan.label:campaignPhases[stage.index]);
+    ui.prop("game-stage-time",'title',stagePlan.goal);ui.attr("game-stage-time",'aria-label',stagePlan.label+'. '+stagePlan.goal);
+    ui.data(section,'stageSection',stagePlan.section);
+    ui.attr('game-stage-progress','aria-valuenow',stagePercent);ui.attr('game-stage-progress','aria-valuetext',stagePercent+'% · '+stage.name+'. '+stagePlan.goal);
+    ui.style('game-stage-progress','--stage-fill',stagePercent+'%');
     ui.text("game-best",best.toLocaleString("pt-BR"));
     ui.text("game-time",pad(Math.floor(run.elapsed/60))+":"+pad(Math.floor(run.elapsed%60)));
     ui.data(section,'runState',run.status);ui.data(section,'runMode',run.mode);

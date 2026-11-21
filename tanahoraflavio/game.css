@@ -382,3 +382,9 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
 
 /* Charge reads independently from the existing ammunition count. */
 .game-power-loadout[data-charging="true"]::after{content:"";position:absolute;left:4px;right:4px;bottom:1px;height:3px;border-radius:3px;background:linear-gradient(to right,#d7b1ff var(--shot-charge,0%),#ffffff20 var(--shot-charge,0%));pointer-events:none}
+
+/* Stage progress fits within the existing header, without shifting the track. */
+.game-stage-header{position:relative;padding-bottom:5px}
+.game-stage-progress{position:absolute;left:0;right:0;bottom:0;height:2px;border-radius:2px;background:#65557518;overflow:hidden}
+.game-stage-progress>span{display:block;height:100%;width:var(--stage-fill,0%);background:#8165b4}
+#game-route .game-route-guide{margin-top:3px;color:#72617f;line-height:1.5}

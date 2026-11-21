@@ -4,7 +4,7 @@ import {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
 // above WORLD.ground. Resizing translates shapes with the hero, never stretches
 // a jump or replaces an active hole with invisible ground.
 export const TERRAIN = Object.freeze({speed:270,warningFor:2.3,slideFor:HERO_SLIDE_SECONDS,slideSpeed:310,clearance:46,platformY:28});
-export function createTerrain(){return {active:null,nextAt:6,completed:0,spawned:0,lessonCompleted:false,flightCompleted:false,flightsCompleted:0,lastFlightArrival:null};}
+export function createTerrain(){return {active:null,preparing:null,nextAt:6,completed:0,spawned:0,lessonCompleted:false,flightCompleted:false,flightsCompleted:0,lastFlightArrival:null};}
 const BASIC_ROUTE=Object.freeze({id:'basic',gapTime:.39,platformOffsetTime:.30,platformTime:.54,platformY:28,requiresDoubleJump:false});
 // The earned jump is an alternative, never the entry ticket to a compulsory bar.
 const ADVANCED_ROUTE=Object.freeze({id:'earned-jump-optional',gapTime:.45,platformOffsetTime:.37,platformTime:.57,platformY:40,requiresDoubleJump:false});
@@ -26,6 +26,7 @@ export function beginTerrain(run,speed=TERRAIN.speed){
 // the São Paulo duels and without a lethal hole beneath the lesson.
 export function beginGroundLesson(run,speed,{routeStart,routeEnd}){
  const state=run.terrain,width=.80*speed,lead=1.32*speed,x=run.player.x+18+lead;
+ state.preparing=null;
  const lesson={routeStart,routeEnd,traveled:0,length:lead+width};
  state.active={id:++state.spawned,kind:'ground-lesson',age:0,speed,warningFor:1.32,requiresDoubleJump:false,
   gaps:[],platforms:[{x,width,y:24}],ceilings:[],lesson};
@@ -37,6 +38,7 @@ export function beginGroundLesson(run,speed,{routeStart,routeEnd}){
 const AIR_BARS=Object.freeze([[3.6,16],[3.4,34],[3.7,52],[3.4,36],[3.5,16]]);
 export function beginAirTransfer(run,speed,{routeStart,routeEnd,from='sao-paulo',to='argentina',fromName='São Paulo',toName='Argentina'}){
  const state=run.terrain,center=run.player.x+18,first=center+1.6*speed,space=.24*speed;
+ state.preparing=null;
  const platforms=[];let end=first;
  for(const [seconds,y] of AIR_BARS){const x=end+space,width=seconds*speed;platforms.push({x,width,y});end=x+width;}
  end+=space;
@@ -151,6 +153,6 @@ export function stepTerrainPlayer(run,dt){
  return null;
 }
 export function recoverTerrain(run){
- const p=run.player;run.terrain.active=null;run.terrain.nextAt=run.elapsed+18;
+ const p=run.player;run.terrain.active=null;run.terrain.preparing=null;run.terrain.nextAt=run.elapsed+18;
  p.y=0;p.velocity=0;p.airJumpsUsed=0;p.grounded=true;p.supportY=0;p.sliding=false;p.slideRemaining=0;
 }
