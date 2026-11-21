@@ -180,6 +180,11 @@ A referência visual original foi revisitada: o fantasma é uma silhueta surreal
 
 O sprite de cada inimigo não desenha mais uma cópia de sua arma. Chefões e coadjuvantes ficam em uma camada elevada, com antecipação existente e efeitos de preparação; cada ataque é desenhado exclusivamente a partir da entidade física. A origem física, velocidades, janelas de esquiva e colisões da versão estável foram preservadas após a primeira tentativa detectar regressões. Rastros, rotação discreta e partículas variam por família; o modo de efeitos reduzidos permanece disponível.
 
+## Correção da postura e do jacaré — 20/11/2026
+
+- A exigência de cinco ações de pular, documentada abaixo como histórico de 17/11, foi retirada. Na regra atual, a transformação do Zé Gotinha dura **dez segundos de tempo ativo**. O indicador mostra os segundos restantes, e Flávio recupera automaticamente a forma humana; W/↑, toque, mouse ou controle não aceleram o relógio. Os movimentos laterais e as ampolas já sinalizadas continuam ativos.
+- Agachamento e deslize apresentam a pose baixa desde a primeira atualização do comando. A entrada percorre quadros completos em intervalos definidos pelo tempo lógico, sem depender da taxa de quadros, enquanto a corrida preserva sua animação de oito passadas.
+
 ## Recuperação do jacaré — 17/11/2026
 
 - A regra de dez segundos descrita no histórico foi substituída. Zé Gotinha inicia a transformação fictícia. Pressione e solte cinco vezes a ação de pular (↑ por padrão), ou use toques/gestos para cima na pista. Mouse e controle seguem o remapeamento. O progresso de 0/5 a 5/5 é compartilhado.
