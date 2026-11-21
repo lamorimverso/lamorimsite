@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
 const dt=1/120;
-const isolated=()=>{const r=core.createRun();core.startRun(r);for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport','nextPickup'])r[k]=Infinity;return r;};
+const isolated=()=>{const r=core.createRun();core.startRun(r);for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport','nextPickup'])r[k]=Infinity;r.terrain.nextAt=Infinity;return r;};
 const step=(r,t)=>{for(let i=0;i<Math.ceil(t/dt);i++)core.advanceRun(r,dt,()=>.5);};
 const source=()=>import('../tanahoraflavio/runner-allies.mjs');
 test('Vorcaro atrai somente passaportes próximos por três segundos sem mudar metros ou vidas',async()=>{

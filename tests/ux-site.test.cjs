@@ -1729,6 +1729,42 @@ for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`acti
  }finally{await context.close();}
 });
 
+for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`stage progress and objectives follow running, pursuit and platform preparation at ${viewport.width}px`,async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport});
+ try{
+  await begin(page);
+  await page.evaluate(async()=>{
+   const r=__testRun,{nextStoryBossDistance}=await import('./runner-bosses.mjs');
+   for(const key of ['nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[key]=Infinity;
+   r.terrain.nextAt=Infinity;r.obstacles=[];r.pickups=[];r.bossesDefeated=2;
+   r.distance=r.routeDistance=28150;r.nextBossAt=nextStoryBossDistance(2);
+  });
+  await page.waitForFunction(()=>document.getElementById('game-stage-name').textContent==='Rio de Janeiro'&&document.getElementById('game').dataset.stageSection==='run');
+  assert.match(await page.locator('#game-stage-time').getAttribute('aria-label'),/Rick Azevedo/);
+  const progress=Number(await page.locator('#game-stage-progress').getAttribute('aria-valuenow'));assert.ok(progress>=5&&progress<10);
+  const [header,meter]=await Promise.all([page.locator('.game-stage-header').boundingBox(),page.locator('#game-stage-progress').boundingBox()]);
+  assert.ok(meter.width>100&&meter.x>=header.x&&meter.x+meter.width<=header.x+header.width+1);
+  assert.ok(meter.y>=header.y&&meter.y+meter.height<=header.y+header.height+1);
+  assert.match(await page.locator('#game-route li[data-stage="rio"] .game-route-guide').textContent(),/Corrida e esquivas/);
+  await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
+  await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/stage-flow-${viewport.width}.png`)});
+  await page.evaluate(()=>{__testRun.raid={phase:'warning',stageId:'rio',remaining:30,recoveryFor:2.5,factIndex:0,id:1,waves:0,stageKeys:['0:rio']};});
+  await page.waitForFunction(()=>document.getElementById('game').dataset.stageSection==='pursuit');
+  assert.match(await page.locator('#game-stage-time').textContent(),/Perseguição/);
+  await page.evaluate(async()=>{
+   const r=__testRun,{nextStoryBossDistance}=await import('./runner-bosses.mjs');
+   r.raid=null;r.bossesDefeated=4;r.distance=r.routeDistance=34900;r.nextBossAt=nextStoryBossDistance(4);
+   r.terrain.nextAt=r.elapsed+100;r.player.x=120;r.player.y=0;r.player.velocity=0;r.player.grounded=true;
+  });
+  await page.waitForFunction(()=>document.getElementById('game').dataset.stageSection==='prepare');
+  assert.match(await page.locator('#game-stage-time').textContent(),/Plataformas/);
+  await page.waitForFunction(()=>__testRun.terrain.active?.kind==='ground-lesson');
+  await page.waitForFunction(()=>document.getElementById('game').dataset.stageSection==='platforms');
+  assert.match(await page.locator('#game-stage-time').getAttribute('aria-label'),/pouse no topo/i);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
 for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`auto-run stops only in a boss duel and resumes after victory at ${viewport.width}px`,async()=>{
  const {context,page,errors}=await open({instrument:true,instrumentSprites:true,viewport});
  try{
