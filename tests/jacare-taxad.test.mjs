@@ -63,10 +63,12 @@ test('coleta cria margem segura de transformação e mantém escudo e vidas',()=
 
 test('a recuperação no ar preserva posição e velocidade sem disparar novo salto',()=>{
  const r=isolated();r.player.y=42;r.player.velocity=210;r.player.isJacare=true;r.player.grounded=false;r.shieldFor=Infinity;
- for(let i=0;i<5;i++)assert.equal(core.recoverJacareRun(r),true);
+ r.player.jacareAge=core.JACARE_RECOVERY_SECONDS-.005;
+ assert.equal(core.recoverJacareRun(r),false,'W não interrompe o relógio');
+ core.advanceRun(r,1/120,()=>.5);
  assert.equal(r.player.isJacare,false);
- assert.equal(r.player.y,42);
- assert.equal(r.player.velocity,210);
+ assert.ok(r.player.y>42,'a posição continua a física de voo');
+ assert.ok(r.player.velocity<210&&r.player.velocity>180,'a velocidade varia só pela gravidade');
  assert.ok(r.graceFor>.49);
  assert.ok(r.player.restoreFlashFor>0);
  assert.equal(core.jumpRun(r),false,'no ar, o próximo comando só arma buffer');

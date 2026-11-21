@@ -14,7 +14,7 @@ export {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from '.
 import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=740e8ab135c4';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=6da54cb343f5';
 import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
-import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=f64eb9ec518e';
+import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=b60a849f2e34';
 import {regularCastMuzzle} from './runner-cast-pose.mjs?v=ad9beaec5ae2';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=d3b6a81b34b9';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
@@ -26,7 +26,7 @@ export const WORLD = Object.freeze({width:900,height:300,ground:246});
 // Envelope de todas as poses no atlas a .95 de escala, incluindo o agachamento.
 // A mesma margem serve ao jacaré e evita deslocar o herói ao trocar de postura.
 export const PLAYER = Object.freeze({x:120,width:34,height:58,visualLeft:-26,visualRight:75});
-export const JACARE_RECOVERY_PRESSES = 5;
+export const JACARE_RECOVERY_SECONDS = 10;
 export const GAME_MODES = Object.freeze(['endless','story']);
 export const STORY_BOSS_COUNT = STORY_ENCOUNTERS;
 export const PASSPORTS_PER_LIFE = 100;
@@ -72,7 +72,7 @@ const BOSS_GOALS = Object.freeze({
 export const PICKUPS = Object.freeze([
  Object.freeze({type:'passport',name:'Passaporte',value:10,purpose:'100 passaportes = +1 continuação'}),
  Object.freeze({type:'shield',name:'Parte de escudo',value:0,purpose:'6 partes = 1 escudo de reserva'}),
- Object.freeze({type:'ze-gotinha',name:'Zé Gotinha',value:0,purpose:'Transforma Flávio em jacaré fictício até cinco comandos de recuperação; breve proteção inicial'}),
+ Object.freeze({type:'ze-gotinha',name:'Zé Gotinha',value:0,purpose:'Transforma Flávio em jacaré fictício por dez segundos, com recuperação automática e breve proteção inicial'}),
  Object.freeze({type:'rachadinha',name:'Rachadinha',value:0,purpose:'Pacote cenográfico raro que restaura a forma normal'})
 ]);
 // Chefões atacam por iniciativa própria; Flávio dispara, desvia e gerencia suprimentos.
@@ -429,17 +429,16 @@ export function activateReserveShield(run){
  run.reserveShields--;run.shieldFor=6;
  announce(run,'Escudo de reserva ativado! Proteção por 6 segundos.');return true;
 }
-// Recebe somente uma nova entrada já filtrada pelo dispositivo, nunca um salto em fila.
-export function recoverJacareRun(run){
+// API antiga mantida por compatibilidade: nenhum comando pode antecipar o relógio.
+export function recoverJacareRun(_run){return false;}
+function restoreJacareRun(run){
  const p=run.player;
- if(run.status!=='running'||!p.isJacare)return false;
- if(++p.jacareProgress===JACARE_RECOVERY_PRESSES){
-  p.isJacare=false;p.restoreFlashFor=JACARE_RESTORE_FLASH;
-  p.jumpBufferedUntil=p.coyoteUntil=0;p.crouchHeld=false;p.crouching=false;
-  const wavePending=hasJacareVolley(run);
-  if(!wavePending)run.graceFor=Math.max(run.graceFor,JACARE_RESTORE_GRACE);
-  announce(run,wavePending?'Forma humana recuperada. Desvie das ampolas já marcadas.':'Recuperação concluída: Flávio voltou à corrida normal.');
- }
+ if(run.status!=='running'||!p.isJacare||p.jacareAge<JACARE_RECOVERY_SECONDS)return false;
+ p.isJacare=false;p.restoreFlashFor=JACARE_RESTORE_FLASH;
+ p.jumpBufferedUntil=p.coyoteUntil=0;p.crouchHeld=false;p.crouching=false;
+ const wavePending=hasJacareVolley(run);
+ if(!wavePending)run.graceFor=Math.max(run.graceFor,JACARE_RESTORE_GRACE);
+ announce(run,wavePending?'Contagem concluída: forma humana recuperada. Desvie das ampolas já marcadas.':'Contagem concluída: Flávio voltou à corrida normal.');
  return true;
 }
 export function jumpRun(run){
@@ -1040,7 +1039,12 @@ export function advanceRun(run,seconds,rng){
  const entering=run.boss?.combat&&run.boss.phase==='intro'&&playerX(run)>visibleWidth(run)-BOSS_ARENA_RESERVE;
  run.player.x=entering?Math.max(visibleWidth(run)-BOSS_ARENA_RESERVE,playerX(run)-230*dt):Math.max(bounds.min,Math.min(bounds.max,playerX(run)+(run.player.moveHeld||0)*moveSpeed*dt));
  advanceAllies(run,dt);
- if(run.player.isJacare)run.player.jacareAge+=dt;
+ if(run.player.isJacare){
+  const p=run.player;
+  p.jacareAge=Math.min(JACARE_RECOVERY_SECONDS,p.jacareAge+dt);
+  p.jacareProgress=Math.floor(p.jacareAge);
+  if(p.jacareAge>=JACARE_RECOVERY_SECONDS)restoreJacareRun(run);
+ }
  run.player.restoreFlashFor=Math.max(0,run.player.restoreFlashFor-dt);
  if(run.nextBossAt===null)run.nextBossAt=run.mode==='story'?nextStoryBossDistance(0):nextBossDistance(0);
  if(run.nextRaid===null)run.nextRaid=18+random(rng)*12;
@@ -1265,7 +1269,7 @@ export function advanceRun(run,seconds,rng){
     run.player.crouching=false;run.player.crouchHeld=false;run.player.jumpBufferedUntil=run.player.coyoteUntil=0;
     run.player.sliding=false;run.player.slideRemaining=0;run.player.attackHeld=false;run.player.attackFor=0;
     queueJacareVolley(run,rng);
-    announce(run,'Zé Gotinha: transformação fictícia! Dê cinco comandos de recuperação e desvie lateralmente das ampolas cenográficas. Vacinas não causam essa transformação.');
+    announce(run,'Zé Gotinha: transformação fictícia por dez segundos! A recuperação é automática; desvie lateralmente das ampolas cenográficas. Vacinas não causam essa transformação.');
    }
    if(p.type==='shield'){addShieldPart(run);announce(run,run.allyShieldProgress?'Parte de escudo: '+run.allyShieldProgress+'/6.':'Escudo de reserva guardado! Use o botão de escudo quando precisar.');}
    if(p.type==='rachadinha'){

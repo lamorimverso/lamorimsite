@@ -29,8 +29,8 @@ test('o chefe e o fim da transformação não restauram o dano acumulado',()=>{
  const r=scene({mode:'story'});r.player.hp=1;r.nextBossAt=0;step(r);
  assert.equal(r.boss.combat,true);assert.equal(r.player.hp,1);
  r.boss.hp=0;step(r);assert.equal(r.boss,null);assert.equal(r.player.hp,1);
- r.player.isJacare=true;
- for(let i=0;i<5;i++)core.recoverJacareRun(r);
+ r.player.isJacare=true;r.player.jacareAge=core.JACARE_RECOVERY_SECONDS-.01;
+ step(r,2);
  assert.equal(r.player.isJacare,false);assert.equal(r.player.hp,1);
 });
 
@@ -80,8 +80,9 @@ test('a cura não é gerada na entrada do jacaré nem durante a onda já marcada
   r.pickups=[{type:'ze-gotinha',x:r.player.x+17,y:20,speed:0}];
   step(r);assert.equal(r.player.isJacare,true);
   assert.ok(!r.pickups.some(p=>p.type==='rachadinha'));
-  for(let i=0;i<5;i++)core.recoverJacareRun(r);
+  r.player.jacareAge=core.JACARE_RECOVERY_SECONDS-.02;
   if(dodge)core.moveRun(r,1);
+  step(r,3);
   step(r,164);assert.ok(!r.pickups.some(p=>p.type==='rachadinha'));
   if(!dodge){assert.equal(r.status,'over');assert.equal(r.lastHit.type,'pfizer-ampoule');continue;}
   core.moveRun(r,0);

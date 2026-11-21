@@ -2,66 +2,70 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
 
+const DT=1/120;
 function isolated(){
  const r=core.createRun({seed:17});core.startRun(r);
  r.nextBossAt=r.nextRaid=r.nextObstacle=r.nextAllyAt=r.nextSupportAt=Infinity;
  r.nextPower=r.nextPassport=r.nextPickup=Infinity;
  return r;
 }
-function step(r,seconds){for(let i=0;i<Math.round(seconds*120)&&r.status==='running';i++)core.advanceRun(r,1/120);}
-function collect(r){r.pickups.push({type:'ze-gotinha',x:r.player.x+17,y:20,speed:0});step(r,1/120);}
+function step(r,seconds){for(let i=0;i<Math.ceil(seconds/DT)&&r.status==='running';i++)core.advanceRun(r,DT);}
+function collect(r){r.pickups.push({type:'ze-gotinha',x:r.player.x+17,y:20,speed:0});step(r,DT);}
 
-test('o relógio não recupera o jacaré, e a corrida e as ondas seguem após dez segundos',()=>{
- const r=isolated();collect(r);assert.equal(r.player.isJacare,true);
- r.shieldFor=Infinity;
- step(r,12);
+test('jacaré conta dez segundos sozinho, sem pressionar W, toque ou outro botão',()=>{
+ const r=isolated();r.shieldFor=Infinity;collect(r);
+ assert.equal(r.player.isJacare,true);assert.equal(r.player.jacareAge,0);
+ step(r,core.JACARE_RECOVERY_SECONDS-.2);
  assert.equal(r.player.isJacare,true);
- assert.equal(r.player.jacareProgress,0);
- assert.ok(r.distance>1000);
- const deadline=r.elapsed+5;
- while(!r.obstacles.some(o=>o.type==='pfizer-ampoule'&&o.age<.1)&&r.elapsed<deadline)step(r,1/120);
- const wave=r.obstacles.filter(o=>o.type==='pfizer-ampoule');
- assert.ok(wave.length===4&&wave.every(o=>o.warningFor>=.78),'uma onda nova ainda tem aviso e desvio');
+ assert.ok(r.player.jacareAge>9.7&&r.player.jacareProgress===9);
+ assert.ok(r.distance>1000,'a corrida e as ondas continuam enquanto o relógio avança');
+ step(r,.25);
+ assert.equal(r.player.isJacare,false);
+ assert.equal(r.player.jacareProgress,core.JACARE_RECOVERY_SECONDS);
+ assert.equal(r.player.jacareAge,core.JACARE_RECOVERY_SECONDS);
+ assert.equal(r.player.velocity,0);
+ assert.ok(r.player.restoreFlashFor>0);
+ assert.equal(core.recoverJacareRun(r),false);
 });
 
-test('quinto comando retorna sem salto, preservando velocidade, vida e proteção já existente',()=>{
- const r=isolated();r.lives=2;r.player.hp=2;r.shieldFor=8;collect(r);
- assert.equal(r.player.jacareProgress,0);
- for(let n=1;n<5;n++){
-  assert.equal(core.recoverJacareRun(r),true);
-  assert.equal(r.player.jacareProgress,n);
-  assert.equal(r.player.isJacare,true);
+test('W e demais comandos não aceleram nem reiniciam a contagem, mantendo vida e deslocamento',()=>{
+ const r=isolated();r.lives=2;r.player.hp=2;r.shieldFor=Infinity;collect(r);
+ for(let n=0;n<10;n++){
+  assert.equal(core.recoverJacareRun(r),false);
   assert.equal(core.jumpRun(r),false);
-  assert.equal(r.player.velocity,0);
  }
- core.moveRun(r,1);
- assert.equal(core.recoverJacareRun(r),true);
- assert.equal(r.player.jacareProgress,5);
+ assert.equal(r.player.jacareAge,0);
+ assert.equal(r.player.jacareProgress,0);
+ core.moveRun(r,1);step(r,.5);
+ assert.equal(r.player.isJacare,true);
+ assert.ok(r.player.x>core.PLAYER.x);
+ assert.equal(r.player.hp,2);
+ assert.equal(r.lives,2);
+ step(r,core.JACARE_RECOVERY_SECONDS);
  assert.equal(r.player.isJacare,false);
- assert.equal(r.player.velocity,0);
- assert.equal(r.player.jumpBufferedUntil,0);
  assert.equal(r.player.moveHeld,1);
  assert.equal(r.player.hp,2);
  assert.equal(r.lives,2);
- assert.ok(r.shieldFor>7);
- assert.ok(r.player.restoreFlashFor>0);
- assert.equal(core.recoverJacareRun(r),false);
- assert.equal(core.jumpRun(r),true,'só um novo comando permite salto humano');
+ assert.equal(core.jumpRun(r),true,'o salto só volta a funcionar depois do temporizador');
 });
 
-test('uma coleta sobreposta não apaga o progresso e um novo evento começa em zero',()=>{
- const r=isolated();collect(r);core.recoverJacareRun(r);collect(r);
- assert.equal(r.player.jacareProgress,1);
+test('coleta repetida não reinicia relógio e um novo jacaré inicia em dez segundos',()=>{
+ const r=isolated();r.shieldFor=Infinity;collect(r);step(r,2);
+ const before=r.player.jacareAge;collect(r);
+ assert.equal(r.player.isJacare,true);
+ assert.ok(r.player.jacareAge>=before);
  assert.equal(r.collected,1);
- for(let n=0;n<4;n++)core.recoverJacareRun(r);
- r.shieldFor=Infinity;step(r,2.5);
+ step(r,core.JACARE_RECOVERY_SECONDS);
+ assert.equal(r.player.isJacare,false);
+ step(r,3);
  collect(r);
  assert.equal(r.player.isJacare,true);
+ assert.equal(r.player.jacareAge,0);
  assert.equal(r.player.jacareProgress,0);
  assert.equal(r.collected,2);
 });
 
-test('coleta simultânea com o início de um chefe ou perseguição não transforma',()=>{
+test('coleta simultânea com começo de chefe ou raid não transforma',()=>{
  for(const event of ['nextBossAt','nextRaid']){
   const r=isolated();r[event]=0;collect(r);
   assert.ok(r.raid||r.boss);
@@ -70,35 +74,43 @@ test('coleta simultânea com o início de um chefe ou perseguição não transfo
  }
 });
 
-test('um salto antes do pouso não conta sozinho como recuperação',()=>{
- const r=isolated();collect(r);r.player.jumpBufferedUntil=r.elapsed+.12;
+test('salto anterior, input mantido e recuperação automática não disparam salto involuntário',()=>{
+ const r=isolated();collect(r);r.shieldFor=Infinity;
+ r.player.jumpBufferedUntil=r.elapsed+.12;
  step(r,.04);
  assert.equal(r.player.jacareProgress,0);
  assert.equal(r.player.velocity,0);
+ step(r,core.JACARE_RECOVERY_SECONDS);
+ assert.equal(r.player.isJacare,false);
+ assert.equal(r.player.velocity,0);
+ assert.equal(r.player.jumpBufferedUntil,0);
 });
 
-test('a coleta avisa a primeira onda imediatamente e cinco comandos não apagam a ameaça',()=>{
- for(const finishImmediately of [false,true]){
-  const r=isolated();collect(r);
-  const wave=r.obstacles.filter(o=>o.type==='pfizer-ampoule');
-  assert.equal(wave.length,3,'primeira pressão começa com a coleta');
-  assert.ok(wave.every(o=>o.age===0&&o.warningFor>=.78));
-  if(finishImmediately){
-   for(let n=0;n<5;n++)assert.equal(core.recoverJacareRun(r),true);
-   assert.equal(r.player.isJacare,false);
-   assert.deepEqual(r.obstacles,wave,'sinais já exibidos continuam valendo');
-  }
-  step(r,1.8);
-  assert.equal(r.status,'running');assert.equal(r.player.hp,1,'ficar parado custa um dos dois impactos mesmo depois de restaurar a forma');
-  assert.equal(r.lastHit.type,'pfizer-ampoule');
- }
+test('contagem expira sem apagar ampolas já anunciadas nem abrir nova onda',()=>{
+ const r=isolated();r.shieldFor=Infinity;collect(r);
+ r.player.jacareAge=core.JACARE_RECOVERY_SECONDS-.15;
+ r.player.nextJacareThreat=0;
+ r.obstacles=[];
+ step(r,DT);
+ const wave=r.obstacles.filter(o=>o.type==='pfizer-ampoule');
+ assert.ok(wave.length>=3&&wave.every(o=>o.warningFor>=.78));
+ step(r,.2);
+ assert.equal(r.player.isJacare,false);
+ assert.ok(wave.every(o=>r.obstacles.includes(o)),'os avisos existentes não desaparecem');
+ const count=r.obstacles.length;
+ step(r,.1);
+ assert.equal(r.obstacles.length,count,'não há nova onda depois da forma humana');
 });
 
-test('Joice e chefes não sobrepõem a última onda depois da forma humana voltar',()=>{
+test('chefes e Joice aguardam o fim do relógio e da última onda',()=>{
  for(const pending of ['nextBossAt','nextRaid']){
   const r=isolated();collect(r);r[pending]=0;r.shieldFor=Infinity;
-  for(let n=0;n<5;n++)core.recoverJacareRun(r);
-  step(r,.9);assert.ok(r.obstacles.some(o=>o.type==='pfizer-ampoule'));assert.equal(r.boss,null);assert.equal(r.raid,null);
-  step(r,1.7);assert.ok(pending==='nextBossAt'?r.boss:r.raid);
+  step(r,core.JACARE_RECOVERY_SECONDS-.3);
+  assert.equal(r.player.isJacare,true);
+  assert.equal(r.boss,null);assert.equal(r.raid,null);
+  step(r,.4);
+  assert.equal(r.player.isJacare,false);
+  step(r,3);
+  assert.ok(pending==='nextBossAt'?r.boss:r.raid);
  }
 });

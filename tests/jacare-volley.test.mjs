@@ -29,7 +29,8 @@ test('recuperação preserva o último aviso e impede uma nova onda na forma hum
  const run=newJacare(480,240,6);run.shieldFor=Infinity;
  const wave=core.spawnJacareVolley(run,{rng:()=>.5});
  const other={x:600,width:40,height:40,type:'barrier',speed:45};run.obstacles.push(other);
- for(let i=0;i<5;i++)core.recoverJacareRun(run);
+ run.player.jacareAge=core.JACARE_RECOVERY_SECONDS-.1;
+ step(run,.2);
  assert.equal(run.player.isJacare,false);
  assert.deepEqual(run.obstacles,[...wave,other]);
  assert.deepEqual(core.spawnJacareVolley(run,{rng:()=>0}),[]);

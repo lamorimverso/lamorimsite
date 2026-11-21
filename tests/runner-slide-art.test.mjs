@@ -13,6 +13,9 @@ try{canvas=require('@napi-rs/canvas');}catch(error){if(error.code!=='MODULE_NOT_
 
 test('agachamento, deslize e recuperação selecionam quadros próprios',()=>{
  assert.deepEqual([.2,.45,.8,1].map(crouchPose=>heroActionFrameFor({crouchPose})),[0,1,2,3]);
+ assert.equal(heroActionFrameFor({landing:true,crouchPose:0}),null,'início preserva silhueta sem tranco');
+ assert.equal(heroActionFrameFor({landing:true,crouchPose:.2}),0,'a primeira pose baixa aparece após breve transição');
+ assert.equal(heroActionFrameFor({landing:true,sliding:true,slidePose:0,slidePhase:0}),4,'a entrada do deslize usa sua arte própria');
  assert.deepEqual([.04,.14,.52,.94].map(slidePhase=>heroActionFrameFor({sliding:true,slidePhase})),[4,5,6,7]);
  assert.equal(heroActionFrameFor({crouchPose:1,slidePose:.61,slidePhase:.52}),7);
  assert.equal(heroActionFrameFor({crouchPose:1,slidePose:.61,slidePhase:.52,slideShot:{state:'recoil'}}),7,'o recuo não pula o recolhimento da perna');

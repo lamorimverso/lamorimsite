@@ -235,49 +235,46 @@ test('a double jump from a raised platform keeps the complete hero inside the ca
  }finally{await context.close();}
 });
 
-test('jacaré soma teclado, toque, mouse e controle sem salto, tiro ou repetição',async()=>{
+test('jacaré conta dez segundos sem W, toque, mouse ou gamepad para recuperar',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844},hasTouch:true,isMobile:true,init:()=>{window.__pads=[];Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>window.__pads});}});
  try{
   await begin(page);
   await page.evaluate(()=>{const r=__testRun;for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport','nextPickup'])r[k]=Infinity;r.obstacles=[];r.shieldFor=Infinity;r.pickups=[{type:'ze-gotinha',x:r.player.x+17,y:20,speed:0}];window.__pads=[{connected:true,id:'Controle de teste',index:0,axes:[0,0],buttons:[{pressed:false,value:0}]}];});
   const canvas=page.locator('#runner-canvas'),hud=page.locator('#game-jacare-progress');
-  const progress=n=>page.waitForFunction(n=>document.getElementById('game-jacare-progress').getAttribute('aria-valuenow')===String(n),n);
-  await canvas.focus();await hud.waitFor();await progress(0);
-  await page.waitForFunction(()=>document.getElementById('game-controller-status').textContent.includes('Controle de teste'));
-  await page.keyboard.down('ArrowUp');await page.keyboard.down('ArrowUp');
-  await canvas.dispatchEvent('keydown',{key:'ArrowUp',code:'ArrowUp',repeat:false,bubbles:true});
-  await progress(1);await page.keyboard.up('ArrowUp');
+  await canvas.focus();await hud.waitFor();
+  assert.match(await hud.textContent(),/Retorno automático/);
+  assert.equal(await hud.getAttribute('aria-valuemax'),'10');
+  const originalX=await page.evaluate(()=>__testRun.player.x);
+  await page.keyboard.press('w');
   const {x,y,width,height}=await canvas.boundingBox();
-  await page.touchscreen.tap(x+width/2,y+height/2);await progress(2);
-  await canvas.dispatchEvent('pointerdown',{button:0,pointerId:81,pointerType:'touch',isPrimary:true,clientX:100,clientY:100});
-  await canvas.dispatchEvent('pointercancel',{pointerId:81,pointerType:'touch'});
-  await canvas.dispatchEvent('pointerup',{pointerId:81,pointerType:'touch',clientX:100,clientY:100});
-  const start=await page.evaluate(()=>__testRun.player.x);
-  await page.keyboard.down('ArrowRight');await page.waitForFunction(x=>__testRun.player.x>x,start);await page.keyboard.up('ArrowRight');
-  assert.equal(await page.evaluate(()=>__testRun.player.jacareProgress),2,'cancelamento e desvio não contam');
-  await page.evaluate(()=>__pads[0].buttons[0]={pressed:true,value:1});await progress(3);
-  await canvas.click({position:{x:width/2,y:height/2}});await progress(4);
+  await page.touchscreen.tap(x+width/2,y+height/2);
+  await page.evaluate(()=>__pads[0].buttons[0]={pressed:true,value:1});
+  await page.keyboard.down('ArrowRight');await page.waitForFunction(x=>__testRun.player.x>x,originalX);await page.keyboard.up('ArrowRight');
+  await page.evaluate(()=>__pads[0].buttons[0]={pressed:false,value:0});
   assert.equal(await page.evaluate(()=>__testRun.player.isJacare),true);
-  await page.keyboard.press('ArrowUp');await progress(5);
-  assert.deepEqual(await page.evaluate(()=>[__testRun.player.isJacare,__testRun.player.y,__testRun.player.velocity,__testRun.shotsFired]),[false,0,0,0]);
+  assert.equal(await page.evaluate(()=>__testRun.player.velocity),0);
+  await page.evaluate(()=>{__testRun.player.jacareAge=9.85;__testRun.player.nextJacareThreat=Infinity;__testRun.obstacles=[];});
+  await page.waitForFunction(()=>!__testRun.player.isJacare);
+  assert.equal(await page.evaluate(()=>__testRun.player.jacareProgress),10);
   await hud.waitFor({state:'hidden'});
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
 
-test('um clique de mouse não duplica recuperação sem PointerEvent',async()=>{
+test('clique de mouse sem PointerEvent não acelera a recuperação automática',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:900,height:720},init:()=>{delete window.PointerEvent;}});
  try{
   await begin(page);
   await page.evaluate(()=>{const r=__testRun;for(const k of ['nextBossAt','nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport','nextPickup'])r[k]=Infinity;r.obstacles=[];r.shieldFor=Infinity;r.pickups=[{type:'ze-gotinha',x:r.player.x+17,y:20,speed:0}];});
   const hud=page.locator('#game-jacare-progress');await hud.waitFor();
   await page.locator('#runner-canvas').click();
-  assert.equal(await hud.getAttribute('aria-valuenow'),'1');
+  assert.equal(await page.evaluate(()=>__testRun.player.isJacare),true);
+  assert.equal(await page.evaluate(()=>__testRun.player.jacareProgress===Math.floor(__testRun.player.jacareAge)),true);
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
 
-test('recuperar a forma humana rapidamente não evita a ampola já sinalizada',async()=>{
+test('a contagem não elimina a última ampola nem aceita W como recuperação',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844},hasTouch:true,isMobile:true});
  try{
   await begin(page);
@@ -285,11 +282,11 @@ test('recuperar a forma humana rapidamente não evita a ampola já sinalizada',a
   const hud=page.locator('#game-jacare-progress'),canvas=page.locator('#runner-canvas');
   await canvas.focus();await hud.waitFor();
   assert.equal(await page.evaluate(()=>__testRun.obstacles.filter(o=>o.type==='pfizer-ampoule').length),3);
-  await canvas.evaluate(c=>{for(let i=0;i<5;i++)for(const type of ['keydown','keyup'])c.dispatchEvent(new KeyboardEvent(type,{code:'ArrowUp',key:'ArrowUp',bubbles:true}));});
-  assert.equal(await page.evaluate(()=>__testRun.player.isJacare),false);
-  await page.waitForFunction(()=>__testRun.player.restoreFlashFor===0);
+  await canvas.evaluate(c=>{for(let i=0;i<5;i++)for(const type of ['keydown','keyup'])c.dispatchEvent(new KeyboardEvent(type,{code:'KeyW',key:'w',bubbles:true}));});
+  assert.equal(await page.evaluate(()=>__testRun.player.isJacare),true);
+  await page.evaluate(()=>__testRun.player.jacareAge=9.9);
+  await page.waitForFunction(()=>!__testRun.player.isJacare);
   assert.match(await hud.textContent(),/Desvie da última onda/);
-  assert.equal(await hud.isVisible(),true);
   await page.getByText('A ampola acertou Flávio!',{exact:true}).waitFor();
   assert.equal(await page.locator('#game-captured').isVisible(),false);
   assert.deepEqual(errors,[]);
@@ -341,7 +338,7 @@ for(const viewport of [{width:390,height:844},{width:1440,height:900}])test(`tec
  }finally{await context.close();}
 });
 
-test('mudar foco limpa teclas sem perder o progresso do jacaré',async()=>{
+test('mudar foco limpa teclas sem alterar o relógio do jacaré',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:1440,height:900}});
  try{
   await begin(page);await page.evaluate(()=>{const r=__testRun;r.nextObstacle=r.nextRaid=r.nextBossAt=Infinity;r.obstacles=[];r.player.isJacare=true;r.player.jacareAge=1;r.shieldFor=Infinity;});
@@ -350,7 +347,7 @@ test('mudar foco limpa teclas sem perder o progresso do jacaré',async()=>{
   assert.equal(await page.evaluate(()=>__testRun.player.moveHeld),0);
   await page.keyboard.up('ArrowUp');await page.keyboard.up('ArrowRight');await c.focus();await page.keyboard.press('ArrowUp');
   assert.equal(await page.evaluate(()=>__testRun.player.isJacare),true);
-  assert.equal(await page.evaluate(()=>__testRun.player.jacareProgress),2);
+  assert.ok(await page.evaluate(()=>__testRun.player.jacareAge>=1),'o tempo lógico não depende dos comandos');
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
@@ -1439,8 +1436,9 @@ test('engrenagem lista todas as ações, remapeia teclado sem executar o jogo e 
   await page.keyboard.down('l');await page.waitForFunction(x=>__testRun.player.x>x+10,before.x);await page.keyboard.up('l');
   await page.evaluate(()=>{const r=__testRun;r.shieldFor=Infinity;r.pickups=[{type:'ze-gotinha',x:r.player.x+17,y:20,speed:0}];});
   await page.waitForFunction(()=>__testRun.player.isJacare);
-  await page.keyboard.press('ArrowUp');assert.equal(await page.evaluate(()=>__testRun.player.jacareProgress),0);
-  for(let i=0;i<5;i++)await page.keyboard.press('h');
+  await page.keyboard.press('ArrowUp');await page.keyboard.press('h');
+  assert.equal(await page.evaluate(()=>__testRun.player.isJacare),true,'nem o controle padrão nem o remapeado acelera a recuperação');
+  await page.evaluate(()=>__testRun.player.jacareAge=9.95);
   await page.waitForFunction(()=>!__testRun.player.isJacare);
   await page.keyboard.press('h');await page.waitForFunction(()=>__testRun.player.y>10);await page.keyboard.press('n');await page.waitForFunction(()=>__testRun.shotsFired===1);
   await page.reload();await page.locator('#game-settings summary').click();

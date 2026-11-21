@@ -1,9 +1,8 @@
 // Test/check pilot using only public movement and firing commands.
 import * as core from '../tanahoraflavio/runner-core.mjs';
-export function pilotJacare(r,{recover=true}={}){
+export function pilotJacare(r){
  const zones=r.obstacles.filter(o=>o.type==='pfizer-ampoule'&&o.age<o.warningFor+o.fallFor);
  if(!r.player.isJacare&&!zones.length)return false;
- if(recover&&r.player.isJacare&&r.player.jacareAge>=(r.player.jacareProgress+1)*.2)core.recoverJacareRun(r);
  const {min,max}=core.playerBounds(r),current=r.player.x,front=core.PLAYER.width+20,rear=19;
  const targets=[current,min,max,...zones.flatMap(o=>[o.x-front,o.x+o.width+rear])];
  const safe=targets.filter(x=>x>=min&&x<=max&&zones.every(o=>x<=o.x-front||x>=o.x+o.width+rear));
