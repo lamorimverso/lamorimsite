@@ -1,11 +1,11 @@
 import {STAGES,STORY_STAGES,SCENE_DISTANCE} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {bossMechanicFor} from './runner-boss-mechanics.mjs?v=640e2bd41abb';
 import {BOSS_RANKS,bossProfileFor} from './runner-boss-profiles.mjs?v=740e8ab135c4';
-import {bossFlightPose} from './runner-boss-flight.mjs?v=314e50f5a061';
+import {bossFlightPose} from './runner-boss-flight.mjs?v=a2f8750919e6';
 // Encontros ficcionais: quatro classes por cenário, sem mudar identidades.
 
 export const STORY_OPENING_DISTANCE=20800;
-export const BOSS_ARENA_RESERVE=326;
+export const BOSS_ARENA_RESERVE=242;
 export const BOSS_CLASSES=Object.freeze({
  sentinel:Object.freeze({name:'Sentinela',color:'#63c4e1',telegraph:.92,recover:1.3,burst:1}),
  gunner:Object.freeze({name:'Artilheiro',color:'#f1b65d',telegraph:.82,recover:1.15,burst:3}),
@@ -84,7 +84,16 @@ export function arenaPatternFor(boss,fired=0){
 // Decide once at wind-up. Actors own their rhythm; neither posture nor a random
 // roll silently changes the announced tactic into a universal adaptive attack.
 export function planArenaAttack(boss,player={},rng=Math.random){
- return arenaPatternFor(boss,Number.isFinite(boss.patternIndex)?boss.patternIndex:Number(boss.fired)||0);
+ const index=Number.isFinite(boss.patternIndex)?boss.patternIndex:Number(boss.fired)||0;
+ if(!boss.combat||boss.traversal||index<2)return arenaPatternFor(boss,index);
+ // Shuffle complete authored attacks, never the beats within an announced
+ // attack. The first two teach the identity; later cycles vary with the run.
+ const phase=boss.hp<=boss.maxHp/2?1:0,size=phase?6:4,cycle=Math.floor((index-2)/size);
+ const order=Array.from({length:size},(_,i)=>i);
+ let seed=((boss.flightSeed||0)^Math.imul(cycle+1,0x9e3779b9)^Math.imul(phase+1,0x85ebca6b))>>>0;
+ for(const char of boss.type||'')seed=(Math.imul(seed,31)+char.charCodeAt(0))>>>0;
+ for(let i=size-1;i>0;i--){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const j=seed%(i+1);[order[i],order[j]]=[order[j],order[i]];}
+ return arenaPatternFor(boss,order[(index-2)%size]+size);
 }
 export function storyApproachAt(distance,index){
  const boss=storyBossAt(index);if(!boss)return null;

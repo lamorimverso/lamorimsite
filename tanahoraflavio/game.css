@@ -379,3 +379,6 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
  .game-card[data-run-state="over"] .game-captured{max-height:82px}
  .game-card[data-run-state="over"] .game-overlay{padding-block:9px}
 }
+
+/* Charge reads independently from the existing ammunition count. */
+.game-power-loadout[data-charging="true"]::after{content:"";position:absolute;left:4px;right:4px;bottom:1px;height:3px;border-radius:3px;background:linear-gradient(to right,#d7b1ff var(--shot-charge,0%),#ffffff20 var(--shot-charge,0%));pointer-events:none}

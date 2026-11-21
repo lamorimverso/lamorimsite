@@ -57,5 +57,5 @@ export function pilotCounter(r){
  pilotDodge(r);
  const boss=r.boss;
  const incoming=r.obstacles.find(o=>core.isHostileProjectile(o)&&!o.returning&&core.threatTimeToContact(r,o)>.22);
- core.setAttackRun(r,!!boss&&!boss.traversal&&r.ammo>0&&!!incoming);
+ core.setAttackRun(r,!!boss&&!boss.traversal&&r.ammo>0&&(!!incoming||boss.phase==='recover'));
 }

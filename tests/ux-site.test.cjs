@@ -1688,6 +1688,45 @@ test('toc-toc aparece no navegador em todas as oito etapas da História',async()
  }finally{await context.close();}
 });
 
+for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`action boss controls move, slide both ways and charge the existing fire button at ${viewport.width}px`,async()=>{
+ const {context,page,errors}=await open({instrument:true,instrumentSprites:true,viewport});
+ try{
+  await begin(page);
+  await page.evaluate(async()=>{
+   const r=__testRun,{nextStoryBossDistance}=await import('./runner-bosses.mjs');
+   for(const key of ['nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[key]=Infinity;
+   r.obstacles=[];r.pickups=[];r.terrain.nextAt=Infinity;r.shieldFor=Infinity;
+   r.distance=r.routeDistance=r.nextBossAt=nextStoryBossDistance(0);globalThis.__measureHero=true;
+  });
+  await page.waitForFunction(()=>__testRun.boss?.phase==='charge');
+  const held=await page.evaluate(()=>({distance:__testRun.distance,route:__testRun.routeDistance}));
+  for(const key of ['ArrowLeft','ArrowRight']){
+   await page.evaluate(()=>{__testRun.player.x=180;__actorMotion=[];});
+   await page.keyboard.down(key);
+   await page.waitForFunction(()=>__actorMotion.some(a=>a.type==='flavio'&&!a.standing));
+   await page.keyboard.down('ArrowDown');
+   await page.waitForFunction(()=>__testRun.player.sliding);
+   await page.waitForTimeout(100);
+   const x=await page.evaluate(()=>__testRun.player.x);
+   assert.ok(key==='ArrowLeft'?x<180:x>180,'the slide must actually travel in the chosen direction');
+   await page.keyboard.up('ArrowDown');await page.keyboard.up(key);
+  }
+  await page.evaluate(()=>{const r=__testRun;r.boss.phase='recover';r.boss.phaseFor=100;r.boss.recover=100;r.obstacles=[];r.ammo=12;});
+  await page.keyboard.down('j');
+  await page.waitForFunction(()=>__testRun.player.chargeFor>.35);
+  assert.equal(await page.locator('#game-power-loadout').getAttribute('data-charging'),'true');
+  assert.match(await page.locator('#game-attack').getAttribute('aria-label'),/carregar o tiro/);
+  await page.waitForFunction(()=>__testRun.player.chargedFlashFor>0);
+  const battle=await page.evaluate(()=>({distance:__testRun.distance,route:__testRun.routeDistance,shots:__testRun.shotsFired,ammo:__testRun.ammo}));
+  assert.equal(battle.distance,held.distance);assert.equal(battle.route,held.route);
+  assert.ok(battle.ammo<=12-battle.shots-1,'a charge costs an additional round');
+  await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
+  await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/megaman-duel-${viewport.width}.png`)});
+  await page.keyboard.up('j');assert.equal(await page.evaluate(()=>__testRun.player.chargeFor),0);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
 for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`auto-run stops only in a boss duel and resumes after victory at ${viewport.width}px`,async()=>{
  const {context,page,errors}=await open({instrument:true,instrumentSprites:true,viewport});
  try{

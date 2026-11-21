@@ -1,7 +1,7 @@
 import {soldierVariantFor} from './runner-soldier-variants.mjs?v=4bf435291c82';
 import {combatActors,combatDefinitions} from './runner-combat-sprite-data.mjs?v=85a6343e5d39';
 import {redesignDefinitions} from './runner-redesign-data.mjs?v=310909996513';
-import {strideDrawing,actionDrawing} from './runner-drawn-motion.mjs?v=e6447a8a30cc';
+import {strideDrawing,actionDrawing} from './runner-drawn-motion.mjs?v=0d1971800c55';
 export function combatActorTypeFor(type,{armyVariant,enraged=false}={}){return type==='army'&&armyVariant?soldierVariantFor(armyVariant).combatActor:type==='santiago'&&enraged?'santiago-phase2':type;}
 /** Whole-pose keys track physical combat state, never a running cycle on a ship. */
 export function combatFrameFor(type,{frame,cycle,phase=0,preparing=false,attacking=false,recovering=false,hurt=false,reducedMotion=false,progress,armyVariant,enraged=false}={}){

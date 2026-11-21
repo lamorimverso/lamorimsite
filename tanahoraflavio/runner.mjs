@@ -1,26 +1,26 @@
 import {HURT_BODY_SCALE} from './runner-body.mjs?v=57ec474fca38';
 import {createPresentationDOM,createControlLabelReader} from './runner-presentation-cache.mjs?v=4712d27109dc';
 import {edgeThreatsFor,drawEdgeThreats} from './runner-edge-cues.mjs?v=b4b61c9e89df';
-import {drawTerrain,drawSlideContact} from './runner-terrain-art.mjs?v=d970b01c4583';
-import {TERRAIN,terrainSupportAt} from './runner-terrain.mjs?v=fdd6cfe24689';
+import {drawTerrain,drawSlideContact} from './runner-terrain-art.mjs?v=a5bf1a80c812';
+import {TERRAIN,terrainSupportAt} from './runner-terrain.mjs?v=fb8a047c0ab1';
 import {normalizeControls,keyboardActionFor,mouseActionFor,keyLabel} from './runner-control-map.mjs?v=568387e3f764';
 import {createControlSettings} from './runner-control-settings.mjs?v=25524a717d9e';
 import {createGamepadDriver} from './runner-gamepad.mjs?v=18383546c2cd';
-import {HERO_POWERS,heroPowerFor,cycleHeroPower} from './runner-earned-powers.mjs?v=432ca45a76e4';
-import {updateCombatHUD} from './runner-combat-hud.mjs?v=f232659f62af';
+import {HERO_POWERS,heroPowerFor,cycleHeroPower} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
+import {updateCombatHUD} from './runner-combat-hud.mjs?v=b96950bfabe4';
 import {createMovementSoundDirector,movementIsAirborne} from './runner-movement-audio.mjs?v=31522b0ccc1e';
-import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=45efb23b579e';
-import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=6c23ca8e107c';
+import {HERO_SHOT_DURATION,DUEL_CHARGE_SECONDS,drawHeroCharge,drawHeroProjectile} from './runner-hero-shot.mjs?v=7aa1e19e9838';
+import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=8f2c5aee1585';
 import {createAircraftWarningTracker,createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=37fd940420f1';
-import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=a9040a7a6713';
+import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=2ba55b5361ff';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=96420985e2b0";
+import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=0d88dd3eebf2";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=c4fcfde513ff';
-import {heroStridePhase,bossStopsAutoRun} from './runner-drawn-motion.mjs?v=e6447a8a30cc';
-import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=eb6334d566d4';
-import {bossCounterWindow} from './runner-bosses.mjs?v=a9040a7a6713';
-import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=eccdab745072';
-import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=c3863d93a1ec";
+import {heroStridePhase,bossStopsAutoRun} from './runner-drawn-motion.mjs?v=0d1971800c55';
+import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=700c55ebad49';
+import {bossCounterWindow} from './runner-bosses.mjs?v=2ba55b5361ff';
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=4589df3d8763';
+import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=dbaac525a595";
 import { createGameAudio } from "./runner-audio.mjs?v=d93419fd0e46";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=d5e017561fd6";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=73113e4c788c";
@@ -224,7 +224,7 @@ function initRunner() {
     ui.data(attackButton,'ammo',run.ammo>0?"ready":run.player.attackHeld?"held":"reload");
     const ammoHint=run.ammo===0?(run.boss?(run.player.attackHeld?"Solte o disparo para recarregar":"Recarregando munição"):"Sem munição. Colete ajudantes para repor tiros"):"";
     ui.prop(attackButton,'title',ammoHint||(run.player.isJacare?"Disparo indisponível durante a transformação":"Atirar no chefão ou rebater projéteis · "+fireLabel+" · "+weapon.name));
-    ui.attr(attackButton,"aria-label","Atirar no chefão ou rebater projéteis; segure para repetir; tecla "+fireLabel+"; "+weapon.name+(ammoHint?"; "+ammoHint:""));
+    ui.attr(attackButton,"aria-label","Atirar no chefão ou rebater projéteis; segure para repetir"+(run.boss?.combat&&!run.boss.traversal?" e carregar o tiro; solte para recarregar":"")+"; tecla "+fireLabel+"; "+weapon.name+(ammoHint?"; "+ammoHint:""));
     const hideAttack=run.status!=="running"||!run.boss||run.boss.traversal;
     if(hideAttack&&!attackButton.hidden){
       for(const id of firePointers){
@@ -755,7 +755,7 @@ function initRunner() {
     else if(slidePose===0)slideTravel=0;
     const slidePhase=reduced?0:slideTravel;
     lastPoseElapsed=run.elapsed;
-    const runningStride=active&&!bossStopsAutoRun(run)&&!airborne&&!crouchTarget&&!run.player.isJacare;
+    const runningStride=active&&(!bossStopsAutoRun(run)||!!run.player.moveHeld)&&!airborne&&!crouchTarget&&!run.player.isJacare;
     const support=terrainSupportAt(run,playerX(run)+18,13),floor=WORLD.ground-(support??0);
     // Pés e efeito de impacto assumem a altura do suporte real, sem levantar
     // o sprite inteiro para fazer a passada animada parecer mais forte.
@@ -796,7 +796,7 @@ function initRunner() {
         if(scale!==1){ctx.save();ctx.translate(pivot,feet);ctx.scale(scale,scale);ctx.translate(-pivot,-feet);}
         drawHeroShot(ctx,{x:pivot,y:feet,phase,age:HERO_SHOT_DURATION-run.player.attackFor,crouching:crouchTarget,crouchPose,sliding,slidePose,slidePhase,airborne,falling:run.player.velocity<0,reducedMotion:reduced,facing:run.player.shotFacing||1,alpha});
         if(scale!==1)ctx.restore();
-      }else drawActor(ctx,{type:"flavio",x:pivot,y:feet,scale:.95*scale,phase,standing:bossStopsAutoRun(run),airborne,facing,
+      }else drawActor(ctx,{type:"flavio",x:pivot,y:feet,scale:.95*scale,phase,standing:bossStopsAutoRun(run)&&!run.player.moveHeld,airborne,facing,
         falling:run.player.velocity<0,reducedMotion:reduced,landing:crouchTarget,crouchPose,sliding,slidePose,slidePhase,hurt:run.status==="over",alpha});
       if(run.player.restoreFlashFor>0&&!prefersReducedMotion()){
         ctx.save();ctx.globalAlpha=Math.min(.55,run.player.restoreFlashFor/.48*.55);
@@ -805,6 +805,10 @@ function initRunner() {
       }
     }
     ctx.restore();
+    if(active&&run.boss?.combat&&!run.boss.traversal){
+      const muzzle=heroMuzzleFor(run,run.player.shotFacing||1);
+      drawHeroCharge(ctx,{x:muzzle.x,y:WORLD.ground-muzzle.y,progress:(run.player.chargeFor||0)/DUEL_CHARGE_SECONDS,flash:run.player.chargedFlashFor||0});
+    }
     drawProtection(ctx,{...protection,foreground:true});
   }
   function joiceFigure(){

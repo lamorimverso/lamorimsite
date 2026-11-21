@@ -1,10 +1,19 @@
-import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=459f3114044e';
-import {drawCombatSprite} from './runner-sprites.mjs?v=9528143bbe4b';
-import {HERO_POWERS} from './runner-earned-powers.mjs?v=432ca45a76e4';
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=d4ae32a5a1d7';
+import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=1fe368645d13';
+import {drawCombatSprite} from './runner-sprites.mjs?v=d315d90b4c8a';
+import {HERO_POWERS} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=bb7820d6e288';
 import {heroActionMuzzleFor} from './runner-hero-actions.mjs?v=540e224a66e3';
 // Essential action timing shared by the hero renderer and physical launch.
 export const HERO_SHOT_DURATION=.22;
+export const DUEL_CHARGE_SECONDS=1.1;
+export function drawHeroCharge(c,{x,y,progress=0,flash=0}={}){
+ const amount=Math.max(0,Math.min(1,progress));
+ if(amount<.08&&flash<=0)return;
+ c.save();c.translate(x,y);c.strokeStyle=flash>0?'#fff3b5':'#b389e6';
+ c.fillStyle=flash>0?'#fff3b540':'#b389e629';c.lineWidth=flash>0?3:2;
+ c.beginPath();c.arc(0,0,7+amount*6+flash*18,0,Math.PI*2);c.fill();
+ c.beginPath();c.arc(0,0,7+amount*6,-Math.PI/2,-Math.PI/2+Math.PI*2*amount);c.stroke();c.restore();
+}
 export function heroShotPose({age=0,crouching=false,sliding=false,airborne=false,facing=1}={}){
  const t=Math.max(0,Math.min(HERO_SHOT_DURATION,Number(age)||0));
  const state=t<.065?'release':t<.13?'recoil':'recover';
@@ -21,6 +30,12 @@ export function heroShotPose({age=0,crouching=false,sliding=false,airborne=false
 
 /** Complete bottle projectile; its proportions stay fixed while following the shot. */
 export function drawHeroProjectile(c,shot,ground=230,{reducedMotion=false}={}){
+ if(shot.charged){
+  c.save();c.translate(shot.x,ground-shot.y);c.rotate(Math.atan2(-shot.vy,shot.vx));
+  c.fillStyle='#d2b6f74d';c.strokeStyle='#a27bca';c.lineWidth=2;
+  c.beginPath();c.ellipse(0,0,20,12,0,0,Math.PI*2);c.fill();c.stroke();
+  c.strokeStyle='#fff6d3';c.beginPath();c.moveTo(-28,-5);c.lineTo(-14,-5);c.moveTo(-32,5);c.lineTo(-16,5);c.stroke();c.restore();
+ }
  if(shot.powerId&&shot.powerId!=='ivermectina'){
   const power=HERO_POWERS[shot.powerId],size=shot.behavior==='gust'?46:shot.behavior==='wave'?Math.min(56,24+shot.age*44):shot.behavior==='heavy'?30:24;
   c.save();c.translate(shot.x,ground-shot.y);c.rotate(Math.atan2(-shot.vy,shot.vx));

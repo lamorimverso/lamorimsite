@@ -27,7 +27,7 @@ for(const [id,latest,opening,ownBeat] of [
  ['dilma',7.8,'CALMARIA',o=>!!o.gust],
  ['haddad',8.6,'CARIMBO BAIXOU',o=>o.type==='stamp'&&o.falling],
  ['simone',8.6,'COLUNA LIVRE',o=>o.falling]
-])test(`${id} ensina a assinatura cedo e recompensa a devolução seguinte`,()=>{
+])test(`${id} ensina a assinatura cedo e recompensa o tiro durante a abertura`,()=>{
  for(const width of [480,900]){
   const run=startDuel(id,width),boss=run.boss,start=run.elapsed,originalHP=boss.hp;
   const attacks=new Set();
@@ -44,9 +44,9 @@ for(const [id,latest,opening,ownBeat] of [
   assert.equal(boss.hp,originalHP,'a esquiva abre a guarda mas não dá dano direto');
   const earliest=run.elapsed;
   while(run.status==='running'&&run.elapsed-earliest<7&&boss.hp===originalHP){
-   pilotCounter(run);core.advanceRun(run,dt);
+   pilotDodge(run);core.setAttackRun(run,true);core.advanceRun(run,dt);
   }
-  assert.ok(originalHP-boss.hp>originalHP*.145*1.45,`${width}px: a próxima devolução física recebe o bônus`);
+  assert.ok(originalHP-boss.hp>originalHP*.075*1.45,`${width}px: o tiro direto recebe o bônus da abertura`);
  }
 });
 
@@ -86,14 +86,14 @@ test('continuar depois de sofrer um pulso tardio não deixa Rick preso com zero 
  for(let i=0;i<6/dt&&run.status==='running';i++)core.advanceRun(run,dt);
  assert.equal(run.status,'over');
  assert.deepEqual(run.lastHit,{type:'signal-pulse',action:'jump',actor:'rick'});
- assert.equal(boss.fired,6);
+ assert.ok(boss.fired>=4&&boss.fired<=6);
  assert.equal(boss.phase,'attack');
  assert.ok(boss.volleyShots.some(o=>!o.resolved));
  assert.equal(core.continueRun(run),true);
  assert.equal(run.lives,1);
  let opening=false;
- for(let i=0;i<4/dt&&run.boss===boss;i++){
-  core.advanceRun(run,dt);
+ for(let i=0;i<8/dt&&run.boss===boss;i++){
+  pilotDodge(run);core.advanceRun(run,dt);
   opening ||= !!bossCounterWindow(boss).label;
  }
  assert.equal(run.lastBoss,'rick','a continuação conclui a sequência já emitida');
