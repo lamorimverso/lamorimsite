@@ -1,7 +1,7 @@
 import {soldierVariantFor} from './runner-soldier-variants.mjs?v=4bf435291c82';
-import {drawSpriteActor,drawCombatSprite} from './runner-sprites.mjs?v=5a0530cc264c';
-import {heroShotPose} from './runner-hero-shot.mjs?v=1d5691115609';
-import {heroActionFrameFor} from './runner-hero-actions.mjs?v=28d4a6299ddf';
+import {drawSpriteActor,drawCombatSprite} from './runner-sprites.mjs?v=031fd82c7373';
+import {heroShotPose} from './runner-hero-shot.mjs?v=a6425ecce7d8';
+import {heroActionFrameFor} from './runner-hero-actions.mjs?v=151c98e776c9';
 const INK='#292337';
 function line(c,points,color,width){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.lineCap='round';c.lineJoin='round';c.strokeStyle=color;c.lineWidth=width;c.stroke();}
 function oval(c,x,y,rx,ry,fill,stroke=INK,width=1.5){c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke();}}
@@ -23,7 +23,7 @@ export function drawBossonariHead(c){
 /** Firing uses complete illustrated keyframes; complete slide stays below high attacks. */
 export function drawHeroShot(c,{x=0,y=0,phase=0,age=0,crouching=false,crouchPose=crouching?1:0,sliding=false,slidePose=sliding?1:0,slidePhase=sliding?.45:0,airborne=false,falling=false,reducedMotion=false,facing=1,alpha=1}={}){
  const low=crouching||sliding&&!airborne;
- const p=heroShotPose({age,crouching:low,airborne,facing});
+ const p=heroShotPose({age,crouching:low,sliding,airborne,facing});
  const type=low?'flavio-slide-shot':airborne?'flavio-air-shot':'flavio';
  const frame=p.state==='release'?2:p.state==='recoil'?1:p.settle<.8?3:0;
  const posture={landing:true,crouchPose,sliding,slidePose,slidePhase,slideShot:p,reducedMotion};

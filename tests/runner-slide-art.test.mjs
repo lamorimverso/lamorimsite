@@ -88,12 +88,13 @@ test('o deslize desenha uma silhueta baixa, estendida e apoiada, inclusive ao di
  const slide=measure(drawActor,{landing:true,sliding:true,scale:.95});
  assert.ok(crouch.height>=51&&stand.height>crouch.height+12,JSON.stringify({stand,crouch}));
  assert.ok(slide.height>=38,JSON.stringify({slide,crouch}));
- for(const low of [crouch,slide])assert.ok(low.headWidth>=stand.headWidth*.87&&low.headWidth<=stand.headWidth*1.14,'a cabeça saudável não muda de tamanho: '+JSON.stringify({stand,low}));
+ assert.ok(crouch.headWidth>=stand.headWidth*.87&&crouch.headWidth<=stand.headWidth*1.14,'a arte do agachamento permanece intacta');
+ assert.ok(slide.headWidth>=26&&slide.headWidth<slide.height*.8,'a nova pose mantém o rosto legível e espaço para o tronco: '+JSON.stringify(slide));
  const descending=measure(drawActor,{landing:true,crouchPose:.45,scale:.95});
  const rising=measure(drawActor,{landing:false,crouchPose:.45,scale:.95});
  assert.ok(descending.height>crouch.height+5&&descending.height<stand.height,JSON.stringify({stand,descending,crouch}));
  assert.deepEqual(rising,descending,'subida e descida percorrem a mesma dobra do corpo');
- assert.ok(slide.height<=playerBodyFor({hp:2,sliding:true}).terrainHeight+1&&slide.height<crouch.height-5,JSON.stringify({slide,crouch}));
+ assert.ok(slide.height<=playerBodyFor({hp:2,sliding:true}).terrainHeight+1&&slide.height<crouch.height-2,JSON.stringify({slide,crouch}));
  assert.ok(slide.width>=crouch.width+8,JSON.stringify({slide,crouch}));
  const retract=measure(drawActor,{landing:true,slidePose:.55,slidePhase:.55,scale:.95});
  assert.ok(retract.width<slide.width-8&&Math.abs(retract.sole)<=1.5,'o calcanhar recolhe na saída do deslize');

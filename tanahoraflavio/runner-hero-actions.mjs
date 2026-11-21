@@ -1,11 +1,10 @@
 // 12 complete illustrated poses, registered on the same shoe baseline.
 const WIDTH=336,HEIGHT=258,DENSITY=3,X=168,GROUND=246;
-const sha256='bd4603c5f94cdf65a46f2b73b7a0a0a5855f2f751050f0c4e8cdd20e7c42e459';
-export const heroActionsDefinition={
- url:new URL('./assets/flavio-acoes-v2.webp',import.meta.url).href+'?v='+sha256.slice(0,12),
- width:WIDTH*4,height:HEIGHT*3,sha256,
- frames:Array.from({length:12},(_,i)=>({x:i%4*WIDTH,y:Math.floor(i/4)*HEIGHT,width:WIDTH,height:HEIGHT}))
-};
+export {heroActionsDefinition} from './runner-hero-actions-data.mjs?v=9b4ab8b1e2c7';
+import {slideActionMuzzles} from './runner-hero-actions-data.mjs?v=9b4ab8b1e2c7';
+export function heroActionMuzzleFor(state='release',facing=1){
+ const p=slideActionMuzzles[state==='recoil'?1:0];return {x:p.x*(facing<0?-1:1),y:p.y};
+}
 
 // Do not interpolate or mix drawings. Squat and skid each have their own
 // sequence; release is a drawn retraction, not a reversed slide timeline.

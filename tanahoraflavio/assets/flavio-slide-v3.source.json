@@ -1,0 +1,10 @@
+{
+  "origin": "image_gen",
+  "sourceSha256": "b98f7d4574df4e954b01bef1baede5cfdd58c46f60b8e7c52a7d0327d88517a2",
+  "reference": "flavio-acoes-v2.webp",
+  "purpose": "Replace the flattened sliding drawings with complete raised-torso knee slides, preserving character identity and the existing crouch art.",
+  "layout": {"columns": 4, "rows": 2},
+  "runtimeFrames": {"4": 0, "5": 1, "6": 2, "7": 3, "10": 4, "11": 5},
+  "normalization": "Uniform scaling only; common ground baseline; new barrel positions measured from the actual drawings.",
+  "finalEditPrompt": "Precise game sprite-sheet edit. Keep the TOP ROW of reference image exactly unchanged, same 4 figures, same positions, same scale and anatomy. Change ONLY the BOTTOM ROW. It must show FOUR variations of the exact SAME sustained full feet-first slide posture as the TOP ROW THIRD COLUMN: forward leg fully extended, rear knee bent, diagonal raised torso clearly visible, back hand braced behind, identical head size, all facing RIGHT. Preserve the same character identity, purple suit, yellow tie, black shoes and clean cartoon linework. All four bottom-row figures hold the small purple toy blaster horizontally in the forward hand at LOW chest height, and all four bottom-row bodies must have the SAME head/torso/leg positions and same silhouette proportions; only the firing arm, blaster and elbow subtly change between release, recoil, follow-through and settle. No muzzle flash. Specifically, do NOT make bottom-left compact or crouched, and do NOT retract either leg in bottom-right. All four firing figures have the long extended forward leg and clearly raised diagonal torso. Keep same 4 by 2 equal-cell transparent RGBA sheet layout. Maintain consistent head size across all 8 figures. Real transparent background, no text, no grid, no shadows, no particles. Leave all sprites fully inside their cells with clean transparent spacing."
+}
