@@ -551,7 +551,7 @@ function segmentHitsBox(shot,minX,maxX,minY,maxY,radius=0){
 function rollBossDamage(run,basis){
  // Sorteio por acerto, separado da IA: FPS e padrões do chefe não alteram o dano.
  const draw=()=>{
-  if(run.damageRandomState==null)return random(Math.random);
+  if(run.damageRandomState==null)run.damageRandomState=(random(Math.random)*4294967296)>>>0;
   run.damageRandomState=nextSeed(run.damageRandomState);
   return run.damageRandomState/4294967296;
  };

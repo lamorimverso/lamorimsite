@@ -47,6 +47,13 @@ test('seeded damage can be reproduced without repeating across different runs',(
 test('damage rolls do not consume the attack planning random stream',()=>{
  const r=scene(22),prior=r.randomState;rebound(r);assert.equal(r.randomState,prior);
 });
+test('unseeded fights bootstrap a separate damage stream once instead of drawing from the AI on every hit',()=>{
+ const r=scene(22);r.damageRandomState=null;
+ const original=Math.random;let draws=0;
+ Math.random=()=>{draws++;return .2;};
+ try{rebound(r);r.boss.hp=100;rebound(r);}finally{Math.random=original;}
+ assert.equal(draws,1);
+});
 test('damage feedback reports actual HP removed and one projectile cannot hurt twice',()=>{
  const r=scene(22),boss=r.boss;boss.hp=2;
  const hit=rebound(r);assert.equal(boss.hp,0);assert.equal(hit.feedback.amount,2);
