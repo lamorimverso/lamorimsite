@@ -14,7 +14,7 @@ import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from 
 import {createAircraftWarningTracker,createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=37fd940420f1';
 import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=18365bfe1950';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_PRESSES, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, recoverJacareRun, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=08e268583a0b";
+import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=08e268583a0b";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {heroStridePhase} from './runner-drawn-motion.mjs?v=f90ca65ad9d8';
 import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=396addb29e7f';
@@ -203,18 +203,19 @@ function initRunner() {
     ui.data(section,'art',spritesReady?"loaded":spritesFailed?"error":"loading");
     const power=run.shieldFor>0?"shield":run.graceFor>0?"recovery":"none";
     ui.data(section,'power',run.player.isJacare?"jacare":power);ui.data(section,'ammo',"none");
-    const recoveryCount=run.player.jacareProgress,jacareProgress=recoveryCount+"/"+JACARE_RECOVERY_PRESSES;
+    const recoveryElapsed=Math.min(JACARE_RECOVERY_SECONDS,Math.floor(run.player.jacareAge));
+    const recoveryRemaining=Math.max(0,Math.ceil(JACARE_RECOVERY_SECONDS-run.player.jacareAge));
     const entryProtected=run.player.isJacare&&run.graceFor>0;
-    ui.text("game-power",run.player.isJacare?"Jacaré · "+jacareProgress:run.boss?.combat?"Energia "+run.player.hp+"/"+run.player.maxHp+(power==='shield'?" · Escudo":""):power==="shield"?"Escudo de reserva · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo");
+    ui.text("game-power",run.player.isJacare?"Jacaré · "+recoveryRemaining+" s":run.boss?.combat?"Energia "+run.player.hp+"/"+run.player.maxHp+(power==='shield'?" · Escudo":""):power==="shield"?"Escudo de reserva · "+Math.ceil(run.shieldFor)+" s":power==="recovery"?"Recuperando · "+Math.ceil(run.graceFor)+" s":"Sem efeito ativo");
     const recovery=$("game-jacare-progress");
     if(recovery){
       const recovering=run.player.isJacare;
-      const ampoulesPending=!recovering&&recoveryCount===JACARE_RECOVERY_PRESSES&&run.obstacles.some(o=>o.type==='pfizer-ampoule');
+      const ampoulesPending=!recovering&&run.player.jacareAge>=JACARE_RECOVERY_SECONDS&&run.obstacles.some(o=>o.type==='pfizer-ampoule');
       ui.prop(recovery,'hidden',run.status!=="running"||!(recovering||ampoulesPending||run.player.restoreFlashFor>0));
-      ui.text("game-jacare-count",jacareProgress);
-      ui.text("game-jacare-hint",recovering?labels.jump+" ou toque"+(entryProtected?" · Protegido":""):ampoulesPending?"Desvie da última onda":"Recuperado");
-      ui.attr(recovery,"aria-valuenow",String(recoveryCount));
-      ui.attr(recovery,"aria-valuetext",recovering?jacareProgress+". Pressione "+labels.jump+" ou toque na pista. Desvie de lado."+(entryProtected?" Proteção inicial ativa.":""):jacareProgress+". Forma humana recuperada."+(ampoulesPending?" Desvie da última onda.":""));
+      ui.text("game-jacare-count",recovering?recoveryRemaining+" s":"0 s");
+      ui.text("game-jacare-hint",recovering?"Retorno automático"+(entryProtected?" · Protegido":""):ampoulesPending?"Desvie da última onda":"Recuperado");
+      ui.attr(recovery,"aria-valuenow",String(recoveryElapsed));
+      ui.attr(recovery,"aria-valuetext",recovering?recoveryRemaining+" segundos restantes. Recuperação automática. Desvie de lado."+(entryProtected?" Proteção inicial ativa.":""):"Forma humana recuperada."+(ampoulesPending?" Desvie da última onda.":""));
     }
     ui.prop($("game-ammo").parentElement,'hidden',!run.boss);
     const fireLabel=labels.fire;
@@ -381,7 +382,7 @@ function initRunner() {
     if($("game-settings").open){resetFrameClock(frameClock,now);return;}
     gamepadDriver?.poll();
     const timing=advanceFrameClock(frameClock,now);
-    const before={hp:run.player.hp,hit:run.lastHit,collected:run.collected,boss:run.boss?.type,
+    const before={hp:run.player.hp,hit:run.lastHit,collected:run.collected,boss:run.boss?.type,jacare:run.player.isJacare,
       passports:run.passports,spawned:run.spawnedObstacles,attacks:run.boss?.fired||0};
     let bufferedTakeoff=false;
     for(let i=0;i<timing.steps&&run.status==="running";i++){
@@ -393,6 +394,7 @@ function initRunner() {
     }
     updateUI();
     if(!before.boss&&run.boss){audio.enemyEntrance(run.boss);voices.event("boss",run);}
+    if(before.jacare&&!run.player.isJacare)audio.effect("restore");
     if(run.status==="running"&&run.lastHit!==before.hit)playPlayerImpact();
     else if(run.player.hp>before.hp)audio.effect("restore");
     else if(before.boss&&!run.boss)audio.effect("victory");
@@ -482,10 +484,7 @@ function initRunner() {
     if(controlsOpen())return;
     resumeFromGesture();
     if(["ready","over"].includes(run.status))begin();
-    if(recoverJacareRun(run)){
-      if(!run.player.isJacare)audio.effect("restore");
-      updateUI();draw();return;
-    }
+    // O salto nunca acelera a transformação: apenas o relógio recupera o jacaré.
     if(jumpRun(run)){movementSounds.update(run);draw();}
   }
   function crouch(active){
