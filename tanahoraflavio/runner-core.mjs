@@ -18,9 +18,9 @@ import {HERO_SHOT_DURATION,DUEL_CHARGE_SECONDS,heroShotPose} from './runner-hero
 import {regularCastMuzzle} from './runner-cast-pose.mjs?v=8f2c5aee1585';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=d3b6a81b34b9';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
-import {BOSS_ARENA_RESERVE,BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,optionalStoryBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=2ba55b5361ff';
-export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=2ba55b5361ff';
-export {bossArenaPose} from './runner-bosses.mjs?v=2ba55b5361ff';
+import {BOSS_ARENA_RESERVE,BOSS_RUN_INTERVAL,BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,optionalStoryBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=766c802dd6db';
+export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=766c802dd6db';
+export {bossArenaPose} from './runner-bosses.mjs?v=766c802dd6db';
 // Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
 import {bossStopsAutoRun} from './runner-drawn-motion.mjs?v=0d1971800c55';
 export const WORLD = Object.freeze({width:900,height:300,ground:246});
@@ -748,7 +748,7 @@ function beginBoss(run){
   hitFlashFor:0,attackFlashFor:0,lastAction:null,actionStreak:0,
   plannedFor:0,plannedAttack:{...bossAttackFor(conf.foe.type,0,conf.round-1),approach:'diagonal'}};
  if(encounter){
-  Object.assign(run.boss,encounter,{combat:true,maxHp:encounter.hp,hp:encounter.hp,age:0,phase:'intro',phaseFor:1.1,
+  Object.assign(run.boss,encounter,{combat:true,platformer:!encounter.traversal,maxHp:encounter.hp,hp:encounter.hp,age:0,phase:'intro',phaseFor:1.1,
    total:encounter.hp,remaining:encounter.hp,fired:0,volleyLeft:0,evaded:0,plannedAttack:arenaPatternFor(encounter,0)});
   run.heroShots=[];run.pickups=[];
   if(encounter.traversal)run.player.attackHeld=false;
@@ -865,7 +865,7 @@ function resolveBossDodges(run){
  if(boss.combat?boss.hp>0:!(Number.isFinite(boss.hp)&&boss.hp<=0)&&(boss.fired<boss.total||boss.remaining>0))return;
  if(storyVolleyPendingVictory(boss))return;
  if(!boss.combat&&boss.hp>0&&run.obstacles.some(o=>o.reflected&&!o.destroyed&&o.reflection?.boss===boss))return;
- if(!boss.traversal)grantBossPower(run,boss.type);run.lastBoss=boss.type;run.boss=null;run.ammo=Math.min(ROUTE_AMMO,run.ammo);run.bossesDefeated++;rewardMovementVictory(run,boss);run.bossCooldown=4;
+ if(!boss.traversal)grantBossPower(run,boss.type);run.lastBoss=boss.type;run.boss=null;run.ammo=Math.min(ROUTE_AMMO,run.ammo);run.bossesDefeated++;rewardMovementVictory(run,boss);run.bossCooldown=BOSS_RUN_INTERVAL;
  run.heroShots=[];run.player.attackHeld=false;run.player.chargeFor=0;run.obstacles=[];
  if(run.practice){run.status='won';run.nextBossAt=Infinity;clearRunInput(run);announce(run,'Desafio opcional concluído.');return;}
  if(run.mode==='story'&&run.bossesDefeated>=STORY_BOSS_COUNT){
@@ -1113,7 +1113,11 @@ export function advanceRun(run,seconds,rng){
   const plan=nextAirTransfer(run),{lessonAt}=groundLessonFor(run);
   const flightStop=plan&&run.routeDistance<=plan.boardAt?plan.boardAt:Infinity;
   const lessonStop=lessonPending(run)&&run.routeDistance<=lessonAt?lessonAt:Infinity;
-  run.routeDistance=Math.min(stop,raidStop,flightStop,lessonStop,run.routeDistance+travel);
+  // Stretch nominal stage progress across the post-boss running interval.
+  // Physical metres and road movement keep their normal speed; no checkpoint freeze.
+  const spacing=run.mode==='story'&&run.bossesDefeated>0&&run.bossCooldown>0&&Number.isFinite(run.nextBossAt);
+  const routeTravel=spacing?Math.min(travel,Math.max(0,run.nextBossAt-run.routeDistance)*dt/run.bossCooldown):travel;
+  run.routeDistance=Math.min(stop,raidStop,flightStop,lessonStop,run.routeDistance+routeTravel);
  }
  run.bossCooldown=Math.max(0,run.bossCooldown-dt);
  if(run.phantomCloud){run.phantomCloud.remaining=Math.max(0,run.phantomCloud.remaining-dt);if(!run.phantomCloud.remaining)run.phantomCloud=null;}

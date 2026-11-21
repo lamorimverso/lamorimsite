@@ -1,0 +1,19 @@
+{
+  "sources": [
+    {
+      "repository": "https://github.com/MoltenGears/Mega-Man-Labs",
+      "revision": "9afb6aa790f88d0097a4aa5e1dd8391127f405d7",
+      "license": "MIT",
+      "copied": "Thunder Man state scripts (code only)",
+      "runtimePort": "tanahoraflavio/runner-platform-boss.mjs"
+    },
+    {
+      "repository": "https://github.com/jspicl/jspicl-megaman-sample",
+      "revision": "05e0a42b1414d46caea83dd3c0730b9772db0491",
+      "license": "MIT",
+      "copied": "player state, actor factory and sprite/animation configuration",
+      "use": "reference for separating character artwork from behavior; existing Flavio atlases remain the renderer source"
+    }
+  ],
+  "excluded": "No upstream music, character images, game ROMs or cartridge data copied."
+}

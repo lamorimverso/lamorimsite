@@ -111,7 +111,7 @@ test('bossFigure desenha o corpo na origem física do projétil inimigo nos dois
   if(mode==='story')r.bossesDefeated=1;
   core.advanceRun(r,dt,()=>.5);for(let i=0;i<120*4&&!r.obstacles.some(core.isHostileProjectile);i++)core.advanceRun(r,dt,()=>.5);
   const state={x:0,y:0},stack=[];let drawn;
-  const ctx={save(){stack.push({...state});},restore(){Object.assign(state,stack.pop());},translate(x,y){state.x+=x;state.y+=y;},fillText(){},beginPath(){},roundRect(){},fill(){},measureText(s){return {width:s.length*7};}};
+  const ctx={save(){stack.push({...state});},restore(){Object.assign(state,stack.pop());},translate(x,y){state.x+=x;state.y+=y;},fillText(){},beginPath(){},ellipse(){},roundRect(){},fill(){},measureText(s){return {width:s.length*7};}};
   const draw=make({run:r,ctx,STAGES:core.STAGES,virtualWidth:900,WORLD:core.WORLD,bossArenaPose:core.bossArenaPose,bossPresentationFor:bosses.bossPresentationFor,bossCounterWindow:bosses.bossCounterWindow,campaignAccentFor,
    enemyEmitterPose:art.enemyEmitterPose,enemyMotionFor:art.enemyMotionFor,prefersReducedMotion:()=>reduced,
    drawHoverEnemy(c,args){drawn={x:state.x+args.x,y:state.y+args.y};},bossCue:()=>({action:'jump'})});

@@ -1689,7 +1689,7 @@ test('toc-toc aparece no navegador em todas as oito etapas da História',async()
 });
 
 for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`action boss controls move, slide both ways and charge the existing fire button at ${viewport.width}px`,async()=>{
- const {context,page,errors}=await open({instrument:true,instrumentSprites:true,viewport});
+ const {context,page,errors}=await open({instrument:true,instrumentSprites:true,instrumentCasting:true,viewport});
  try{
   await begin(page);
   await page.evaluate(async()=>{
@@ -1699,6 +1699,8 @@ for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`acti
    r.distance=r.routeDistance=r.nextBossAt=nextStoryBossDistance(0);globalThis.__measureHero=true;
   });
   await page.waitForFunction(()=>__testRun.boss?.phase==='charge');
+  await page.waitForFunction(()=>__castPoses.some(p=>p.type==='ana-elisa'&&p.platform===false));
+  assert.equal(await page.evaluate(()=>__testRun.boss.platformer),true,'the real campaign uses the ground arena and its own character');
   const held=await page.evaluate(()=>({distance:__testRun.distance,route:__testRun.routeDistance}));
   for(const key of ['ArrowLeft','ArrowRight']){
    await page.evaluate(()=>{__testRun.player.x=180;__actorMotion=[];});

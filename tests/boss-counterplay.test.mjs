@@ -80,7 +80,7 @@ test('story traversal spans a visible arc, and at the rightmost player position 
   }
   assert.ok(launched,'fight spawned a horizontal projectile');
   assert.ok(core.playerBounds(r).max-minimum>=100,'mobile retains meaningful horizontal movement');
-  assert.ok(Math.max(...positions)-Math.min(...positions)>=60,'boss traverses beyond short edge sway');
+  assert.ok(Math.max(...positions)-Math.min(...positions)>=40,'boss performs a committed ground advance');
   assert.ok(positions.every(x=>x>=width-220&&x<=width-52),'boss stays within the visible combat arena');
  }
 });

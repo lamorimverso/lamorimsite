@@ -42,9 +42,12 @@ test('a direct shot damages the boss once and is consumed',()=>{
  for(let i=0;i<60;i++)core.advanceRun(r,dt);assert.equal(b.hp,after,'the consumed shot cannot hit again');
 });
 
-test('starter shot relays an in-flight boss projectile, and damage occurs only on the return',()=>{
- const r=scene();until(r,()=>r.obstacles.some(o=>o.launched));
+test('a starter shot physically crossing a hostile projectile reflects it, with damage only on return',()=>{
+ const r=scene();r.boss.reducedMotion=true;until(r,()=>r.obstacles.some(o=>o.launched));
  const hostile=r.obstacles.find(o=>o.launched),boss=r.boss,hp=boss.hp;
+ // A deliberate crossing fixture. Aiming at the boss must not guarantee an
+ // intercept of every curved projectile emitted during a leap.
+ Object.assign(hostile,{arcHeight:0,curve:null,launchY:48,targetY:48,y:48});
  assert.equal(core.attackRun(r),true);
  until(r,()=>hostile.reflected===true);
  assert.equal(boss.hp,hp,'the hit between projectiles does not damage the boss immediately');
