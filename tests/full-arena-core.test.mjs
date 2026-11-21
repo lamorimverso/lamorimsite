@@ -106,12 +106,10 @@ test('jacaré termina o minigame antes de iniciar outro encontro pendente',()=>{
   const r=isolated();transform(r);r.routeDistance=23000;if(kind==='boss')r.nextBossAt=0;else r.nextRaid=0;
   r.shieldFor=Infinity;
   step(r,.2);assert.equal(r.boss,null);assert.equal(r.raid,null);
-  step(r,10);assert.equal(r.player.isJacare,true,'encontro continua aguardando depois de dez segundos');
-  for(let i=0;i<4;i++)core.recoverJacareRun(r);
-  step(r,.2);assert.equal(r.boss,null);assert.equal(r.raid,null);
-  core.recoverJacareRun(r);step(r,.2);
-  assert.equal(r.player.isJacare,false);
-  assert.ok(kind==='boss'?r.boss:r.raid,'encontro pendente inicia após a recuperação');
+  step(r,9.5);assert.equal(r.player.isJacare,true,'chefe não interrompe a contagem');
+  step(r,.7);assert.equal(r.player.isJacare,false,'forma humana volta automaticamente');
+  step(r,3);
+  assert.ok(kind==='boss'?r.boss:r.raid,'encontro pendente inicia após o relógio e a última onda');
  }
 });
 
