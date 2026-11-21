@@ -28,8 +28,9 @@ export function heroActionFrameFor({type='flavio',airborne=false,hurt=false,land
   return 6;
  }
  if(leaving)return 6;
- // Mostra o primeiro quadro baixo no mesmo comando físico de agachar.
- if(crouchPose<.16)return landing?0:null;
+ // Mantém os primeiros instantes da silhueta de corrida para evitar
+ // uma troca brusca de corpo; o tempo de agachar segue contínuo.
+ if(crouchPose<.16)return null;
  if(reducedMotion)return 2;
  if(crouchPose<.40)return 0;
  if(crouchPose<.76)return 1;
