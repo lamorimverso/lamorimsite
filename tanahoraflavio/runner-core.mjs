@@ -14,7 +14,7 @@ export {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from '.
 import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=740e8ab135c4';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=29c7a939c7a7';
 import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
-import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=1d5691115609';
+import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=a6425ecce7d8';
 import {regularCastMuzzle} from './runner-cast-pose.mjs?v=254a1fabf2a5';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=d3b6a81b34b9';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
@@ -465,7 +465,7 @@ export function setAttackRun(run,active){
  return run.player.attackHeld;
 }
 export function heroMuzzleFor(run,facing=1){
- const {muzzle}=heroShotPose({facing,crouching:run.player.crouching,airborne:run.player.y>0});
+ const {muzzle}=heroShotPose({facing,crouching:run.player.crouching,sliding:run.player.sliding,airborne:run.player.y>0});
  const scale=playerBodyFor(run.player).scale;
  return {x:playerX(run)+PLAYER.width/2+muzzle.x*scale,y:run.player.y-muzzle.y*scale};
 }

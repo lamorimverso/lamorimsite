@@ -53,6 +53,14 @@ const readHeroPixels=(args,output)=>{
  let headLeft=360,headRight=-1;
  for(let y=top+5;y<=top+38;y++)for(let x=left;x<=right;x++)if(data[(y*360+x)*4+3]>128){headLeft=Math.min(headLeft,x);headRight=Math.max(headRight,x);}
  output.headWidth=(headRight-headLeft+1)/3;
+ output.torsoRows=0;
+ for(let y=-26;y<=-17;y++){
+  let purple=0;for(let x=-24;x<2;x++){
+   const i=(Math.round((floor+y)*3)*360+Math.round((pivot+x)*3))*4;
+   const [r,g,b,a]=data.slice(i,i+4);if(a>128&&r>35&&b>r*.95&&b>g*1.3)purple++;
+  }
+  if(purple>=4)output.torsoRows++;
+ }
 };
 drawSpriteActor=(c,args)=>{
  const rows=(globalThis.__actorMotion??=[]),row={type:args.type,facing:args.facing,frame:spriteFrameFor(args.type,args)?.index};
@@ -134,8 +142,9 @@ for(const remapped of [false,true])test(`crouch-forward draws a distinct extende
   assert.ok([4,5].includes(slideIn.action)&&slide.action===6,'deslizar tem carga, extensão e chegada ao quadro comprido');
   assert.ok(crouch.height>=51&&running.height>crouch.height+12,'o joelho dobra sem encolher o herói: '+JSON.stringify({running,crouch}));
   assert.ok(descending.height>crouch.height+4&&descending.height<running.height,'a queda passa pela dobra intermediária: '+JSON.stringify({running,descending,crouch}));
-  assert.ok(slide.height>=38&&slide.height<=51&&slide.height<crouch.height-5,'o deslize baixa mais que o agachamento: '+JSON.stringify({slide,crouch}));
-  for(const low of [crouch,slide])assert.ok(low.headWidth>=running.headWidth*.83&&low.headWidth<=running.headWidth*1.20,'a cabeça mantém tamanho: '+JSON.stringify({running,low}));
+  assert.ok(slide.height>=38&&slide.height<=51&&slide.height<crouch.height-2,'o deslize baixa mais que o agachamento: '+JSON.stringify({slide,crouch}));
+  assert.ok(crouch.headWidth>=running.headWidth*.83&&crouch.headWidth<=running.headWidth*1.20,'o agachamento original mantém a cabeça');
+  assert.ok(slide.headWidth>=26&&slide.headWidth<slide.height*.8&&slide.torsoRows>=6,'a nova pose mostra rosto e tronco, sem virar uma faixa horizontal: '+JSON.stringify(slide));
   assert.ok(slideIn.width>crouch.width+2&&slideIn.width<slide.width,'a perna estende progressivamente: '+JSON.stringify({slideIn,slide,crouch}));
   assert.ok(slide.width>=crouch.width+8,`a perna projetada alonga a silhueta: ${JSON.stringify({slide,crouch})}`);
   assert.ok(Math.abs(slide.sole)<=1.5&&slide.y===crouch.y,'as solas permanecem apoiadas no mesmo piso');
@@ -143,6 +152,8 @@ for(const remapped of [false,true])test(`crouch-forward draws a distinct extende
   await page.waitForFunction(()=>__actorMotion.some(p=>p.stance==='slide'&&p.shooting&&p.width>0));
   const shot=await page.evaluate(()=>__actorMotion.find(p=>p.stance==='slide'&&p.shooting&&p.width>0));
   assert.ok(shot.height<=51&&shot.y===slide.y&&Math.abs(shot.sole)<=1.5,'disparar preserva a postura e o contato com o solo');
+  await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
+  await page.locator('#game').screenshot({path:path.resolve(__dirname,'../ux-captures/slide-'+(remapped?'remapped':'arrows')+'.png')});
   await page.keyboard.up(forward);
   await page.waitForFunction(()=>!__testRun.player.sliding&&__testRun.terrain.active===null&&__actorMotion.at(-1)?.sample==='crouch');
   assert.ok(await page.evaluate(()=>__actorMotion.some(p=>p.sample==='slide-out'&&p.action===7&&p.travel>0&&p.width>0)),'a perna não volta para o primeiro quadro quando solta frente');

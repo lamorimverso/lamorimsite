@@ -1,7 +1,7 @@
 // Atlas e recortes gerados dos desenhos escolhidos, preservando os PNGs fontes.
 import {definitions} from './runner-sprite-data.mjs?v=4a931cb52b80';
 import {drawHeroLowPose} from './runner-slide-art.mjs?v=f0043535e452';
-import {heroActionsDefinition,heroActionFrameFor,drawHeroAction} from './runner-hero-actions.mjs?v=28d4a6299ddf';
+import {heroActionsDefinition,heroActionFrameFor,drawHeroAction} from './runner-hero-actions.mjs?v=151c98e776c9';
 import {combatDefinitions,combatActors} from './runner-combat-sprite-data.mjs?v=85a6343e5d39';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=29c7a939c7a7';
 import {signatureDefinitions,signatureProps} from './runner-signature-sprite-data.mjs?v=8340feb630e5';
