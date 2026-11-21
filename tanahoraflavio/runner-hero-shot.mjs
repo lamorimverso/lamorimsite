@@ -1,5 +1,5 @@
-import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=e84e9f026780';
-import {drawCombatSprite} from './runner-sprites.mjs?v=8daa308ff1ae';
+import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=02c53ccacec7';
+import {drawCombatSprite} from './runner-sprites.mjs?v=1e1c13c37f69';
 import {HERO_POWERS} from './runner-earned-powers.mjs?v=432ca45a76e4';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=6da54cb343f5';
 // Essential action timing shared by the hero renderer and physical launch.
