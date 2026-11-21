@@ -31,14 +31,14 @@ export function drawHoverPlatform(c,{phase=0,reducedMotion=false,accent='#dbc778
  // Motors are below the hull; the top ellipse is an exposed walkable deck.
  const time=reducedMotion?0:phase;
  for(const side of [-1,1]){
-  const mx=side*31,beat=(1+Math.sin(time*2.7+side*1.8))*.5;
-  const plume=10+beat*10+(attacking?5:preparing?3:0),bend=Math.sin(time*1.9+side)*4;
+  const mx=side*31,beat=reducedMotion?.5:(1+Math.sin(time*2.7+side*1.8))*.5;
+  const plume=10+beat*10+(attacking?5:preparing?3:0),bend=reducedMotion?0:Math.sin(time*1.9+side)*4;
   polygon(c,[[mx-9,18],[mx+9,18],[mx+6+bend,30+plume*.6],[mx+3+bend,25+plume],[mx+bend,33+plume],[mx-4+bend,26+plume*.8]],'#e87848',null);
   polygon(c,[[mx-7,18],[mx+7,18],[mx+4+bend*.6,29+plume*.5],[mx+bend*.5,29+plume*.8],[mx-4,28+plume*.35]],'#ffd776',null);
   polygon(c,[[mx-4,19],[mx+4,19],[mx+bend*.25,27+plume*.45]],'#ecffff',null);
   for(let i=0;i<3;i++){
    const travel=((time*.17+i/3+(side+1)*.11)%1+1)%1;
-   oval(c,mx+bend+Math.sin(time+i*2)*3,29+plume+travel*8,2*(1-travel),3*(1-travel),'#f5b65c',null);
+   oval(c,mx+bend+(reducedMotion?0:Math.sin(time+i*2)*3),29+plume+travel*8,2*(1-travel),3*(1-travel),'#f5b65c',null);
   }
   oval(c,mx,19,10,5,'#263a54');line(c,[[mx-5,20],[mx+5,20]],'#8de9ec',2);
  }
@@ -49,7 +49,7 @@ export function drawHoverPlatform(c,{phase=0,reducedMotion=false,accent='#dbc778
  // Deck y=0 beneath both boot soles. Rim and windows stay visible around them.
  line(c,[[-35,1],[35,1]],'#edf4d8',2);
  for(const [i,dx] of [-38,-19,0,19,38].entries()){
-  const lit=Math.sin(time*1.5-i*1.3)>.1;
+  const lit=reducedMotion?i%2===0:Math.sin(time*1.5-i*1.3)>.1;
   oval(c,dx,14,3.5,2.3,attacking?'#ffdda0':lit?accent:'#406b83',INK,1);
  }
  // Vent blades animate below the fixed deck and boot anchors.

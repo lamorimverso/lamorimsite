@@ -75,3 +75,9 @@ test('standing Flávio uses a planted combat drawing and resumes distinct stride
  const render=(standing,phase)=>{const c=createCanvas(200,150).getContext('2d');drawActor(c,{type:'flavio',x:90,y:140,standing,phase});return c.getImageData(0,0,200,150).data;};
  assert.deepEqual(render(true,0),render(true,18));assert.notDeepEqual(render(true,0),render(false,0));assert.notDeepEqual(render(false,1),render(false,3));
 });
+test('reduced-motion platform skips decorative trigonometry rather than evaluating frozen oscillators',()=>{
+ const c=createCanvas(180,100).getContext('2d'),original=Math.sin;let calls=0;
+ Math.sin=(...args)=>{calls++;return original(...args);};
+ try{art.drawHoverPlatform(c,{phase:30,reducedMotion:true});assert.equal(calls,0);}
+ finally{Math.sin=original;}
+});
