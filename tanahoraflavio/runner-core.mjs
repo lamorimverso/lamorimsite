@@ -264,6 +264,7 @@ export function createRun({assisted=false,seed,mode='endless',practiceId}={}) {
  const startDistance=practice?STORY_OPENING_DISTANCE+practice.stageIndex*SCENE_DISTANCE+practice.distance:0;
  return {status:'ready',mode:mode==='story'?'story':'endless',assisted:assisted===true,practice,elapsed:0,distance:startDistance,routeDistance:startDistance,viewportWidth:WORLD.width,bonus:0,collected:0,passports:0,lives:1,
   randomState:seed===undefined?null:Number(seed)>>>0,
+  damageRandomState:seed===undefined?null:(Number(seed)^0x9e3779b9)>>>0,
   ballot:{digits:'',message:''},
   event:'',events:0,movementSkills:createMovementSkills(),lastSkillReward:null,terrain:createTerrain(),player:{airJumpsUsed:0,grounded:true,supportY:0,sliding:false,slideRemaining:0,slideLatched:false,x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareProgress:0,jacareAge:0,nextJacareThreat:0,restoreFlashFor:0,coyoteUntil:0,jumpBufferedUntil:0,attackHeld:false,attackFor:0,attackCooldown:0,shotFacing:1,hp:HERO_MAX_HP,maxHp:HERO_MAX_HP,recoveryPending:false,terrainContact:null},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ammo:ROUTE_AMMO,ammoIdleFor:0,ammoReloadFor:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,recoveryReadyAt:0,shieldFor:0,graceFor:0,reserveShields:0,allyShieldProgress:0,allyHelpCount:0,
@@ -547,6 +548,16 @@ function segmentHitsBox(shot,minX,maxX,minY,maxY,radius=0){
   else{const a=(min-origin)/delta,z=(max-origin)/delta;near=Math.max(near,Math.min(a,z));far=Math.min(far,Math.max(a,z));}
  }return near<=far;
 }
+function rollBossDamage(run,basis){
+ // Sorteio por acerto, separado da IA: FPS e padrões do chefe não alteram o dano.
+ const draw=()=>{
+  if(run.damageRandomState==null)return random(Math.random);
+  run.damageRandomState=nextSeed(run.damageRandomState);
+  return run.damageRandomState/4294967296;
+ };
+ const critical=draw()<.14,variation=.85+draw()*.30;
+ return {damage:basis*variation*(critical?1.5:1),critical};
+}
 function interceptProjectile(run,shot,o){
  const boss=run.boss;
  if(o.bossAttack&&boss&&!boss.traversal&&(o.owner===boss.type||o.storyVolley&&o.owner==null)){
@@ -554,11 +565,11 @@ function interceptProjectile(run,shot,o){
   const weakness=boss.weakness&&shot.powerId===boss.weakness;
   const earned=boss.counterReady;
   const basis=boss.combat?Math.max(3,boss.maxHp*.145):Math.max(2,boss.maxHp*.12);
-  const damage=basis*Math.max(.84,Math.min(1.55,shot.damage||1))*(earned?1+earned.damage*.16:1)*(weakness?1.35:1);
+  const hit=rollBossDamage(run,basis*Math.max(.84,Math.min(1.55,shot.damage||1))*(earned?1+earned.damage*.16:1)*(weakness?1.35:1));
   boss.counterReady=null;
   if(!boss.combat&&!o.counted)boss.remaining=Math.max(0,boss.remaining-1);
   Object.assign(o,{reflected:true,returning:true,passed:true,counted:true,resolved:true,waitFor:0,speed:-510,
-   reflection:{boss,damage,weakness,age:0}});
+   reflection:{boss,...hit,weakness,age:0}});
  }else{o.destroyed=true;o.counted=true;o.passed=true;}
  run.clearedAt={x:o.x+o.width/2,remaining:.25};
 }
@@ -576,7 +587,9 @@ function advanceReflectedProjectile(run,o,dt){
  const pose=bossArenaPose(boss,visibleWidth(run));
  const x=o.x+o.width/2,dx=pose.x-x,dy=pose.platformY+48-o.y,distance=Math.hypot(dx,dy),pace=610*dt;
  if(distance<=24+pace){
+  const previousHp=boss.hp;
   boss.hp=Math.max(0,boss.hp-reflected.damage);boss.hitFlashFor=.16;
+  boss.lastDamage={amount:previousHp-boss.hp,critical:reflected.critical===true,remaining:.8};
   if(reflected.weakness)boss.weaknessFlashFor=.3;
   o.destroyed=true;return;
  }
@@ -752,6 +765,7 @@ function advanceBoss(run,dt,rng,balance){
  const boss=run.boss;if(!boss)return;
  boss.attackFlashFor=Math.max(0,boss.attackFlashFor-dt);
  boss.hitFlashFor=Math.max(0,(boss.hitFlashFor||0)-dt);
+ if(boss.lastDamage)boss.lastDamage.remaining=Math.max(0,boss.lastDamage.remaining-dt);
  if(boss.combat){
   if(boss.phase==='attack'&&boss.volleyLeft<=0)finishStoryVolley(boss);
   boss.stillFor=run.player.moveHeld?0:(boss.stillFor||0)+dt;
