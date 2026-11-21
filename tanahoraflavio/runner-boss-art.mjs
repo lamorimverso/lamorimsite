@@ -1,13 +1,13 @@
 import {drawCharacterBody,drawCharacterArm} from './runner-body-art.mjs?v=67badae0df52';
-import {drawBossonariHead} from './runner-character-art.mjs?v=1bc81a441a97';
-import {standingEnemyPose} from './runner-cast-pose.mjs?v=ad9beaec5ae2';
-export {standingEnemyPose} from './runner-cast-pose.mjs?v=ad9beaec5ae2';
-import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=02eabcb74f94';
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=6da54cb343f5';
-import {drawMemeArmy} from './runner-art.mjs?v=a254d4bb3f83';
+import {drawBossonariHead} from './runner-character-art.mjs?v=cf8f6d416c45';
+import {standingEnemyPose} from './runner-cast-pose.mjs?v=254a1fabf2a5';
+export {standingEnemyPose} from './runner-cast-pose.mjs?v=254a1fabf2a5';
+import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=5a0530cc264c';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=29c7a939c7a7';
+import {drawMemeArmy} from './runner-art.mjs?v=28dbcc5341d5';
 import {regionalEmitterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 
-import {CAMPAIGN_CAST_POINT,campaignAccentFor,campaignBossPoseFor,drawCampaignBoss,drawCampaignCrowd} from './runner-campaign-art.mjs?v=6cc1ca5a171d';
+import {CAMPAIGN_CAST_POINT,campaignAccentFor,campaignBossPoseFor,drawCampaignBoss,drawCampaignCrowd} from './runner-campaign-art.mjs?v=dbf144c98bb6';
 
 // Full illustrated combat sprites share the original running artwork style.
 // Coordinates are logical game pixels; y always remains the top of the deck.
@@ -27,12 +27,19 @@ function oval(c,x,y,rx,ry,fill,stroke=INK,width=1.6){c.beginPath();c.ellipse(x,y
 function polygon(c,points,fill,stroke=INK,width=1.6){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.closePath();c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke();}}
 function line(c,points,color=INK,width=2){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.lineCap='round';c.lineJoin='round';c.strokeStyle=color;c.lineWidth=width;c.stroke();}
 
-function drawShip(c,p,accent,preparing,attacking,hurt){
+export function drawHoverPlatform(c,{phase=0,reducedMotion=false,accent='#dbc778',preparing=false,attacking=false,hurt=false}={}){
  // Motors are below the hull; the top ellipse is an exposed walkable deck.
+ const time=reducedMotion?0:phase;
  for(const side of [-1,1]){
-  const mx=side*31,plume=8+p.motor*7;
-  polygon(c,[[mx-8,18],[mx+8,18],[mx+5,23+plume],[mx,28+plume],[mx-5,23+plume]],'#5ee0e4',null);
-  polygon(c,[[mx-3,19],[mx+3,19],[mx,25+plume*.65]],CREAM,null);
+  const mx=side*31,beat=reducedMotion?.5:(1+Math.sin(time*2.7+side*1.8))*.5;
+  const plume=10+beat*10+(attacking?5:preparing?3:0),bend=reducedMotion?0:Math.sin(time*1.9+side)*4;
+  polygon(c,[[mx-9,18],[mx+9,18],[mx+6+bend,30+plume*.6],[mx+3+bend,25+plume],[mx+bend,33+plume],[mx-4+bend,26+plume*.8]],'#e87848',null);
+  polygon(c,[[mx-7,18],[mx+7,18],[mx+4+bend*.6,29+plume*.5],[mx+bend*.5,29+plume*.8],[mx-4,28+plume*.35]],'#ffd776',null);
+  polygon(c,[[mx-4,19],[mx+4,19],[mx+bend*.25,27+plume*.45]],'#ecffff',null);
+  for(let i=0;i<3;i++){
+   const travel=((time*.17+i/3+(side+1)*.11)%1+1)%1;
+   oval(c,mx+bend+(reducedMotion?0:Math.sin(time+i*2)*3),29+plume+travel*8,2*(1-travel),3*(1-travel),'#f5b65c',null);
+  }
   oval(c,mx,19,10,5,'#263a54');line(c,[[mx-5,20],[mx+5,20]],'#8de9ec',2);
  }
  oval(c,0,14,50,14,'#263448');
@@ -41,7 +48,15 @@ function drawShip(c,p,accent,preparing,attacking,hurt){
  oval(c,0,4,37,4,'#526b7d');
  // Deck y=0 beneath both boot soles. Rim and windows stay visible around them.
  line(c,[[-35,1],[35,1]],'#edf4d8',2);
- for(const dx of [-38,-19,0,19,38])oval(c,dx,14,3.5,2.3,attacking?'#ffdda0':preparing?accent:'#8ae3e3',INK,1);
+ for(const [i,dx] of [-38,-19,0,19,38].entries()){
+  const lit=reducedMotion?i%2===0:Math.sin(time*1.5-i*1.3)>.1;
+  oval(c,dx,14,3.5,2.3,attacking?'#ffdda0':lit?accent:'#406b83',INK,1);
+ }
+ // Vent blades animate below the fixed deck and boot anchors.
+ for(const side of [-1,1])for(let i=0;i<3;i++){
+  const offset=((time*2+i*4)%12+12)%12;
+  line(c,[[side*14-5+offset,21],[side*14-2+offset,24]],'#88a6b7',1.3);
+ }
  line(c,[[-48,9],[-40,15]],accent,2);line(c,[[40,15],[48,9]],accent,2);
 }
 function drawMagic(c,p,accent,preparing,attacking){
@@ -71,7 +86,7 @@ export function drawHoverEnemy(c,{type='haddad',x=0,y=0,scale=1,phase=0,preparin
  if(type==='povo'){drawCampaignCrowd(c,{x,y,scale,phase,reducedMotion,preparing,attacking,recovering,progress});return;}
  const p=standingEnemyPose({phase,preparing,attacking,recovering,hurt,reducedMotion,classId,action,progress}),accent=campaignAccentFor(type)??SUITS[type]?.[2]??'#dbc778';
  c.save();c.translate(x,y);c.scale(scale,scale);
- drawShip(c,p,accent,preparing,attacking,hurt);
+ drawHoverPlatform(c,{phase,reducedMotion,accent,preparing,attacking,hurt});
  const campaignPose=campaignBossPoseFor(type,p,{phase,reducedMotion,action,progress});
  if(campaignPose&&drawCampaignBoss(c,{type,pose:campaignPose})){
   // The launch spark matches the unchanged engine origin. A marked lane does

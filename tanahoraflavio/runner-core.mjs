@@ -12,15 +12,15 @@ export {grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powe
 import {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=c4fcfde513ff';
 export {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=740e8ab135c4';
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=6da54cb343f5';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=29c7a939c7a7';
 import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
-import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=b60a849f2e34';
-import {regularCastMuzzle} from './runner-cast-pose.mjs?v=ad9beaec5ae2';
+import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=1d5691115609';
+import {regularCastMuzzle} from './runner-cast-pose.mjs?v=254a1fabf2a5';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=d3b6a81b34b9';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
-import {BOSS_ARENA_RESERVE,BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,optionalStoryBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=18365bfe1950';
-export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=18365bfe1950';
-export {bossArenaPose} from './runner-bosses.mjs?v=18365bfe1950';
+import {BOSS_ARENA_RESERVE,BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,optionalStoryBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=a9040a7a6713';
+export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=a9040a7a6713';
+export {bossArenaPose} from './runner-bosses.mjs?v=a9040a7a6713';
 // Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
 export const WORLD = Object.freeze({width:900,height:300,ground:246});
 // Envelope de todas as poses no atlas a .95 de escala, incluindo o agachamento.
@@ -469,7 +469,7 @@ export function heroMuzzleFor(run,facing=1){
  const scale=playerBodyFor(run.player).scale;
  return {x:playerX(run)+PLAYER.width/2+muzzle.x*scale,y:run.player.y-muzzle.y*scale};
 }
-// Geometria e alvo do disparo só incluem projéteis hostis já lançados.
+// A seleção de projéteis só inclui ameaças já lançadas; o chefão tem alvo próprio.
 // Zé rival reutiliza trajetória de quique, mas continua sendo um personagem.
 const nonProjectileBodies=new Set(['povo','crowd-lane','ze-gotinha-rival','lula-runner','orla-runner','paulista-runner','route-scout','terminal-guard']);
 export function isHostileProjectile(o){
@@ -524,10 +524,21 @@ function shotLift(behavior,progress){
  return behavior==='lob'?60*envelope:behavior==='arc'?30*envelope:behavior==='heavy'?18*envelope:
   behavior==='bounce'?28*Math.abs(Math.sin(progress*Math.PI*3)):behavior==='orbit'?22*Math.sin(progress*Math.PI*4)*envelope:behavior==='gust'?8*Math.sin(progress*Math.PI*5)*envelope:0;
 }
+function aimAtBoss(run,power){
+ const boss=run.boss;
+ if(!boss||boss.traversal||boss.phase==='intro'||boss.hp<=0)return null;
+ const muzzle=heroMuzzleFor(run,1);let time=0,pose;
+ // Lead the moving platform using the same clock as its visible trajectory.
+ for(let i=0;i<5;i++){
+  pose=bossArenaPose({...boss,age:boss.age+time,motionClock:(boss.motionClock||0)+time},visibleWidth(run));
+  const y=pose.platformY+48;time=Math.hypot(pose.x-muzzle.x,y-muzzle.y)/power.speed;
+ }
+ return {x:pose.x,y:pose.platformY+48,facing:1};
+}
 export function attackRun(run){
  const b=run.boss,p=run.player,power=heroPowerFor(run),level=run.powerLevels?.[run.activePower]||1;
  if(run.status!=='running'||!(run.ammo>0)||p.isJacare||b?.traversal||b?.phase==='intro'||p.attackCooldown>0||(run.heroShots?.length||0)>=18)return false;
- const target=aimAtProjectile(run,power);
+ const target=aimAtProjectile(run,power)||aimAtBoss(run,power);
  p.shotFacing=target?.facing??1;
  const {x,y}=heroMuzzleFor(run,p.shotFacing),targetX=target?.x??x+p.shotFacing*160,targetY=target?.y??y;
  const dx=p.shotFacing*Math.max(1,(targetX-x)*p.shotFacing),dy=targetY-y,distance=Math.max(1,Math.hypot(dx,dy)),angle=Math.atan2(dy,dx);
@@ -558,6 +569,12 @@ function rollBossDamage(run,basis){
  const critical=draw()<.14,variation=.85+draw()*.30;
  return {damage:basis*variation*(critical?1.5:1),critical};
 }
+function applyBossHit(boss,hit){
+ const previousHp=boss.hp;
+ boss.hp=Math.max(0,boss.hp-hit.damage);boss.hitFlashFor=.16;
+ if(previousHp>boss.hp)boss.lastDamage={amount:previousHp-boss.hp,critical:hit.critical===true,remaining:.8};
+ if(hit.weakness)boss.weaknessFlashFor=.3;
+}
 function interceptProjectile(run,shot,o){
  const boss=run.boss;
  if(o.bossAttack&&boss&&!boss.traversal&&(o.owner===boss.type||o.storyVolley&&o.owner==null)){
@@ -587,10 +604,7 @@ function advanceReflectedProjectile(run,o,dt){
  const pose=bossArenaPose(boss,visibleWidth(run));
  const x=o.x+o.width/2,dx=pose.x-x,dy=pose.platformY+48-o.y,distance=Math.hypot(dx,dy),pace=610*dt;
  if(distance<=24+pace){
-  const previousHp=boss.hp;
-  boss.hp=Math.max(0,boss.hp-reflected.damage);boss.hitFlashFor=.16;
-  boss.lastDamage={amount:previousHp-boss.hp,critical:reflected.critical===true,remaining:.8};
-  if(reflected.weakness)boss.weaknessFlashFor=.3;
+  applyBossHit(boss,reflected);
   o.destroyed=true;return;
  }
  if(reflected.age>2){o.destroyed=true;return;}
@@ -616,6 +630,17 @@ function advanceHeroShots(run,dt){
    if(!isHostileProjectile(o)||!segmentHitsBox(shot,o.x,o.x+o.width,o.y-o.height/2,o.y+o.height/2,radius))continue;
    interceptProjectile(run,shot,o);
    if(shot.cancels>0){shot.cancels--;continue;}return false;
+  }
+  const boss=run.boss;
+  if(boss&&!boss.traversal&&boss.phase!=='intro'&&boss.hp>0){
+   const pose=bossArenaPose(boss,visibleWidth(run));
+   // The body and deck share the drawn position. A shot is consumed once,
+   // including wave/fan powers; rebounding a hostile shot remains stronger.
+   if(segmentHitsBox(shot,pose.x-30,pose.x+30,pose.platformY+8,pose.platformY+100,radius)){
+    const weakness=boss.weakness===shot.powerId;
+    const hit=rollBossDamage(run,Math.max(1.5,boss.maxHp*.075)*Math.max(.84,Math.min(1.55,shot.damage||1))*(weakness?1.35:1));
+    applyBossHit(boss,{...hit,weakness});return false;
+   }
   }
   return true;
  });
@@ -717,6 +742,7 @@ function beginBoss(run){
   if(encounter.traversal)run.player.attackHeld=false;
  }else {const profile=bossProfileFor(type);Object.assign(run.boss,{maxHp:conf.attacks*2,hp:conf.attacks*2,age:0,classId:profile.classId,className:BOSS_CLASSES[profile.classId].name,rank:profile.rank,rankName:BOSS_RANKS[profile.rank-1],powerName:profile.powerName,attackTypes:profile.attackTypes,tactic:profile.tactic,weakness:profile.weakness,reward:profile.reward,rematchIndex:Math.floor(Math.max(0,conf.round-1)/BOSS_ROSTER.length)});}
  run.boss.reducedMotion=run.reducedMotion===true;
+ run.boss.flightSeed=run.randomState??Math.floor(random(Math.random)*4294967296);
  run.obstacles=[];run.nextObstacle=Math.max(1.8,run.nextObstacle);
  const final=encounter?.role==='final-boss';
  announce(run,(final?'CHEFÃO FINAL ':encounter?.type==='povo'?'TRAVESSIA ':encounter?.role==='subboss'?'SUBCHEFE ':encounter?.role==='optional'?'DESAFIO OPCIONAL ':'CHEFÃO ')+run.boss.name+'! '+run.boss.objective);
@@ -1062,13 +1088,13 @@ export function advanceRun(run,seconds,rng){
  run.player.restoreFlashFor=Math.max(0,run.player.restoreFlashFor-dt);
  if(run.nextBossAt===null)run.nextBossAt=run.mode==='story'?nextStoryBossDistance(0):nextBossDistance(0);
  if(run.nextRaid===null)run.nextRaid=18+random(rng)*12;
- const balance=difficultyAt(run.distance,run.elapsed),travel=balance.speed*assistance(run)*dt;run.distance+=travel;
- if(!run.boss?.combat&&!run.terrain?.active?.flight&&!run.terrain?.active?.lesson){
+ const balance=difficultyAt(run.distance,run.elapsed),travel=run.boss?0:balance.speed*assistance(run)*dt;run.distance+=travel;
+ if(!run.boss&&!run.terrain?.active?.flight&&!run.terrain?.active?.lesson){
   const stop=run.mode==='story'&&Number.isFinite(run.nextBossAt)&&run.routeDistance<=run.nextBossAt?run.nextBossAt:Infinity;
   const local=campaignRouteDistance(run)%SCENE_DISTANCE;
   const missingRaid=Number.isFinite(run.nextRaid)&&!run.practice&&!run.raidStageCoverage?.[raidStageKey(run)];
   // Keep an unmet local encounter before the scenery transition. Physical
-  // distance still advances while a duel, cooldown or Jacaré finishes.
+  // distance still advances while a cooldown or Jacaré finishes.
   const raidStop=missingRaid&&local<=6200?run.routeDistance-local+6200:Infinity;
   const plan=nextAirTransfer(run),{lessonAt}=groundLessonFor(run);
   const flightStop=plan&&run.routeDistance<=plan.boardAt?plan.boardAt:Infinity;

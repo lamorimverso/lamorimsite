@@ -1,6 +1,7 @@
 import {STAGES,STORY_STAGES,SCENE_DISTANCE} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {bossMechanicFor} from './runner-boss-mechanics.mjs?v=640e2bd41abb';
 import {BOSS_RANKS,bossProfileFor} from './runner-boss-profiles.mjs?v=740e8ab135c4';
+import {bossFlightPose} from './runner-boss-flight.mjs?v=314e50f5a061';
 // Encontros ficcionais: quatro classes por cenário, sem mudar identidades.
 
 export const STORY_OPENING_DISTANCE=20800;
@@ -120,6 +121,7 @@ export function bossArenaPose(boss,width=900){
  const tempo=1+(Number(boss.stageIndex)||0)*.06+(boss.enraged?.16:0);
  const t=age*tempo,release=boss.attackFlashFor>0?Math.sin(boss.attackFlashFor/.26*Math.PI)*7:0;
  if(boss.combat&&identity){
+  if(!boss.traversal)return bossFlightPose(boss,width,identity);
   // These routes occupy the right corridor, leaving a fixed safe run-up at
   // the same proportional screen position even when a mobile device rotates.
   const time=(boss.motionClock??t)+identity.offset;

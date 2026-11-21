@@ -29,11 +29,12 @@ test('campanha exige um subchefe e um chefe por mapa, com travessia extra antes 
  assert.equal(bosses.storyBossAt(core.STORY_BOSS_COUNT),null);
 });
 test('sobreviver aos ataques não derrota um chefão da História',()=>{
- const r=scene();const distance=r.routeDistance;
+ const r=scene();const distance=r.routeDistance,physical=r.distance;
  for(let i=0;i<120*35;i++)core.advanceRun(r,dt,()=>.5);
  assert.equal(r.bossesDefeated,0);assert.ok(r.boss.hp>0);
  assert.equal(r.routeDistance,distance,'arena fica no cenário do confronto');
- assert.ok(r.distance>distance,'corrida e relógio continuam ativos');
+ assert.equal(r.distance,physical,'a arena interrompe o deslocamento físico');
+ assert.ok(r.elapsed>35,'o relógio do combate continua ativo');
  assert.ok(r.boss.fired>0);
 });
 test('disparo real possui intervalo e rebate um projétil, sem aceitar tiro durante a entrada',()=>{
@@ -45,7 +46,7 @@ test('disparo real possui intervalo e rebate um projétil, sem aceitar tiro dura
  assert.equal(core.attackRun(r),false,'intervalo de tiro evita spam');
  assert.equal(r.heroShots.length,1);
  for(let i=0;i<160;i++)core.advanceRun(r,dt,()=>.5);
- assert.ok(r.boss.hp<hp,'é preciso rebater um projétil, não atingir o próprio chefe');
+ assert.ok(r.boss.hp<hp,'o projétil devolvido atinge o chefe');
 });
 test('atirar e esquivar vence encontros e a urna só abre depois do último',()=>{
  for(let index=0;index<core.STORY_BOSS_COUNT;index++){
