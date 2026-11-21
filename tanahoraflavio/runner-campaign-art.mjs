@@ -1,4 +1,4 @@
-import {drawCampaignFigure,drawCampaignFigurePortrait} from './runner-sprites.mjs?v=1e1c13c37f69';
+import {drawCampaignFigure,drawCampaignFigurePortrait} from './runner-sprites.mjs?v=02eabcb74f94';
 // Complete illustrated campaign characters. The original vectors remain a
 // loading fallback; encounter props and presentation anchors stay independent.
 const INK='#292337',CREAM='#fff5de',RIM='#ffe7bd74';
