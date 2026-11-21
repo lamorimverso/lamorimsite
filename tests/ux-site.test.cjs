@@ -136,10 +136,14 @@ for(const remapped of [false,true])test(`crouch-forward draws a distinct extende
   await page.waitForFunction(()=>__actorMotion.some(p=>p.sample==='crouch'&&p.width>0));
   await page.keyboard.down(forward);
   await page.waitForFunction(()=>__testRun.player.sliding&&__testRun.player.x>200&&__actorMotion.some(p=>p.sample==='slide'&&p.action===6&&p.width>0));
-  const [running,descending,crouch,slideIn,slide]=await page.evaluate(()=>['run','crouch-in','crouch','slide-in','slide'].map(s=>__actorMotion.find(p=>p.sample===s&&p.width>0&&(s!=='slide'||p.action===6))));
+  const {running,descending,crouch,entry,slideIn,slide}=await page.evaluate(()=>{
+   const sample=(kind,action)=>__actorMotion.find(p=>p.sample===kind&&p.width>0&&(action===undefined||p.action===action));
+   return {running:sample('run'),descending:sample('crouch-in'),crouch:sample('crouch'),entry:sample('slide-in',4),slideIn:sample('slide-in',5),slide:sample('slide',6)};
+  });
   assert.equal(running.action,null,'corrida mantém suas ilustrações originais');
   assert.ok(descending.action>=0&&descending.action<2&&crouch.action>=2&&crouch.action<=3,'abaixar tem uma sequência própria');
-  assert.ok([4,5].includes(slideIn.action)&&slide.action===6,'deslizar tem carga, extensão e chegada ao quadro comprido');
+  assert.ok(entry.action===4&&slideIn.action===5&&slide.action===6,'deslizar tem carga, extensão e chegada ao quadro comprido');
+  assert.ok(entry.height<=51&&entry.torsoRows>=6&&entry.width<slideIn.width,'a entrada tem tronco visível e a perna ainda recolhida');
   assert.ok(crouch.height>=51&&running.height>crouch.height+12,'o joelho dobra sem encolher o herói: '+JSON.stringify({running,crouch}));
   assert.ok(descending.height>crouch.height+4&&descending.height<running.height,'a queda passa pela dobra intermediária: '+JSON.stringify({running,descending,crouch}));
   assert.ok(slide.height>=38&&slide.height<=51&&slide.height<crouch.height-2,'o deslize baixa mais que o agachamento: '+JSON.stringify({slide,crouch}));
