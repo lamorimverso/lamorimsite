@@ -80,13 +80,13 @@ function fallbackHead(c,type,accent){
  line(c,[[-5,-78],[5,-78]],accent,1.5);
 }
 
-export function drawHoverEnemy(c,{type='haddad',x=0,y=0,scale=1,phase=0,preparing=false,attacking=false,recovering=false,hurt=false,reducedMotion=false,classId='sentinel',action='jump',progress,armyVariant,stageId='brasilia',enraged=false}={}){
+export function drawHoverEnemy(c,{type='haddad',x=0,y=0,scale=1,phase=0,preparing=false,attacking=false,recovering=false,hurt=false,reducedMotion=false,classId='sentinel',action='jump',progress,armyVariant,stageId='brasilia',enraged=false,platform=true}={}){
  if(!Number.isFinite(x)||!Number.isFinite(y)||!Number.isFinite(scale)||scale<=0)return;
  const visual=regionalEmitterFor(type,stageId);type=visual.type;armyVariant??=visual.armyVariant;
  if(type==='povo'){drawCampaignCrowd(c,{x,y,scale,phase,reducedMotion,preparing,attacking,recovering,progress});return;}
  const p=standingEnemyPose({phase,preparing,attacking,recovering,hurt,reducedMotion,classId,action,progress}),accent=campaignAccentFor(type)??SUITS[type]?.[2]??'#dbc778';
  c.save();c.translate(x,y);c.scale(scale,scale);
- drawHoverPlatform(c,{phase,reducedMotion,accent,preparing,attacking,hurt});
+ if(platform)drawHoverPlatform(c,{phase,reducedMotion,accent,preparing,attacking,hurt});
  const campaignPose=campaignBossPoseFor(type,p,{phase,reducedMotion,action,progress});
  if(campaignPose&&drawCampaignBoss(c,{type,pose:campaignPose})){
   // The launch spark matches the unchanged engine origin. A marked lane does

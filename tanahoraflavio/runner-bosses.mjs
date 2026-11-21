@@ -2,10 +2,12 @@ import {STAGES,STORY_STAGES,SCENE_DISTANCE} from './runner-route-data.mjs?v=c4fc
 import {bossMechanicFor} from './runner-boss-mechanics.mjs?v=640e2bd41abb';
 import {BOSS_RANKS,bossProfileFor} from './runner-boss-profiles.mjs?v=740e8ab135c4';
 import {bossFlightPose} from './runner-boss-flight.mjs?v=a2f8750919e6';
+import {platformBossPose} from './runner-platform-boss.mjs?v=06f6bd14b28a';
 // Encontros ficcionais: quatro classes por cenário, sem mudar identidades.
 
 export const STORY_OPENING_DISTANCE=20800;
 export const BOSS_ARENA_RESERVE=242;
+export const BOSS_RUN_INTERVAL=18;
 export const BOSS_CLASSES=Object.freeze({
  sentinel:Object.freeze({name:'Sentinela',color:'#63c4e1',telegraph:.92,recover:1.3,burst:1}),
  gunner:Object.freeze({name:'Artilheiro',color:'#f1b65d',telegraph:.82,recover:1.15,burst:3}),
@@ -122,6 +124,7 @@ export function bossPresentationFor(boss,obstacles=[],{continuousCast=false}={})
   action:attacking||recovering?boss.lastReleasedAction||boss.lastAction||'jump':pending?.action||beat?.action||boss.plannedAttack?.action||'jump'};
 }
 export function bossArenaPose(boss,width=900){
+ if(boss.platformer)return platformBossPose(boss,width);
  if(boss.reducedMotion)return {x:width-94,platformY:68};
  const age=Number(boss.age)||0;
  const identity=boss.plannedAttack?.bossMotion||bossProfileFor(boss.type)?.motion;

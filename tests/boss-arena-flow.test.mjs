@@ -30,22 +30,22 @@ test('normal firing can hit Ana Elisa directly before the first hostile projecti
   assert.equal(r.shotsFired,1);
  }
 });
-test('hovering bosses vary their routes and leave a wider mobile action arena',()=>{
+test('ground bosses vary jumps and advances while preserving the mobile reaction corridor',()=>{
  const paths=[];
  for(const seed of [12,34]){
   const r=scene(seed),b=r.boss;const points=[];
   for(let i=0;i<2400;i++){
    pilotDodge(r);core.advanceRun(r,dt);const p=core.bossArenaPose(b,480);points.push(p);
-   if(b.phase!=='intro'){assert.ok(p.x>=260&&p.x<=428);assert.ok(p.platformY>=45&&p.platformY<=120);}
-   if(i)assert.ok(Math.hypot(p.x-points[i-1].x,p.platformY-points[i-1].platformY)<5,'no teleport at a flight boundary');
+   if(b.phase!=='intro'){assert.ok(p.x>=260&&p.x<=428);assert.ok(p.platformY>=0&&p.platformY<=96);}
+   if(i)assert.ok(Math.hypot(p.x-points[i-1].x,p.platformY-points[i-1].platformY)<5,'no teleport at a movement boundary');
   }
   assert.equal(r.status,'running','the sampled fight remains live across flight boundaries');
-  const x=points.slice(150).map(p=>p.x);assert.ok(Math.max(...x)-Math.min(...x)>60);
+  const x=points.slice(150).map(p=>p.x);assert.ok(Math.max(...x)-Math.min(...x)>=40);
   const desktop=core.bossArenaPose(b,900),mobile=core.bossArenaPose(b,480);assert.ok(Math.abs(desktop.x-mobile.x-420)<1e-8);assert.equal(desktop.platformY,mobile.platformY);
   b.reducedMotion=true;const fixed=core.bossArenaPose(b,480);b.age+=5;assert.deepEqual(core.bossArenaPose(b,480),fixed);
   paths.push(points);
  }
- assert.notDeepEqual(paths[0],paths[1],'a new run gets a different flight variation');
+ assert.notDeepEqual(paths[0],paths[1],'a new run gets a different movement order');
 });
 test('ship hull and exhaust animate separately, with stable deck and reduced-motion output',()=>{
  assert.equal(typeof art.drawHoverPlatform,'function');

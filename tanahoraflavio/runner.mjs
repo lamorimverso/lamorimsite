@@ -12,14 +12,14 @@ import {createMovementSoundDirector,movementIsAirborne} from './runner-movement-
 import {HERO_SHOT_DURATION,DUEL_CHARGE_SECONDS,drawHeroCharge,drawHeroProjectile} from './runner-hero-shot.mjs?v=7aa1e19e9838';
 import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=8f2c5aee1585';
 import {createAircraftWarningTracker,createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=37fd940420f1';
-import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=2ba55b5361ff';
+import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=766c802dd6db';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=0d88dd3eebf2";
+import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=a7137aa8048b";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {heroStridePhase,bossStopsAutoRun} from './runner-drawn-motion.mjs?v=0d1971800c55';
 import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=700c55ebad49';
-import {bossCounterWindow} from './runner-bosses.mjs?v=2ba55b5361ff';
-import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=4589df3d8763';
+import {bossCounterWindow} from './runner-bosses.mjs?v=766c802dd6db';
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=f88f8769724e';
 import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=dbaac525a595";
 import { createGameAudio } from "./runner-audio.mjs?v=d93419fd0e46";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=d5e017561fd6";
@@ -709,8 +709,11 @@ function initRunner() {
     const pose={x:arenaPose.x,y:WORLD.ground-arenaPose.platformY,scale:1};
     const bossX=pose.x,bossY=pose.y;
     const {preparing,attacking}=presentation;
+    if(b.platformer){
+      ctx.save();ctx.fillStyle='#29233722';ctx.beginPath();ctx.ellipse(bossX,WORLD.ground+2,24-arenaPose.platformY*.08,4,0,0,Math.PI*2);ctx.fill();ctx.restore();
+    }
     ctx.save();ctx.translate(bossX,bossY);
-    drawHoverEnemy(ctx,{type:b.type,x:0,y:0,scale:pose.scale,phase,...presentation,hurt:b.hitFlashFor>0,reducedMotion:prefersReducedMotion(),classId:b.classId,armyVariant:b.stageId||STAGES[b.stageIndex]?.id,enraged:b.enraged});
+    drawHoverEnemy(ctx,{type:b.type,platform:!b.platformer,x:0,y:0,scale:pose.scale,phase,...presentation,hurt:b.hitFlashFor>0,reducedMotion:prefersReducedMotion(),classId:b.classId,armyVariant:b.stageId||STAGES[b.stageIndex]?.id,enraged:b.enraged});
     ctx.restore();
     if(b.lastDamage?.remaining>0){
       const hit=b.lastDamage,progress=1-hit.remaining/.8;
