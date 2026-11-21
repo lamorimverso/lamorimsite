@@ -20,9 +20,9 @@ test('the sustained slide has visible jacket volume above the hips, not a flat s
  const c=createCanvas(360,360).getContext('2d');c.scale(3,3);
  drawActor(c,{type:'flavio',x:60,y:104,scale:.95,landing:true,sliding:true,slidePhase:.52});
  const data=c.getImageData(0,0,360,360).data;let rows=0;
- for(let y=-26;y<=-17;y++){
+ for(let y=-32;y<=-17;y++){
   let purple=0;
-  for(let x=-24;x<2;x++){
+  for(let x=-40;x<10;x++){
    const i=(Math.round((104+y)*3)*360+Math.round((60+x)*3))*4;
    const [r,g,b,a]=data.slice(i,i+4);if(a>128&&r>35&&b>r*.95&&b>g*1.3)purple++;
   }

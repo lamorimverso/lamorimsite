@@ -1,9 +1,9 @@
-import {HERO_MAX_HP,playerBodyFor} from './runner-body.mjs?v=5bb5129d61ee';
+import {HERO_MAX_HP,playerBodyFor} from './runner-body.mjs?v=57ec474fca38';
 import {createMovementSkills,movementProfileFor,rewardMovementVictory} from './runner-movement-skills.mjs?v=d0ad734b4838';
 export {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
-export {terrainProfileFor} from './runner-terrain.mjs?v=49b2cbbcd7c7';
-import {TERRAIN,createTerrain,beginTerrain,beginGroundLesson,beginAirTransfer,aircraftHitFor,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer} from './runner-terrain.mjs?v=49b2cbbcd7c7';
-export {terrainSupportAt} from './runner-terrain.mjs?v=49b2cbbcd7c7';
+export {terrainProfileFor} from './runner-terrain.mjs?v=fdd6cfe24689';
+import {TERRAIN,createTerrain,beginTerrain,beginGroundLesson,beginAirTransfer,aircraftHitFor,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer} from './runner-terrain.mjs?v=fdd6cfe24689';
+export {terrainSupportAt} from './runner-terrain.mjs?v=fdd6cfe24689';
 import {stageRosterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 import {groundRhythmFor,groundStyleFor} from './runner-ground-rhythm.mjs?v=c282904db6c6';
 import {ROUTE_AMMO,advanceAmmo,addShieldPart} from './runner-supplies.mjs?v=44c67e8a5802';
@@ -12,16 +12,17 @@ export {grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powe
 import {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=c4fcfde513ff';
 export {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=740e8ab135c4';
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=29c7a939c7a7';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=d4ae32a5a1d7';
 import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
-import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=a6425ecce7d8';
-import {regularCastMuzzle} from './runner-cast-pose.mjs?v=254a1fabf2a5';
+import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=45efb23b579e';
+import {regularCastMuzzle} from './runner-cast-pose.mjs?v=6c23ca8e107c';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=d3b6a81b34b9';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
 import {BOSS_ARENA_RESERVE,BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,optionalStoryBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=a9040a7a6713';
 export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=a9040a7a6713';
 export {bossArenaPose} from './runner-bosses.mjs?v=a9040a7a6713';
 // Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
+import {bossStopsAutoRun} from './runner-drawn-motion.mjs?v=e6447a8a30cc';
 export const WORLD = Object.freeze({width:900,height:300,ground:246});
 // Envelope de todas as poses no atlas a .95 de escala, incluindo o agachamento.
 // A mesma margem serve ao jacaré e evita deslocar o herói ao trocar de postura.
@@ -1088,7 +1089,7 @@ export function advanceRun(run,seconds,rng){
  run.player.restoreFlashFor=Math.max(0,run.player.restoreFlashFor-dt);
  if(run.nextBossAt===null)run.nextBossAt=run.mode==='story'?nextStoryBossDistance(0):nextBossDistance(0);
  if(run.nextRaid===null)run.nextRaid=18+random(rng)*12;
- const balance=difficultyAt(run.distance,run.elapsed),travel=run.boss?0:balance.speed*assistance(run)*dt;run.distance+=travel;
+ const balance=difficultyAt(run.distance,run.elapsed),travel=bossStopsAutoRun(run)?0:balance.speed*assistance(run)*dt;run.distance+=travel;
  if(!run.boss&&!run.terrain?.active?.flight&&!run.terrain?.active?.lesson){
   const stop=run.mode==='story'&&Number.isFinite(run.nextBossAt)&&run.routeDistance<=run.nextBossAt?run.nextBossAt:Infinity;
   const local=campaignRouteDistance(run)%SCENE_DISTANCE;

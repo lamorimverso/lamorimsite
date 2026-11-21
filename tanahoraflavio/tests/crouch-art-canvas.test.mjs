@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
+import {HERO_CROUCH_CLEARANCE} from '../runner-body.mjs';
 const require=createRequire(import.meta.url);let canvas;try{canvas=require('@napi-rs/canvas');}catch{}
 async function setup(t){
  const {Image}=canvas,prior=Object.getOwnPropertyDescriptor(globalThis,'Image');
@@ -26,14 +27,14 @@ test('four sampled frames of the bend lower the body and mirror without moving t
  }
  assert.ok(heights[0]>heights[1]&&heights[1]>heights[2]&&Math.abs(heights[2]-heights[3])<=1,JSON.stringify(heights));
  assert.equal(new Set(frames).size,4,'the two squat holds are differently drawn');
- assert.ok(heights.at(-1)>=51&&heights.at(-1)<=58,JSON.stringify(heights));
+ assert.ok(heights.at(-1)>=60&&heights.at(-1)<=HERO_CROUCH_CLEARANCE,JSON.stringify(heights));
 });
 test('release, recoil and recovery render distinct complete low poses and muzzle flash touches the new barrel',{skip:!canvas},async t=>{
  const {art}=await setup(t),{heroShotPose}=await import('../runner-hero-shot.mjs');
  for(const facing of [-1,1]){
   const states=[];for(const age of [0,.08,.18]){
    const c=canvas.createCanvas(260,180).getContext('2d');assert.equal(art.drawHeroShot(c,{x:130,y:150,crouching:true,age,facing}),true);
-   const b=bounds(c);assert.ok(b.n>550);assert.ok(b.y0>=91&&b.y0<=99&&b.y1>=149&&b.y1<=150);states.push(Buffer.from(c.getImageData(0,0,260,180).data).toString('base64'));
+   const b=bounds(c);assert.ok(b.n>550);assert.ok(b.y0>=150-HERO_CROUCH_CLEARANCE&&b.y0<100&&b.y1>=149&&b.y1<=150);states.push(Buffer.from(c.getImageData(0,0,260,180).data).toString('base64'));
    if(age===0){const p=heroShotPose({age,crouching:true,facing}),pixels=c.getImageData(Math.round(130+p.muzzle.x+facing*5)-3,Math.round(150+p.muzzle.y)-3,7,7).data;assert.ok(pixels.some((v,i)=>i%4===0&&v>230&&pixels[i+1]>150&&pixels[i+2]<220&&pixels[i+3]>100),'flash beside drawn IVER barrel');}
   }
   assert.equal(new Set(states).size,3);

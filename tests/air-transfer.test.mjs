@@ -129,7 +129,7 @@ test('air transfer warns before real shots and does not count a decorative aircr
 
 test('o voo alto passa sobre as novas poses, mas ainda acerta as duas formas em pé',()=>{
  for(const hp of [1,2])for(const posture of ['crouching','sliding','standing']){
-  const r=flightReady(),a=enter(r),craft=a.flight.aircraft.find(c=>c.kind==='high');
+  const r=flightReady();r.player.hp=hp;const a=enter(r),craft=a.flight.aircraft.find(c=>c.kind==='high');
   a.flight.traveled=craft.launchAt;
   const {shot}=aircraftPoseFor(a,craft);
   Object.assign(r.player,{hp,x:shot.x-18,y:a.platforms[craft.barIndex].y,[posture]:true});
@@ -205,4 +205,11 @@ test('takeoff ramp is a physical upward surface ending at the real opening',()=>
   if(r.player.y>5){ascended=true;assert.equal(r.player.grounded,true);assert.equal(r.player.velocity,0);}
  }
  assert.equal(ascended,true);
+});
+
+test('a high aircraft commits the body scale at boarding and never retargets an in-flight shot',()=>{
+ const r=flightReady();r.player.hp=1;const a=enter(r),craft=a.flight.aircraft.find(c=>c.kind==='high');
+ a.flight.traveled=craft.launchAt;const before=aircraftPoseFor(a,craft).shot;
+ r.player.hp=2;const after=aircraftPoseFor(a,craft).shot;
+ assert.equal(after.y,before.y);assert.equal(after.x,before.x);
 });

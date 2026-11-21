@@ -1,46 +1,62 @@
 #!/usr/bin/env node
-// Register complete image_gen drawings with uniform scaling. The preserved
-// source PNG is never altered; crouch frames remain from the existing atlas.
+// Calibrate anatomical scale from facial landmarks, never total pose height.
+// Complete source drawings and alpha are preserved; all resizing is uniform.
 import sharp from 'sharp';
 import {createCanvas,loadImage} from '@napi-rs/canvas';
 import {readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
+import {imageComponents,facePixel} from './hero-image-components.mjs';
 const root=new URL('../',import.meta.url),check=process.argv.includes('--check');
-const sourceURL=new URL('tanahoraflavio/assets/flavio-slide-v3.source.png',root);
-const input=await readFile(sourceURL),{data,info}=await sharp(input).ensureAlpha().raw().toBuffer({resolveWithObject:true});
-const boxes=[];
-for(let row=0;row<2;row++)for(let col=0;col<4;col++){
- let x=info.width,y=info.height,right=-1,bottom=-1;
- for(let yy=Math.floor(row*info.height/2);yy<Math.floor((row+1)*info.height/2);yy++)for(let xx=Math.floor(col*info.width/4);xx<Math.floor((col+1)*info.width/4);xx++){
-  if(data[(yy*info.width+xx)*4+3]<=64)continue;
-  x=Math.min(x,xx);y=Math.min(y,yy);right=Math.max(right,xx);bottom=Math.max(bottom,yy);
+const input=await readFile(new URL('tanahoraflavio/assets/flavio-slide-v4.source.png',root));
+const {data,info}=await sharp(input).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+const figures=imageComponents(data,info.width,info.height,(d,i)=>d[i+3]>32).slice(0,8);
+if(figures.length!==8)throw new Error('Eight complete figures required');
+const rows=[figures.filter(b=>b.y<info.height/2).sort((a,b)=>a.x-b.x),figures.filter(b=>b.y>=info.height/2).sort((a,b)=>a.x-b.x)];
+if(rows.some(row=>row.length!==4))throw new Error('Four complete figures per row required');
+const boxes=rows.flat(),faces=imageComponents(data,info.width,info.height,facePixel).slice(0,8);
+const widths=[1,2,3,5,6].map(i=>{const b=boxes[i];return faces.find(f=>f.x>=b.x&&f.x+f.width<=b.x+b.width&&f.y>=b.y&&f.y+f.height<=b.y+b.height)?.width;}).sort((a,b)=>a-b);
+if(widths.some(w=>!w))throw new Error('Each slide needs a complete face landmark');
+const targetFacePixels=119;
+const originalBytes=await readFile(new URL('tanahoraflavio/assets/flavio-acoes-v2.webp',root));
+const originalPixels=await sharp(originalBytes).ensureAlpha().raw().toBuffer();
+const oldFaces=imageComponents(originalPixels,1344,774,facePixel).filter(b=>b.n>1000);
+const layout={width:336,height:300,density:3,x:168,ground:288},canvas=createCanvas(layout.width*4,layout.height*3),c=canvas.getContext('2d');
+const original=await loadImage(originalBytes),image=await loadImage(await sharp(input).png().toBuffer());
+const replacements=new Map([[4,1],[5,2],[6,3],[10,5],[11,6]]);
+for(let frame=0;frame<12;frame++){
+ const ox=frame%4*layout.width,oy=Math.floor(frame/4)*layout.height;
+ c.save();c.translate(ox+layout.x,oy+layout.ground);
+ if(replacements.has(frame)){
+  const b=boxes[replacements.get(frame)],face=faces.find(f=>f.x>=b.x&&f.x+f.width<=b.x+b.width&&f.y>=b.y&&f.y+f.height<=b.y+b.height);
+  const factor=targetFacePixels/face.width;c.scale(factor,factor);
+  c.drawImage(image,b.x-2,b.y-2,b.width+4,b.height+4,-b.width/2-2,-b.height-2,b.width+4,b.height+4);
+ }else{
+  const sx=frame%4*336,sy=Math.floor(frame/4)*258;
+  const face=oldFaces.find(b=>b.x>=sx&&b.x+b.width<=sx+336&&b.y>=sy&&b.y+b.height<=sy+258);
+  if(!face)throw new Error('Missing original face '+frame);
+  const factor=targetFacePixels/face.width;c.scale(factor,factor);
+  c.drawImage(original,sx,sy,336,258,-168,-246,336,258);
  }
- if(right<x)throw new Error('Missing complete slide pose '+row+'/'+col);
- let muzzle=null;
- if(row===1){
-  let tip=-1,ys=[];
-  for(let xx=Math.ceil(x+(right-x)*.72);xx<=right;xx++)for(let yy=y;yy<y+(bottom-y)*.67;yy++){
-   const i=(yy*info.width+xx)*4,[r,g,b,a]=data.slice(i,i+4);
-   if(a>128&&r>45&&b>r*1.04&&b>g*1.15){if(xx>tip){tip=xx;ys=[];}if(xx===tip)ys.push(yy);}
-  }
-  if(!ys.length)throw new Error('Missing purple barrel '+col);
-  muzzle={x:tip+2,y:(Math.min(...ys)+Math.max(...ys))/2};
- }
- boxes.push({x,y,width:right-x+1,height:bottom-y+1,center:(x+right)/2,ground:bottom+1,muzzle});
+ c.restore();
 }
-const width=336,height=258,density=3,canvas=createCanvas(width*4,height*3),c=canvas.getContext('2d');
-const original=await loadImage(await readFile(new URL('tanahoraflavio/assets/flavio-acoes-v2.webp',root))),image=await loadImage(await sharp(input).png().toBuffer());
-c.drawImage(original,0,0);
-const replacements=[[4,0,49],[5,1,49],[6,2,49],[7,3,49],[10,4,49],[11,5,49]],muzzles=[];
-for(const [target,source,logicalHeight] of replacements){
- const b=boxes[source],factor=logicalHeight*density/b.height,ox=target%4*width,oy=Math.floor(target/4)*height;
- c.clearRect(ox,oy,width,height);c.save();c.translate(ox+168,oy+246);c.scale(factor,factor);
- c.drawImage(image,b.x-2,b.y-2,b.width+4,b.height+4,b.x-2-b.center,b.y-2-b.ground,b.width+4,b.height+4);c.restore();
- if(b.muzzle)muzzles.push({x:(b.muzzle.x-b.center)*factor/density,y:(b.muzzle.y-b.ground)*factor/density});
+const pixels=c.getImageData(0,0,canvas.width,canvas.height).data,heights=[],muzzles=[];
+for(let frame=0;frame<12;frame++){
+ const ox=frame%4*layout.width,oy=Math.floor(frame/4)*layout.height;let top=canvas.height,right=-1,left=canvas.width,bottom=-1;
+ for(let y=oy;y<oy+layout.height;y++)for(let x=ox;x<ox+layout.width;x++)if(pixels[(y*canvas.width+x)*4+3]>128){top=Math.min(top,y);left=Math.min(left,x);right=Math.max(right,x);bottom=Math.max(bottom,y);}
+ heights.push((bottom-top+1)/layout.density);
+ if([8,9,10,11].includes(frame)){
+  let tip=-1,ys=[];
+  for(let x=Math.ceil(left+(right-left)*.62);x<=right;x++)for(let y=top;y<top+(bottom-top)*.72;y++){
+   const i=(y*canvas.width+x)*4,[r,g,b,a]=pixels.slice(i,i+4);
+   if(a>128&&r>45&&b>180&&b>r*1.04&&b>g*1.15){if(x>tip){tip=x;ys=[];}if(x===tip)ys.push(y);}
+  }
+  if(!ys.length)throw new Error('Missing calibrated barrel '+frame);
+  muzzles.push({x:(tip+2-ox-layout.x)/layout.density,y:((Math.min(...ys)+Math.max(...ys))/2-oy-layout.ground)/layout.density});
+ }
 }
 const webp=await sharp(canvas.toBuffer('image/png')).webp({lossless:true,effort:6}).toBuffer(),sha256=createHash('sha256').update(webp).digest('hex');
-const module=`// Generated by tools/build-slide-actions.mjs; complete poses, uniform scale.\nconst WIDTH=336,HEIGHT=258;\nexport const heroActionsDefinition={url:new URL('./assets/flavio-acoes-v3.webp',import.meta.url).href+'?v=${sha256.slice(0,12)}',width:WIDTH*4,height:HEIGHT*3,sha256:'${sha256}',frames:Array.from({length:12},(_,i)=>({x:i%4*WIDTH,y:Math.floor(i/4)*HEIGHT,width:WIDTH,height:HEIGHT}))};\nexport const slideActionMuzzles=${JSON.stringify(muzzles)};\n`;
-for(const [path,bytes] of [['tanahoraflavio/assets/flavio-acoes-v3.webp',webp],['tanahoraflavio/runner-hero-actions-data.mjs',Buffer.from(module)]]){
- const url=new URL(path,root);if(check){if(!(await readFile(url)).equals(bytes))throw new Error('Slide asset out of date: '+path);}else await writeFile(url,bytes);
+const module=`// Generated by tools/build-slide-actions.mjs; calibrated to the running face scale.\nexport const heroActionLayout=${JSON.stringify(layout)};\nexport const heroActionsDefinition={url:new URL('./assets/flavio-acoes-v4.webp',import.meta.url).href+'?v=${sha256.slice(0,12)}',width:${canvas.width},height:${canvas.height},sha256:'${sha256}',frames:Array.from({length:12},(_,i)=>({x:i%4*336,y:Math.floor(i/4)*300,width:336,height:300}))};\nexport const heroActionHeights=${JSON.stringify(heights)};\nexport const crouchActionMuzzles=${JSON.stringify(muzzles.slice(0,2))};\nexport const slideActionMuzzles=${JSON.stringify(muzzles.slice(2))};\n`;
+for(const [path,bytes] of [['tanahoraflavio/assets/flavio-acoes-v4.webp',webp],['tanahoraflavio/runner-hero-actions-data.mjs',Buffer.from(module)]]){
+ const url=new URL(path,root);if(check){if(!(await readFile(url)).equals(bytes))throw new Error('Scaled hero asset out of date: '+path);}else await writeFile(url,bytes);
 }
-console.log(JSON.stringify({bytes:webp.length,sha256,sourceSha256:createHash('sha256').update(input).digest('hex'),muzzles}));
+console.log(JSON.stringify({bytes:webp.length,sha256,targetFacePixels,sourceFaceWidth:widths[2],heights,muzzles}));

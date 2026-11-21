@@ -1,8 +1,9 @@
 // Select whole authored drawings. Timing is supplied by the simulation clock.
+export function bossStopsAutoRun(run){return !!run?.boss&&!run.boss.traversal;}
 export function heroStridePhase(run){
  // Eight drawings cover two ground contacts over a 144px full stride.
  // Physical distance keeps cadence continuous as speed and scenery change.
- return run?.status==='running'&&!run.boss&&Number.isFinite(run.distance)?Math.max(0,run.distance)/18:0;
+ return run?.status==='running'&&!bossStopsAutoRun(run)&&Number.isFinite(run.distance)?Math.max(0,run.distance)/18:0;
 }
 export function strideDrawing(frames,index,phase=0,reducedMotion=false){
  const next=frames[index]?.next,fraction=Math.max(0,Number(phase)||0)%1;

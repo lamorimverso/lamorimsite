@@ -1,9 +1,9 @@
-import {playerBodyFor} from './runner-body.mjs?v=5bb5129d61ee';
+import {playerBodyFor,HERO_SLIDE_SECONDS,HERO_CROUCH_CLEARANCE} from './runner-body.mjs?v=57ec474fca38';
 import {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
 // Shared simulation/render geometry. x is logical screen-space; y is height
 // above WORLD.ground. Resizing translates shapes with the hero, never stretches
 // a jump or replaces an active hole with invisible ground.
-export const TERRAIN = Object.freeze({speed:270,warningFor:2.3,slideFor:.85,slideSpeed:310,clearance:46,platformY:28});
+export const TERRAIN = Object.freeze({speed:270,warningFor:2.3,slideFor:HERO_SLIDE_SECONDS,slideSpeed:310,clearance:46,platformY:28});
 export function createTerrain(){return {active:null,nextAt:6,completed:0,spawned:0,lessonCompleted:false,flightCompleted:false,flightsCompleted:0,lastFlightArrival:null};}
 const BASIC_ROUTE=Object.freeze({id:'basic',gapTime:.39,platformOffsetTime:.30,platformTime:.54,platformY:28,requiresDoubleJump:false});
 // The earned jump is an alternative, never the entry ticket to a compulsory bar.
@@ -40,7 +40,7 @@ export function beginAirTransfer(run,speed,{routeStart,routeEnd,from='sao-paulo'
  const platforms=[];let end=first;
  for(const [seconds,y] of AIR_BARS){const x=end+space,width=seconds*speed;platforms.push({x,width,y});end=x+width;}
  end+=space;
- const flight={from,to,fromName,toName,phase:'boarding',progress:0,traveled:0,nominalSpeed:speed,
+ const flight={from,to,fromName,toName,phase:'boarding',progress:0,traveled:0,nominalSpeed:speed,bodyScale:playerBodyFor(run.player).scale,
   routeStart,routeEnd,length:end-center,phasesAt:[first-center,platforms[1].x-center,platforms.at(-1).x-center],aircraft:[]};
  // Quiet silhouettes teach the aircraft vocabulary before any armed crossing.
  for(const [kind,barIndex,offset] of [['flyby',0,platforms[0].width*.47],['high',1,platforms[1].width*.50],['lane',2,platforms[2].width-speed*.21]]){
@@ -60,7 +60,7 @@ export function aircraftPoseFor(a,craft){
  if(f.traveled<craft.warnAt||t>1.05)return null;
  if(craft.kind==='flyby')return {markerX:x,aircraftX:x+92-220*t,aircraftY:bar.y+161,warning:false,shot:null};
  // The high shot clears both bent poses, but still crosses the upright body.
- const lane=craft.kind==='lane',originX=x+(lane?0:84),originY=bar.y+(lane?158:67);
+ const lane=craft.kind==='lane',originX=x+(lane?0:84),originY=bar.y+(lane?158:HERO_CROUCH_CLEARANCE*(f.bodyScale??1)+9);
  const warning=t<0,aircraftX=originX+84*t,aircraftY=originY+(lane?0:Math.max(0,-t)*42+Math.max(0,t)*82);
  const shot=t>=0&&t<=(lane?.64:.85)&&!craft.spent?{
   x:originX-(lane?0:220*t),y:lane?Math.max(bar.y+16,originY-355*t):originY,

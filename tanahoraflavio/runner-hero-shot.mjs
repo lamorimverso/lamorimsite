@@ -1,8 +1,8 @@
-import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=cb64b4e66226';
-import {drawCombatSprite} from './runner-sprites.mjs?v=031fd82c7373';
+import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=459f3114044e';
+import {drawCombatSprite} from './runner-sprites.mjs?v=9528143bbe4b';
 import {HERO_POWERS} from './runner-earned-powers.mjs?v=432ca45a76e4';
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=29c7a939c7a7';
-import {heroActionMuzzleFor} from './runner-hero-actions.mjs?v=151c98e776c9';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=d4ae32a5a1d7';
+import {heroActionMuzzleFor} from './runner-hero-actions.mjs?v=540e224a66e3';
 // Essential action timing shared by the hero renderer and physical launch.
 export const HERO_SHOT_DURATION=.22;
 export function heroShotPose({age=0,crouching=false,sliding=false,airborne=false,facing=1}={}){
@@ -16,7 +16,7 @@ export function heroShotPose({age=0,crouching=false,sliding=false,airborne=false
   shoulder:{x:-8-kick*.4,y:crouching?-26:-44},
   elbow:{x:1-kick-settle*8,y:-height+1+settle*6},
   hand:{x:10-kick-settle*12,y:-height+settle*9},
-  muzzle:sliding&&!airborne?heroActionMuzzleFor(state,facing):combatGeometryFor(crouching?'flavio-slide-shot':airborne?'flavio-air-shot':'flavio',{frame:2,scale:.95,facing}).muzzle};
+  muzzle:!airborne&&(crouching||sliding)?heroActionMuzzleFor(state,facing,sliding):combatGeometryFor(airborne?'flavio-air-shot':'flavio',{frame:2,scale:.95,facing}).muzzle};
 }
 
 /** Complete bottle projectile; its proportions stay fixed while following the shot. */

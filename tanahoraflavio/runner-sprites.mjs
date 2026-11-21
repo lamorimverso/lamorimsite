@@ -1,13 +1,13 @@
 // Atlas e recortes gerados dos desenhos escolhidos, preservando os PNGs fontes.
 import {definitions} from './runner-sprite-data.mjs?v=4a931cb52b80';
 import {drawHeroLowPose} from './runner-slide-art.mjs?v=f0043535e452';
-import {heroActionsDefinition,heroActionFrameFor,drawHeroAction} from './runner-hero-actions.mjs?v=151c98e776c9';
+import {heroActionsDefinition,heroActionFrameFor,drawHeroAction} from './runner-hero-actions.mjs?v=540e224a66e3';
 import {combatDefinitions,combatActors} from './runner-combat-sprite-data.mjs?v=85a6343e5d39';
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=29c7a939c7a7';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=d4ae32a5a1d7';
 import {signatureDefinitions,signatureProps} from './runner-signature-sprite-data.mjs?v=8340feb630e5';
 import {campaignDefinitions,campaignActors as originalCampaignActors} from './runner-campaign-sprite-data.mjs?v=bf314ee912e5';
 import {redesignDefinitions,redesignedCampaignActors} from './runner-redesign-data.mjs?v=310909996513';
-import {strideDrawing,actionDrawing} from './runner-drawn-motion.mjs?v=a64c5db94886';
+import {strideDrawing,actionDrawing} from './runner-drawn-motion.mjs?v=e6447a8a30cc';
 const campaignActors={...originalCampaignActors,...redesignedCampaignActors};
 export const spriteDefinitions={...definitions,...combatDefinitions,...signatureDefinitions,heroActions:heroActionsDefinition,...campaignDefinitions,...redesignDefinitions};
 const sheets=new Map();let activeAttempt=null;

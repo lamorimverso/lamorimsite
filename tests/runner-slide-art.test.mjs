@@ -84,15 +84,16 @@ test('o deslize desenha uma silhueta baixa, estendida e apoiada, inclusive ao di
   return {height:(bottom-top+1)/ratio,width:(right-left+1)/ratio,sole:(bottom+1)/ratio-floor,headWidth:(headRight-headLeft+1)/ratio};
  }
  const stand=measure(drawActor,{scale:.95});
+ const fullRunningHeight=Math.max(...Array.from({length:8},(_,phase)=>measure(drawActor,{scale:.95,phase}).height));
  const crouch=measure(drawActor,{landing:true,scale:.95});
  const slide=measure(drawActor,{landing:true,sliding:true,scale:.95});
  assert.ok(crouch.height>=51&&stand.height>crouch.height+12,JSON.stringify({stand,crouch}));
  assert.ok(slide.height>=38,JSON.stringify({slide,crouch}));
  assert.ok(crouch.headWidth>=stand.headWidth*.87&&crouch.headWidth<=stand.headWidth*1.14,'a arte do agachamento permanece intacta');
- assert.ok(slide.headWidth>=26&&slide.headWidth<slide.height*.8,'a nova pose mantém o rosto legível e espaço para o tronco: '+JSON.stringify(slide));
+ assert.ok(slide.headWidth>=stand.headWidth*.9&&slide.headWidth<=stand.headWidth*1.1,'o deslize mantém o tamanho da cabeça: '+JSON.stringify({stand,slide}));
  const descending=measure(drawActor,{landing:true,crouchPose:.45,scale:.95});
  const rising=measure(drawActor,{landing:false,crouchPose:.45,scale:.95});
- assert.ok(descending.height>crouch.height+5&&descending.height<stand.height,JSON.stringify({stand,descending,crouch}));
+ assert.ok(descending.height>crouch.height+5&&descending.height<=fullRunningHeight+1,JSON.stringify({stand,descending,crouch}));
  assert.deepEqual(rising,descending,'subida e descida percorrem a mesma dobra do corpo');
  assert.ok(slide.height<=playerBodyFor({hp:2,sliding:true}).terrainHeight+1&&slide.height<crouch.height-2,JSON.stringify({slide,crouch}));
  assert.ok(slide.width>=crouch.width+8,JSON.stringify({slide,crouch}));
@@ -106,7 +107,7 @@ test('o deslize desenha uma silhueta baixa, estendida e apoiada, inclusive ao di
  assert.ok(Math.abs(hurt.height-slide.height*HURT_BODY_SCALE)<=1&&Math.abs(hurt.width-slide.width*HURT_BODY_SCALE)<=1,JSON.stringify({slide,hurt}));
  for(const age of [.03,.08,.16,.21])for(const facing of [-1,1]){
   const lowShot=measure(drawHeroShot,{age,crouching:true,sliding:true,facing},{checkMuzzle:age===.03});
-  assert.ok(lowShot.height<=playerBodyFor({hp:2,sliding:true}).terrainHeight+1&&lowShot.width>=crouch.width+8,JSON.stringify({lowShot,slide,crouch,age,facing}));
+  assert.ok(lowShot.height<=playerBodyFor({hp:2,sliding:true,attackFor:.22-age}).terrainHeight+1&&lowShot.width>=crouch.width+8,JSON.stringify({lowShot,slide,crouch,age,facing}));
   assert.ok(Math.abs(lowShot.sole)<=1.5,JSON.stringify(lowShot));
  }
  for(const facing of [-1,1]){
