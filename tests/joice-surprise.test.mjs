@@ -7,14 +7,15 @@ function run(){const r=core.createRun();core.startRun(r);r.shieldFor=Infinity;r.
 // Isola segundos elegíveis: o teste de exclusão de transições está no motor.
 const advance=(r,seconds,rng=()=>.5)=>{for(let i=0;i<Math.ceil(seconds/dt);i++){r.routeDistance=1000;core.advanceRun(r,dt,rng);}};
 
-test('corrida infinita mantém a paisagem e a rota passando durante Joice e chefes',()=>{
+test('corrida infinita segue durante Joice e para na arena de chefão',()=>{
  for(const encounter of ['boss','raid']){
   const r=run();r.nextRaid=Infinity;
   if(encounter==='raid')r.raid={phase:'active',remaining:8,factIndex:0,id:1};
   else{r.nextBossAt=0;core.advanceRun(r,dt);}
   const before={route:r.routeDistance,total:r.distance};
   core.advanceRun(r,dt);
-  assert.ok(r.routeDistance>before.route,'nenhum encontro congela o avanço da paisagem');
+  if(encounter==='boss'){assert.equal(r.routeDistance,before.route);assert.equal(r.distance,before.total);}
+  else assert.ok(r.routeDistance>before.route,'a perseguição da Joice mantém a corrida');
   assert.ok(Math.abs((r.routeDistance-before.route)-(r.distance-before.total))<1e-8);
  }
 });

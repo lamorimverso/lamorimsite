@@ -7,20 +7,20 @@ import {normalizeControls,keyboardActionFor,mouseActionFor,keyLabel} from './run
 import {createControlSettings} from './runner-control-settings.mjs?v=25524a717d9e';
 import {createGamepadDriver} from './runner-gamepad.mjs?v=18383546c2cd';
 import {HERO_POWERS,heroPowerFor,cycleHeroPower} from './runner-earned-powers.mjs?v=432ca45a76e4';
-import {updateCombatHUD} from './runner-combat-hud.mjs?v=c9ba3bf718f6';
+import {updateCombatHUD} from './runner-combat-hud.mjs?v=a222aece4301';
 import {createMovementSoundDirector,movementIsAirborne} from './runner-movement-audio.mjs?v=31522b0ccc1e';
-import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=b60a849f2e34';
-import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=ad9beaec5ae2';
+import {HERO_SHOT_DURATION,drawHeroProjectile} from './runner-hero-shot.mjs?v=1d5691115609';
+import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=254a1fabf2a5';
 import {createAircraftWarningTracker,createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=37fd940420f1';
-import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=18365bfe1950';
+import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=a9040a7a6713';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=4c4d80cd263e";
+import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=809aaafff56a";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=c4fcfde513ff';
-import {heroStridePhase} from './runner-drawn-motion.mjs?v=f90ca65ad9d8';
-import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=6cc1ca5a171d';
-import {bossCounterWindow} from './runner-bosses.mjs?v=18365bfe1950';
-import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=d7f1d42d78be';
-import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=a254d4bb3f83";
+import {heroStridePhase} from './runner-drawn-motion.mjs?v=a64c5db94886';
+import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=dbf144c98bb6';
+import {bossCounterWindow} from './runner-bosses.mjs?v=a9040a7a6713';
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=efda14d77dc6';
+import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=28dbcc5341d5";
 import { createGameAudio } from "./runner-audio.mjs?v=d93419fd0e46";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=d5e017561fd6";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=73113e4c788c";
@@ -223,8 +223,8 @@ function initRunner() {
     ui.prop(attackButton,'disabled',controlsOpen()||run.boss?.traversal||run.player.isJacare||!run.boss&&run.ammo===0);
     ui.data(attackButton,'ammo',run.ammo>0?"ready":run.player.attackHeld?"held":"reload");
     const ammoHint=run.ammo===0?(run.boss?(run.player.attackHeld?"Solte o disparo para recarregar":"Recarregando munição"):"Sem munição. Colete ajudantes para repor tiros"):"";
-    ui.prop(attackButton,'title',ammoHint||(run.player.isJacare?"Disparo indisponível durante a transformação":"Rebater projéteis · "+fireLabel+" · "+weapon.name));
-    ui.attr(attackButton,"aria-label","Disparar para rebater projéteis; segure para repetir; tecla "+fireLabel+"; "+weapon.name+(ammoHint?"; "+ammoHint:""));
+    ui.prop(attackButton,'title',ammoHint||(run.player.isJacare?"Disparo indisponível durante a transformação":"Atirar no chefão ou rebater projéteis · "+fireLabel+" · "+weapon.name));
+    ui.attr(attackButton,"aria-label","Atirar no chefão ou rebater projéteis; segure para repetir; tecla "+fireLabel+"; "+weapon.name+(ammoHint?"; "+ammoHint:""));
     const hideAttack=run.status!=="running"||!run.boss||run.boss.traversal;
     if(hideAttack&&!attackButton.hidden){
       for(const id of firePointers){
@@ -269,7 +269,7 @@ function initRunner() {
     ui.data(cue,'opening',String(reflected||!!opening));
     if(!cue.hidden){
       ui.text("game-battle-attack",reflected?'Projétil devolvido':opening?'Guarda aberta':b.traversal?b.name:(attackCueFor(combatCue)?.label||b.powerName));
-      ui.text("game-battle-action",reflected?'Continue desviando':intercept?'Rebata ou desvie':opening?'Aguarde o próximo projétil':combatCue?.action==='jump'?'Pule':combatCue?.action==='crouch'?'Abaixe':combatCue?.action==='move'?'Desvie para o lado':'Atravesse a passagem');
+      ui.text("game-battle-action",reflected?'Continue desviando':intercept?'Rebata ou desvie':opening?'Atire no chefão':combatCue?.action==='jump'?'Pule':combatCue?.action==='crouch'?'Abaixe':combatCue?.action==='move'?'Desvie para o lado':'Atravesse a passagem');
     }
 
     const cameoAttack=run.cameo?run.obstacles.find(o=>o.sourceActor===run.cameo.type&&!o.passed):null;
@@ -755,7 +755,7 @@ function initRunner() {
     else if(slidePose===0)slideTravel=0;
     const slidePhase=reduced?0:slideTravel;
     lastPoseElapsed=run.elapsed;
-    const runningStride=active&&!airborne&&!crouchTarget&&!run.player.isJacare;
+    const runningStride=active&&!run.boss&&!airborne&&!crouchTarget&&!run.player.isJacare;
     const support=terrainSupportAt(run,playerX(run)+18,13),floor=WORLD.ground-(support??0);
     // Pés e efeito de impacto assumem a altura do suporte real, sem levantar
     // o sprite inteiro para fazer a passada animada parecer mais forte.
@@ -776,7 +776,7 @@ function initRunner() {
     if(sliding)drawSlideContact(ctx,{x:playerX(run)+17,y:feet,age:run.elapsed,reducedMotion:reduced});
     const protection={x:playerX(run)+17,y:feet,crouching:crouchTarget||run.player.isJacare,remaining:run.shieldFor};
     ctx.save();
-    if(!shooting&&decorative&&!airborne&&!run.player.isJacare){
+    if(!shooting&&decorative&&runningStride){
       // Inclinação pequena e alternada para que a corrida não pareça
       // apenas o cenário rolando por trás de um personagem imóvel.
       const pivot=playerX(run)+17;
@@ -796,7 +796,7 @@ function initRunner() {
         if(scale!==1){ctx.save();ctx.translate(pivot,feet);ctx.scale(scale,scale);ctx.translate(-pivot,-feet);}
         drawHeroShot(ctx,{x:pivot,y:feet,phase,age:HERO_SHOT_DURATION-run.player.attackFor,crouching:crouchTarget,crouchPose,sliding,slidePose,slidePhase,airborne,falling:run.player.velocity<0,reducedMotion:reduced,facing:run.player.shotFacing||1,alpha});
         if(scale!==1)ctx.restore();
-      }else drawActor(ctx,{type:"flavio",x:pivot,y:feet,scale:.95*scale,phase,airborne,facing,
+      }else drawActor(ctx,{type:"flavio",x:pivot,y:feet,scale:.95*scale,phase,standing:!!run.boss,airborne,facing,
         falling:run.player.velocity<0,reducedMotion:reduced,landing:crouchTarget,crouchPose,sliding,slidePose,slidePhase,hurt:run.status==="over",alpha});
       if(run.player.restoreFlashFor>0&&!prefersReducedMotion()){
         ctx.save();ctx.globalAlpha=Math.min(.55,run.player.restoreFlashFor/.48*.55);

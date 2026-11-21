@@ -43,11 +43,12 @@ test('chefões repetem a ordem ampliada depois de cinco encontros distintos',()=
  }
  assert.deepEqual(seen,['haddad','lula','xandao','janones','pf','haddad']);
 });
-test('a distância e a rota crescem durante o chefão e o protagonista não atira',()=>{
+test('a distância e a rota param durante o chefão sem disparo automático',()=>{
  const r=running();triggerBoss(r);r.boss.nextAttack=100;const route=r.routeDistance,start=r.distance;
  step(r,.2);
- assert.ok(r.routeDistance>route);
- assert.ok(core.scoreFor(r)>start);
+ assert.equal(r.routeDistance,route);
+ assert.equal(r.distance,start);
+ assert.equal(core.scoreFor(r),Math.floor(start));
  assert.equal(r.boss.total,12);
  assert.equal('shots' in r,false);
 });

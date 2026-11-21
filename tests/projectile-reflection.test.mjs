@@ -33,12 +33,13 @@ test('a shot only destroys active hostile projectiles; bodies and ground structu
  assert.equal(r.defeatedEnemies,0);
 });
 
-test('a direct shot through the boss never lowers PV',()=>{
+test('a direct shot damages the boss once and is consumed',()=>{
  const r=scene();until(r,()=>r.boss.phase==='charge');
  const b=r.boss,hp=b.hp,pose=core.bossArenaPose(b,480);
  r.heroShots.push({x:pose.x-52,y:pose.platformY+48,radius:5,cancels:0,vx:850,vy:0,age:0,flightFor:.2,damage:30});
  for(let i=0;i<16;i++)core.advanceRun(r,dt);
- assert.equal(b.hp,hp);assert.ok(r.heroShots.some(o=>o.x>pose.x+20),'passing boss does not absorb the shot');
+ assert.ok(b.hp<hp);assert.equal(r.heroShots.length,0);const after=b.hp;
+ for(let i=0;i<60;i++)core.advanceRun(r,dt);assert.equal(b.hp,after,'the consumed shot cannot hit again');
 });
 
 test('starter shot relays an in-flight boss projectile, and damage occurs only on the return',()=>{
