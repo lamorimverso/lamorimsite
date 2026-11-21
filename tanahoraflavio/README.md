@@ -183,7 +183,7 @@ O sprite de cada inimigo não desenha mais uma cópia de sua arma. Chefões e co
 ## Correção da postura e do jacaré — 20/11/2026
 
 - A exigência de cinco ações de pular, documentada abaixo como histórico de 17/11, foi retirada. Na regra atual, a transformação do Zé Gotinha dura **dez segundos de tempo ativo**. O indicador mostra os segundos restantes, e Flávio recupera automaticamente a forma humana; W/↑, toque, mouse ou controle não aceleram o relógio. Os movimentos laterais e as ampolas já sinalizadas continuam ativos.
-- Agachamento e deslize apresentam a pose baixa desde a primeira atualização do comando. A entrada percorre quadros completos em intervalos definidos pelo tempo lógico, sem depender da taxa de quadros, enquanto a corrida preserva sua animação de oito passadas.
+- Agachamento mantém uma breve transição de silhueta antes da primeira pose baixa, evitando a troca brusca do corpo detectada em Canvas. O deslize usa sua sequência própria logo ao iniciar. As transições seguem duração definida pelo tempo lógico, sem depender da taxa de quadros, enquanto a corrida preserva sua animação de oito passadas.
 
 ## Recuperação do jacaré — 17/11/2026
 
