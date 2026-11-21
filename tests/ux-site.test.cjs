@@ -43,6 +43,7 @@ async function open({instrument=false,instrumentAudio=false,instrumentCasting=fa
  if(instrumentSprites){
   const source=await fs.readFile(path.resolve(__dirname,'../tanahoraflavio/runner-sprites.mjs'),'utf8');
   await context.route('**/runner-sprites.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+`
+import {imageComponents,facePixel} from '../tools/hero-image-components.mjs';
 const drawOriginal=drawSpriteActor;
 const readHeroPixels=(args,output)=>{
  const g=new OffscreenCanvas(360,360).getContext('2d'),pivot=60,floor=104;
@@ -53,9 +54,11 @@ const readHeroPixels=(args,output)=>{
  let headLeft=360,headRight=-1;
  for(let y=top+5;y<=top+38;y++)for(let x=left;x<=right;x++)if(data[(y*360+x)*4+3]>128){headLeft=Math.min(headLeft,x);headRight=Math.max(headRight,x);}
  output.headWidth=(headRight-headLeft+1)/3;
+ output.faceWidth=imageComponents(data,360,360,facePixel)[0].width/3;
+ output.fullStandingHeight=94*args.scale;
  output.torsoRows=0;
- for(let y=-26;y<=-17;y++){
-  let purple=0;for(let x=-24;x<2;x++){
+ for(let y=-32;y<=-17;y++){
+  let purple=0;for(let x=-40;x<10;x++){
    const i=(Math.round((floor+y)*3)*360+Math.round((pivot+x)*3))*4;
    const [r,g,b,a]=data.slice(i,i+4);if(a>128&&r>35&&b>r*.95&&b>g*1.3)purple++;
   }
@@ -66,7 +69,7 @@ drawSpriteActor=(c,args)=>{
  const rows=(globalThis.__actorMotion??=[]),row={type:args.type,facing:args.facing,frame:spriteFrameFor(args.type,args)?.index};
  if(globalThis.__measureHero&&args.type==='flavio'){
   const p=globalThis.__testRun?.player,last=rows.at(-1);
-  row.stance=p?.sliding?'slide':p?.crouching?'crouch':'run';row.y=args.y;row.shooting=!!args.slideShot;
+  row.standing=!!args.standing;row.stance=p?.sliding?'slide':p?.crouching?'crouch':'run';row.y=args.y;row.shooting=!!args.slideShot;
   row.bend=args.crouchPose??0;row.skid=args.slidePose??0;row.travel=args.slidePhase??0;row.action=heroActionFrameFor(args);
   row.sample=row.stance==='slide'?(row.skid>.91?'slide':row.skid>=.38?'slide-in':'unstable'):
    row.stance==='crouch'?(row.skid>.14?'slide-out':row.bend>.9?'crouch':row.bend>=.32?'crouch-in':'unstable'):
@@ -143,19 +146,20 @@ for(const remapped of [false,true])test(`crouch-forward draws a distinct extende
   assert.equal(running.action,null,'corrida mantém suas ilustrações originais');
   assert.ok(descending.action>=0&&descending.action<2&&crouch.action>=2&&crouch.action<=3,'abaixar tem uma sequência própria');
   assert.ok(entry.action===4&&slideIn.action===5&&slide.action===6,'deslizar tem carga, extensão e chegada ao quadro comprido');
-  assert.ok(entry.height<=51&&entry.torsoRows>=6&&entry.width<slideIn.width,'a entrada tem tronco visível e a perna ainda recolhida');
+  assert.ok(entry.height<=running.fullStandingHeight&&entry.torsoRows>=6&&entry.width<slideIn.width,'a entrada tem tronco visível e a perna ainda recolhida');
   assert.ok(crouch.height>=51&&running.height>crouch.height+12,'o joelho dobra sem encolher o herói: '+JSON.stringify({running,crouch}));
-  assert.ok(descending.height>crouch.height+4&&descending.height<running.height,'a queda passa pela dobra intermediária: '+JSON.stringify({running,descending,crouch}));
-  assert.ok(slide.height>=38&&slide.height<=51&&slide.height<crouch.height-2,'o deslize baixa mais que o agachamento: '+JSON.stringify({slide,crouch}));
+  assert.ok(descending.height>crouch.height+4&&descending.height<=running.fullStandingHeight+1,'a queda passa pela dobra intermediária: '+JSON.stringify({running,descending,crouch}));
+  assert.ok(slide.height>=38&&slide.height<=70&&slide.height<crouch.height-2,'o deslize baixa mais que o agachamento: '+JSON.stringify({slide,crouch}));
   assert.ok(crouch.headWidth>=running.headWidth*.83&&crouch.headWidth<=running.headWidth*1.20,'o agachamento original mantém a cabeça');
-  assert.ok(slide.headWidth>=26&&slide.headWidth<slide.height*.8&&slide.torsoRows>=6,'a nova pose mostra rosto e tronco, sem virar uma faixa horizontal: '+JSON.stringify(slide));
+  assert.ok(slide.torsoRows>=6,'o deslize mantém o tronco desenhado: '+JSON.stringify(slide));
+  for(const low of [crouch,slide])assert.ok(low.faceWidth>=running.faceWidth*.95&&low.faceWidth<=running.faceWidth*1.05,'agachar e deslizar não encolhem o personagem: '+JSON.stringify({running,low}));
   assert.ok(slideIn.width>crouch.width+2&&slideIn.width<slide.width,'a perna estende progressivamente: '+JSON.stringify({slideIn,slide,crouch}));
   assert.ok(slide.width>=crouch.width+8,`a perna projetada alonga a silhueta: ${JSON.stringify({slide,crouch})}`);
   assert.ok(Math.abs(slide.sole)<=1.5&&slide.y===crouch.y,'as solas permanecem apoiadas no mesmo piso');
   await page.keyboard.press('j');
   await page.waitForFunction(()=>__actorMotion.some(p=>p.stance==='slide'&&p.shooting&&p.width>0));
   const shot=await page.evaluate(()=>__actorMotion.find(p=>p.stance==='slide'&&p.shooting&&p.width>0));
-  assert.ok(shot.height<=51&&shot.y===slide.y&&Math.abs(shot.sole)<=1.5,'disparar preserva a postura e o contato com o solo');
+  assert.ok(shot.height<=70&&shot.y===slide.y&&Math.abs(shot.sole)<=1.5,'disparar preserva a postura e o contato com o solo');
   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
   await page.locator('#game').screenshot({path:path.resolve(__dirname,'../ux-captures/slide-'+(remapped?'remapped':'arrows')+'.png')});
   await page.keyboard.up(forward);
@@ -1681,5 +1685,32 @@ test('toc-toc aparece no navegador em todas as oito etapas da História',async()
    assert.equal(info.raid,info.stage);assert.ok(info.count>=1);assert.match(await page.locator('#game-raid-title').textContent(),/JOICE/);
   }
   assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`auto-run stops only in a boss duel and resumes after victory at ${viewport.width}px`,async()=>{
+ const {context,page,errors}=await open({instrument:true,instrumentSprites:true,viewport});
+ try{
+  await begin(page);
+  await page.evaluate(async()=>{
+   const r=__testRun,{nextStoryBossDistance}=await import('./runner-bosses.mjs');
+   for(const k of ['nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
+   r.terrain.nextAt=Infinity;r.obstacles=[];r.pickups=[];r.routeDistance=nextStoryBossDistance(0);r.nextBossAt=0;__measureHero=true;
+  });
+  await page.waitForFunction(()=>__testRun.boss&&!__testRun.boss.traversal&&__actorMotion.at(-1)?.standing);
+  const held=await page.evaluate(()=>({distance:__testRun.distance,elapsed:__testRun.elapsed}));
+  await page.waitForFunction(t=>__testRun.elapsed>t+.25,held.elapsed);
+  assert.equal(await page.evaluate(()=>__testRun.distance),held.distance,'duel stops the road without pausing combat');
+  await page.evaluate(()=>{__testRun.boss.hp=0;});
+  await page.waitForFunction(d=>!__testRun.boss&&__testRun.distance>d&&!__actorMotion.at(-1)?.standing,held.distance);
+  assert.equal(await page.evaluate(()=>__testRun.status),'running');
+  await page.evaluate(async()=>{
+   const r=__testRun,{nextStoryBossDistance}=await import('./runner-bosses.mjs');
+   r.bossesDefeated=8;r.routeDistance=nextStoryBossDistance(8);r.nextBossAt=0;r.bossCooldown=0;r.obstacles=[];r.pickups=[];
+  });
+  await page.waitForFunction(()=>__testRun.boss?.traversal);
+  const moving=await page.evaluate(()=>__testRun.distance);
+  await page.waitForFunction(d=>__testRun.distance>d+25&&!__actorMotion.at(-1)?.standing,moving);
+  assert.equal(await page.evaluate(()=>__testRun.status),'running');assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });

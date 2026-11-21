@@ -1,0 +1,20 @@
+{
+  "origin": "image_gen",
+  "editTarget": "user-selected image-edit-target-c3546082d9ff4741.png",
+  "sourceSha256": "f747b8787bf45d87205c316be3d00949712eafd972ed271b2ea9f2d64488d044",
+  "purpose": "Natural rearward-reclined feet-first slides with anatomical scale calibrated to the running character; no normalization by overall posture height.",
+  "layout": {
+    "columns": 4,
+    "rows": 2
+  },
+  "runtimeFrames": {
+    "4": 1,
+    "5": 2,
+    "6": 3,
+    "10": 5,
+    "11": 6
+  },
+  "targetFacePixelsAtDensity3": 119,
+  "normalization": "Each complete figure scales uniformly to the same facial landmark size; soles share a ground baseline. Original crouch figures use the same anatomical reference.",
+  "promptSummary": "Edit the selected sprite sheet into an attractive classic action-game feet-first skid. Keep the top-left upright and bottom-left passport crouch reference figures unchanged. Redraw the other six sliding figures with correct reclined anatomy: head and shoulders behind the hips at left; hip ahead at right; torso leaning back about 60 degrees from vertical, with a visible neck and a thick diagonal chest between head and hip. One heel extends forward and the other knee bends. Keep head, hand, shoe size and limb thickness at the upright character scale. Three passport slide stages and three blaster release/recoil/follow-through stages. Same original Flavio face, purple suit, white shirt, yellow tie, brown hair, black shoes, four columns by two rows, transparent RGBA. No cropping, shrinking, background, text, grid, shadows, particles or muzzle flashes."
+}

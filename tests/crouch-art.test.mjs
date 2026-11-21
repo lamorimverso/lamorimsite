@@ -49,6 +49,6 @@ test('crouched firing uses the illustrated IVER barrel for physical release in b
    const i=(y*info.width+x)*4;if(data[i+3]>128&&data[i+2]>data[i+1]*1.15)barrel=true;
   }
   assert.ok(barrel,'measured muzzle touches the actual purple barrel');
-  if(frame===2)assert.deepEqual(heroShotPose({age:0,crouching:true,facing}).muzzle,g.muzzle);
+  if(frame===2){const {heroActionMuzzleFor}=await import('../tanahoraflavio/runner-hero-actions.mjs');assert.deepEqual(heroShotPose({age:0,crouching:true,facing}).muzzle,heroActionMuzzleFor('release',facing,false));}
  }
 });

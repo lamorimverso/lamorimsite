@@ -1,9 +1,8 @@
 // 12 complete illustrated poses, registered on the same shoe baseline.
-const WIDTH=336,HEIGHT=258,DENSITY=3,X=168,GROUND=246;
-export {heroActionsDefinition} from './runner-hero-actions-data.mjs?v=9b4ab8b1e2c7';
-import {slideActionMuzzles} from './runner-hero-actions-data.mjs?v=9b4ab8b1e2c7';
-export function heroActionMuzzleFor(state='release',facing=1){
- const p=slideActionMuzzles[state==='recoil'?1:0];return {x:p.x*(facing<0?-1:1),y:p.y};
+export {heroActionsDefinition} from './runner-hero-actions-data.mjs?v=6cd4d142b6b6';
+import {heroActionLayout,crouchActionMuzzles,slideActionMuzzles} from './runner-hero-actions-data.mjs?v=6cd4d142b6b6';
+export function heroActionMuzzleFor(state='release',facing=1,sliding=true){
+ const p=(sliding?slideActionMuzzles:crouchActionMuzzles)[state==='recoil'?1:0];return {x:p.x*(facing<0?-1:1),y:p.y};
 }
 
 // Do not interpolate or mix drawings. Squat and skid each have their own
@@ -37,6 +36,7 @@ export function heroActionFrameFor({type='flavio',airborne=false,hurt=false,land
 }
 
 export function drawHeroAction(context,image,frame,{x,y,scale,alpha,facing}){
+ const {width:WIDTH,height:HEIGHT,density:DENSITY,x:X,ground:GROUND}=heroActionLayout;
  const factor=scale/(.95*DENSITY);
  context.save();context.globalAlpha*=alpha;context.translate(x,y);
  context.scale(facing===-1?-1:1,1);context.imageSmoothingEnabled=true;
