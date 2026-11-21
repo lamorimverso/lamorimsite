@@ -16,7 +16,7 @@ function scene(seed=32,width=480){
 test('the first boss stops travel and stride while combat time and movement stay live; victory resumes running',()=>{
  const r=scene(),distance=r.distance,route=r.routeDistance,age=r.boss.age,x=r.player.x;
  core.moveRun(r,-1);for(let i=0;i<80;i++)core.advanceRun(r,dt);
- assert.equal(r.distance,distance);assert.equal(r.routeDistance,route);assert.equal(heroStridePhase(r),0);
+ assert.equal(r.distance,distance);assert.equal(r.routeDistance,route);assert.ok(heroStridePhase(r)>0);
  assert.ok(r.boss.age>age);assert.ok(r.player.x<x);assert.equal(core.jumpRun(r),true);
  r.boss.hp=0;core.advanceRun(r,dt);assert.equal(r.boss,null);
  core.advanceRun(r,dt);assert.ok(r.distance>distance);assert.ok(r.routeDistance>route);assert.ok(heroStridePhase(r)>0);
@@ -30,7 +30,7 @@ test('normal firing can hit Ana Elisa directly before the first hostile projecti
   assert.equal(r.shotsFired,1);
  }
 });
-test('Galaga-style sweeps vary by run, remain continuous and preserve the mobile combat corridor',()=>{
+test('hovering bosses vary their routes and leave a wider mobile action arena',()=>{
  const paths=[];
  for(const seed of [12,34]){
   const r=scene(seed),b=r.boss;const points=[];
@@ -40,7 +40,7 @@ test('Galaga-style sweeps vary by run, remain continuous and preserve the mobile
    if(i)assert.ok(Math.hypot(p.x-points[i-1].x,p.platformY-points[i-1].platformY)<5,'no teleport at a flight boundary');
   }
   assert.equal(r.status,'running','the sampled fight remains live across flight boundaries');
-  const x=points.slice(150).map(p=>p.x);assert.ok(Math.max(...x)-Math.min(...x)>100);
+  const x=points.slice(150).map(p=>p.x);assert.ok(Math.max(...x)-Math.min(...x)>60);
   const desktop=core.bossArenaPose(b,900),mobile=core.bossArenaPose(b,480);assert.ok(Math.abs(desktop.x-mobile.x-420)<1e-8);assert.equal(desktop.platformY,mobile.platformY);
   b.reducedMotion=true;const fixed=core.bossArenaPose(b,480);b.age+=5;assert.deepEqual(core.bossArenaPose(b,480),fixed);
   paths.push(points);

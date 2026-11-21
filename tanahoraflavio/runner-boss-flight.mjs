@@ -15,6 +15,8 @@ export function bossFlightPose(boss,width,identity){
  const dive=(variant<2?36:44)*envelope;
  const rise=variant<2?Math.sin(angle)*7:Math.sin(angle*2)*6;
  const arrival=boss.phase==='intro'?Math.max(0,1-age/1.1)**3:0;
- return {x:width-135+patrol+crossing+loop+arrival*155,
+ // Reserve the right-hand stage for the enemy; the player now has room for
+ // a full left/right slide on narrow screens without passing the muzzle.
+ return {x:Math.max(width-132,Math.min(width-52,width-100+(patrol+crossing+loop)*.72))+arrival*155,
   platformY:65+Math.sin(t*identity.yRate+identity.offset)*4+dive+rise*envelope-arrival*20};
 }

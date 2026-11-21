@@ -1,28 +1,28 @@
 import {HERO_MAX_HP,playerBodyFor} from './runner-body.mjs?v=57ec474fca38';
 import {createMovementSkills,movementProfileFor,rewardMovementVictory} from './runner-movement-skills.mjs?v=d0ad734b4838';
 export {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
-export {terrainProfileFor} from './runner-terrain.mjs?v=fdd6cfe24689';
-import {TERRAIN,createTerrain,beginTerrain,beginGroundLesson,beginAirTransfer,aircraftHitFor,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer} from './runner-terrain.mjs?v=fdd6cfe24689';
-export {terrainSupportAt} from './runner-terrain.mjs?v=fdd6cfe24689';
+export {terrainProfileFor} from './runner-terrain.mjs?v=fb8a047c0ab1';
+import {TERRAIN,createTerrain,beginTerrain,beginGroundLesson,beginAirTransfer,aircraftHitFor,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer} from './runner-terrain.mjs?v=fb8a047c0ab1';
+export {terrainSupportAt} from './runner-terrain.mjs?v=fb8a047c0ab1';
 import {stageRosterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 import {groundRhythmFor,groundStyleFor} from './runner-ground-rhythm.mjs?v=c282904db6c6';
 import {ROUTE_AMMO,advanceAmmo,addShieldPart} from './runner-supplies.mjs?v=44c67e8a5802';
-import {heroPowerFor,grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=432ca45a76e4';
-export {grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=432ca45a76e4';
+import {heroPowerFor,grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
+export {grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
 import {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=c4fcfde513ff';
 export {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=740e8ab135c4';
-import {combatGeometryFor} from './runner-combat-geometry.mjs?v=d4ae32a5a1d7';
+import {combatGeometryFor} from './runner-combat-geometry.mjs?v=bb7820d6e288';
 import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
-import {HERO_SHOT_DURATION,heroShotPose} from './runner-hero-shot.mjs?v=45efb23b579e';
-import {regularCastMuzzle} from './runner-cast-pose.mjs?v=6c23ca8e107c';
+import {HERO_SHOT_DURATION,DUEL_CHARGE_SECONDS,heroShotPose} from './runner-hero-shot.mjs?v=7aa1e19e9838';
+import {regularCastMuzzle} from './runner-cast-pose.mjs?v=8f2c5aee1585';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=d3b6a81b34b9';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
-import {BOSS_ARENA_RESERVE,BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,optionalStoryBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=a9040a7a6713';
-export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=a9040a7a6713';
-export {bossArenaPose} from './runner-bosses.mjs?v=a9040a7a6713';
+import {BOSS_ARENA_RESERVE,BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,optionalStoryBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=2ba55b5361ff';
+export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=2ba55b5361ff';
+export {bossArenaPose} from './runner-bosses.mjs?v=2ba55b5361ff';
 // Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
-import {bossStopsAutoRun} from './runner-drawn-motion.mjs?v=e6447a8a30cc';
+import {bossStopsAutoRun} from './runner-drawn-motion.mjs?v=0d1971800c55';
 export const WORLD = Object.freeze({width:900,height:300,ground:246});
 // Envelope de todas as poses no atlas a .95 de escala, incluindo o agachamento.
 // A mesma margem serve ao jacaré e evita deslocar o herói ao trocar de postura.
@@ -168,7 +168,8 @@ const announce = (run,text) => {run.event=text;run.events++;};
 const assistance = run => run.assisted ? .82 : 1;
 // Primeiro contato horizontal usa o mesmo recuo de 3 px da colisão abaixo.
 export const playerX = run => Number.isFinite(run.player.x)?run.player.x:PLAYER.x;
-export const playerBounds = run => ({min:-PLAYER.visualLeft,max:visibleWidth(run)-(run.boss?.combat&&run.boss.phase!=='intro'?BOSS_ARENA_RESERVE:PLAYER.visualRight)});
+const arenaReserve=run=>run.boss?.traversal?326:BOSS_ARENA_RESERVE;
+export const playerBounds = run => ({min:-PLAYER.visualLeft,max:visibleWidth(run)-(run.boss?.combat&&run.boss.phase!=='intro'?arenaReserve(run):PLAYER.visualRight)});
 const frontContact = run => playerX(run)+PLAYER.width-6;
 const REACTION_GAP = .82;
 // A full marked-lane escape can close opposing contacts by almost a second
@@ -179,6 +180,7 @@ const JUMP_BUFFER_SECONDS = .12;
 const EDGE_JUMP_GRACE = .08;
 const JACARE_ENTRY_GRACE = .60;
 const LATERAL_SPEED = 230;
+export {DUEL_CHARGE_SECONDS} from './runner-hero-shot.mjs?v=7aa1e19e9838';
 const isJacareAmpoule=o=>o.falling&&o.owner==='pfizer'&&o.type==='pfizer-ampoule';
 const hasJacareVolley=run=>run.obstacles.some(isJacareAmpoule);
 const JACARE_RESTORE_GRACE = .55;
@@ -267,7 +269,7 @@ export function createRun({assisted=false,seed,mode='endless',practiceId}={}) {
   randomState:seed===undefined?null:Number(seed)>>>0,
   damageRandomState:seed===undefined?null:(Number(seed)^0x9e3779b9)>>>0,
   ballot:{digits:'',message:''},
-  event:'',events:0,movementSkills:createMovementSkills(),lastSkillReward:null,terrain:createTerrain(),player:{airJumpsUsed:0,grounded:true,supportY:0,sliding:false,slideRemaining:0,slideLatched:false,x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareProgress:0,jacareAge:0,nextJacareThreat:0,restoreFlashFor:0,coyoteUntil:0,jumpBufferedUntil:0,attackHeld:false,attackFor:0,attackCooldown:0,shotFacing:1,hp:HERO_MAX_HP,maxHp:HERO_MAX_HP,recoveryPending:false,terrainContact:null},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ammo:ROUTE_AMMO,ammoIdleFor:0,ammoReloadFor:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
+  event:'',events:0,movementSkills:createMovementSkills(),lastSkillReward:null,terrain:createTerrain(),player:{airJumpsUsed:0,grounded:true,supportY:0,sliding:false,slideRemaining:0,slideLatched:false,x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareProgress:0,jacareAge:0,nextJacareThreat:0,restoreFlashFor:0,coyoteUntil:0,jumpBufferedUntil:0,attackHeld:false,chargeFor:0,arenaTravel:0,attackFor:0,attackCooldown:0,shotFacing:1,hp:HERO_MAX_HP,maxHp:HERO_MAX_HP,recoveryPending:false,terrainContact:null},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ammo:ROUTE_AMMO,ammoIdleFor:0,ammoReloadFor:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,recoveryReadyAt:0,shieldFor:0,graceFor:0,reserveShields:0,allyShieldProgress:0,allyHelpCount:0,
   lastPickup:null,lastTraversalBlock:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,phantomCloud:null,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:practice?startDistance:null,bossCooldown:0,
@@ -459,10 +461,11 @@ export function jumpRun(run){
 }
 export function clearRunInput(run){
  run.player.moveHeld=0;run.player.crouchHeld=false;run.player.crouching=false;run.player.sliding=false;run.player.slideRemaining=0;run.player.slideLatched=false;run.player.jumpBufferedUntil=run.player.coyoteUntil=0;
- run.player.attackHeld=false;
+ run.player.attackHeld=false;run.player.chargeFor=0;
 }
 export function setAttackRun(run,active){
  run.player.attackHeld=!!active&&run.status==='running'&&!run.player.isJacare&&!run.boss?.traversal;
+ if(!run.player.attackHeld)run.player.chargeFor=0;
  return run.player.attackHeld;
 }
 export function heroMuzzleFor(run,facing=1){
@@ -538,8 +541,10 @@ function aimAtBoss(run,power){
 }
 export function attackRun(run){
  const b=run.boss,p=run.player,power=heroPowerFor(run),level=run.powerLevels?.[run.activePower]||1;
- if(run.status!=='running'||!(run.ammo>0)||p.isJacare||b?.traversal||b?.phase==='intro'||p.attackCooldown>0||(run.heroShots?.length||0)>=18)return false;
- const target=aimAtProjectile(run,power)||aimAtBoss(run,power);
+ const charged=!!b?.combat&&!b.traversal&&p.attackHeld&&(p.chargeFor||0)>=DUEL_CHARGE_SECONDS-1e-8&&run.ammo>=2;
+ if(run.status!=='running'||!(run.ammo>0)||p.isJacare||b?.traversal||b?.phase==='intro'||p.attackCooldown>0&&!charged||(run.heroShots?.length||0)>=18)return false;
+ const ammoCost=charged?2:1;
+ const target=b?.combat?aimAtBoss(run,power)||aimAtProjectile(run,power):aimAtProjectile(run,power)||aimAtBoss(run,power);
  p.shotFacing=target?.facing??1;
  const {x,y}=heroMuzzleFor(run,p.shotFacing),targetX=target?.x??x+p.shotFacing*160,targetY=target?.y??y;
  const dx=p.shotFacing*Math.max(1,(targetX-x)*p.shotFacing),dy=targetY-y,distance=Math.max(1,Math.hypot(dx,dy)),angle=Math.atan2(dy,dx);
@@ -548,9 +553,10 @@ export function attackRun(run){
   const vx=Math.cos(angle+spread)*power.speed,vy=Math.sin(angle+spread)*power.speed;
   (run.heroShots??=[]).push({type:run.activePower==='ivermectina'?'hero-ivermectina':power.projectiles?.[i]||power.projectile,powerId:run.activePower,
    behavior:power.behavior,x,y:y+offset,originX:x,originY:y+offset,previousX:x,previousY:y+offset,vx,vy,age:0,flightFor:Math.max(.15,distance/power.speed),
-   radius:power.radius,cancels:power.cancels,damage:power.damage*(1+(level-1)*.12)});
+   radius:power.radius+(charged?4:0),cancels:power.cancels+(charged?1:0),damage:power.damage*(1+(level-1)*.12)*(charged?2.1:1),charged,ammoCost});
  }
- run.ammo--;run.ammoIdleFor=0;run.ammoReloadFor=0;
+ run.ammo-=ammoCost;run.ammoIdleFor=0;run.ammoReloadFor=0;
+ if(charged){p.chargeFor=0;p.chargedFlashFor=.22;}
  p.attackCooldown=power.cooldown*(1-(level-1)*.06);p.attackFor=HERO_SHOT_DURATION;run.shotsFired=(run.shotsFired||0)+1;return true;
 }
 function segmentHitsBox(shot,minX,maxX,minY,maxY,radius=0){
@@ -614,12 +620,16 @@ function advanceReflectedProjectile(run,o,dt){
 function advanceHeroShots(run,dt){
  const p=run.player;p.attackCooldown=Math.max(0,(p.attackCooldown||0)-dt);p.attackFor=Math.max(0,(p.attackFor||0)-dt);
  advanceAmmo(run,dt);
+ const charging=run.boss?.combat&&!run.boss.traversal&&run.boss.phase!=='intro'&&p.attackHeld&&!p.isJacare&&run.ammo>=2;
+ p.chargeFor=charging?Math.min(DUEL_CHARGE_SECONDS,(p.chargeFor||0)+dt):0;
+ p.chargedFlashFor=Math.max(0,(p.chargedFlashFor||0)-dt);
  if(p.attackHeld)attackRun(run);
  run.heroShots=(run.heroShots||[]).filter(shot=>{
   shot.previousX=shot.x;shot.previousY=shot.y;shot.age+=dt;
   if(shot.behavior==='homing'){
-   const target=run.obstacles.filter(isHostileProjectile).sort((a,b)=>Math.hypot(a.x+a.width/2-shot.x,a.y-shot.y)-Math.hypot(b.x+b.width/2-shot.x,b.y-shot.y))[0];
-   if(target){const dx=target.x+target.width/2-shot.x,dy=target.y-shot.y,d=Math.max(1,Math.hypot(dx,dy)),k=Math.min(1,dt*4);shot.vx+=(dx/d*540-shot.vx)*k;shot.vy+=(dy/d*540-shot.vy)*k;}
+   const boss=run.boss,pose=boss?.combat&&!boss.traversal&&boss.hp>0?bossArenaPose(boss,visibleWidth(run)):null;
+   const target=pose?{x:pose.x,y:pose.platformY+48}:run.obstacles.filter(isHostileProjectile).sort((a,b)=>Math.hypot(a.x+a.width/2-shot.x,a.y-shot.y)-Math.hypot(b.x+b.width/2-shot.x,b.y-shot.y))[0];
+   if(target){const dx=target.x+(target.width||0)/2-shot.x,dy=target.y-shot.y,d=Math.max(1,Math.hypot(dx,dy)),k=Math.min(1,dt*4);shot.vx+=(dx/d*540-shot.vx)*k;shot.vy+=(dy/d*540-shot.vy)*k;}
   }
   if(shot.behavior==='return'&&shot.age>shot.flightFor*1.2&&!shot.returned){shot.vx=-shot.vx;shot.vy=-shot.vy*.5;shot.returned=true;}
   shot.x+=shot.vx*dt;
@@ -639,7 +649,8 @@ function advanceHeroShots(run,dt){
    // including wave/fan powers; rebounding a hostile shot remains stronger.
    if(segmentHitsBox(shot,pose.x-30,pose.x+30,pose.platformY+8,pose.platformY+100,radius)){
     const weakness=boss.weakness===shot.powerId;
-    const hit=rollBossDamage(run,Math.max(1.5,boss.maxHp*.075)*Math.max(.84,Math.min(1.55,shot.damage||1))*(weakness?1.35:1));
+    const opening=boss.combat?Math.min(2.2,bossCounterWindow(boss).damage):1;
+    const hit=rollBossDamage(run,Math.max(1.5,boss.maxHp*.075)*Math.max(.84,Math.min(shot.charged?3.1:1.55,shot.damage||1))*(weakness?1.35:1)*opening);
     applyBossHit(boss,{...hit,weakness});return false;
    }
   }
@@ -855,7 +866,7 @@ function resolveBossDodges(run){
  if(storyVolleyPendingVictory(boss))return;
  if(!boss.combat&&boss.hp>0&&run.obstacles.some(o=>o.reflected&&!o.destroyed&&o.reflection?.boss===boss))return;
  if(!boss.traversal)grantBossPower(run,boss.type);run.lastBoss=boss.type;run.boss=null;run.ammo=Math.min(ROUTE_AMMO,run.ammo);run.bossesDefeated++;rewardMovementVictory(run,boss);run.bossCooldown=4;
- run.heroShots=[];run.player.attackHeld=false;run.obstacles=[];
+ run.heroShots=[];run.player.attackHeld=false;run.player.chargeFor=0;run.obstacles=[];
  if(run.practice){run.status='won';run.nextBossAt=Infinity;clearRunInput(run);announce(run,'Desafio opcional concluído.');return;}
  if(run.mode==='story'&&run.bossesDefeated>=STORY_BOSS_COUNT){
   run.status='ballot';run.nextBossAt=Infinity;run.obstacles=[];run.pickups=[];run.phantomCloud=null;
@@ -1075,10 +1086,12 @@ export function advanceRun(run,seconds,rng){
  run.player.previousX=playerX(run);
  const bounds=playerBounds(run);
  if(run.boss?.activeGust){const gust=run.boss.activeGust;run.player.x=Math.max(bounds.min,Math.min(bounds.max,playerX(run)+gust.direction*gust.strength*dt));gust.remaining-=dt;if(gust.remaining<=0)run.boss.activeGust=null;}
- advanceSlide(run,dt,!run.boss&&!run.raid&&!run.player.isJacare&&!(run.mode==='story'&&storyApproachAt(run.routeDistance,run.bossesDefeated)));
+ const duel=run.boss?.combat&&!run.boss.traversal&&run.boss.phase!=='intro';
+ advanceSlide(run,dt,!!duel||!run.boss&&!run.raid&&!run.player.isJacare&&!(run.mode==='story'&&storyApproachAt(run.routeDistance,run.bossesDefeated)));
  const moveSpeed=run.player.sliding?TERRAIN.slideSpeed:LATERAL_SPEED*(run.aid?.kind==='encourage'?1.2:1);
- const entering=run.boss?.combat&&run.boss.phase==='intro'&&playerX(run)>visibleWidth(run)-BOSS_ARENA_RESERVE;
- run.player.x=entering?Math.max(visibleWidth(run)-BOSS_ARENA_RESERVE,playerX(run)-230*dt):Math.max(bounds.min,Math.min(bounds.max,playerX(run)+(run.player.moveHeld||0)*moveSpeed*dt));
+ const entering=run.boss?.combat&&run.boss.phase==='intro'&&playerX(run)>visibleWidth(run)-arenaReserve(run);
+ run.player.x=entering?Math.max(visibleWidth(run)-arenaReserve(run),playerX(run)-230*dt):Math.max(bounds.min,Math.min(bounds.max,playerX(run)+(run.player.moveHeld||0)*moveSpeed*dt));
+ if(bossStopsAutoRun(run)&&run.player.moveHeld)run.player.arenaTravel=(run.player.arenaTravel||0)+Math.abs(run.player.x-run.player.previousX);
  advanceAllies(run,dt);
  if(run.player.isJacare){
   const p=run.player;

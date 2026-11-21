@@ -87,8 +87,10 @@ export function terrainSupportAt(run,x,halfWidth=0){
  return a.gaps.some(s=>x-halfWidth>s.x&&x+halfWidth<s.x+s.width)?null:0;
 }
 export function advanceSlide(run,dt,allowed){
- const p=run.player,wants=allowed&&p.grounded!==false&&p.velocity===0&&p.crouchHeld&&p.moveHeld>0;
- if(!p.crouchHeld||p.moveHeld<=0)p.slideLatched=false;
+ const p=run.player,duel=!!run.boss&&!run.boss.traversal;
+ const moving=duel?p.moveHeld!==0:p.moveHeld>0;
+ const wants=allowed&&p.grounded!==false&&p.velocity===0&&p.crouchHeld&&moving;
+ if(!p.crouchHeld||!moving)p.slideLatched=false;
  if(!wants){p.sliding=false;p.slideRemaining=0;return;}
  if(!p.sliding&&!p.slideLatched){p.sliding=true;p.slideLatched=true;p.slideRemaining=TERRAIN.slideFor;}
  if(p.sliding){p.slideRemaining=Math.max(0,p.slideRemaining-dt);if(p.slideRemaining<=1e-8)p.sliding=false;}

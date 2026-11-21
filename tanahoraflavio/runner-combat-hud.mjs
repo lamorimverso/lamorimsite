@@ -1,10 +1,10 @@
 import {createPresentationDOM} from './runner-presentation-cache.mjs?v=4712d27109dc';
 import {ammoCapacityFor} from './runner-supplies.mjs?v=44c67e8a5802';
-import {heroPowerFor} from './runner-earned-powers.mjs?v=432ca45a76e4';
-import {drawSpriteHead,drawCombatSprite} from './runner-sprites.mjs?v=9528143bbe4b';
-import {drawHeroProjectile} from './runner-hero-shot.mjs?v=45efb23b579e';
+import {heroPowerFor} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
+import {drawSpriteHead,drawCombatSprite} from './runner-sprites.mjs?v=d315d90b4c8a';
+import {drawHeroProjectile,DUEL_CHARGE_SECONDS} from './runner-hero-shot.mjs?v=7aa1e19e9838';
 
-import {drawCampaignPortrait} from './runner-campaign-art.mjs?v=eb6334d566d4';
+import {drawCampaignPortrait} from './runner-campaign-art.mjs?v=700c55ebad49';
 
 // DOM meters retain keyboard/touch controls and accessible values over the track.
 const clamp=value=>Math.max(0,Math.min(1,value));
@@ -39,7 +39,9 @@ export function updateCombatHUD(run,{spritesReady=false,controlLabels={power:'T'
  ui.attr(charge,'aria-label','Munição de '+weapon.name);
  meter(ui,charge,ammo,capacity,ammo+' de '+capacity+' tiros · '+(run.boss?(run.player.attackHeld?'Solte o disparo para recarregar':'Recarrega ao parar de atirar'):'Reponha munição com ajudantes'));
  ui.style(charge,'--meter-color',weapon.color);
- ui.prop('game-power-loadout','title',weapon.name+' · nível '+level+' · '+weapon.description+' · '+controlLabels.power+' troca a arma');
+ ui.style('game-power-loadout','--shot-charge',100*clamp((run.player.chargeFor||0)/DUEL_CHARGE_SECONDS)+'%');
+ ui.data('game-power-loadout','charging',run.player.chargeFor>0);
+ ui.prop('game-power-loadout','title',weapon.name+' · nível '+level+' · '+weapon.description+' · '+controlLabels.power+' troca a arma'+(run.boss?.combat&&!run.boss.traversal?' · Segure o disparo: carga automática a cada 1,1 s, custa 2 tiros. Solte para recarregar.':''));
  ui.text('game-weapon-level',ammo+'/'+capacity);
  const reserve=$('game-reserve-shield'),ready=run.reserveShields>0,guarded=run.shieldFor>0;
  const shieldText=ready?(guarded?'Escudo guardado; aguarde a proteção atual terminar':run.reserveShields+' escudos prontos; usar com '+controlLabels.shield+' ou toque'):'Escudo: '+run.allyShieldProgress+'/6 ajudas';

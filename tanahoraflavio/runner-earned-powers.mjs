@@ -36,7 +36,7 @@ export function grantBossPower(run,id){
 }
 export function equipHeroPower(run,id){
  if(run.status!=='running'||!run.ownedPowers?.includes(id)||!HERO_POWERS[id])return false;
- run.activePower=id;if(run.player)run.player.attackHeld=false;return true;
+ run.activePower=id;if(run.player){run.player.attackHeld=false;run.player.chargeFor=0;}return true;
 }
 export function cycleHeroPower(run){
  const list=run.ownedPowers||['ivermectina'],index=list.indexOf(run.activePower);
