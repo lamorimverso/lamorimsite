@@ -19,15 +19,17 @@ export function heroActionFrameFor({type='flavio',airborne=false,hurt=false,land
  if(slideShot&&slideShot.state!=='recover')return (sliding||slidePose>.5?10:8)+(slideShot.state==='recoil'?1:0);
  if(sliding){
   if(reducedMotion)return 6;
-  if(slidePose>.18){
-   if(slidePhase>=.9)return 7;
-   if(slidePhase<.085)return 4;
-   if(slidePhase<.24||slidePose<.68)return 5;
-   return 6;
-  }
+  // O deslize precisa desenhar a entrada desde o primeiro frame físico.
+  // Antes, a primeira fração exibia corrida/agachamento enquanto a hitbox
+  // já deslizava por baixo da barreira.
+  if(slidePose<=.18||slidePhase<.085)return 4;
+  if(slidePhase>=.9)return 7;
+  if(slidePhase<.24||slidePose<.68)return 5;
+  return 6;
  }
  if(leaving)return 6;
- if(crouchPose<.16)return null;
+ // Mostra o primeiro quadro baixo no mesmo comando físico de agachar.
+ if(crouchPose<.16)return landing?0:null;
  if(reducedMotion)return 2;
  if(crouchPose<.40)return 0;
  if(crouchPose<.76)return 1;
