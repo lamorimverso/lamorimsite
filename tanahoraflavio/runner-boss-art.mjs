@@ -1,4 +1,5 @@
 import {drawCharacterBody,drawCharacterArm} from './runner-body-art.mjs?v=67badae0df52';
+import {drawPlatformRoom} from './runner-platform-room-art.mjs?v=344dcf5c7c31';
 import {drawBossonariHead} from './runner-character-art.mjs?v=220a271ead2e';
 import {standingEnemyPose} from './runner-cast-pose.mjs?v=8f2c5aee1585';
 export {standingEnemyPose} from './runner-cast-pose.mjs?v=8f2c5aee1585';
@@ -134,6 +135,8 @@ export function drawHoverEnemy(c,{type='haddad',x=0,y=0,scale=1,phase=0,preparin
 /** Keep the stage itself and only a faint combat line on the road. */
 export function drawBossArena(c,{width=900,ground=246,state='idle'}={}){
  if(!Number.isFinite(width)||width<=0||!Number.isFinite(ground))return;
+ drawPlatformRoom(c,{width,ground,state});
+ if(state?.traversal||state?.phase==='exit')return;
  const phase=typeof state==='string'?state:state?.phase;
  const intense=phase==='phase2'||!!state?.enraged;
  const color=phase==='charge'?'#b38d48':phase==='attack'?'#a9535e':phase==='recover'?'#599888':intense?'#a56076':'#627f8b';

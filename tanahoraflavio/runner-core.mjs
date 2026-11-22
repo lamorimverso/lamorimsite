@@ -1,5 +1,5 @@
-import {stageRouteTravel,RAID_HANDOFF_SECONDS,PAIR_RUN_DISTANCE,pairRunRemaining} from './runner-stage-director.mjs?v=7577a5c9c3c2';
-export {stagePlanFor} from './runner-stage-director.mjs?v=7577a5c9c3c2';
+import {stageRouteTravel,RAID_HANDOFF_SECONDS,PAIR_RUN_DISTANCE,pairRunRemaining} from './runner-stage-director.mjs?v=071886f07909';
+export {stagePlanFor} from './runner-stage-director.mjs?v=071886f07909';
 import {HERO_MAX_HP,playerBodyFor} from './runner-body.mjs?v=57ec474fca38';
 import {createMovementSkills,movementProfileFor,rewardMovementVictory} from './runner-movement-skills.mjs?v=d0ad734b4838';
 export {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
@@ -274,7 +274,7 @@ export function createRun({assisted=false,seed,mode='endless',practiceId}={}) {
   event:'',events:0,movementSkills:createMovementSkills(),lastSkillReward:null,terrain:createTerrain(),player:{airJumpsUsed:0,grounded:true,supportY:0,sliding:false,slideRemaining:0,slideLatched:false,x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareProgress:0,jacareAge:0,nextJacareThreat:0,restoreFlashFor:0,coyoteUntil:0,jumpBufferedUntil:0,attackHeld:false,chargeFor:0,arenaTravel:0,attackFor:0,attackCooldown:0,shotFacing:1,hp:HERO_MAX_HP,maxHp:HERO_MAX_HP,recoveryPending:false,terrainContact:null},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ammo:ROUTE_AMMO,ammoIdleFor:0,ammoReloadFor:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,recoveryReadyAt:0,shieldFor:0,graceFor:0,reserveShields:0,allyShieldProgress:0,allyHelpCount:0,
   lastPickup:null,lastTraversalBlock:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,phantomCloud:null,
-  boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:practice?startDistance:null,bossCooldown:0,storyLeg:null,
+  boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:practice?startDistance:null,bossCooldown:0,storyLeg:null,arenaExit:null,
   raid:null,nextRaid:null,raids:0,raidStages:{},raidStageCoverage:{},lastFact:-1,cameo:null,overheadCount:0,lastOverheadActor:null,
   seenOverheadActors:[],seenGroundActors:[],lastGroundActor:null,
   lastAction:null,actionStreak:0,attackStyles:[],nextAllyAt:14000,alliesMet:0,
@@ -461,6 +461,11 @@ export function jumpRun(run){
  }
  p.jumpBufferedUntil=p.coyoteUntil=0;p.crouching=false;p.sliding=false;p.slideRemaining=0;p.grounded=false;p.velocity=610;return true;
 }
+export function releaseJumpRun(run){
+ const p=run.player,b=run.boss;
+ if(run.status!=='running'||!b?.combat||b.traversal||p.isJacare||p.grounded||p.velocity<=260)return false;
+ p.velocity=260;return true;
+}
 export function clearRunInput(run){
  run.player.moveHeld=0;run.player.crouchHeld=false;run.player.crouching=false;run.player.sliding=false;run.player.slideRemaining=0;run.player.slideLatched=false;run.player.jumpBufferedUntil=run.player.coyoteUntil=0;
  run.player.attackHeld=false;run.player.chargeFor=0;
@@ -543,8 +548,9 @@ function aimAtBoss(run,power){
 }
 export function attackRun(run){
  const b=run.boss,p=run.player,power=heroPowerFor(run),level=run.powerLevels?.[run.activePower]||1;
+ const limit=b?.combat&&!b.traversal&&run.activePower==='ivermectina'?3:18;
  const charged=!!b?.combat&&!b.traversal&&p.attackHeld&&(p.chargeFor||0)>=DUEL_CHARGE_SECONDS-1e-8&&run.ammo>=2;
- if(run.status!=='running'||!(run.ammo>0)||p.isJacare||b?.traversal||b?.phase==='intro'||p.attackCooldown>0&&!charged||(run.heroShots?.length||0)>=18)return false;
+ if(run.status!=='running'||!(run.ammo>0)||p.isJacare||b?.traversal||b?.phase==='intro'||p.attackCooldown>0&&!charged||(run.heroShots?.length||0)>=limit)return false;
  const ammoCost=charged?2:1;
  const target=b?.combat?aimAtBoss(run,power)||aimAtProjectile(run,power):aimAtProjectile(run,power)||aimAtBoss(run,power);
  p.shotFacing=target?.facing??1;
@@ -746,6 +752,7 @@ function beginBoss(run){
  const encounter=run.mode==='story'?(run.practice||storyBossAt(run.bossesDefeated)):null;
  if(run.mode==='story'&&!encounter){run.nextBossAt=Infinity;return;}
  const type=encounter?.type||takeBoss(run);
+ run.arenaExit=null;
  run.storyLeg=null;
  const conf=encounter?{foe:{type,name:encounter.name,color:encounter.color},rule:encounter.role,level:encounter.rank,objective:encounter.objective,round:encounter.index+1,attacks:encounter.hp,interval:encounter.interval}:bossAtRound(run.bossesDefeated,type);
  run.boss={type:conf.foe.type,name:conf.foe.name,color:conf.foe.color,level:conf.level,supreme:conf.supreme,
@@ -872,6 +879,7 @@ function resolveBossDodges(run){
  if(storyVolleyPendingVictory(boss))return;
  if(!boss.combat&&boss.hp>0&&run.obstacles.some(o=>o.reflected&&!o.destroyed&&o.reflection?.boss===boss))return;
  if(!boss.traversal)grantBossPower(run,boss.type);run.lastBoss=boss.type;run.boss=null;run.ammo=Math.min(ROUTE_AMMO,run.ammo);run.bossesDefeated++;rewardMovementVictory(run,boss);run.bossCooldown=BOSS_RUN_INTERVAL;
+ if(boss.combat&&!boss.traversal&&!run.practice&&run.bossesDefeated<STORY_BOSS_COUNT)run.arenaExit={phase:'exit',age:0,duration:.65,color:boss.color,reducedMotion:run.reducedMotion===true};
  if(run.mode==='story'&&!run.practice&&boss.role==='map-boss')run.storyLeg={fromStage:boss.stageIndex,requiredDistance:PAIR_RUN_DISTANCE,groundDistance:0};
  run.heroShots=[];run.player.attackHeld=false;run.player.chargeFor=0;run.obstacles=[];
  if(run.practice){run.status='won';run.nextBossAt=Infinity;clearRunInput(run);announce(run,'Desafio opcional concluído.');return;}
@@ -1114,6 +1122,7 @@ export function advanceRun(run,seconds,rng){
  if(run.status!=='running'||!Number.isFinite(seconds)||seconds<=0)return;
  if(typeof rng!=='function')rng=run.randomState===null||run.randomState===undefined?Math.random:()=>{run.randomState=nextSeed(run.randomState);return run.randomState/4294967296;};
  const dt=Math.min(seconds,.05);run.elapsed+=dt;
+ if(run.arenaExit){run.arenaExit.age+=dt;if(run.arenaExit.age>=run.arenaExit.duration)run.arenaExit=null;}
  if(run.boss)run.boss.hurtFor=Math.max(0,(run.boss.hurtFor||0)-dt);
  if(run.lastSkillReward){run.lastSkillReward.remaining-=dt;if(run.lastSkillReward.remaining<=0)run.lastSkillReward=null;}
  if(run.lastPowerReward){run.lastPowerReward.remaining-=dt;if(run.lastPowerReward.remaining<=0)run.lastPowerReward=null;}

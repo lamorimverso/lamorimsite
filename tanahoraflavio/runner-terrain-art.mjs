@@ -1,4 +1,5 @@
 import {aircraftPoseFor} from './runner-terrain.mjs?v=4bbd5ce8e483';
+import {drawTileSurface} from './runner-platform-room-art.mjs?v=344dcf5c7c31';
 // Shapes use the same logical x and height-above-ground as traversal physics.
 // No collision state is changed here, and no asset allocation is needed per frame.
 const INK='#303747',STONE='#aebbb9',EDGE='#e7e8d8',SHADE='#657985';
@@ -55,8 +56,7 @@ function drawAirTerrain(c,a,ground,width){
  for(const p of a.platforms){
   const y=ground-p.y,edge=p.x+p.width;if(edge<-10||p.x>width+16)continue;
   const x=Math.max(-6,p.x),right=Math.min(edge,width+6),w=right-x;if(w<1)continue;
-  rect(c,x,y,w,10,'#7c96a3','#375068',2);line(c,x+2,y+1,right-2,y+1,'#eef7e6',2.5);
-  for(let k=Math.max(0,Math.ceil((-p.x)/28));k<Math.floor((right-p.x-7)/28);k++)line(c,p.x+8+k*28,y+7,p.x+15+k*28,y+4,'#4f6c80',1.1);
+  drawTileSurface(c,{x,y,width:w,height:10,originX:p.x});
   if(edge>=0&&edge<width+12)routeMarker(c,edge-25,y-30,'jump',.9);
  }
  for(const craft of f.aircraft){
@@ -114,6 +114,7 @@ export function drawTerrain(c,{terrain,ground=246,width=900}={}){
   if(active.lesson)routeMarker(c,x-30,y-27,'jump',.95);
   rect(c,x,y,w,Math.max(5,platform.y),STONE,INK,2);
   rect(c,x+3,y+6,w-6,Math.max(5,platform.y-8),'#899e9e',null,1);
+  drawTileSurface(c,{x,y,width:w,height:Math.max(5,platform.y),face:STONE,edge:'#526c78'});
   line(c,x+3,y+2,x+w-3,y+2,EDGE,2.5);
   line(c,x+6,y+9,x+w-6,y+9,SHADE,1);
   for(let dx=14;dx<w-6;dx+=30){line(c,x+dx,y+12,x+dx-5,y+Math.min(23,platform.y-3),'#708786');}
