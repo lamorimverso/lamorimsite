@@ -1,5 +1,5 @@
-import {stageRouteTravel,RAID_HANDOFF_SECONDS,PAIR_RUN_DISTANCE,pairRunRemaining} from './runner-stage-director.mjs?v=edded529b99f';
-export {stagePlanFor} from './runner-stage-director.mjs?v=edded529b99f';
+import {stageRouteTravel,RAID_HANDOFF_SECONDS,PAIR_RUN_DISTANCE,pairRunRemaining} from './runner-stage-director.mjs?v=7577a5c9c3c2';
+export {stagePlanFor} from './runner-stage-director.mjs?v=7577a5c9c3c2';
 import {HERO_MAX_HP,playerBodyFor} from './runner-body.mjs?v=57ec474fca38';
 import {createMovementSkills,movementProfileFor,rewardMovementVictory} from './runner-movement-skills.mjs?v=d0ad734b4838';
 export {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
@@ -882,7 +882,7 @@ function resolveBossDodges(run){
   return;
  }
  run.nextBossAt=run.mode==='story'?nextStoryBossDistance(run.bossesDefeated):Math.max(nextBossDistance(run.bossesDefeated),run.routeDistance+7000);run.nextObstacle=Math.max(1.8,run.nextObstacle);
- announce(run,run.mode==='story'?(boss.traversal?'Passagem concluída · ':'Você derrotou ')+boss.name+'! '+run.bossesDefeated+'/'+STORY_BOSS_COUNT+' etapas concluídas. '+(boss.role==='map-boss'?'Dupla vencida. Corra mais 20 km até a próxima dupla.':'Continue para o próximo confronto.'):
+ announce(run,run.mode==='story'?(boss.traversal?'Passagem concluída · ':'Você derrotou ')+boss.name+'! '+run.bossesDefeated+'/'+STORY_BOSS_COUNT+' etapas concluídas. '+(boss.role==='map-boss'?'Dupla vencida. Corra mais '+PAIR_RUN_DISTANCE/1000+' km até a próxima dupla.':'Continue para o próximo confronto.'):
   'Você escapou do chefão '+boss.name+'! '+(run.bossesDefeated%BOSS_ROSTER.length===0?'Cinco chefões superados nesta sequência.':'Continue fugindo.'));
 }
 const raidStageKey=run=>Math.floor(campaignRouteDistance(run)/(routeStagesFor(run).length*SCENE_DISTANCE))+':'+routeStageFor(run).id;

@@ -1745,7 +1745,7 @@ for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`stag
   const [header,meter]=await Promise.all([page.locator('.game-stage-header').boundingBox(),page.locator('#game-stage-progress').boundingBox()]);
   assert.ok(meter.width>100&&meter.x>=header.x&&meter.x+meter.width<=header.x+header.width+1);
   assert.ok(meter.y>=header.y&&meter.y+meter.height<=header.y+header.height+1);
-  assert.match(await page.locator('#game-route li[data-stage="rio"] .game-route-guide').textContent(),/Dois vilões · 20 km de fuga/);
+  assert.match(await page.locator('#game-route li[data-stage="rio"] .game-route-guide').textContent(),/Dois vilões · 100 km de fuga/);
   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
   await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/stage-flow-${viewport.width}.png`)});
   await page.evaluate(()=>{__testRun.raid={phase:'warning',stageId:'rio',remaining:30,recoveryFor:2.5,factIndex:0,id:1,waves:0,stageKeys:['0:rio']};});
@@ -1766,7 +1766,7 @@ for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`stag
 });
 
 
-for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`twenty kilometre legs and airborne platform travel are visible at ${viewport.width}px`,async()=>{
+for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`one hundred kilometre legs and airborne platform travel are visible at ${viewport.width}px`,async()=>{
  const {context,page,errors}=await open({instrument:true,viewport});
  try{
   await begin(page);
@@ -1782,14 +1782,14 @@ for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`twen
   const readLeg=()=>page.evaluate(()=>({text:document.getElementById('game-stage-time').textContent,required:__testRun.storyLeg.requiredDistance,remaining:__testRun.storyLeg.requiredDistance-__testRun.storyLeg.groundDistance}));
   const before=await readLeg();
   const shown=state=>Number(state.text.match(/Fuga · (\d+,\d) km até a dupla/)[1].replace(',','.'))*1000;
-  assert.equal(before.required,20000);assert.ok(before.remaining>19000);
+  assert.equal(before.required,100000);assert.ok(before.remaining>99000);
   assert.ok(Math.abs(shown(before)-before.remaining)<=100,'the running counter matches physical distance within rounding and one UI frame');
   await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/pair-leg-${viewport.width}.png`)});
   await page.evaluate(async()=>{
    const c=await import('./runner-core.mjs'),r=__testRun,start=r.storyLeg.groundDistance;
    for(let i=0;i<1200&&r.storyLeg.groundDistance-start<2500;i++)c.advanceRun(r,1/120);
   });
-  await page.waitForFunction(()=>Number(document.getElementById('game-stage-progress').getAttribute('aria-valuenow'))>=12);
+  await page.waitForFunction(()=>Number(document.getElementById('game-stage-progress').getAttribute('aria-valuenow'))>=2);
   const after=await readLeg();assert.ok(shown(after)<shown(before)-2000);
   assert.ok(Math.abs(shown(after)-after.remaining)<=100,'the counter keeps following the moving run after two and a half kilometres');
   assert.equal(await page.evaluate(()=>__testRun.boss),null);

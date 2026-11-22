@@ -14,7 +14,12 @@ function shape(c,fill,stroke,draw){c.beginPath();draw();c.fillStyle=fill;c.fill(
 function rect(c,x,y,w,h,fill,stroke,r=0){shape(c,fill,stroke,()=>r?c.roundRect(x,y,w,h,r):c.rect(x,y,w,h));}
 function oval(c,x,y,rx,ry,fill){shape(c,fill,null,()=>c.ellipse(x,y,rx,ry,0,0,Math.PI*2));}
 function line(c,points,color,width=1.3){c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.strokeStyle=color;c.lineWidth=width;c.stroke();}
-function cloud(c,x,y,s){c.save();c.translate(x,y);c.scale(s,s);shape(c,'#ffffffc9','#ffffff88',()=>{c.moveTo(-36,8);c.bezierCurveTo(-53,4,-45,-10,-29,-9);c.bezierCurveTo(-31,-32,4,-37,13,-16);c.bezierCurveTo(32,-24,48,-8,37,7);c.closePath();});c.restore();}
+function cloud(c,x,y,s){
+ c.save();c.translate(x,y);c.scale(s,s);
+ shape(c,'#ffffffc9','#ffffff88',()=>{c.moveTo(-36,8);c.bezierCurveTo(-53,4,-45,-10,-29,-9);c.bezierCurveTo(-31,-32,4,-37,13,-16);c.bezierCurveTo(32,-24,48,-8,37,7);c.closePath();});
+ shape(c,'#aac9d32b',null,()=>{c.moveTo(-36,4);c.quadraticCurveTo(-7,11,37,3);c.lineTo(37,7);c.quadraticCurveTo(0,12,-36,8);c.closePath();});
+ c.restore();
+}
 function palm(c,x,y,p){line(c,[[x,y],[x-4,y-27],[x+2,y-65]],p.ink,4);for(const [dx,dy]of[[-27,-5],[-21,10],[24,-6],[29,12],[-3,-16]]){c.beginPath();c.moveTo(x+2,y-65);c.quadraticCurveTo(x+dx*.7,y-79+dy*.5,x+dx,y-65+dy);c.strokeStyle=p.near;c.lineWidth=5;c.stroke();}}
 
 function skyline(c,stage,p,d,width){
@@ -189,7 +194,8 @@ export function journeySceneryGeometry({routeDistance=0,distance=routeDistance,w
  const decorativeDistance=reducedMotion?0:travelled;
  return {width:w,layers,landmarks,paletteStops,flight:mood,waypoint:routeWaypoint(route,w,stageFor,reducedMotion,flightLift),roadOffset:wrap(decorativeDistance,98),clouds:[
   {x:wrap(145-decorativeDistance*.016,w+140)-70,y:65,scale:.73},
-  {x:wrap(510-decorativeDistance*.019,w+160)-80,y:91,scale:.48}
+  {x:wrap(510-decorativeDistance*.019,w+160)-80,y:91,scale:.48},
+  {x:wrap(790-decorativeDistance*.011,w+120)-60,y:43,scale:.32}
  ]};
 }
 
@@ -211,6 +217,7 @@ function daylightGradient(c,geometry,top,bottom,opacity){
 function farBuildings(c,x,p,variant){
  rect(c,x+8,190+variant*5,26,34-variant*5,p.far,null,2);
  rect(c,x+42,176+variant*7,35,48-variant*7,p.far,null,2);
+ for(let y=186+variant*7;y<216;y+=10)for(let col=0;col<3;col++)rect(c,x+48+col*8,y,3,4,p.stone+'80',null,1);
  rect(c,x+88,198,45,26,p.far,null,2);
 }
 function farFeature(c,x,stageId,p,variant){
@@ -370,6 +377,7 @@ export function drawJourneyScenery(c,options={}){
  try{
   c.fillStyle=paletteGradient(c,geometry,'sky');c.fillRect(0,skyTop,width,300-skyTop);
   c.fillStyle=daylightGradient(c,geometry,0,246,1);c.fillRect(0,skyTop,width,246-skyTop);
+  oval(c,width-66,55,43,43,'#fff7d80e');oval(c,width-66,55,35,35,'#fff7d816');
   oval(c,width-66,55,29,29,'#fff7d838');oval(c,width-66,55,21,21,'#fff9e5d9');
   for(const item of geometry.clouds)cloud(c,item.x,item.y,item.scale);
   const flightLift=geometry.flight?.lift??0;

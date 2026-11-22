@@ -6,7 +6,7 @@ const expectedFlights=core.STORY_STAGES.slice(3).map((stage,i)=>core.STORY_STAGE
 for(const width of [480,900])for(let seed=1;seed<=10;seed++){
  const r=core.createRun({mode:'story',seed});core.startRun(r);core.resizeRun(r,width);
  const rehearsals=new Set(),flights=[];let transforms=0,prior=false,previousFlight=null;
- for(let i=0;i<120*1800&&r.status==='running';i++){
+ for(let i=0;i<120*4200&&r.status==='running';i++){
   pilotCounter(r);
   if(r.reserveShields&&r.shieldFor<=0)core.activateReserveShield(r);core.advanceRun(r,1/120);
   if(r.rehearsedBoss)rehearsals.add(r.rehearsedBoss);

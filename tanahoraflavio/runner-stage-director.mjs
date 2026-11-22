@@ -2,7 +2,7 @@ import {SCENE_DISTANCE,STAGES,STORY_STAGES} from './runner-route-data.mjs?v=c4fc
 import {STORY_OPENING_DISTANCE,STORY_ENCOUNTERS,storyBossAt,bossRoleLabel,storyApproachAt} from './runner-bosses.mjs?v=f8107568ec3b';
 
 export const RAID_HANDOFF_SECONDS=4.5;
-export const PAIR_RUN_DISTANCE=20000;
+export const PAIR_RUN_DISTANCE=100000;
 export const pairRunRemaining=run=>Math.max(0,(run.storyLeg?.requiredDistance||0)-(run.storyLeg?.groundDistance||0));
 const encounters=Object.freeze(Array.from({length:STORY_ENCOUNTERS},(_,i)=>Object.freeze(storyBossAt(i))));
 const guides=Object.freeze({
@@ -17,7 +17,7 @@ const guides=Object.freeze({
 });
 export function stageGuideFor(id){
  const [label,lesson]=guides[id]||guides.brasilia;
- return {label,lesson,order:'Dois vilões · '+(id==='brasilia-final'?'Urna':'20 km de fuga · '+(['brasilia','rio'].includes(id)?'Próxima dupla':'Viagem por plataformas'))};
+ return {label,lesson,order:'Dois vilões · '+(id==='brasilia-final'?'Urna':PAIR_RUN_DISTANCE/1000+' km de fuga · '+(['brasilia','rio'].includes(id)?'Próxima dupla':'Viagem por plataformas'))};
 }
 function raidTimeLeft(raid,timing){
  const recovery=raid.recoveryFor??timing.recoveryFor;
@@ -70,7 +70,10 @@ export function stagePlanFor(run){
  if(run.terrain?.active)return {...plan,section:'platforms',label:'Trecho de plataformas',goal:'Salte e pouse no topo das plataformas.'};
  if(run.raid)return {...plan,section:'pursuit',label:run.raid.phase==='warning'?'Perseguição à vista':run.raid.phase==='active'?'Fuja da PF':'Retomando a fuga',goal:'Pule os bloqueios e abaixe dos microfones.'};
  if(run.terrain?.preparing)return {...plan,section:'prepare',label:run.terrain.preparing.kind==='air-transfer'?'Embarque à frente':'Plataformas à frente',goal:'Conclua a esquiva e prepare o próximo salto.'};
- if(remaining>0)return {...plan,progress:1-remaining/run.storyLeg.requiredDistance,section:'leg',label:'Fuga · '+(remaining/1000).toFixed(1).replace('.',',')+' km até a dupla',goal:'Corra os 20 km antes da próxima dupla. '+plan.goal};
+ if(remaining>0){
+  const distance=remaining<1000?Math.ceil(remaining)+' m':(remaining/1000).toFixed(1).replace('.',',')+' km';
+  return {...plan,section:'leg',label:'Fuga · '+distance+' até a dupla',goal:'Corra os '+PAIR_RUN_DISTANCE/1000+' km antes da próxima dupla. '+plan.goal};
+ }
  if(opening)return {...plan,section:'opening',label:'Fuga inicial · Brasília'};
  if(story&&storyApproachAt(run.routeDistance,run.bossesDefeated))return {...plan,section:'approach',label:'Chefão à frente · '+next.name,goal:'Observe o ataque antes de enfrentar '+next.name+'.'};
  if(run.bossCooldown>0&&run.bossesDefeated>0)return {...plan,section:'recovery',label:'Trecho de fuga'+(next?' · '+next.name:'')};
