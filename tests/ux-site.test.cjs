@@ -1322,20 +1322,22 @@ test('aviso de arma conquistada não cobre os controles compactos no celular',as
  }finally{await context.close();}
 });
 
-test('segunda fase da arena preserva o cenário sem os postes e raios laterais',async()=>{
+test('segunda fase mantém portões nas bordas, piso em blocos e cenário central livre',async()=>{
  const {context,page,errors}=await open();try{
   const marks=await page.evaluate(async()=>{
    const {drawBossArena}=await import('./runner-boss-art.mjs'),canvas=document.createElement('canvas');
    canvas.width=480;canvas.height=300;
    const c=canvas.getContext('2d');drawBossArena(c,{width:480,ground:246,state:{phase:'recover',enraged:true}});
-   const {data}=c.getImageData(0,0,480,300);let scenery=0,road=0;
+   const {data}=c.getImageData(0,0,480,300);let scenery=0,road=0,left=0,right=0;
    for(let y=0;y<300;y++)for(let x=0;x<480;x++){
     if(!data[(y*480+x)*4+3])continue;
-    if(y<245)scenery++;else road++;
+    if(y<245){if(x<18)left++;else if(x>=462)right++;else scenery++;}else road++;
    }
-   return {scenery,road};
+   return {scenery,road,left,right};
   });
-  assert.equal(marks.scenery,0);assert.ok(marks.road>0&&marks.road<1300,'o cenário só recebe uma linha de chão discreta');
+  assert.equal(marks.scenery,0,'o centro da arena não esconde o cenário nem os ataques');
+  assert.ok(marks.left>500&&marks.right>500,'os dois portões ficam restritos às bordas');
+  assert.ok(marks.road>480*40&&marks.road<=480*55,'o piso em blocos ocupa apenas a superfície de chão');
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
