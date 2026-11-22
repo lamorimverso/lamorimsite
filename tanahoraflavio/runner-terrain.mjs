@@ -36,16 +36,17 @@ export function beginGroundLesson(run,speed,{routeStart,routeEnd}){
 // surfaces. Widths are distances at the actual departure speed; acceleration
 // never changes geometry after takeoff, including during viewport changes.
 const AIR_BARS=Object.freeze([[3.6,16],[3.4,34],[3.7,52],[3.4,36],[3.5,16]]);
+const STORY_AIR_BARS=Object.freeze([[1.35,16],[1.5,34],[1.4,52],[1.55,70],[1.4,46],[1.5,30],[1.4,16]]);
 export function beginAirTransfer(run,speed,{routeStart,routeEnd,from='sao-paulo',to='argentina',fromName='São Paulo',toName='Argentina'}){
- const state=run.terrain,center=run.player.x+18,first=center+1.6*speed,space=.24*speed;
+ const story=run.mode==='story',state=run.terrain,center=run.player.x+18,first=center+1.6*speed,space=(story?.38:.24)*speed;
  state.preparing=null;
  const platforms=[];let end=first;
- for(const [seconds,y] of AIR_BARS){const x=end+space,width=seconds*speed;platforms.push({x,width,y});end=x+width;}
+ for(const [seconds,y] of story?STORY_AIR_BARS:AIR_BARS){const x=end+space,width=seconds*speed;platforms.push({x,width,y});end=x+width;}
  end+=space;
  const flight={from,to,fromName,toName,phase:'boarding',progress:0,traveled:0,nominalSpeed:speed,bodyScale:playerBodyFor(run.player).scale,
   routeStart,routeEnd,length:end-center,phasesAt:[first-center,platforms[1].x-center,platforms.at(-1).x-center],aircraft:[]};
  // Quiet silhouettes teach the aircraft vocabulary before any armed crossing.
- for(const [kind,barIndex,offset] of [['flyby',0,platforms[0].width*.47],['high',1,platforms[1].width*.50],['lane',2,platforms[2].width-speed*.21]]){
+ for(const [kind,barIndex,offset] of [['flyby',0,platforms[0].width*.47],['high',1,platforms[1].width*.50],['lane',2,story?platforms[2].width*.45:platforms[2].width-speed*.21]]){
   const crossAt=platforms[barIndex].x+offset-center;
   const launchAt=crossAt-(kind==='lane'?.50:.33)*speed;
   flight.aircraft.push({kind,barIndex,offset,launchAt,warnAt:launchAt-.95*speed,spent:false});

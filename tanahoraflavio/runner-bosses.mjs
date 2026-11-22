@@ -59,7 +59,7 @@ function campaignBoss(entry,index=-1){
  const profile=bossProfileFor(type);
  if(!profile)return null;
  const group=BOSS_CLASSES[profile.classId],traversal=['fiscal','renato-freitas','povo'].includes(type);
- const hp=traversal?1:role==='final-boss'?64:role==='map-boss'?24+stageIndex*5:16+stageIndex*3;
+ const hp=traversal?1:role==='final-boss'?104:role==='map-boss'?60+stageIndex*6:['rick','guilherme'].includes(type)?64:32+stageIndex*4;
  return {id:role==='optional'?'optional-'+type:'campaign-'+type,index,stageIndex,stageId:STORY_STAGES[stageIndex].id,slot,type,name,role,traversal,distance,
   classId:profile.classId,className:group.name,rank:profile.rank,rankName:BOSS_RANKS[profile.rank-1],
   powerName:profile.powerName,rematchIndex:0,tactic:profile.tactic,reward:profile.reward,weakness:profile.weakness,hp,

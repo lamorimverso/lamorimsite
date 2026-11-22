@@ -1,4 +1,4 @@
-import {aircraftPoseFor} from './runner-terrain.mjs?v=c41a2baf8bbd';
+import {aircraftPoseFor} from './runner-terrain.mjs?v=4bbd5ce8e483';
 // Shapes use the same logical x and height-above-ground as traversal physics.
 // No collision state is changed here, and no asset allocation is needed per frame.
 const INK='#303747',STONE='#aebbb9',EDGE='#e7e8d8',SHADE='#657985';
@@ -31,9 +31,10 @@ function drawAirTerrain(c,a,ground,width){
  const gap=a.gaps[0],f=a.flight;
  const left=Math.max(-2,gap.x),right=Math.min(width+2,gap.x+gap.width);
  if(right>left){
-  // The void replaces the road only where the physical support is absent.
-  const sky=c.createLinearGradient(0,ground-1,0,303);sky.addColorStop(0,'#94b8d3');sky.addColorStop(1,'#dceaf3');
-  c.fillStyle=sky;c.fillRect(left,ground-1,right-left,303-ground);
+  // Remove the 12 px verge too: a continuous band above the void looks like
+  // a safe floor even though only the independent platforms supply support.
+  const top=ground-13,sky=c.createLinearGradient(0,top,0,303);sky.addColorStop(0,'#94b8d3');sky.addColorStop(1,'#dceaf3');
+  c.fillStyle=sky;c.fillRect(left,top,right-left,303-top);
  }
  for(const ramp of a.ramps||[]){
   const x=ramp.x,edge=x+ramp.width;if(edge<0||x>width)continue;

@@ -22,7 +22,8 @@ export function pilotDodge(r){
    const [,high,lane]=terrain.flight.aircraft;
    const overhead=(terrain.flight.traveled-high.warnAt)/terrain.flight.nominalSpeed;
    if(r.player.grounded&&support===terrain.platforms[high.barIndex]&&overhead>=0&&overhead<1.85)core.crouchRun(r,true);
-   const laneAhead=support===terrain.platforms[lane.barIndex]&&(support.x+lane.offset-center)/terrain.speed<.20;
+   const laneEta=support?(support.x+lane.offset-center)/terrain.speed:Infinity;
+   const laneAhead=support===terrain.platforms[lane.barIndex]&&laneEta>-.10&&laneEta<.20;
    if(r.player.grounded&&(support||center<voidSpan.x)&&(laneAhead||(edge-center)/terrain.speed<.17))core.jumpRun(r);
   }else if(terrain.kind==='ground-lesson'){
    const bar=terrain.platforms[0],eta=(bar.x-r.player.x-18)/terrain.speed;

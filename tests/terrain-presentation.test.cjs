@@ -73,12 +73,13 @@ test('air transfer paints the true void, the marked support and the aircraft sho
    flight:{phase:'crossing',traveled:300,nominalSpeed:400,aircraft:[craft]}};
   const render=()=>{const before=JSON.stringify(a);drawTerrain(c,{terrain:{active:a},width:480});return before===JSON.stringify(a);};
   const pixel=(x,y)=>[...c.getImageData(x,y,1,1).data];const okay=render();
-  const warning=pixel(190,155),voidBelow=pixel(375,278),barTop=pixel(285,205),clear=pixel(375,230);
+  const warning=pixel(190,155),voidBelow=pixel(375,278),verge=pixel(375,239),barTop=pixel(285,205),clear=pixel(375,230);
   c.clearRect(0,0,480,300);a.flight.traveled=craft.launchAt+190;const {shot}=aircraftPoseFor(a,craft);
-  const secondOkay=render();return {warning,voidBelow,barTop,clear,shot:pixel(Math.round(shot.x),Math.round(246-shot.y)),okay:okay&&secondOkay};
+  const secondOkay=render();return {warning,voidBelow,verge,barTop,clear,shot:pixel(Math.round(shot.x),Math.round(246-shot.y)),okay:okay&&secondOkay};
  });
  assert.ok(out.warning[3]>100,'readable jump marker before the shot');
  assert.ok(out.voidBelow[3]>220&&out.barTop[3]>220,'void finish and platform are visible where physics tests them');
+ assert.ok(out.verge[3]>220,'the former road verge cannot remain visible across the void');
  assert.equal(out.clear[3],0,'no false surface at empty air above the background road');
  assert.ok(out.shot[3]>200&&out.okay);
 });

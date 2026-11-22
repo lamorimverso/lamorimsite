@@ -46,7 +46,7 @@ for(const [id,latest,opening,ownBeat] of [
   while(run.status==='running'&&run.elapsed-earliest<7&&boss.hp===originalHP){
    pilotDodge(run);core.setAttackRun(run,true);core.advanceRun(run,dt);
   }
-  assert.ok(originalHP-boss.hp>originalHP*.075*1.45,`${width}px: o tiro direto recebe o bônus da abertura`);
+  assert.ok(originalHP-boss.hp>1.1*1.45,`${width}px: o tiro direto recebe o bônus da abertura sem escalar com o PV máximo`);
  }
 });
 
@@ -54,13 +54,14 @@ test('Rick termina os seis pulsos comprometidos mesmo com uma devolução letal 
  for(const width of [480,900]){
   const run=startDuel('rick',width),boss=run.boss,start=run.elapsed;
   core.grantBossPower(run,'xandao'); // Recompensa do duelo imediatamente anterior na rota.
-  let lethalAt,visibleOpening=false;
+  let lethalAt,visibleOpening=false,weakened=false;
   while(run.status==='running'&&run.boss===boss&&run.elapsed-start<16){
    pilotCounter(run);core.advanceRun(run,dt);
+   if(!weakened&&boss.fired>0){boss.hp=3;weakened=true;} // Golpe letal após comprometer a primeira rajada completa.
    if(boss.hp===0&&!lethalAt)lethalAt=boss.fired;
    visibleOpening ||= bossCounterWindow(boss).label==='SÉTIMO TEMPO';
   }
-  assert.ok(lethalAt>0&&lethalAt<6,`${width}px: o martelo mantém dano letal antes do sexto pulso`);
+  assert.ok(lethalAt>0&&lethalAt<6,`${width}px: o golpe letal chega antes do sexto pulso no cenário de regressão`);
   assert.equal(boss.fired,6,`${width}px: o golpe letal não cancela pulsos já anunciados`);
   assert.deepEqual(boss.volleyShots.map(o=>o.action),['jump','crouch','jump','crouch','jump','crouch']);
   assert.ok(boss.volleyShots.every(o=>o.launched&&o.resolved&&!o.contactHit),`${width}px: os seis pulsos são reais e evitáveis`);
@@ -75,8 +76,10 @@ test('continuar depois de sofrer um pulso tardio não deixa Rick preso com zero 
  const run=startDuel('rick',480),boss=run.boss;
  core.grantBossPower(run,'xandao');
  run.player.hp=1;run.lives=2;
+ let weakened=false;
  for(let i=0;i<12/dt&&run.status==='running'&&boss.hp>0;i++){
   pilotCounter(run);core.advanceRun(run,dt);
+  if(!weakened&&boss.fired>0){boss.hp=3;weakened=true;}
  }
  assert.equal(boss.hp,0);
  assert.ok(boss.fired>0&&boss.fired<6,'o golpe letal chega antes dos últimos pulsos');
