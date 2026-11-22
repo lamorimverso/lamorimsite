@@ -1322,20 +1322,22 @@ test('aviso de arma conquistada não cobre os controles compactos no celular',as
  }finally{await context.close();}
 });
 
-test('segunda fase da arena preserva o cenário sem os postes e raios laterais',async()=>{
+test('segunda fase mantém portões nas bordas, piso em blocos e cenário central livre',async()=>{
  const {context,page,errors}=await open();try{
   const marks=await page.evaluate(async()=>{
    const {drawBossArena}=await import('./runner-boss-art.mjs'),canvas=document.createElement('canvas');
    canvas.width=480;canvas.height=300;
    const c=canvas.getContext('2d');drawBossArena(c,{width:480,ground:246,state:{phase:'recover',enraged:true}});
-   const {data}=c.getImageData(0,0,480,300);let scenery=0,road=0;
+   const {data}=c.getImageData(0,0,480,300);let scenery=0,road=0,left=0,right=0;
    for(let y=0;y<300;y++)for(let x=0;x<480;x++){
     if(!data[(y*480+x)*4+3])continue;
-    if(y<245)scenery++;else road++;
+    if(y<245){if(x<18)left++;else if(x>=462)right++;else scenery++;}else road++;
    }
-   return {scenery,road};
+   return {scenery,road,left,right};
   });
-  assert.equal(marks.scenery,0);assert.ok(marks.road>0&&marks.road<1300,'o cenário só recebe uma linha de chão discreta');
+  assert.equal(marks.scenery,0,'o centro da arena não esconde o cenário nem os ataques');
+  assert.ok(marks.left>500&&marks.right>500,'os dois portões ficam restritos às bordas');
+  assert.ok(marks.road>480*40&&marks.road<=480*55,'o piso em blocos ocupa apenas a superfície de chão');
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
@@ -1808,6 +1810,60 @@ for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`one 
   assert.match(await page.locator('#game-stage-time').getAttribute('aria-label'),/Cair no vazio encerra/);
   await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/air-platforms-${viewport.width}.png`)});
   assert.equal(await page.evaluate(()=>__testRun.status),'running');
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`platform style arena receives jump release from keyboard, mouse, touch and controller at ${viewport.width}px`,async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport,init:()=>{window.__pads=[];Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>window.__pads});}});
+ try{
+  await begin(page);
+  await page.evaluate(()=>{
+   const r=__testRun;for(const k of ['nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
+   r.terrain.nextAt=Infinity;r.obstacles=[];r.pickups=[];r.routeDistance=r.nextBossAt=22000;
+  });
+  await page.waitForFunction(()=>__testRun.boss?.phase==='charge');
+  await page.evaluate(()=>{Object.assign(__testRun.boss,{phase:'recover',phaseFor:100,reducedMotion:true});});
+  await page.locator('#runner-canvas').focus();
+  await page.keyboard.down('Space');await page.waitForFunction(()=>__testRun.player.y>15&&__testRun.player.velocity>300);
+  await page.keyboard.up('Space');
+  assert.ok(await page.evaluate(()=>__testRun.player.velocity<=260));
+  await page.waitForFunction(()=>__testRun.player.grounded);
+  // Releasing one bound jump key keeps another held key in control.
+  const combined=await page.evaluate(()=>{
+   const target=document.getElementById('runner-canvas');
+   target.dispatchEvent(new KeyboardEvent('keydown',{code:'Space',bubbles:true}));
+   target.dispatchEvent(new KeyboardEvent('keydown',{code:'ArrowUp',bubbles:true}));
+   document.dispatchEvent(new KeyboardEvent('keyup',{code:'Space',bubbles:true}));
+   const one=__testRun.player.velocity;
+   document.dispatchEvent(new KeyboardEvent('keyup',{code:'ArrowUp',bubbles:true}));
+   return {one,both:__testRun.player.velocity};
+  });
+  assert.ok(combined.one>260);assert.equal(combined.both,260);
+  await page.waitForFunction(()=>__testRun.player.grounded);
+  const box=await page.locator('#runner-canvas').boundingBox();await page.mouse.move(box.x+box.width*.4,box.y+box.height*.5);
+  await page.mouse.down();await page.waitForFunction(()=>__testRun.player.y>15&&__testRun.player.velocity>300);
+  await page.mouse.up();assert.ok(await page.evaluate(()=>__testRun.player.velocity<=260));
+  await page.waitForFunction(()=>__testRun.player.grounded);
+  const canvas=page.locator('#runner-canvas'),touch={pointerId:724,pointerType:'touch',isPrimary:true,button:0,clientX:220,clientY:280};
+  await canvas.dispatchEvent('pointerdown',touch);await canvas.dispatchEvent('pointermove',{...touch,clientY:230});
+  await page.waitForFunction(()=>__testRun.player.y>15&&__testRun.player.velocity>300);
+  await canvas.dispatchEvent('pointerup',{...touch,clientY:230});assert.ok(await page.evaluate(()=>__testRun.player.velocity<=260));
+  await page.waitForFunction(()=>__testRun.player.grounded);
+  await page.evaluate(()=>{window.__pads=[{connected:true,id:'Controle de plataforma',index:0,axes:[0,0],buttons:Array.from({length:18},()=>({pressed:false,value:0}))}];});
+  await page.waitForFunction(()=>document.getElementById('game-controller-status').textContent.includes('Controle de plataforma'));
+  await page.evaluate(()=>__pads[0].buttons[0]={pressed:true,value:1});
+  await page.waitForFunction(()=>__testRun.player.y>15&&__testRun.player.velocity>300);
+  await page.evaluate(()=>__pads[0].buttons[0]={pressed:false,value:0});
+  await page.waitForFunction(()=>__testRun.player.velocity<=260);
+  await page.waitForFunction(()=>__testRun.player.grounded);
+  await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
+  await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/maker-arena-${viewport.width}.png`)});
+  const resumed=await page.evaluate(async()=>{
+   const c=await import('./runner-core.mjs'),r=__testRun;r.boss.hp=0;c.advanceRun(r,1/120);
+   const opening=!!r.arenaExit,before=r.distance;c.advanceRun(r,1/120);return {opening,moved:r.distance>before,status:r.status};
+  });
+  assert.deepEqual(resumed,{opening:true,moved:true,status:'running'});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });

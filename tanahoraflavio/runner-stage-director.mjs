@@ -64,7 +64,7 @@ export function stagePlanFor(run){
  if(run.status==='over')return {...plan,section:'result',label:'Fim da corrida',goal:'Veja o resultado da tentativa.'};
  if(run.status==='prison')return {...plan,section:'result',label:'Prisão fictícia',goal:'A campanha será reiniciada.'};
  if(run.boss)return {...plan,section:'arena',label:bossRoleLabel(run.boss)+' · '+run.boss.name,
-  goal:run.boss.traversal?'Desvie até concluir a passagem.':'Desvie dos ataques e atire nas aberturas.'};
+  goal:run.boss.traversal?'Desvie até concluir a passagem.':'Mova-se pela arena e atire nas aberturas. Solte o pulo na subida para encurtar o salto.'};
  if(run.player?.isJacare)return {...plan,section:'jacare',label:'Desvie das ampolas',goal:'Mova-se para os lados até a recuperação automática.'};
  if(run.terrain?.active?.flight){const f=run.terrain.active.flight;return {...plan,section:'transfer',label:'Viagem · Sem chão',goal:'Pule de plataforma em plataforma até '+f.toName+'. Cair no vazio encerra a tentativa.'};}
  if(run.terrain?.active)return {...plan,section:'platforms',label:'Trecho de plataformas',goal:'Salte e pouse no topo das plataformas.'};
