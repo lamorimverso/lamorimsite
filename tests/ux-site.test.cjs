@@ -1779,13 +1779,19 @@ for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`twen
   await page.waitForFunction(()=>__testRun.boss?.type==='xandao');
   await page.evaluate(()=>{__testRun.boss.hp=0;});
   await page.waitForFunction(()=>document.getElementById('game').dataset.stageSection==='leg');
-  assert.match(await page.locator('#game-stage-time').textContent(),/20,0 km até a dupla/);
+  const readLeg=()=>page.evaluate(()=>({text:document.getElementById('game-stage-time').textContent,required:__testRun.storyLeg.requiredDistance,remaining:__testRun.storyLeg.requiredDistance-__testRun.storyLeg.groundDistance}));
+  const before=await readLeg();
+  const shown=state=>Number(state.text.match(/Fuga · (\d+,\d) km até a dupla/)[1].replace(',','.'))*1000;
+  assert.equal(before.required,20000);assert.ok(before.remaining>19000);
+  assert.ok(Math.abs(shown(before)-before.remaining)<=100,'the running counter matches physical distance within rounding and one UI frame');
   await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/pair-leg-${viewport.width}.png`)});
   await page.evaluate(async()=>{
    const c=await import('./runner-core.mjs'),r=__testRun,start=r.storyLeg.groundDistance;
    for(let i=0;i<1200&&r.storyLeg.groundDistance-start<2500;i++)c.advanceRun(r,1/120);
   });
-  await page.waitForFunction(()=>/17,[45] km até a dupla/.test(document.getElementById('game-stage-time').textContent));
+  await page.waitForFunction(()=>Number(document.getElementById('game-stage-progress').getAttribute('aria-valuenow'))>=12);
+  const after=await readLeg();assert.ok(shown(after)<shown(before)-2000);
+  assert.ok(Math.abs(shown(after)-after.remaining)<=100,'the counter keeps following the moving run after two and a half kilometres');
   assert.equal(await page.evaluate(()=>__testRun.boss),null);
   await page.evaluate(async()=>{
    const c=await import('./runner-core.mjs'),{beginAirTransfer}=await import('./runner-terrain.mjs'),{pilotDodge}=await import('../tools/story-pilot.mjs'),r=__testRun;
