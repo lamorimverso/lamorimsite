@@ -7,7 +7,7 @@ test('pursuits fit before boss approaches instead of holding the scenery at the 
  for(const [seed,width,fps,assisted] of [[1,480,60,false],[17,900,60,true]]){
   const r=core.createRun({mode:'story',seed,assisted});core.startRun(r);core.resizeRun(r,width);
   let previous=r.routeDistance,stall=0,maxStall=0,oldRaid=null;const raidEntrances=[];
-  for(let i=0;i<fps*1500&&r.status==='running';i++){
+  for(let i=0;i<fps*4200&&r.status==='running';i++){
    pilotCounter(r);core.advanceRun(r,1/fps);
    if(r.raid&&r.raid!==oldRaid)raidEntrances.push({route:r.routeDistance,next:r.nextBossAt,stage:core.routeStageFor(r).id});
    oldRaid=r.raid;

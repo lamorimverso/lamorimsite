@@ -19,7 +19,7 @@ const instrument=`
         scene==='duelo'?run.boss?.combat&&run.boss.fired>=1:
         reference?routeStageFor(run).id==='sao-paulo'&&campaignRouteDistance(run)%SCENE_DISTANCE>=5800:
         run.terrain.active?.kind==='air-transfer'&&run.terrain.active.flight?.phase==='crossing';
-      while(steps++<120*700&&run.status==='running'&&!matches()){
+      while(steps++<120*1800&&run.status==='running'&&!matches()){
         pilot(run);if(run.reserveShields&&run.shieldFor<=0)activateReserveShield(run);advanceRun(run,1/120);
         if(steps%(120*60)===0)sample();
       }

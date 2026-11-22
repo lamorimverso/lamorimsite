@@ -24,27 +24,32 @@ test('airborne void removes the road verge as well as the lower road surface',()
   assert.ok(blue>red+20&&alpha>220,`y=${y}: the empty span must show sky instead of a leftover verge`);
  }
 });
-test('a completed pair reserves twenty thousand physical running metres before the next pair',()=>{
+test('a completed pair reserves one hundred thousand physical running metres before the next pair',()=>{
  for(const fps of [30,60,120]){
   const r=duel(1),dt=1/fps;r.boss.hp=0;core.advanceRun(r,dt);
   const start=r.distance;let previous=r.routeDistance;
-  while(r.distance-start<19999&&r.status==='running'){
-   core.advanceRun(r,dt);if(r.distance-start<20000)assert.equal(r.boss,null,'twenty kilometres must not be replaced by an eighteen-second cooldown');
+  while(r.distance-start<99999&&r.status==='running'){
+   core.advanceRun(r,dt);if(r.distance-start<100000)assert.equal(r.boss,null,'one hundred kilometres must not be replaced by an eighteen-second cooldown');
    if(!r.boss)assert.ok(r.routeDistance>previous,'the scenery must keep advancing during the leg');previous=r.routeDistance;
   }
   for(let i=0;i<fps*10&&!r.boss;i++)core.advanceRun(r,dt);
-  assert.equal(r.boss?.type,'rick');assert.ok(r.distance-start>=20000);
+  assert.equal(r.boss?.type,'rick');assert.ok(r.distance-start>=100000);
  }
 });
 test('the first victory keeps its partner next, while the second opens a measured running leg',()=>{
  const first=duel(0);first.boss.hp=0;core.advanceRun(first,1/60);
  assert.equal(first.storyLeg,null);assert.equal(core.stagePlanFor(first).nextBossName,'Xandão');
  const second=duel(1);second.boss.hp=0;core.advanceRun(second,1/60);
- assert.equal(second.storyLeg.requiredDistance,20000);assert.equal(second.storyLeg.groundDistance,0);
- const plan=core.stagePlanFor(second);assert.equal(plan.section,'leg');assert.match(plan.label,/20,0 km/);
+ assert.equal(second.storyLeg.requiredDistance,100000);assert.equal(second.storyLeg.groundDistance,0);
+ const plan=core.stagePlanFor(second);assert.equal(plan.section,'leg');assert.match(plan.label,/100,0 km/);
  assert.match(plan.goal,/próxima dupla/i);
- second.storyLeg.groundDistance=5000;second.raid={phase:'active',remaining:4};
+ second.storyLeg.groundDistance=25000;second.raid={phase:'active',remaining:4};
  assert.equal(core.stagePlanFor(second).progress,.25,'a pursuit must preserve the measured leg progress');
+});
+test('the final running metres are shown as metres instead of a premature zero-kilometre label',()=>{
+ const r=duel(1);r.boss.hp=0;core.advanceRun(r,1/60);
+ r.storyLeg.groundDistance=99975;
+ const p=core.stagePlanFor(r);assert.equal(p.section,'leg');assert.match(p.label,/25 m até a dupla/);assert.doesNotMatch(p.label,/0,0 km/);
 });
 test('flight metres cannot satisfy the ground-running interval and a reserved pair cannot interrupt a flight',async()=>{
  const {beginAirTransfer}=await import('../tanahoraflavio/runner-terrain.mjs');

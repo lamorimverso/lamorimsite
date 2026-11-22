@@ -43,7 +43,7 @@ test('rota completa sem teleporte percorre todas as fases até a urna depois de 
  for(const width of [480,900]){
   const run=core.createRun({mode:'story',seed:12,assisted:true});core.resizeRun(run,width);core.startRun(run);run.lives=20;
   const seen=[],visited=new Set();let last=null;
-  for(let i=0;i<120*1500&&run.status==='running';i++){
+  for(let i=0;i<120*4200&&run.status==='running';i++){
    pilotCounter(run);core.advanceRun(run,1/120);
    visited.add(core.routeStageFor(run).id);
    if(run.boss&&run.boss!==last){last=run.boss;seen.push(run.boss.type);}

@@ -76,7 +76,7 @@ test('a campanha de verdade apresenta retaguarda e emissão alta depois da trave
  for(const [width,seed] of [[480,2],[900,7]]){
   const r=core.createRun({mode:'story',seed});core.resizeRun(r,width);core.startRun(r);
   let lastSpawn=0,povo=false,janones=false;const waves=[];
-  for(let i=0;i<120*1800&&r.status==='running'&&waves.length<2;i++){
+  for(let i=0;i<120*4200&&r.status==='running'&&waves.length<2;i++){
    pilotCounter(r);if(r.reserveShields&&r.shieldFor<=0)core.activateReserveShield(r);core.advanceRun(r,dt);
    povo ||= r.lastBoss==='povo';janones ||= r.lastBoss==='janones';
    if(lastSpawn===r.spawnedObstacles)continue;lastSpawn=r.spawnedObstacles;
@@ -103,7 +103,7 @@ test('o Fiscal não consome o espaço de ensino do Paraguai na rota natural',asy
  const {pilotCounter}=await import('../tools/story-pilot.mjs');
  const r=core.createRun({mode:'story',seed:1});core.resizeRun(r,480);core.startRun(r);
  const waves=[];let lastSpawn=0;
- for(let i=0;i<120*900&&r.status==='running'&&waves.length<2;i++){
+ for(let i=0;i<120*4200&&r.status==='running'&&waves.length<2;i++){
   pilotCounter(r);if(r.reserveShields&&r.shieldFor<=0)core.activateReserveShield(r);core.advanceRun(r,dt);
   if(lastSpawn===r.spawnedObstacles)continue;lastSpawn=r.spawnedObstacles;
   if(r.lastBoss!=='fiscal'||r.boss||r.raid||r.terrain.active||core.routeStageFor(r).id!=='paraguai')continue;
