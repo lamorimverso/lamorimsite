@@ -95,7 +95,7 @@ test('real flight needs jumping and reaches each mode’s destination at 30/60/1
   }
   assert.equal(r.status,'running',JSON.stringify({mode,hz,width,assisted,last:r.lastHit,phase:a.flight.phase,flight:a.flight.progress,x:r.player.x,y:r.player.y}));
   assert.equal(r.terrain.flightCompleted,true);assert.equal(core.routeStageFor(r).id,mode==='story'?'argentina':'florida');
-  assert.ok(r.elapsed-initial>=19&&r.elapsed-initial<27);assert.ok(landings>=4);assert.ok(resized);
+  assert.ok(r.elapsed-initial>=(mode==='story'?14:19)&&r.elapsed-initial<(mode==='story'?20:27));assert.ok(landings>=(mode==='story'?6:4));assert.ok(resized);
   assert.deepEqual([...phases],['boarding','ascent','crossing','landing']);
  }
 });

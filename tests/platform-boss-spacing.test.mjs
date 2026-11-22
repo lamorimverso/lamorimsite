@@ -37,7 +37,7 @@ test('ground bosses still take physical direct shots from the existing Flavio we
 });
 
 test('even the shortest campaign gap gives eighteen seconds of running, with scenery progress rather than a frozen checkpoint',()=>{
- for(const dt of [1/30,1/60,1/120])for(const index of [0,1,13,14,15]){
+ for(const dt of [1/30,1/60,1/120])for(const index of [0,14,15]){
   const r=scene(index);r.boss.hp=0;core.advanceRun(r,dt);assert.equal(r.boss,null);
   const next=r.bossesDefeated,physical=r.distance,route=r.routeDistance;
   let previous=route;

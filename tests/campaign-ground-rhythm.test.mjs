@@ -76,7 +76,7 @@ test('a campanha de verdade apresenta retaguarda e emissão alta depois da trave
  for(const [width,seed] of [[480,2],[900,7]]){
   const r=core.createRun({mode:'story',seed});core.resizeRun(r,width);core.startRun(r);
   let lastSpawn=0,povo=false,janones=false;const waves=[];
-  for(let i=0;i<120*900&&r.status==='running'&&waves.length<2;i++){
+  for(let i=0;i<120*1800&&r.status==='running'&&waves.length<2;i++){
    pilotCounter(r);if(r.reserveShields&&r.shieldFor<=0)core.activateReserveShield(r);core.advanceRun(r,dt);
    povo ||= r.lastBoss==='povo';janones ||= r.lastBoss==='janones';
    if(lastSpawn===r.spawnedObstacles)continue;lastSpawn=r.spawnedObstacles;

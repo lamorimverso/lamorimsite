@@ -1745,7 +1745,7 @@ for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`stag
   const [header,meter]=await Promise.all([page.locator('.game-stage-header').boundingBox(),page.locator('#game-stage-progress').boundingBox()]);
   assert.ok(meter.width>100&&meter.x>=header.x&&meter.x+meter.width<=header.x+header.width+1);
   assert.ok(meter.y>=header.y&&meter.y+meter.height<=header.y+header.height+1);
-  assert.match(await page.locator('#game-route li[data-stage="rio"] .game-route-guide').textContent(),/Corrida e esquivas/);
+  assert.match(await page.locator('#game-route li[data-stage="rio"] .game-route-guide').textContent(),/Dois vilões · 20 km de fuga/);
   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
   await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/stage-flow-${viewport.width}.png`)});
   await page.evaluate(()=>{__testRun.raid={phase:'warning',stageId:'rio',remaining:30,recoveryFor:2.5,factIndex:0,id:1,waves:0,stageKeys:['0:rio']};});
@@ -1761,6 +1761,47 @@ for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`stag
   await page.waitForFunction(()=>__testRun.terrain.active?.kind==='ground-lesson');
   await page.waitForFunction(()=>document.getElementById('game').dataset.stageSection==='platforms');
   assert.match(await page.locator('#game-stage-time').getAttribute('aria-label'),/pouse no topo/i);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
+
+for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`twenty kilometre legs and airborne platform travel are visible at ${viewport.width}px`,async()=>{
+ const {context,page,errors}=await open({instrument:true,viewport});
+ try{
+  await begin(page);
+  await page.evaluate(async()=>{
+   const r=__testRun,{nextStoryBossDistance}=await import('./runner-bosses.mjs');
+   for(const k of ['nextRaid','nextObstacle','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[k]=Infinity;
+   r.terrain.nextAt=Infinity;r.obstacles=[];r.pickups=[];r.bossesDefeated=1;
+   r.distance=r.routeDistance=r.nextBossAt=nextStoryBossDistance(1);
+  });
+  await page.waitForFunction(()=>__testRun.boss?.type==='xandao');
+  await page.evaluate(()=>{__testRun.boss.hp=0;});
+  await page.waitForFunction(()=>document.getElementById('game').dataset.stageSection==='leg');
+  assert.match(await page.locator('#game-stage-time').textContent(),/20,0 km até a dupla/);
+  await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/pair-leg-${viewport.width}.png`)});
+  await page.evaluate(async()=>{
+   const c=await import('./runner-core.mjs'),r=__testRun,start=r.storyLeg.groundDistance;
+   for(let i=0;i<1200&&r.storyLeg.groundDistance-start<2500;i++)c.advanceRun(r,1/120);
+  });
+  await page.waitForFunction(()=>/17,[45] km até a dupla/.test(document.getElementById('game-stage-time').textContent));
+  assert.equal(await page.evaluate(()=>__testRun.boss),null);
+  await page.evaluate(async()=>{
+   const c=await import('./runner-core.mjs'),{beginAirTransfer}=await import('./runner-terrain.mjs'),{pilotDodge}=await import('../tools/story-pilot.mjs'),r=__testRun;
+   r.storyLeg=null;r.bossCooldown=0;r.bossesDefeated=6;r.nextBossAt=44000;r.distance=r.routeDistance=40400;
+   Object.assign(r.player,{y:0,velocity:0,grounded:true,supportY:0});
+   const a=beginAirTransfer(r,c.difficultyAt(r.distance,r.elapsed).speed,{routeStart:40400,routeEnd:41800,from:'sao-paulo',to:'argentina',fromName:'São Paulo',toName:'Argentina'});
+   for(let i=0;i<1200&&r.status==='running';i++){
+    pilotDodge(r);c.advanceRun(r,1/120);
+    if(a.flight.progress>.30&&!r.player.grounded&&r.player.y>70)break;
+   }
+  });
+  await page.waitForFunction(()=>document.getElementById('game').dataset.stageSection==='transfer');
+  assert.match(await page.locator('#game-stage-time').textContent(),/Sem chão/);
+  assert.match(await page.locator('#game-stage-time').getAttribute('aria-label'),/Cair no vazio encerra/);
+  await page.locator('#game').screenshot({path:path.resolve(__dirname,`../ux-captures/air-platforms-${viewport.width}.png`)});
+  assert.equal(await page.evaluate(()=>__testRun.status),'running');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
