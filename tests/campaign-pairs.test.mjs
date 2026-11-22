@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
 import {storyBossAt,nextStoryBossDistance} from '../tanahoraflavio/runner-bosses.mjs';
 import {pilotCounter} from '../tools/story-pilot.mjs';
+import {createCanvas} from '@napi-rs/canvas';
+import {drawJourneyScenery} from '../tanahoraflavio/runner-scenery.mjs';
+import {drawTerrain} from '../tanahoraflavio/runner-terrain-art.mjs';
 
 function duel(index,width=480){
  const r=core.createRun({mode:'story',seed:17});core.startRun(r);core.resizeRun(r,width);
@@ -11,6 +14,16 @@ function duel(index,width=480){
  if(index>0)core.grantBossPower(r,storyBossAt(index-1).type);
  core.advanceRun(r,1/60);return r;
 }
+test('airborne void removes the road verge as well as the lower road surface',()=>{
+ const ctx=createCanvas(480,300).getContext('2d');
+ const flight={from:'sao-paulo',to:'argentina',phase:'crossing',progress:.5,traveled:2500,nominalSpeed:400,aircraft:[]};
+ drawJourneyScenery(ctx,{width:480,routeDistance:41100,distance:70000,flight});
+ drawTerrain(ctx,{width:480,terrain:{active:{kind:'air-transfer',gaps:[{x:100,width:800}],platforms:[],ceilings:[],flight}}});
+ for(const y of [234,239,250,280]){
+  const [red,,blue,alpha]=ctx.getImageData(350,y,1,1).data;
+  assert.ok(blue>red+20&&alpha>220,`y=${y}: the empty span must show sky instead of a leftover verge`);
+ }
+});
 test('a completed pair reserves twenty thousand physical running metres before the next pair',()=>{
  for(const fps of [30,60,120]){
   const r=duel(1),dt=1/fps;r.boss.hp=0;core.advanceRun(r,dt);

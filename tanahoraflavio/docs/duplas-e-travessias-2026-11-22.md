@@ -10,6 +10,7 @@ A campanha já tinha duplas por mapa, mas usava 18 segundos como intervalo míni
 - Só o deslocamento na pista entra nessa conta. Duelo e travessia aérea não completam os 20 km. O cenário continua avançando e o cabeçalho mostra a distância restante.
 - Preparar o embarque cedo demais não esvazia toda a corrida de obstáculos: a preparação só reserva o final do percurso. Os chefões aguardam o pouso.
 - A campanha usa sete plataformas de alturas diferentes, mais curtas, separadas por vãos maiores. O jogador precisa saltar entre apoios reais. Cair no vazio termina a tentativa, inclusive com escudo ou continuação disponível. O modo Infinito preserva o corredor anterior.
+- O desenho do vazio remove também a faixa de 12 pixels da margem da pista, que continuava parecendo um piso abaixo das plataformas. Há regressão de pixels usando o cenário e o terreno reais.
 - O dano da campanha tem bases absolutas (1,1 no tiro direto e 2,6 na devolução), com os multiplicadores das armas, aberturas, fraquezas e críticos existentes. O breve efeito de acerto de 280 ms impede que um único leque aplique vários impactos simultâneos.
 - PV dos confrontos foram calibrados para permitir mais ciclos de ataques e a segunda fase. Rick e Guilherme recebem resistência apropriada às rajadas e às recompensas anteriores. Não há espera artificial para permitir a vitória.
 
