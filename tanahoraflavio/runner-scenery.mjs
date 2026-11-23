@@ -258,7 +258,7 @@ function drawSkyObjects(c,width,time,reducedMotion){
  };
  // Os astros entram e saem por opacidade, sem saltar de lugar na mudança.
  body(time.index,reducedMotion?.5:time.progress,1-time.blend);
- body(time.nextIndex,0,time.blend);
+ body(time.nextIndex,reducedMotion?.5:0,time.blend);
  if(time.night>.005){
   c.save();c.globalAlpha*=time.night*.85;
   const count=Math.min(38,Math.max(14,Math.ceil(width/24)));
