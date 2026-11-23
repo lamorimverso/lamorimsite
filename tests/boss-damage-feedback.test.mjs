@@ -20,16 +20,13 @@ function render({width=480,critical=true,remaining=.8,reduced=false}={}){
  assert.equal(ctx.globalAlpha,priorAlpha);
  return labels;
 }
-test('the real boss renderer shows the damage and critical distinction in both viewport sizes',()=>{
+test('no floating PV or critical text is drawn over bosses at any viewport size',()=>{
  for(const width of [480,900])for(const critical of [false,true]){
-  const [label]=render({width,critical});
-  assert.equal(label.text,critical?'CRÍTICO! −6,3 PV':'−6,3 PV');
-  assert.ok(label.x-label.maxWidth/2>=0&&label.x+label.maxWidth/2<=width);
-  assert.ok(label.y>=16&&label.y<=290);
+  assert.deepEqual(render({width,critical}),[]);
  }
 });
-test('reduced motion keeps damage feedback stationary, and expired feedback disappears',()=>{
- assert.equal(render({reduced:true})[0].y,render({reduced:true,remaining:.4})[0].y);
- assert.ok(render({remaining:.4})[0].y<render()[0].y);
- assert.deepEqual(render({remaining:0}),[]);
+test('damage values are not drawn during reduced motion or while a hit expires',()=>{
+ for(const reduced of [false,true])for(const remaining of [0,.4,.8]){
+  assert.deepEqual(render({reduced,remaining}),[]);
+ }
 });
