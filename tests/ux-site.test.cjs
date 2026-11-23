@@ -1865,16 +1865,16 @@ for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`plat
    const c=await import('./runner-core.mjs'),r=__testRun;r.boss.hp=0;c.advanceRun(r,1/120);
    const opening=!!r.arenaExit,before=r.distance;c.advanceRun(r,1/120);return {opening,moved:r.distance>before,status:r.status};
   });
-  assert.deepEqual(resumed,{opening:true,moved:false,status:'running'});
+  // A estrada retoma automaticamente após vencer o chefe no Runner.
+  assert.deepEqual(resumed,{opening:true,moved:true,status:'running'});
   const postVictory=await page.evaluate(()=>__testRun.distance);
-  await page.keyboard.down('ArrowRight');
   await page.waitForFunction(distance=>__testRun.distance>distance,postVictory);
-  await page.keyboard.up('ArrowRight');
+  assert.equal(await page.evaluate(()=>__testRun.player.moveHeld),0);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
 
-for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`manual Story stops its camera during boss duels and moves on command at ${viewport.width}px`,async()=>{
+for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`Runner Story pauses its road during duels and resumes automatically at ${viewport.width}px`,async()=>{
  const {context,page,errors}=await open({instrument:true,instrumentSprites:true,viewport});
  try{
   await begin(page);
@@ -1889,9 +1889,8 @@ for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`manu
   assert.equal(await page.evaluate(()=>__testRun.distance),held.distance,'duel stops the road without pausing combat');
   await page.evaluate(()=>{__testRun.boss.hp=0;});
   await page.waitForFunction(()=>!__testRun.boss);
-   await page.keyboard.down('ArrowRight');
    await page.waitForFunction(d=>__testRun.distance>d&&!__actorMotion.at(-1)?.standing,held.distance);
-   await page.keyboard.up('ArrowRight');
+   assert.equal(await page.evaluate(()=>__testRun.player.moveHeld),0);
   assert.equal(await page.evaluate(()=>__testRun.status),'running');
   await page.evaluate(async()=>{
    const r=__testRun,{nextStoryBossDistance}=await import('./runner-bosses.mjs');
@@ -1899,9 +1898,8 @@ for(const viewport of [{width:390,height:844},{width:900,height:720}])test(`manu
   });
   await page.waitForFunction(()=>__testRun.boss?.traversal);
   const moving=await page.evaluate(()=>__testRun.distance);
-  await page.keyboard.down('ArrowRight');
-   await page.waitForFunction(d=>__testRun.distance>d+25&&!__actorMotion.at(-1)?.standing,moving);
-   await page.keyboard.up('ArrowRight');
+  await page.waitForFunction(d=>__testRun.distance>d+25&&!__actorMotion.at(-1)?.standing,moving);
+  assert.equal(await page.evaluate(()=>__testRun.player.moveHeld),0);
   assert.equal(await page.evaluate(()=>__testRun.status),'running');assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
