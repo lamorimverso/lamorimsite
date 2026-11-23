@@ -36,7 +36,7 @@ function initRunner() {
   if (!canvas || !section) return;
   // Uma aba pode ter conservado o HTML anterior enquanto os módulos já
   // mudaram. Atualizar a página uma vez evita inicializar sobre IDs antigos.
-  if(!$("game-stage-progress")||!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-cycle")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-effects")||!$("game-assist")||$("game-options-panel")||!$("game-attack")||!$("game-jacare-progress")||!$("game-jacare-count")||!$("game-jacare-hint")||!$("game-support-retry")||!$("game-settings")||!$("game-start-hint")||!$("game-battle-cue")||!$("game-practice")||!$("game-route")||!$("game-result-actions")||!$("game-ready-actions")||!$("game-controls")||!$("game-continue")||!$("game-form-status")||$("game-expand")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
+  if(!$("game-stage-progress")||!$("game-control-bindings")||!$("game-combat-hud")||!$("game-hero-health")||!$("game-power-charge")||!$("game-weapon-cycle")||!$("game-power-reward")||!$("game-reserve-shield")||!$("game-aid-status")||!$("game-effects")||!$("game-assist")||$("game-options-panel")||!$("game-attack")||!$("game-jacare-progress")||!$("game-jacare-count")||!$("game-jacare-hint")||!$("game-support-retry")||!$("game-settings")||!$("game-fullscreen")||!$("game-fullscreen-note")||!$("game-start-hint")||!$("game-battle-cue")||!$("game-practice")||!$("game-route")||!$("game-result-actions")||!$("game-ready-actions")||!$("game-controls")||!$("game-continue")||!$("game-form-status")||$("game-expand")||!$("game-sound-label")||!$("game-voice-note")||!$("game-captured")||!$("countdown-layout")||$("game-jump")||$("game-progress")){
     const url=new URL(location.href);
     if(url.searchParams.get("ui")!=="20261115-campaign-hierarchy"){
       url.searchParams.set("ui","20261115-campaign-hierarchy");location.replace(url.href);
@@ -85,9 +85,6 @@ function initRunner() {
   let run=createRun({assisted:preferences.assisted,mode:selectedMode(),manualStory:false}),frameId=0;
   run.supportAvailable=false;
   const trackPointers=new Map(),moveKeys=new Set(),jumpKeys=createPressGate(),jumpSources=createHeldSources(),crouchSources=createHeldSources(),attackSources=createHeldSources();
-  // Each touch button tracks its own pointer so multiple fingers are independent.
-  const mobilePointers=new Map(),mobileHeld=new Map();
-  const mobileButtons=[...$("game-mobile-controls").querySelectorAll("[data-mobile-action]")];
   const attackButton=$("game-attack"),firePointers=new Set(),mouseHeld=new Map();
   const frameClock=createFrameClock(performance.now());
   let spritesReady=false,spritesFailed=false,loadedSprites=0,loadingSprites=false,landingUntil=0;
@@ -510,8 +507,6 @@ function initRunner() {
     else if(!active)draw();
   }
   function clearControls(){
-    mobilePointers.clear();mobileHeld.clear();
-    for(const button of mobileButtons)button.setAttribute('aria-pressed','false');
     trackPointers.clear();moveKeys.clear();mouseHeld.clear();gamepadHeld.clear();gamepadDriver?.reset();jumpKeys.clear();jumpSources.clear();crouchSources.clear();attackSources.clear();clearRunInput(run);movementSounds.reset(run);
   }
   function fire(source,active){
@@ -531,54 +526,10 @@ function initRunner() {
   attackButton.addEventListener('click',event=>{if(controlsOpen()||attackButton.hidden)return;if(event.detail===0){if(attackRun(run))heroShotSound();draw();}});
   function updateMovement(){
     if(controlsOpen()){moveRun(run,0);return;}
-    const actions=[...moveKeys].map(code=>keyboardActionFor(preferences.controls,code)).concat([...mouseHeld.values()],[...mobileHeld.values()]);
+    const actions=[...moveKeys].map(code=>keyboardActionFor(preferences.controls,code)).concat([...mouseHeld.values()]);
     const right=actions.includes('right')||gamepadHeld.has('right'),left=actions.includes('left')||gamepadHeld.has('left');
     const pointer=[...trackPointers.values()].filter(p=>p.action==="move").at(-1);
     moveRun(run,Number(right)-Number(left)||(pointer?.direction||0));
-  }
-  // Buttons and the existing canvas swipe gestures are independent input sources.
-  function pressMobile(button,source){
-    if(run.status!=='running'||controlsOpen()||mobilePointers.has(source))return;
-    const action=button.dataset.mobileAction;
-    mobilePointers.set(source,{button,action});
-    button.setAttribute('aria-pressed','true');
-    if(action==='left'||action==='right'){mobileHeld.set(source,action);updateMovement();}
-    else if(action==='crouch'){
-      // The on-screen button must honour the same hold/toggle setting as swiping.
-      // Both surfaces share the same toggle source; switching input methods works.
-      if(preferences.crouchMode==='toggle')crouchSources.toggle('touch-toggle');
-      else crouchSources.set(source,true);
-      crouch(crouchSources.active);
-      if(preferences.crouchMode==='toggle')button.setAttribute('aria-pressed',String(crouchSources.active));
-    }
-    else if(action==='jump')jump(source);
-  }
-  function releaseMobile(source){
-    const pointer=mobilePointers.get(source);if(!pointer)return;
-    mobilePointers.delete(source);
-    const {button,action}=pointer;
-    const stillHeld=[...mobilePointers.values()].some(p=>p.button===button);
-    button.setAttribute('aria-pressed',String(stillHeld||action==='crouch'&&preferences.crouchMode==='toggle'&&crouchSources.active));
-    if(action==='left'||action==='right'){mobileHeld.delete(source);updateMovement();}
-    else if(action==='crouch'&&preferences.crouchMode==='hold'){crouchSources.set(source,false);crouch(crouchSources.active);}
-    else if(action==='jump')releaseJump(source);
-  }
-  for(const button of mobileButtons){
-    button.addEventListener('pointerdown',event=>{
-      if(event.button!==0||run.status!=='running'||controlsOpen())return;
-      event.preventDefault();
-      const source='mobile:'+event.pointerId;
-      pressMobile(button,source);
-      try{button.setPointerCapture(event.pointerId);}catch{}
-    });
-    for(const type of ['pointerup','pointercancel','lostpointercapture'])
-      button.addEventListener(type,event=>releaseMobile('mobile:'+event.pointerId));
-    // Accessible keyboard activation never emits pointerdown; real taps should fire once.
-    button.addEventListener('click',event=>{
-      if(event.detail!==0)return;
-      const source='mobile:keyboard:'+button.dataset.mobileAction;
-      pressMobile(button,source);releaseMobile(source);
-    });
   }
   $("game-start").addEventListener("click",()=>begin());
   $("game-mode-chooser").addEventListener("change",()=>{if(run.status==="ready"){run.mode=selectedMode();run.manualStory=false;updateUI();draw();}});
@@ -658,6 +609,13 @@ function initRunner() {
     lastPointerAt=performance.now();
     event.preventDefault();resumeFromGesture();canvas.focus({preventScroll:true});
     if(event.pointerType!=="touch"||run.status!=="running"){jump();return;}
+    if(event.isPrimary===false&&run.boss&&!run.boss.traversal){
+      const source='touch-fire:'+event.pointerId;
+      trackPointers.set(event.pointerId,{action:'fire'});
+      fire(source,true);
+      try{canvas.setPointerCapture?.(event.pointerId);}catch{}
+      return;
+    }
     const pointer={x:event.clientX,y:event.clientY,action:"pending"};
     if(run.player.crouchHeld&&(preferences.crouchMode==="hold"||trackPointers.size>0)){pointer.action="jump";jump('touch:'+event.pointerId);}
     trackPointers.set(event.pointerId,pointer);
@@ -684,6 +642,7 @@ function initRunner() {
     trackPointers.delete(event.pointerId);
     if(pointer.action==="move")updateMovement();
     if(pointer.action==="jump")releaseJump('touch:'+event.pointerId);
+    if(pointer.action==="fire")fire('touch-fire:'+event.pointerId,false);
     if(pointer.action==="pending"&&event.type==="pointerup")jump();
     if(pointer.action==="crouch"&&preferences.crouchMode==="hold"){crouchSources.set("touch:"+event.pointerId,false);crouch(crouchSources.active);}
   }
@@ -741,6 +700,44 @@ function initRunner() {
     }, {threshold:[0,.12]}).observe(canvas);
   }
 
+  // Native Fullscreen API on Android/iPad; fixed-viewport fallback on iPhone
+  // where Safari may still reject fullscreen for non-video elements.
+  const fullscreenButton=$('game-fullscreen');
+  const fullscreenNote=$('game-fullscreen-note');
+  let fallbackFullscreen=false;
+  const fullscreenActive=()=>document.fullscreenElement===section||fallbackFullscreen;
+  function reflectFullscreen(){
+    section.dataset.mobileFullscreen=String(fallbackFullscreen);
+    document.body.classList.toggle('runner-fullscreen-fallback',fallbackFullscreen);
+    const active=fullscreenActive();
+    fullscreenButton.setAttribute('aria-pressed',String(active));
+    fullscreenButton.textContent=active?'⛶ Sair da tela cheia':'⛶ Jogar em tela cheia';
+    fullscreenNote.textContent=fallbackFullscreen
+      ?'O navegador não permite tela cheia nativa. A pista ocupa a área disponível; barras do navegador podem permanecer. Use esta opção para sair.'
+      :active?'Tela cheia ativa. Abra a engrenagem e escolha Sair da tela cheia para voltar.'
+        :'Sem botões direcionais: toque para pular, deslize para desviar ou abaixar; nos chefes, toque com um segundo dedo para atirar.';
+  }
+  async function toggleFullscreen(){
+    if(document.fullscreenElement===section){
+      try{await document.exitFullscreen();}catch{ /* O navegador mantém seu estado. */ }
+    }else if(fallbackFullscreen){
+      fallbackFullscreen=false;
+    }else if(typeof section.requestFullscreen==='function'){
+      try{
+        await section.requestFullscreen({navigationUI:'hide'});
+        if(document.fullscreenElement!==section)fallbackFullscreen=true;
+      }catch{fallbackFullscreen=true;}
+    }else fallbackFullscreen=true;
+    $('game-settings').open=false;
+    reflectFullscreen();syncActivity();resize();draw();
+    if(run.status==='running')canvas.focus({preventScroll:true});
+  }
+  fullscreenButton.addEventListener('click',toggleFullscreen);
+  document.addEventListener('fullscreenchange',()=>{
+    if(document.fullscreenElement===section)fallbackFullscreen=false;
+    reflectFullscreen();syncActivity();resize();draw();
+  });
+  reflectFullscreen();
   function resize() {
     const width = canvas.getBoundingClientRect().width;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -1017,7 +1014,7 @@ function initRunner() {
   window.addEventListener('gamepaddisconnected',()=>gamepadDriver.poll());
   window.addEventListener('pagehide',()=>{clearInterval(controllerTimer);controllerTimer=null;gamepadDriver.reset();controlSettings.cancelCapture();});
   window.addEventListener('pageshow',()=>{if(controllerTimer===null)controllerTimer=setInterval(pollControllerOutsideGame,80);gamepadDriver.reset();syncActivity();});
-  for(const id of ["game-sound","game-crouch-mode","game-effects","game-assist"])$(id).disabled=false;
+  for(const id of ["game-sound","game-crouch-mode","game-effects","game-assist","game-fullscreen"])$(id).disabled=false;
   updateUI();resize();draw();prepareSprites();
 }
 

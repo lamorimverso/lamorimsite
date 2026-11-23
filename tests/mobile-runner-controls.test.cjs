@@ -37,102 +37,131 @@ async function beginMobile(viewport){
  });
  return {context,page,errors};
 }
-async function send(page,action,type,pointerId){
- await page.locator('[data-mobile-action="'+action+'"]').dispatchEvent(type,{button:0,pointerType:'touch',pointerId,isPrimary:true});
+async function touch(page,type,pointerId,{primary=true,x=110,y=120}={}){
+ await page.locator('#runner-canvas').dispatchEvent(type,{button:0,pointerType:'touch',pointerId,isPrimary:primary,clientX:x,clientY:y});
 }
+function verifyErrors(errors){assert.deepEqual(errors,[]);}
 for(const viewport of [{width:320,height:568},{width:390,height:844},{width:844,height:390}])
- test('controles de celular cabem na tela e respondem a dois dedos: '+viewport.width+'x'+viewport.height,async()=>{
-  const {context,page,errors}=await beginMobile(viewport);
-  try{
-   const dock=page.locator('#game-mobile-controls'),canvas=page.locator('#runner-canvas');
-   assert.equal(await dock.isVisible(),true,'touch dock visible while running');
-   const metrics=await page.evaluate(()=>{
-    const dock=document.getElementById('game-mobile-controls'),canvas=document.getElementById('runner-canvas');
-    return {overflow:document.documentElement.scrollWidth>innerWidth,
-     buttons:[...dock.querySelectorAll('button')].map(x=>({height:x.getBoundingClientRect().height,width:x.getBoundingClientRect().width})),
-     touchAction:getComputedStyle(dock.querySelector('button')).touchAction,
-     canvasHeight:canvas.getBoundingClientRect().height};
-   });
-   assert.equal(metrics.overflow,false,'no horizontal overflow');
-   assert.equal(metrics.buttons.length,4);
-   for(const b of metrics.buttons)assert.ok(b.height>=44&&b.width>=44,'buttons require a touch-size hit area');
-   assert.equal(metrics.touchAction,'none');
-   assert.ok(metrics.canvasHeight>=170,'track should remain legible');
-   await send(page,'right','pointerdown',101);
-   await page.waitForFunction(()=>__touchRun.player.moveHeld===1);
-   await send(page,'jump','pointerdown',102);
-   await page.waitForFunction(()=>__touchRun.player.y>0);
-   assert.equal(await page.locator('[data-mobile-action="right"]').getAttribute('aria-pressed'),'true');
-   assert.equal(await page.evaluate(()=>__touchRun.player.moveHeld),1,'movement and jump do not cancel each other');
-   await send(page,'jump','pointerup',102);
-   await send(page,'right','pointercancel',101);
-   assert.equal(await page.evaluate(()=>__touchRun.player.moveHeld),0);
-   assert.equal(await page.locator('[data-mobile-action="right"]').getAttribute('aria-pressed'),'false');
-   await page.waitForFunction(()=>__touchRun.player.grounded);
-   await send(page,'crouch','pointerdown',103);
-   await page.waitForFunction(()=>__touchRun.player.crouchHeld);
-   await send(page,'crouch','pointerup',103);
-   await page.waitForFunction(()=>!__touchRun.player.crouchHeld);
-   const distance=await page.evaluate(()=>__touchRun.distance);
-   await page.waitForFunction(before=>__touchRun.distance>before,distance);
-   assert.equal(await page.evaluate(()=>__touchRun.manualStory),false,'runner still advances automatically');
-   assert.deepEqual(errors,[]);
-  }finally{await context.close();}
- });
-test('touch crouch button respects toggle mode and remains held after lifting a finger',async()=>{
- const {context,page,errors}=await beginMobile({width:390,height:844});
+test('celular usa gestos sem controles sobrepostos: '+viewport.width+'x'+viewport.height,async()=>{
+ const {context,page,errors}=await beginMobile(viewport);
  try{
-  await page.evaluate(()=>{
-   const select=document.getElementById('game-crouch-mode');
-   select.value='toggle';select.dispatchEvent(new Event('change',{bubbles:true}));
-  });
-  const crouchButton=page.locator('[data-mobile-action="crouch"]');
-  await send(page,'crouch','pointerdown',301);
-  await send(page,'crouch','pointerup',301);
-  assert.equal(await page.evaluate(()=>__touchRun.player.crouchHeld),true,'toggle mode must remain active after lifting the finger');
-  assert.equal(await crouchButton.getAttribute('aria-pressed'),'true','on-screen state reflects latched crouch');
-  await crouchButton.tap();
-  assert.equal(await page.evaluate(()=>__touchRun.player.crouchHeld),false,'a real touchscreen tap should deactivate the latched state exactly once');
-  assert.equal(await crouchButton.getAttribute('aria-pressed'),'false');
-  await crouchButton.tap();
-  assert.equal(await page.evaluate(()=>__touchRun.player.crouchHeld),true,'a second real touchscreen tap activates crouch again');
-  await send(page,'crouch','pointerdown',302);
-  await send(page,'crouch','pointerup',302);
-  assert.equal(await page.evaluate(()=>__touchRun.player.crouchHeld),false,'another input method can release a latched crouch');
-  assert.deepEqual(errors,[]);
- }finally{await context.close();}
-});
-test('landscape keeps both the track and entire touch dock in the available viewport',async()=>{
- const {context,page,errors}=await beginMobile({width:844,height:390});
- try{
-  const rects=await page.evaluate(()=>{
-   const canvas=document.getElementById('runner-canvas').getBoundingClientRect();
-   const dock=document.getElementById('game-mobile-controls').getBoundingClientRect();
-   return {canvas:{top:canvas.top,bottom:canvas.bottom,height:canvas.height},
-     dock:{top:dock.top,bottom:dock.bottom,height:dock.height},height:innerHeight};
-  });
-  assert.ok(rects.canvas.top>=0,'canvas cannot start above the visible screen: '+JSON.stringify(rects));
-  assert.ok(rects.canvas.bottom<=rects.height,'canvas cannot end below screen: '+JSON.stringify(rects));
-  assert.ok(rects.dock.bottom<=rects.height,'touch dock cannot fall below screen: '+JSON.stringify(rects));
-  assert.deepEqual(errors,[]);
- }finally{await context.close();}
-});
-test('blur frees touch movement, keyboard accessibility click works, desktop dock stays hidden',async()=>{
- const {context,page,errors}=await beginMobile({width:390,height:844});
- try{
-  await send(page,'left','pointerdown',201);
-  assert.equal(await page.evaluate(()=>__touchRun.player.moveHeld),-1);
-  await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
+  assert.equal(await page.locator('#game-mobile-controls').count(),0,'four old buttons must not exist');
+  assert.equal(await page.locator('#game-attack').isVisible(),false,'shooting uses second finger on mobile');
+  assert.equal(await page.locator('#game-fullscreen').count(),1,'fullscreen is available in settings');
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'no horizontal overflow');
+  await touch(page,'pointerdown',101);
+  await touch(page,'pointerup',101);
+  await page.waitForFunction(()=>__touchRun.player.y>0);
+  await page.waitForFunction(()=>__touchRun.player.grounded);
+  await touch(page,'pointerdown',102,{x:100,y:100});
+  await touch(page,'pointermove',102,{x:160,y:100});
+  await page.waitForFunction(()=>__touchRun.player.moveHeld===1);
+  await touch(page,'pointerup',102);
   assert.equal(await page.evaluate(()=>__touchRun.player.moveHeld),0);
-  assert.equal(await page.locator('[data-mobile-action="left"]').getAttribute('aria-pressed'),'false');
-  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
-  await page.locator('[data-mobile-action="jump"]').evaluate(el=>el.click());
-  assert.equal(await page.evaluate(()=>__touchRun.player.velocity>0),true,'keyboard accessible activation fires jump');
-  assert.deepEqual(errors,[]);
+  await touch(page,'pointerdown',103,{x:120,y:100});
+  await touch(page,'pointermove',103,{x:120,y:140});
+  await page.waitForFunction(()=>__touchRun.player.crouchHeld);
+  await touch(page,'pointercancel',103);
+  assert.equal(await page.evaluate(()=>__touchRun.player.crouchHeld),false);
+  const d=await page.evaluate(()=>__touchRun.distance);
+  await page.waitForFunction(before=>__touchRun.distance>before,d);
+  assert.equal(await page.evaluate(()=>__touchRun.manualStory),false);
+  verifyErrors(errors);
  }finally{await context.close();}
- const desktop=await browser.newContext({viewport:{width:900,height:720}});
+});
+for(const viewport of [{width:320,height:568},{width:390,height:844},{width:844,height:390}])
+test('tela cheia funciona e pode ser fechada sem perder a partida: '+viewport.width+'x'+viewport.height,async()=>{
+ const {context,page,errors}=await beginMobile(viewport);
  try{
-  const page=await desktop.newPage();await page.goto(base);
-  assert.equal(await page.locator('#game-mobile-controls').isVisible(),false);
- }finally{await desktop.close();}
+  // Simulate iPhone Safari where element.requestFullscreen is unsupported.
+  await page.evaluate(()=>{document.getElementById('game').requestFullscreen=undefined;});
+  await page.locator('#game-settings summary').tap();
+  const button=page.locator('#game-fullscreen');
+  assert.equal(await button.isEnabled(),true);
+  await button.tap();
+  await page.waitForFunction(()=>document.getElementById('game').dataset.mobileFullscreen==='true');
+  assert.equal(await page.locator('#game-settings').evaluate(x=>x.open),false,'settings close on entry');
+  assert.equal(await button.getAttribute('aria-pressed'),'true');
+  const layout=await page.evaluate(()=>{
+   const game=document.getElementById('game').getBoundingClientRect();
+   const canvas=document.getElementById('runner-canvas').getBoundingClientRect();
+   const pane=document.querySelector('.game-viewport').getBoundingClientRect();
+   return {viewport:{w:innerWidth,h:innerHeight},game:{x:game.x,y:game.y,w:game.width,h:game.height},
+       canvas:{x:canvas.x,y:canvas.y,w:canvas.width,h:canvas.height},
+       pane:{x:pane.x,y:pane.y,w:pane.width,h:pane.height},
+       bodyLocked:document.body.classList.contains('runner-fullscreen-fallback')};
+  });
+  assert.ok(layout.bodyLocked,'fallback locks the background');
+  assert.ok(Math.abs(layout.game.x)<2&&Math.abs(layout.game.y)<2);
+  assert.ok(Math.abs(layout.game.w-layout.viewport.w)<2&&Math.abs(layout.game.h-layout.viewport.h)<2,'fullscreen uses all available view dimensions: '+JSON.stringify(layout));
+  assert.ok(layout.canvas.w>=300&&layout.canvas.h>=170);
+  assert.ok(layout.canvas.y>=0&&layout.canvas.y+layout.canvas.h<=layout.viewport.h+1,'canvas entirely visible: '+JSON.stringify(layout));
+  assert.equal(await page.locator('#game-attack').isVisible(),false);
+  await page.locator('#game-settings summary').tap();
+  assert.equal(await button.getAttribute('aria-pressed'),'true');
+  await button.tap();
+  assert.equal(await page.locator('#game').getAttribute('data-mobile-fullscreen'),'false');
+  assert.equal(await page.locator('#game-settings').evaluate(x=>x.open),false);
+  assert.equal(await page.evaluate(()=>document.body.classList.contains('runner-fullscreen-fallback')),false);
+  assert.equal(await page.locator('#game').getAttribute('data-run-state'),'running');
+  verifyErrors(errors);
+ }finally{await context.close();}
+});
+test('fullscreen request rejection safely falls back and settings retain gesture instructions',async()=>{
+ const {context,page,errors}=await beginMobile({width:390,height:844});
+ try{
+  await page.evaluate(()=>{document.getElementById('game').requestFullscreen=()=>Promise.reject(new DOMException('Blocked','NotAllowedError'));});
+  await page.locator('#game-settings summary').tap();
+  const text=await page.locator('#game-instructions').textContent();
+  assert.match(text,/deslize para os lados/i);
+  assert.match(text,/segundo.*dedo/i);
+  await page.locator('#game-fullscreen').tap();
+  assert.equal(await page.locator('#game').getAttribute('data-mobile-fullscreen'),'true');
+  assert.match(await page.locator('#game-fullscreen-note').textContent(),/barras do navegador podem permanecer/i);
+  verifyErrors(errors);
+ }finally{await context.close();}
+});
+test('real fullscreen event synchronizes the setting when browser exits',async()=>{
+ const {context,page,errors}=await beginMobile({width:390,height:844});
+ try{
+  await page.locator('#game-settings summary').tap();
+  await page.locator('#game-fullscreen').tap();
+  const mode=await page.evaluate(()=>({native:document.fullscreenElement===document.getElementById('game'),fallback:document.getElementById('game').dataset.mobileFullscreen==='true'}));
+  assert.ok(mode.native||mode.fallback,'fullscreen activation must be observable');
+  if(mode.native){
+   await page.evaluate(()=>document.exitFullscreen());
+   await page.waitForFunction(()=>document.getElementById('game-fullscreen').getAttribute('aria-pressed')==='false');
+  }else{
+   await page.locator('#game-settings summary').tap();
+   await page.locator('#game-fullscreen').tap();
+  }
+  assert.equal(await page.locator('#game-fullscreen').getAttribute('aria-pressed'),'false');
+  verifyErrors(errors);
+ }finally{await context.close();}
+});
+test('second finger fires in boss encounter, releasing it does not interrupt first finger',async()=>{
+ const {context,page,errors}=await beginMobile({width:390,height:844});
+ try{
+  await page.evaluate(()=>{__touchRun.nextBossAt=0;__touchRun.bossBag=['lula'];});
+  await page.waitForFunction(()=>__touchRun.boss?.type==='lula');
+  await touch(page,'pointerdown',501);
+  await touch(page,'pointerdown',502,{primary:false,x:160,y:125});
+  assert.equal(await page.evaluate(()=>__touchRun.player.attackHeld),true,'second simultaneous touch fires');
+  await touch(page,'pointerup',502,{primary:false,x:160,y:125});
+  assert.equal(await page.evaluate(()=>__touchRun.player.attackHeld),false,'firing stops on release');
+  await touch(page,'pointerup',501);
+  verifyErrors(errors);
+ }finally{await context.close();}
+});
+test('desktop preserves original keyboard controls and no mobile buttons appear',async()=>{
+ const context=await browser.newContext({viewport:{width:900,height:720}});
+ try{
+  const page=await context.newPage(),errors=[];
+  page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base);
+  assert.equal(await page.locator('#game-mobile-controls').count(),0);
+  await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
+  assert.equal(await page.locator('#game-fullscreen').count(),1);
+  verifyErrors(errors);
+ }finally{await context.close();}
 });
