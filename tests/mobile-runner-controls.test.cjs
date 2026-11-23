@@ -47,6 +47,7 @@ test('celular usa gestos sem controles sobrepostos: '+viewport.width+'x'+viewpor
  const {context,page,errors}=await beginMobile(viewport);
  try{
   assert.equal(await page.locator('#game-mobile-controls').count(),0,'four old buttons must not exist');
+  assert.equal(await page.locator('#game-mode-label').count(),0,'decorative story/automatic-run badge is removed');
   assert.equal(await page.locator('#game-attack').isVisible(),false,'shooting uses second finger on mobile');
   assert.equal(await page.locator('#game-fullscreen').count(),1,'fullscreen is available in settings');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'no horizontal overflow');
