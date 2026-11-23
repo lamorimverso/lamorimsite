@@ -241,6 +241,14 @@ function initRunner() {
         if(attackButton.hasPointerCapture(id))attackButton.releasePointerCapture(id);
       }
       firePointers.clear();
+      // A second finger must not leave a held shot after a boss disappears.
+      for(const [id,pointer] of trackPointers){
+        if(pointer.action==='fire'){
+          attackSources.set('touch-fire:'+id,false);
+          trackPointers.delete(id);
+        }
+      }
+      setAttackRun(run,attackSources.active);
       if(run.status==="running"&&document.activeElement===attackButton)canvas.focus({preventScroll:true});
     }
     ui.prop(attackButton,'hidden',hideAttack);
