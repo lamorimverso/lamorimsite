@@ -221,7 +221,7 @@ function farBuildings(c,x,p,variant){
  for(const [dx,w,h] of blocks){
   const top=224-h;
   rect(c,x+dx,top,w,h,p.far,p.ink+'50',1);
-  rect(c,x+dx+3,top+4,w-6,2,p.stone+'9c');
+  if(dx===42)rect(c,x+dx+3,top+4,w-6,2,p.stone+'9c');
   // Janelas em pares (em vez de grade completa): preserva a luz
   // retrofuturista com menos operações no Canvas, sobretudo no celular.
   for(let col=0;col<2;col++){
@@ -229,9 +229,11 @@ function farBuildings(c,x,p,variant){
    if(wy<220)rect(c,wx,wy,4,6,(col+variant)%3===0?'#ffd997a3':p.stone+'ad');
   }
  }
- const roof=x+58;
- line(c,[[roof,176+variant*7],[roof,169+variant*7]],p.ink+'8c',1.4);
- oval(c,roof,167+variant*7,2,2,'#ffd5a1bf');
+ if(variant===0){
+  const roof=x+58;
+  line(c,[[roof,176+variant*7],[roof,169+variant*7]],p.ink+'8c',1.4);
+  oval(c,roof,167+variant*7,2,2,'#ffd5a1bf');
+ }
 }
 function farFeature(c,x,stageId,p,variant){
  if(stageId==='rio'){
@@ -270,7 +272,7 @@ function middleFeature(c,x,stageId,p,variant){
   rect(c,x+14,218,166,4,p.ink+'89');
   rect(c,x+19,223,156,2,p.stone+'d1');
   for(const dx of [25,93,161])rect(c,x+dx,221,5,14,p.ink+'68');
-  for(let dx=36;dx<162;dx+=31)rect(c,x+dx,213,15,2,'#ffe0a19c');
+  for(let dx=36;dx<162;dx+=56)rect(c,x+dx,213,15,2,'#ffe0a19c');
  }else if(stageId==='argentina'||stageId==='paraguai'||stageId==='casa-branca'){
   rect(c,x+28,223,135,3,p.ink+'7a');
   for(const dx of [43,101,154])line(c,[[x+dx,225],[x+dx,235]],p.ink+'8a',1.5);
