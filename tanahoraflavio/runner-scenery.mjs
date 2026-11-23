@@ -1,13 +1,13 @@
 // Cenários vetoriais: três planos leves, sem texto nem elementos de colisão.
 const palettes={
- brasilia:{sky:'#dceefa',haze:'#fcf9ed',far:'#b8d5d7',near:'#80aead',ink:'#577c86',stone:'#f8f6e8',shade:'#c4d8d5',road:'#dce3dc'},
- rio:{sky:'#d3f0f2',haze:'#fff7e0',far:'#a8cfc3',near:'#73b3a0',ink:'#478582',stone:'#f8f5de',shade:'#c7dfc8',road:'#e6ddc8'},
- argentina:{sky:'#dbe7f5',haze:'#fcf4df',far:'#bdcadb',near:'#90abbf',ink:'#647f9a',stone:'#fff6da',shade:'#d7ccb4',road:'#dce0e6'},
- paraguai:{sky:'#f3e2dc',haze:'#fff6df',far:'#d2bdbb',near:'#91b491',ink:'#8c6d73',stone:'#fff0d9',shade:'#dcc9bd',road:'#e4ddcd'},
- florida:{sky:'#fbe4d5',haze:'#fff9e8',far:'#dfc6cb',near:'#b7bfc8',ink:'#927e8b',stone:'#ffe8d2',shade:'#d6b9ba',road:'#e6dcd1'},
- 'casa-branca':{sky:'#e3eafa',haze:'#fcf7e8',far:'#c0ccdf',near:'#94b4a9',ink:'#718898',stone:'#fffff3',shade:'#d6dfe5',road:'#dce3d7'},
- 'sao-paulo':{sky:'#dbe7f1',haze:'#f9eee3',far:'#aebfcf',near:'#8da99a',ink:'#607986',stone:'#e7eeed',shade:'#8aa7b7',road:'#dbe1dc'},
- 'brasilia-final':{sky:'#e8ecee',haze:'#fcf0d6',far:'#bcced0',near:'#8aa99a',ink:'#64818a',stone:'#fffae6',shade:'#cbd9d2',road:'#dce3dc'}
+ brasilia:{sky:'#7799b4',haze:'#f0dfc5',far:'#83a7b7',near:'#619fa1',ink:'#355a71',stone:'#f7efd8',shade:'#bbd1cf',road:'#a4bec5'},
+ rio:{sky:'#78b3be',haze:'#f1e1bc',far:'#7db4ad',near:'#5aada2',ink:'#366e75',stone:'#f7ebd0',shade:'#b6d4c8',road:'#a8c8b8'},
+ argentina:{sky:'#809dbb',haze:'#eddfd2',far:'#93adc5',near:'#719caf',ink:'#4d6888',stone:'#fff0d4',shade:'#c4cccf',road:'#adbfce'},
+ paraguai:{sky:'#bb9ba7',haze:'#f5e0c5',far:'#b69eaa',near:'#87aa9c',ink:'#7b657a',stone:'#fff0da',shade:'#dcc4c0',road:'#c9b8ba'},
+ florida:{sky:'#d29cb4',haze:'#ffe4c7',far:'#bea6bd',near:'#98a9bd',ink:'#806d8f',stone:'#ffe8d5',shade:'#dbbdc8',road:'#d1bec6'},
+ 'casa-branca':{sky:'#89a3c2',haze:'#f1e3d8',far:'#a1b3cb',near:'#83aaa9',ink:'#536b86',stone:'#fff9ea',shade:'#ccd9dc',road:'#b2c7cd'},
+ 'sao-paulo':{sky:'#718da8',haze:'#e8d8d0',far:'#829cb4',near:'#829c9d',ink:'#48637c',stone:'#e5edea',shade:'#a6bcc6',road:'#b2c0c3'},
+ 'brasilia-final':{sky:'#858aa6',haze:'#ead1b3',far:'#91a0b2',near:'#78a4a5',ink:'#536b7f',stone:'#fff2d9',shade:'#c2cfd1',road:'#b4c5c5'}
 };
 const wrap=(n,span)=>(n%span+span)%span;
 function shape(c,fill,stroke,draw){c.beginPath();draw();c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=1.3;c.stroke();}}
@@ -215,10 +215,25 @@ function daylightGradient(c,geometry,top,bottom,opacity){
  return gradient;
 }
 function farBuildings(c,x,p,variant){
- rect(c,x+8,190+variant*5,26,34-variant*5,p.far,null,2);
- rect(c,x+42,176+variant*7,35,48-variant*7,p.far,null,2);
- for(let y=186+variant*7;y<216;y+=10)for(let col=0;col<3;col++)rect(c,x+48+col*8,y,3,4,p.stone+'80',null,1);
- rect(c,x+88,198,45,26,p.far,null,2);
+ // Fachadas 16-bit originais: contornos técnicos e janelas no horizonte.
+ // Tudo termina no canteiro a y=224, fora da zona de colisão.
+ const blocks=[[8,26,34-variant*5],[42,35,48-variant*7],[88,45,26+variant*4]];
+ for(const [dx,w,h] of blocks){
+  const top=224-h;
+  rect(c,x+dx,top,w,h,p.far,p.ink+'50',1);
+  if(dx===42)rect(c,x+dx+3,top+4,w-6,2,p.stone+'9c');
+  // Janelas em pares (em vez de grade completa): preserva a luz
+  // retrofuturista com menos operações no Canvas, sobretudo no celular.
+  for(let col=0;col<2;col++){
+   const wx=x+dx+7+col*(w-14),wy=top+13+((col+variant)%2)*11;
+   if(wy<220)rect(c,wx,wy,4,6,(col+variant)%3===0?'#ffd997a3':p.stone+'ad');
+  }
+ }
+ if(variant===0){
+  const roof=x+58;
+  line(c,[[roof,176+variant*7],[roof,169+variant*7]],p.ink+'8c',1.4);
+  oval(c,roof,167+variant*7,2,2,'#ffd5a1bf');
+ }
 }
 function farFeature(c,x,stageId,p,variant){
  if(stageId==='rio'){
@@ -234,7 +249,7 @@ function farFeature(c,x,stageId,p,variant){
  }else farBuildings(c,x,p,variant);
 }
 function drawFarPlane(c,layer,width){
- c.save();c.globalAlpha*=.55;
+ c.save();c.globalAlpha*=.73;
  for(const segment of layer.segments){
   if(segment.alpha<=0)continue;
   c.save();c.globalAlpha*=segment.alpha;
@@ -251,6 +266,17 @@ function drawFarPlane(c,layer,width){
 }
 function middleFeature(c,x,stageId,p,variant){
  shape(c,p.near,null,()=>{c.moveTo(x-22,237);c.quadraticCurveTo(x+49,208+variant*4,x+131,229);c.quadraticCurveTo(x+167,218,x+222,237);c.closePath();});
+ // Viaduto e mobiliário urbano em camada intermediária; estrutura sem
+ // colisão, discreta sob os monumentos para deixar os perigos legíveis.
+ if(stageId==='brasilia'||stageId==='brasilia-final'||stageId==='sao-paulo'){
+  rect(c,x+14,218,166,4,p.ink+'89');
+  rect(c,x+19,223,156,2,p.stone+'d1');
+  for(const dx of [25,93,161])rect(c,x+dx,221,5,14,p.ink+'68');
+  for(let dx=36;dx<162;dx+=56)rect(c,x+dx,213,15,2,'#ffe0a19c');
+ }else if(stageId==='argentina'||stageId==='paraguai'||stageId==='casa-branca'){
+  rect(c,x+28,223,135,3,p.ink+'7a');
+  for(const dx of [43,101,154])line(c,[[x+dx,225],[x+dx,235]],p.ink+'8a',1.5);
+ }
  if(stageId==='florida'){
   c.save();c.translate(x+89,234);c.scale(.44,.44);palm(c,0,0,p);c.restore();
  }else if(stageId==='argentina'||stageId==='casa-branca'){
@@ -259,7 +285,7 @@ function middleFeature(c,x,stageId,p,variant){
  }
 }
 function drawMiddlePlane(c,layer,width){
- c.save();c.globalAlpha*=.48;
+ c.save();c.globalAlpha*=.61;
  for(const segment of layer.segments){
   if(segment.alpha<=0)continue;
   c.save();c.globalAlpha*=segment.alpha;
@@ -376,7 +402,13 @@ export function drawJourneyScenery(c,options={}){
  c.save();
  try{
   c.fillStyle=paletteGradient(c,geometry,'sky');c.fillRect(0,skyTop,width,300-skyTop);
-  c.fillStyle=daylightGradient(c,geometry,0,246,1);c.fillRect(0,skyTop,width,246-skyTop);
+  c.fillStyle=daylightGradient(c,geometry,0,246,.9);c.fillRect(0,skyTop,width,246-skyTop);
+  // Faixas horizontais muito leves reforçam o contraste da cidade de
+  // fundo sem copiar pixels do Mega Man nem competir com as balas.
+  c.save();c.globalAlpha*=.35;
+  const stripeColor=paletteGradient(c,geometry,'stone',.24);
+  for(const y of [139,154,169])rect(c,0,y,width,1,stripeColor);
+  c.restore();
   oval(c,width-66,55,43,43,'#fff7d80e');oval(c,width-66,55,35,35,'#fff7d816');
   oval(c,width-66,55,29,29,'#fff7d838');oval(c,width-66,55,21,21,'#fff9e5d9');
   for(const item of geometry.clouds)cloud(c,item.x,item.y,item.scale);
@@ -386,6 +418,11 @@ export function drawJourneyScenery(c,options={}){
   // One translucent wash separates distant silhouettes from the greener middle
   // plane. It never crosses the arena floor and adds no animated particles.
   c.fillStyle=daylightGradient(c,geometry,132,238,.42);c.fillRect(0,132,width,106);
+  // Um filete luminoso de cidade, atrás do plano médio, reforça
+  // a profundidade retrofuturista sem criar objetos interativos.
+  c.save();c.globalAlpha*=.29;
+  rect(c,0,210,width,2,paletteGradient(c,geometry,'stone',.72));
+  c.restore();
   drawMiddlePlane(c,geometry.layers[1],width);c.restore();
   if(flightLift<1){
    c.save();c.globalAlpha*=(1-.6*quiet)*(1-flightLift);drawAmbientDetails(c,geometry,options);c.restore();

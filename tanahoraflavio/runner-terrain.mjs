@@ -4,6 +4,8 @@ import {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
 // above WORLD.ground. Resizing translates shapes with the hero, never stretches
 // a jump or replaces an active hole with invisible ground.
 export const TERRAIN = Object.freeze({speed:270,warningFor:2.3,slideFor:HERO_SLIDE_SECONDS,slideSpeed:310,clearance:46,platformY:28});
+// Intervalo entre investidas da História; o Infinito mantém o deslize clássico.
+export const STORY_DASH_RECOVERY_SECONDS = .28;
 export function createTerrain(){return {active:null,preparing:null,nextAt:6,completed:0,spawned:0,lessonCompleted:false,flightCompleted:false,flightsCompleted:0,lastFlightArrival:null};}
 const BASIC_ROUTE=Object.freeze({id:'basic',gapTime:.39,platformOffsetTime:.30,platformTime:.54,platformY:28,requiresDoubleJump:false});
 // The earned jump is an alternative, never the entry ticket to a compulsory bar.
@@ -91,12 +93,27 @@ export function terrainSupportAt(run,x,halfWidth=0){
 }
 export function advanceSlide(run,dt,allowed){
  const p=run.player,duel=!!run.boss&&!run.boss.traversal;
+ if(run.manualStory)p.slideCooldownFor=Math.max(0,(p.slideCooldownFor||0)-dt);
  const moving=duel?p.moveHeld!==0:p.moveHeld>0;
  const wants=allowed&&p.grounded!==false&&p.velocity===0&&p.crouchHeld&&moving;
  if(!p.crouchHeld||!moving)p.slideLatched=false;
- if(!wants){p.sliding=false;p.slideRemaining=0;return;}
- if(!p.sliding&&!p.slideLatched){p.sliding=true;p.slideLatched=true;p.slideRemaining=TERRAIN.slideFor;}
- if(p.sliding){p.slideRemaining=Math.max(0,p.slideRemaining-dt);if(p.slideRemaining<=1e-8)p.sliding=false;}
+ if(!wants){
+  if(run.manualStory&&p.sliding)p.slideCooldownFor=STORY_DASH_RECOVERY_SECONDS;
+  p.sliding=false;p.slideRemaining=0;return;
+ }
+ if(!p.sliding&&!p.slideLatched){
+  // Um comando enviado durante a recuperação é consumido: soltar e
+  // pressionar novamente impede investidas automáticas em sequência.
+  if(run.manualStory&&p.slideCooldownFor>1e-8){p.slideLatched=true;return;}
+  p.sliding=true;p.slideLatched=true;p.slideRemaining=TERRAIN.slideFor;
+ }
+ if(p.sliding){
+  p.slideRemaining=Math.max(0,p.slideRemaining-dt);
+  if(p.slideRemaining<=1e-8){
+   p.sliding=false;
+   if(run.manualStory)p.slideCooldownFor=STORY_DASH_RECOVERY_SECONDS;
+  }
+ }
 }
 export function advanceTerrain(run,dt,travel){
  const state=run.terrain,a=state?.active;if(!a)return;

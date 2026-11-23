@@ -3,9 +3,9 @@ export {stagePlanFor} from './runner-stage-director.mjs?v=071886f07909';
 import {HERO_MAX_HP,playerBodyFor} from './runner-body.mjs?v=57ec474fca38';
 import {createMovementSkills,movementProfileFor,rewardMovementVictory} from './runner-movement-skills.mjs?v=d0ad734b4838';
 export {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
-export {terrainProfileFor} from './runner-terrain.mjs?v=4bbd5ce8e483';
-import {TERRAIN,createTerrain,beginTerrain,beginGroundLesson,beginAirTransfer,aircraftHitFor,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer} from './runner-terrain.mjs?v=4bbd5ce8e483';
-export {terrainSupportAt} from './runner-terrain.mjs?v=4bbd5ce8e483';
+export {terrainProfileFor} from './runner-terrain.mjs?v=d75123c1af20';
+import {TERRAIN,STORY_DASH_RECOVERY_SECONDS,createTerrain,beginTerrain,beginGroundLesson,beginAirTransfer,aircraftHitFor,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer} from './runner-terrain.mjs?v=d75123c1af20';
+export {terrainSupportAt} from './runner-terrain.mjs?v=d75123c1af20';
 import {stageRosterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 import {groundRhythmFor,groundStyleFor} from './runner-ground-rhythm.mjs?v=c282904db6c6';
 import {ROUTE_AMMO,advanceAmmo,addShieldPart} from './runner-supplies.mjs?v=44c67e8a5802';
@@ -180,6 +180,8 @@ const OPPOSING_ESCAPE_RESERVE=.95;
 // A retaguarda se aproxima pela esquerda; outras ameaças continuam pela direita.
 const JUMP_BUFFER_SECONDS = .12;
 const EDGE_JUMP_GRACE = .08;
+const STORY_JUMP_BUFFER_SECONDS = .15;
+const STORY_EDGE_JUMP_GRACE = .12;
 const JACARE_ENTRY_GRACE = .60;
 const LATERAL_SPEED = 230;
 export {DUEL_CHARGE_SECONDS} from './runner-hero-shot.mjs?v=7aa1e19e9838';
@@ -267,11 +269,11 @@ function rearMotion(run,x,width){
 export function createRun({assisted=false,seed,mode='endless',practiceId,manualStory=false}={}) {
  const practice=mode==='story'?optionalStoryBossAt(practiceId):null;
  const startDistance=practice?STORY_OPENING_DISTANCE+practice.stageIndex*SCENE_DISTANCE+practice.distance:0;
- return {status:'ready',mode:mode==='story'?'story':'endless',manualStory:mode==='story'&&manualStory===true,assisted:assisted===true,practice,elapsed:0,distance:startDistance,routeDistance:startDistance,viewportWidth:WORLD.width,bonus:0,collected:0,passports:0,lives:1,
+ return {status:'ready',mode:mode==='story'?'story':'endless',manualStory:mode==='story'&&manualStory===true,assisted:assisted===true,practice,elapsed:0,distance:startDistance,routeDistance:startDistance,viewportWidth:WORLD.width,cameraLead:0,bonus:0,collected:0,passports:0,lives:1,
   randomState:seed===undefined?null:Number(seed)>>>0,
   damageRandomState:seed===undefined?null:(Number(seed)^0x9e3779b9)>>>0,
   ballot:{digits:'',message:''},
-  event:'',events:0,movementSkills:createMovementSkills(),lastSkillReward:null,terrain:createTerrain(),player:{airJumpsUsed:0,grounded:true,supportY:0,sliding:false,slideRemaining:0,slideLatched:false,x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareProgress:0,jacareAge:0,nextJacareThreat:0,restoreFlashFor:0,coyoteUntil:0,jumpBufferedUntil:0,attackHeld:false,chargeFor:0,arenaTravel:0,manualTravel:0,attackFor:0,attackCooldown:0,shotFacing:1,hp:HERO_MAX_HP,maxHp:HERO_MAX_HP,recoveryPending:false,terrainContact:null},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ammo:ROUTE_AMMO,ammoIdleFor:0,ammoReloadFor:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
+  event:'',events:0,movementSkills:createMovementSkills(),lastSkillReward:null,terrain:createTerrain(),player:{airJumpsUsed:0,grounded:true,supportY:0,sliding:false,slideRemaining:0,slideLatched:false,slideCooldownFor:0,x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareProgress:0,jacareAge:0,nextJacareThreat:0,restoreFlashFor:0,coyoteUntil:0,jumpBufferedUntil:0,attackHeld:false,chargeFor:0,arenaTravel:0,manualTravel:0,attackFor:0,attackCooldown:0,shotFacing:1,hp:HERO_MAX_HP,maxHp:HERO_MAX_HP,recoveryPending:false,terrainContact:null},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ammo:ROUTE_AMMO,ammoIdleFor:0,ammoReloadFor:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,recoveryReadyAt:0,shieldFor:0,graceFor:0,reserveShields:0,allyShieldProgress:0,allyHelpCount:0,
   lastPickup:null,lastTraversalBlock:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,phantomCloud:null,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:practice?startDistance:null,bossCooldown:0,storyLeg:null,arenaExit:null,
@@ -447,6 +449,11 @@ function restoreJacareRun(run){
  announce(run,wavePending?'Contagem concluída: forma humana recuperada. Desvie das ampolas já marcadas.':'Contagem concluída: Flávio voltou à corrida normal.');
  return true;
 }
+function finishStoryDash(run){
+ const p=run.player;
+ if(run.manualStory&&p.sliding)p.slideCooldownFor=Math.max(p.slideCooldownFor||0,STORY_DASH_RECOVERY_SECONDS);
+ p.sliding=false;p.slideRemaining=0;
+}
 export function jumpRun(run){
  if(run.status!=='running'||run.player.isJacare)return false;
  const p=run.player;
@@ -455,15 +462,15 @@ export function jumpRun(run){
   const profile=movementProfileFor(run);
   if((run.player.airJumpsUsed||0)<profile.maxAirJumps){
    run.player.airJumpsUsed=(run.player.airJumpsUsed||0)+1;run.player.jumpBufferedUntil=0;
-   run.player.crouching=false;run.player.sliding=false;run.player.slideRemaining=0;run.player.grounded=false;run.player.velocity=profile.airJumpVelocity;return true;
+   run.player.crouching=false;finishStoryDash(run);run.player.grounded=false;run.player.velocity=profile.airJumpVelocity;return true;
   }
-  run.player.jumpBufferedUntil=run.elapsed+JUMP_BUFFER_SECONDS;return false;
+  run.player.jumpBufferedUntil=run.elapsed+(run.manualStory?STORY_JUMP_BUFFER_SECONDS:JUMP_BUFFER_SECONDS);return false;
  }
- p.jumpBufferedUntil=p.coyoteUntil=0;p.crouching=false;p.sliding=false;p.slideRemaining=0;p.grounded=false;p.velocity=610;return true;
+ p.jumpBufferedUntil=p.coyoteUntil=0;p.crouching=false;finishStoryDash(run);p.grounded=false;p.velocity=610;return true;
 }
 export function releaseJumpRun(run){
  const p=run.player,b=run.boss;
- if(run.status!=='running'||!b?.combat||b.traversal||p.isJacare||p.grounded||p.velocity<=260)return false;
+ if(run.status!=='running'||!run.manualStory&&(!b?.combat||b.traversal)||p.isJacare||p.grounded||p.velocity<=260)return false;
  p.velocity=260;return true;
 }
 export function clearRunInput(run){
@@ -672,7 +679,7 @@ function advanceHeroShots(run,dt){
 export function crouchRun(run,active){
  run.player.crouchHeld=!!active&&run.status==='running'&&!run.player.isJacare;
  const next=!run.player.isJacare&&run.player.crouchHeld&&run.player.grounded!==false&&Math.abs(run.player.y-(run.player.supportY??0))<1e-8&&run.player.velocity===0;
- run.player.crouching=next;if(!next){run.player.sliding=false;run.player.slideRemaining=0;}if(!active)run.player.slideLatched=false;
+ run.player.crouching=next;if(!next)finishStoryDash(run);if(!active)run.player.slideLatched=false;
  return next;
 }
 // Interno ao motor/testes; não há comando de pausa na interface.
@@ -1138,9 +1145,16 @@ export function advanceRun(run,seconds,rng){
   // Recuar move Flávio dentro da tela, sem retroceder para fases vencidas.
   // O Infinito e as simulações antigas mantêm a corrida automática.
   const manualScroll=run.manualStory===true&&!bossStopsAutoRun(run);
+  // Antecipação suave: deixa até 5,5% da tela a mais à frente do
+  // personagem. O recuo da câmera nunca move a estrada sem comando.
+  if(manualScroll){
+   const targetLead=run.player.moveHeld>0?Math.min(28,visibleWidth(run)*.055):
+    run.player.moveHeld<0?-Math.min(14,visibleWidth(run)*.03):0;
+   run.cameraLead+=(targetLead-run.cameraLead)*(1-Math.exp(-9*dt));
+  }
   let manualTravel=0;
   if(manualScroll&&!entering&&run.player.moveHeld>0){
-   const step=moveSpeed*dt,anchor=Math.max(bounds.min,Math.min(bounds.max,visibleWidth(run)*.38));
+   const step=moveSpeed*dt,anchor=Math.max(bounds.min,Math.min(bounds.max,visibleWidth(run)*.38-run.cameraLead));
    const screenStep=Math.min(step,Math.max(0,anchor-playerX(run)));
    run.player.x=Math.max(bounds.min,Math.min(bounds.max,playerX(run)+screenStep));
    manualTravel=step-screenStep;
@@ -1187,7 +1201,7 @@ export function advanceRun(run,seconds,rng){
  const terrainHit=stepTerrainPlayer(run,dt);
  const p=run.player;
  if(p.isJacare||p.grounded||terrainHit)p.coyoteUntil=0;
- else if(wasGrounded&&p.velocity<=0)p.coyoteUntil=run.elapsed+EDGE_JUMP_GRACE;
+ else if(wasGrounded&&p.velocity<=0)p.coyoteUntil=run.elapsed+(run.manualStory?STORY_EDGE_JUMP_GRACE:EDGE_JUMP_GRACE);
  else if(p.coyoteUntil<run.elapsed)p.coyoteUntil=0;
  if(!run.player.isJacare&&run.player.grounded&&run.player.jumpBufferedUntil>0)jumpRun(run);
  if(!terrainHit||terrainHit.source!==run.player.terrainContact)run.player.terrainContact=null;
