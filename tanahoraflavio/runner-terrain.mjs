@@ -1,6 +1,5 @@
 import {playerBodyFor,HERO_SLIDE_SECONDS,HERO_CROUCH_CLEARANCE} from './runner-body.mjs?v=57ec474fca38';
 import {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
-import {stagePlatformSupport,stageGapAt} from './runner-story-rooms.mjs?v=207342bf9f77';
 // Shared simulation/render geometry. x is logical screen-space; y is height
 // above WORLD.ground. Resizing translates shapes with the hero, never stretches
 // a jump or replaces an active hole with invisible ground.
@@ -87,7 +86,7 @@ export function aircraftHitFor(run,body=playerBodyFor(run.player)){
 }
 export function translateTerrain(run,delta){const a=run.terrain?.active;if(a)for(const shapes of [a.gaps,a.platforms,a.ceilings,a.ramps||[]])for(const s of shapes)s.x+=delta;}
 export function terrainSupportAt(run,x,halfWidth=0){
- const a=run.terrain?.active;if(!a)return stagePlatformSupport(run,x,halfWidth)??(stageGapAt(run,x,halfWidth)?null:0);
+ const a=run.terrain?.active;if(!a)return 0;
  const platform=a.platforms.find(s=>x+halfWidth>=s.x&&x-halfWidth<=s.x+s.width);if(platform)return platform.y;
  const ramp=a.ramps?.find(g=>x>=g.x&&x<=g.x+g.width);if(ramp)return ramp.height*(x-ramp.x)/ramp.width;
  return a.gaps.some(s=>x-halfWidth>s.x&&x+halfWidth<s.x+s.width)?null:0;
