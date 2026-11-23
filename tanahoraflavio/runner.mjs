@@ -15,7 +15,7 @@ import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from 
 import {createAircraftWarningTracker,createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=37fd940420f1';
 import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=f8107568ec3b';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, releaseJumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, stagePlanFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=bc1cf5b75877";
+import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, releaseJumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, stagePlanFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=story-shoot-20261122";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {heroStridePhase,bossStopsAutoRun} from './runner-drawn-motion.mjs?v=0d1971800c55';
 import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=700c55ebad49';
@@ -762,7 +762,7 @@ function initRunner() {
   function character(){
     const airborne=movementIsAirborne(run.player),reduced=prefersReducedMotion();
     const active=run.status==="running",decorative=active&&!reduced;
-    const facing=run.allyShieldFor>0?1:run.player.moveHeld<0?-1:1;
+    const facing=run.allyShieldFor>0?1:run.manualStory?(run.player.shotFacing<0?-1:1):run.player.moveHeld<0?-1:1;
     // A corrida volta a usar sua passada ilustrada original. As duas ações
     // baixas selecionam quadros de sequências próprias, no mesmo apoio.
     const phase=run.manualStory&&!bossStopsAutoRun(run)?Math.max(0,run.player.manualTravel||0)/18:heroStridePhase(run);

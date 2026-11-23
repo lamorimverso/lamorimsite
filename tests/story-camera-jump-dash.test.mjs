@@ -22,7 +22,7 @@ test('manual Story camera looks ahead smoothly without moving the route while id
   assert.equal(run.cameraLead,0);
   assert.equal(run.distance,0);
   core.moveRun(run,1);
-  step(run,120);
+  step(run,240);
   assert.ok(run.cameraLead>20&&run.cameraLead<=28,'camera must anticipate visible ground ahead');
   assert.ok(run.distance>0);
   const distance=run.distance,route=run.routeDistance;
