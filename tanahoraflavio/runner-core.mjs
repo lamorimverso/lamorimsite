@@ -1,5 +1,5 @@
-import {stageRouteTravel,RAID_HANDOFF_SECONDS,PAIR_RUN_DISTANCE,pairRunRemaining} from './runner-stage-director.mjs?v=071886f07909';
-export {stagePlanFor} from './runner-stage-director.mjs?v=071886f07909';
+import {stageRouteTravel,RAID_HANDOFF_SECONDS,PAIR_RUN_DISTANCE,pairRunRemaining} from './runner-stage-director.mjs?v=47d06b5bcfda';
+export {stagePlanFor} from './runner-stage-director.mjs?v=47d06b5bcfda';
 import {HERO_MAX_HP,playerBodyFor} from './runner-body.mjs?v=57ec474fca38';
 import {createMovementSkills,movementProfileFor,rewardMovementVictory} from './runner-movement-skills.mjs?v=d0ad734b4838';
 export {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
@@ -20,9 +20,9 @@ import {HERO_SHOT_DURATION,DUEL_CHARGE_SECONDS,heroShotPose} from './runner-hero
 import {regularCastMuzzle} from './runner-cast-pose.mjs?v=8f2c5aee1585';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=d3b6a81b34b9';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
-import {BOSS_ARENA_RESERVE,BOSS_RUN_INTERVAL,BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,optionalStoryBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=f8107568ec3b';
-export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=f8107568ec3b';
-export {bossArenaPose} from './runner-bosses.mjs?v=f8107568ec3b';
+import {BOSS_ARENA_RESERVE,BOSS_RUN_INTERVAL,BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,optionalStoryBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=7170512cf929';
+export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=7170512cf929';
+export {bossArenaPose} from './runner-bosses.mjs?v=7170512cf929';
 // Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
 import {bossStopsAutoRun} from './runner-drawn-motion.mjs?v=0d1971800c55';
 export const WORLD = Object.freeze({width:900,height:300,ground:246});

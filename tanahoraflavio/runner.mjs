@@ -1,4 +1,4 @@
-import {stageGuideFor} from './runner-stage-director.mjs?v=071886f07909';
+import {stageGuideFor} from './runner-stage-director.mjs?v=47d06b5bcfda';
 import {HURT_BODY_SCALE} from './runner-body.mjs?v=57ec474fca38';
 import {createPresentationDOM,createControlLabelReader} from './runner-presentation-cache.mjs?v=4712d27109dc';
 import {edgeThreatsFor,drawEdgeThreats} from './runner-edge-cues.mjs?v=b4b61c9e89df';
@@ -13,13 +13,13 @@ import {createMovementSoundDirector,movementIsAirborne} from './runner-movement-
 import {HERO_SHOT_DURATION,DUEL_CHARGE_SECONDS,drawHeroCharge,drawHeroProjectile} from './runner-hero-shot.mjs?v=7aa1e19e9838';
 import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=8f2c5aee1585';
 import {createAircraftWarningTracker,createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=37fd940420f1';
-import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=f8107568ec3b';
+import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=7170512cf929';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, releaseJumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, stagePlanFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=ce7085295dc4";
+import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, releaseJumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, stagePlanFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=94b652c25a3c";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {heroStridePhase,bossStopsAutoRun} from './runner-drawn-motion.mjs?v=0d1971800c55';
 import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=700c55ebad49';
-import {bossCounterWindow} from './runner-bosses.mjs?v=f8107568ec3b';
+import {bossCounterWindow} from './runner-bosses.mjs?v=7170512cf929';
 import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=c0f55e6867c9';
 import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=dbaac525a595";
 import { createGameAudio } from "./runner-audio.mjs?v=d93419fd0e46";
@@ -732,16 +732,16 @@ function initRunner() {
     ctx.save();ctx.translate(bossX,bossY);
     drawHoverEnemy(ctx,{type:b.type,platform:!b.platformer,x:0,y:0,scale:pose.scale,phase,...presentation,hurt:b.hitFlashFor>0,reducedMotion:prefersReducedMotion(),classId:b.classId,armyVariant:b.stageId||STAGES[b.stageIndex]?.id,enraged:b.enraged});
     ctx.restore();
-    if(b.lastDamage?.remaining>0){
-      const hit=b.lastDamage,progress=1-hit.remaining/.8;
-      const label=(hit.critical?"CRÍTICO! ":"")+"−"+Number(hit.amount).toLocaleString("pt-BR",{maximumFractionDigits:1})+" PV";
-      ctx.save();ctx.globalAlpha=Math.min(1,hit.remaining*5);ctx.textAlign="center";
-      ctx.font=hit.critical?"850 17px system-ui":"750 15px system-ui";
-      const w=Math.min(virtualWidth-24,ctx.measureText(label).width+16);
-      const x=Math.max(w/2+12,Math.min(virtualWidth-w/2-12,bossX));
-      const y=Math.max(24,bossY-98-(prefersReducedMotion()?0:progress*16));
-      ctx.fillStyle=hit.critical?"#6c3b16":"#163f36";ctx.beginPath();ctx.roundRect(x-w/2,y-15,w,23,5);ctx.fill();
-      ctx.fillStyle="#fff";ctx.fillText(label,x,y+2,w-12);ctx.restore();
+    // O dano continua sendo aplicado na física e exibido pela barra de vida.
+    // Não exibir os antigos números flutuantes de PV sobre o chefão.
+    if(b.platformer&&arenaPose.state==='dash'&&!prefersReducedMotion()){
+      ctx.save();ctx.strokeStyle='#53717d55';ctx.lineWidth=1.6;
+      const behind=arenaPose.velocityX>0?-1:1;
+      for(let i=0;i<3;i++){
+        const tx=bossX+behind*(23+i*7),ty=WORLD.ground-5+i*2;
+        ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(tx+behind*(9+i*2),ty);ctx.stroke();
+      }
+      ctx.restore();
     }
     if(b.role)return;
     const counter=b.combat&&bossCounterWindow(b),cue=b.phase==='charge'?b.plannedAttack:bossCue();
