@@ -191,7 +191,7 @@ function initRunner() {
 
     ui.text("game-phase","Cenário "+(stage.index+1)+" de "+stages.length+" · "+(run.mode==="story"?"História "+Math.min(run.bossesDefeated,STORY_BOSS_COUNT)+"/"+STORY_BOSS_COUNT:"Volta "+lap));
     ui.text("game-stage-name",stage.name);
-    ui.text("game-mode-label",run.mode==="story"?"🎮 História · Movimento manual: ←/→ ou A/D":"🏃 Infinito · Corrida automática");
+    ui.text("game-mode-label",run.mode==="story"?"🎮 História · Corrida automática":"🏃 Infinito · Corrida automática");
     const cast=characterProgressAt(run);
     ui.text("game-difficulty","Risco "+difficulty.level+" · "+cast.available+"/"+cast.total+" rivais");
     ui.data(section,'playerForm',run.player.isJacare?'jacare':run.player.hp===1?'hurt':'normal');

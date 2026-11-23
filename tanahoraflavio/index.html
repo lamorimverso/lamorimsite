@@ -28,7 +28,7 @@
   <link rel="stylesheet" href="control-settings.css?v=1c20042497ae">
   <link rel="stylesheet" href="game.css?v=9047dc461aa8">
   <script defer src="page-layout.js?v=69f225a085c7"></script>
-  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=017691c17e17"></script>
+  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=a69de0c717fa"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -79,7 +79,7 @@
           <div><span>Passaportes</span><strong id="game-passports">0</strong><div class="passport-track" title="100 passaportes = uma continuação explícita" aria-hidden="true"><span id="game-passport-progress"></span></div></div>
         </div>
         <div class="game-stage-header">
-          <div><span id="game-phase" class="sr-only">Cenário 1 de 6</span><strong id="game-stage-name">Brasília</strong><small id="game-mode-label" class="game-mode-label">🎮 História · Movimento manual: ←/→ ou A/D</small><small id="game-difficulty">Risco 1 · 0 m</small></div>
+          <div><span id="game-phase" class="sr-only">Cenário 1 de 6</span><strong id="game-stage-name">Brasília</strong><small id="game-mode-label" class="game-mode-label">🎮 História · Corrida automática</small><small id="game-difficulty">Risco 1 · 0 m</small></div>
           <span class="game-stage-clock" id="game-stage-time">7.000 m até Rio</span>
           <div class="game-stage-progress" id="game-stage-progress" role="progressbar" aria-label="Progresso da fase" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div>
         </div>
@@ -91,7 +91,7 @@
         </div>
         <details class="game-settings" id="game-settings"><summary title="Configurações de comandos"><span aria-hidden="true">⚙</span><span class="sr-only">Comandos</span></summary>
           <div class="game-settings-content">
-            <p class="game-instructions" id="game-instructions">Configure teclado, mouse e controle. No modo História, solte o pulo na subida para um salto curto e segure para saltar alto; a câmera antecipa o avanço. Na arena, o mesmo controle ajusta o salto. A arma básica permite até três tiros simultâneos. Abaixe enquanto avança para deslizar sob passagens baixas. Pule os vãos e pouse nas plataformas. Vença Soraya na História ou cinco chefes no Infinito para ganhar duplo pulo: aperte pular novamente no ar. Itens de aliados dão um escudo frontal de 3 s; seis ajudas também guardam uma reserva. No toque: toque para pular, deslize para mover ou abaixar e use o ícone de mira para rebater projéteis inimigos. Dois impactos encerram a tentativa. Rachadinha cenográfica cura a forma machucada. Uma continuação guardada pode ser usada no resultado, quando a pista permite. No modo História, use A/D ou ←/→ para caminhar e fazer a câmera avançar. Abaixe enquanto se move para deslizar; uma nova investida exige soltar o comando e uma breve recuperação. No Infinito, o cenário avança automaticamente. O jogo fica parado enquanto você ajusta os comandos.</p>
+            <p class="game-instructions" id="game-instructions">Configure teclado, mouse e controle. Nos dois modos, a corrida avança automaticamente. Solte o botão de pulo durante a subida para um salto curto ou segure para alcançar plataformas mais altas. Na arena, o mesmo controle ajusta o salto. A arma básica permite até três tiros simultâneos. Abaixe enquanto avança para deslizar sob passagens baixas. Pule os vãos e pouse nas plataformas. Vença Soraya na História ou cinco chefes no Infinito para ganhar duplo pulo: aperte pular novamente no ar. Itens de aliados dão um escudo frontal de 3 s; seis ajudas também guardam uma reserva. No toque: toque para pular, deslize para mover ou abaixar e use o ícone de mira para rebater projéteis inimigos. Dois impactos encerram a tentativa. Rachadinha cenográfica cura a forma machucada. Uma continuação guardada pode ser usada no resultado, quando a pista permite. Use A/D ou ←/→ para mudar de posição e desviar, sem precisar segurar uma direção para correr. Abaixe enquanto se move para deslizar sob passagens baixas. Na História, os chefes e eventos aparecem ao longo da corrida. O jogo fica parado enquanto você ajusta os comandos.</p>
             <div id="game-control-bindings"></div>
             <div class="game-options">
               <label for="game-crouch-mode">Abaixar<select id="game-crouch-mode" disabled><option value="hold">Deslizar e segurar</option><option value="toggle">Deslizar para alternar</option></select></label>
