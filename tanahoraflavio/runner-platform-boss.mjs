@@ -1,24 +1,22 @@
-// Ground movement adapted from Mega Man Labs' Thunder Man jump/dash/move
-// states, Copyright (c) 2019 Molten Gears, MIT. See third-party/megaman-labs.LICENSE.txt.
-// Ported to this engine's y-up coordinates and narrow-screen reaction corridor.
-const clamp=n=>Math.max(0,Math.min(1,n));
-const smooth=n=>{const u=clamp(n);return u*u*(3-2*u);};
+// Patrulha terrestre contínua com saltos e avanço rápido, mantendo a faixa
+// de reação à direita da arena. As trajetórias independem do FPS e da fase
+// de ataque: o chefão continua andando enquanto dispara.
 function hash(text,seed){for(const ch of text)seed=(Math.imul(seed,31)+ch.charCodeAt(0))>>>0;return seed;}
-function maneuver(kind,time,height){
- if(time<0||time>=1)return {x:0,y:0,state:'idle'};
- if(kind==='jump')return {x:-40*Math.sin(Math.PI*time)**2,y:4*height*time*(1-time),state:'jump'};
- // A short committed dash, followed by walking back; no retargeting mid-dash.
- const offset=time<.15?smooth(time/.15):1-smooth((time-.15)/.85);
- return {x:-42*offset,y:0,state:time<.15?'dash':'move'};
-}
 export function platformBossPose(boss,width=900){
  const age=Math.max(0,Number(boss.age)||0),arrival=boss.phase==='intro'?Math.max(0,1-age/1.1)**3*150:0;
+ // Acessibilidade: sem movimento decorativo, mas com combate preservado.
  if(boss.reducedMotion)return {x:width-88+arrival,platformY:0,state:'idle'};
- const clock=Math.max(0,age-1.1),cycle=Math.floor(clock/4.8),time=clock-cycle*4.8;
- const variant=(hash(boss.type||'',Number(boss.flightSeed)||0)+cycle)%3;
- const order=variant===0?['jump','dash']:variant===1?['dash','jump']:['jump','jump'];
+ const t=Math.max(0,age-1.1),seed=Number(boss.flightSeed)||0;
+ const stride=t*2.7+(hash(boss.type||'',seed)%628)/100;
+ // 76 px de patrulha, com reversão suave e velocidade máxima de 103 px/s.
+ // Mesmo no celular, o chefe não invade o corredor do jogador.
+ const x=width-94+38*Math.sin(stride)+arrival;
+ const velocityX=102.6*Math.cos(stride);
+ // Um salto curto a cada 3,1 s. Pouso completo antes do salto seguinte,
+ // inclusive durante a carga e o lançamento de projéteis.
+ const jumpClock=(t+(hash('jump:'+(boss.type||''),seed)%310)/100)%3.1;
+ const jumping=jumpClock>=.65&&jumpClock<1.45;
  const height=({sentinel:72,gunner:78,caster:86,sovereign:82})[boss.classId]||76;
- const a=maneuver(order[0],time-.55,height),b=maneuver(order[1],time-2.05,height);
- const active=a.state!=='idle'?a:b;
- return {x:width-88+active.x+arrival,platformY:active.y,state:active.state};
+ const platformY=jumping?height*Math.sin(Math.PI*(jumpClock-.65)/.8):0;
+ return {x,platformY,state:jumping?'jump':Math.abs(velocityX)>65?'dash':'move',velocityX};
 }
