@@ -543,16 +543,24 @@ function initRunner() {
     mobilePointers.set(source,{button,action});
     button.setAttribute('aria-pressed','true');
     if(action==='left'||action==='right'){mobileHeld.set(source,action);updateMovement();}
-    else if(action==='crouch'){crouchSources.set(source,true);crouch(crouchSources.active);}
+    else if(action==='crouch'){
+      // The on-screen button must honour the same hold/toggle setting as swiping.
+      // Both surfaces share the same toggle source; switching input methods works.
+      if(preferences.crouchMode==='toggle')crouchSources.toggle('touch-toggle');
+      else crouchSources.set(source,true);
+      crouch(crouchSources.active);
+      if(preferences.crouchMode==='toggle')button.setAttribute('aria-pressed',String(crouchSources.active));
+    }
     else if(action==='jump')jump(source);
   }
   function releaseMobile(source){
     const pointer=mobilePointers.get(source);if(!pointer)return;
     mobilePointers.delete(source);
     const {button,action}=pointer;
-    button.setAttribute('aria-pressed',String([...mobilePointers.values()].some(p=>p.button===button)));
+    const stillHeld=[...mobilePointers.values()].some(p=>p.button===button);
+    button.setAttribute('aria-pressed',String(stillHeld||action==='crouch'&&preferences.crouchMode==='toggle'&&crouchSources.active));
     if(action==='left'||action==='right'){mobileHeld.delete(source);updateMovement();}
-    else if(action==='crouch'){crouchSources.set(source,false);crouch(crouchSources.active);}
+    else if(action==='crouch'&&preferences.crouchMode==='hold'){crouchSources.set(source,false);crouch(crouchSources.active);}
     else if(action==='jump')releaseJump(source);
   }
   for(const button of mobileButtons){
