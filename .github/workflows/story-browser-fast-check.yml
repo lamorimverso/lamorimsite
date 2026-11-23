@@ -1,4 +1,4 @@
-name: Story browser focused regression (temporary)
+name: Story browser and parallax final regression (temporary)
 on:
   push:
     branches:
