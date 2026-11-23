@@ -469,7 +469,7 @@ body.runner-fullscreen-fallback{overflow:hidden!important;overscroll-behavior:no
   font-weight:800;line-height:1.12;letter-spacing:-.045em;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
-.game-card .game-dashboard .game-topline{display:contents}
+.game-card .game-dashboard .game-topline{display:contents;position:static;inset:auto;margin:0}
 .game-card .game-dashboard .game-scoreboard{
   grid-area:stats;position:static;inset:auto;
   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
