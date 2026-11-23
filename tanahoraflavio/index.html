@@ -26,9 +26,9 @@
   <title>Tá na hora, Flávio! · Contagem e minigame</title>
 
   <link rel="stylesheet" href="control-settings.css?v=1c20042497ae">
-  <link rel="stylesheet" href="game.css?v=9047dc461aa8">
+  <link rel="stylesheet" href="game.css?v=d41b5a268ee0">
   <script defer src="page-layout.js?v=69f225a085c7"></script>
-  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=a69de0c717fa"></script>
+  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=ce5b5c6fcb6c"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -91,7 +91,7 @@
         </div>
         <details class="game-settings" id="game-settings"><summary title="Configurações de comandos"><span aria-hidden="true">⚙</span><span class="sr-only">Comandos</span></summary>
           <div class="game-settings-content">
-            <p class="game-instructions" id="game-instructions">Configure teclado, mouse e controle. Nos dois modos, a corrida avança automaticamente. Solte o botão de pulo durante a subida para um salto curto ou segure para alcançar plataformas mais altas. Na arena, o mesmo controle ajusta o salto. A arma básica permite até três tiros simultâneos. Abaixe enquanto avança para deslizar sob passagens baixas. Pule os vãos e pouse nas plataformas. Vença Soraya na História ou cinco chefes no Infinito para ganhar duplo pulo: aperte pular novamente no ar. Itens de aliados dão um escudo frontal de 3 s; seis ajudas também guardam uma reserva. No toque: toque para pular, deslize para mover ou abaixar e use o ícone de mira para rebater projéteis inimigos. Dois impactos encerram a tentativa. Rachadinha cenográfica cura a forma machucada. Uma continuação guardada pode ser usada no resultado, quando a pista permite. Use A/D ou ←/→ para mudar de posição e desviar, sem precisar segurar uma direção para correr. Abaixe enquanto se move para deslizar sob passagens baixas. Na História, os chefes e eventos aparecem ao longo da corrida. O jogo fica parado enquanto você ajusta os comandos.</p>
+            <p class="game-instructions" id="game-instructions">Configure teclado, mouse e controle. Nos dois modos, a corrida avança automaticamente. Solte o botão de pulo durante a subida para um salto curto ou segure para alcançar plataformas mais altas. Na arena, o mesmo controle ajusta o salto. A arma básica permite até três tiros simultâneos. Abaixe enquanto avança para deslizar sob passagens baixas. Pule os vãos e pouse nas plataformas. Vença Soraya na História ou cinco chefes no Infinito para ganhar duplo pulo: aperte pular novamente no ar. Itens de aliados dão um escudo frontal de 3 s; seis ajudas também guardam uma reserva. No celular, use os botões grandes abaixo da pista: esquerda e direita para desviar, abaixar segurando e pular tocando ou segurando para alcançar plataformas. Toques e deslizes na pista continuam funcionando; use o ícone de mira para atirar. Dois impactos encerram a tentativa. Rachadinha cenográfica cura a forma machucada. Uma continuação guardada pode ser usada no resultado, quando a pista permite. Use A/D ou ←/→ para mudar de posição e desviar, sem precisar segurar uma direção para correr. Abaixe enquanto se move para deslizar sob passagens baixas. Na História, os chefes e eventos aparecem ao longo da corrida. O jogo fica parado enquanto você ajusta os comandos.</p>
             <div id="game-control-bindings"></div>
             <div class="game-options">
               <label for="game-crouch-mode">Abaixar<select id="game-crouch-mode" disabled><option value="hold">Deslizar e segurar</option><option value="toggle">Deslizar para alternar</option></select></label>
@@ -136,7 +136,13 @@
           <div class="power-chip"><span class="sr-only">Vantagem ativa: </span><strong id="game-power">Sem efeito ativo</strong></div>
           <div class="ammo-chip" hidden><span class="sr-only">Munição especial: </span><strong id="game-ammo">Sem arma</strong></div>
         </div>
-          <div class="game-overlay" id="game-overlay"><span class="game-overlay-badge" id="game-overlay-badge">Corrida fictícia</span><img class="game-captured" id="game-captured" src="assets/flavio-captured-v1.webp?v=35a44e31f10f" width="1334" height="1179" alt="Caricatura de Flávio com as mãos algemadas" fetchpriority="low" hidden><strong id="game-overlay-title">Pronto para correr?</strong><p id="game-overlay-copy">Pule ou abaixe para desviar.</p><p class="game-start-hint sr-only" id="game-start-hint">Toque: pular · ↓: abaixar · ↔: mover</p><div id="game-result-actions"></div></div>
+          <div class="game-overlay" id="game-overlay"><span class="game-overlay-badge" id="game-overlay-badge">Corrida fictícia</span><img class="game-captured" id="game-captured" src="assets/flavio-captured-v1.webp?v=35a44e31f10f" width="1334" height="1179" alt="Caricatura de Flávio com as mãos algemadas" fetchpriority="low" hidden><strong id="game-overlay-title">Pronto para correr?</strong><p id="game-overlay-copy">Pule ou abaixe para desviar.</p><p class="game-start-hint sr-only" id="game-start-hint">No celular: Pular · Abaixar · Desviar, ou use gestos na pista</p><div id="game-result-actions"></div></div>
+        <div class="game-mobile-controls" id="game-mobile-controls" role="group" aria-label="Controles de toque do jogo">
+          <button type="button" class="game-mobile-control" data-mobile-action="left" aria-label="Desviar para a esquerda" aria-pressed="false"><span class="game-mobile-control-icon" aria-hidden="true">◀</span><span>Esquerda</span></button>
+          <button type="button" class="game-mobile-control" data-mobile-action="right" aria-label="Desviar para a direita" aria-pressed="false"><span class="game-mobile-control-icon" aria-hidden="true">▶</span><span>Direita</span></button>
+          <button type="button" class="game-mobile-control" data-mobile-action="crouch" aria-label="Segurar para abaixar e deslizar" aria-pressed="false"><span class="game-mobile-control-icon" aria-hidden="true">▼</span><span>Abaixar</span></button>
+          <button type="button" class="game-mobile-control game-mobile-control-primary" data-mobile-action="jump" aria-label="Pular, segure para salto alto" aria-pressed="false"><span class="game-mobile-control-icon" aria-hidden="true">▲</span><span>Pular</span></button>
+        </div>
         </div>
         <section class="game-ballot" id="game-ballot" hidden tabindex="-1" aria-label="Urna fictícia da campanha">
           <div class="game-ballot-screen">

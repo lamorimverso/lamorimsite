@@ -85,6 +85,9 @@ function initRunner() {
   let run=createRun({assisted:preferences.assisted,mode:selectedMode(),manualStory:false}),frameId=0;
   run.supportAvailable=false;
   const trackPointers=new Map(),moveKeys=new Set(),jumpKeys=createPressGate(),jumpSources=createHeldSources(),crouchSources=createHeldSources(),attackSources=createHeldSources();
+  // Each touch button tracks its own pointer so multiple fingers are independent.
+  const mobilePointers=new Map(),mobileHeld=new Map();
+  const mobileButtons=[...$("game-mobile-controls").querySelectorAll("[data-mobile-action]")];
   const attackButton=$("game-attack"),firePointers=new Set(),mouseHeld=new Map();
   const frameClock=createFrameClock(performance.now());
   let spritesReady=false,spritesFailed=false,loadedSprites=0,loadingSprites=false,landingUntil=0;
@@ -507,6 +510,8 @@ function initRunner() {
     else if(!active)draw();
   }
   function clearControls(){
+    mobilePointers.clear();mobileHeld.clear();
+    for(const button of mobileButtons)button.setAttribute('aria-pressed','false');
     trackPointers.clear();moveKeys.clear();mouseHeld.clear();gamepadHeld.clear();gamepadDriver?.reset();jumpKeys.clear();jumpSources.clear();crouchSources.clear();attackSources.clear();clearRunInput(run);movementSounds.reset(run);
   }
   function fire(source,active){
@@ -526,10 +531,46 @@ function initRunner() {
   attackButton.addEventListener('click',event=>{if(controlsOpen()||attackButton.hidden)return;if(event.detail===0){if(attackRun(run))heroShotSound();draw();}});
   function updateMovement(){
     if(controlsOpen()){moveRun(run,0);return;}
-    const actions=[...moveKeys].map(code=>keyboardActionFor(preferences.controls,code)).concat([...mouseHeld.values()]);
+    const actions=[...moveKeys].map(code=>keyboardActionFor(preferences.controls,code)).concat([...mouseHeld.values()],[...mobileHeld.values()]);
     const right=actions.includes('right')||gamepadHeld.has('right'),left=actions.includes('left')||gamepadHeld.has('left');
     const pointer=[...trackPointers.values()].filter(p=>p.action==="move").at(-1);
     moveRun(run,Number(right)-Number(left)||(pointer?.direction||0));
+  }
+  // Buttons and the existing canvas swipe gestures are independent input sources.
+  function pressMobile(button,source){
+    if(run.status!=='running'||controlsOpen()||mobilePointers.has(source))return;
+    const action=button.dataset.mobileAction;
+    mobilePointers.set(source,{button,action});
+    button.setAttribute('aria-pressed','true');
+    if(action==='left'||action==='right'){mobileHeld.set(source,action);updateMovement();}
+    else if(action==='crouch'){crouchSources.set(source,true);crouch(crouchSources.active);}
+    else if(action==='jump')jump(source);
+  }
+  function releaseMobile(source){
+    const pointer=mobilePointers.get(source);if(!pointer)return;
+    mobilePointers.delete(source);
+    const {button,action}=pointer;
+    button.setAttribute('aria-pressed',String([...mobilePointers.values()].some(p=>p.button===button)));
+    if(action==='left'||action==='right'){mobileHeld.delete(source);updateMovement();}
+    else if(action==='crouch'){crouchSources.set(source,false);crouch(crouchSources.active);}
+    else if(action==='jump')releaseJump(source);
+  }
+  for(const button of mobileButtons){
+    button.addEventListener('pointerdown',event=>{
+      if(event.button!==0||run.status!=='running'||controlsOpen())return;
+      event.preventDefault();
+      const source='mobile:'+event.pointerId;
+      pressMobile(button,source);
+      try{button.setPointerCapture(event.pointerId);}catch{}
+    });
+    for(const type of ['pointerup','pointercancel','lostpointercapture'])
+      button.addEventListener(type,event=>releaseMobile('mobile:'+event.pointerId));
+    // Accessible keyboard activation never emits pointerdown; real taps should fire once.
+    button.addEventListener('click',event=>{
+      if(event.detail!==0)return;
+      const source='mobile:keyboard:'+button.dataset.mobileAction;
+      pressMobile(button,source);releaseMobile(source);
+    });
   }
   $("game-start").addEventListener("click",()=>begin());
   $("game-mode-chooser").addEventListener("change",()=>{if(run.status==="ready"){run.mode=selectedMode();run.manualStory=false;updateUI();draw();}});

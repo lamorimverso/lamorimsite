@@ -32,6 +32,10 @@ jobs:
         run: node tools/version-runner-assets.mjs --check
       - name: Verify preinstalled Chrome
         run: test -x /usr/bin/google-chrome
+      - name: Mobile touch controls smoke test
+        env:
+          PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/google-chrome
+        run: node --test tests/mobile-runner-controls.test.cjs
       - name: Test runner and desktop/mobile UI
         env:
           PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/google-chrome
