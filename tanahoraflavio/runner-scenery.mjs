@@ -406,7 +406,8 @@ export function drawJourneyScenery(c,options={}){
   // Faixas horizontais muito leves reforçam o contraste da cidade de
   // fundo sem copiar pixels do Mega Man nem competir com as balas.
   c.save();c.globalAlpha*=.35;
-  for(const y of [139,154,169])rect(c,0,y,width,1,paletteGradient(c,geometry,'stone',.24));
+  const stripeColor=paletteGradient(c,geometry,'stone',.24);
+  for(const y of [139,154,169])rect(c,0,y,width,1,stripeColor);
   c.restore();
   oval(c,width-66,55,43,43,'#fff7d80e');oval(c,width-66,55,35,35,'#fff7d816');
   oval(c,width-66,55,29,29,'#fff7d838');oval(c,width-66,55,21,21,'#fff9e5d9');
