@@ -264,14 +264,14 @@ function rearMotion(run,x,width){
  const distance=rearContact-(x+width-3),requested=distance/seconds,speed=Math.max(180,requested);
  return {speed:-speed,waitFor:Math.max(0,seconds-distance/speed)};
 }
-export function createRun({assisted=false,seed,mode='endless',practiceId}={}) {
+export function createRun({assisted=false,seed,mode='endless',practiceId,manualStory=false}={}) {
  const practice=mode==='story'?optionalStoryBossAt(practiceId):null;
  const startDistance=practice?STORY_OPENING_DISTANCE+practice.stageIndex*SCENE_DISTANCE+practice.distance:0;
- return {status:'ready',mode:mode==='story'?'story':'endless',assisted:assisted===true,practice,elapsed:0,distance:startDistance,routeDistance:startDistance,viewportWidth:WORLD.width,bonus:0,collected:0,passports:0,lives:1,
+ return {status:'ready',mode:mode==='story'?'story':'endless',manualStory:mode==='story'&&manualStory===true,assisted:assisted===true,practice,elapsed:0,distance:startDistance,routeDistance:startDistance,viewportWidth:WORLD.width,bonus:0,collected:0,passports:0,lives:1,
   randomState:seed===undefined?null:Number(seed)>>>0,
   damageRandomState:seed===undefined?null:(Number(seed)^0x9e3779b9)>>>0,
   ballot:{digits:'',message:''},
-  event:'',events:0,movementSkills:createMovementSkills(),lastSkillReward:null,terrain:createTerrain(),player:{airJumpsUsed:0,grounded:true,supportY:0,sliding:false,slideRemaining:0,slideLatched:false,x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareProgress:0,jacareAge:0,nextJacareThreat:0,restoreFlashFor:0,coyoteUntil:0,jumpBufferedUntil:0,attackHeld:false,chargeFor:0,arenaTravel:0,attackFor:0,attackCooldown:0,shotFacing:1,hp:HERO_MAX_HP,maxHp:HERO_MAX_HP,recoveryPending:false,terrainContact:null},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ammo:ROUTE_AMMO,ammoIdleFor:0,ammoReloadFor:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
+  event:'',events:0,movementSkills:createMovementSkills(),lastSkillReward:null,terrain:createTerrain(),player:{airJumpsUsed:0,grounded:true,supportY:0,sliding:false,slideRemaining:0,slideLatched:false,x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareProgress:0,jacareAge:0,nextJacareThreat:0,restoreFlashFor:0,coyoteUntil:0,jumpBufferedUntil:0,attackHeld:false,chargeFor:0,arenaTravel:0,manualTravel:0,attackFor:0,attackCooldown:0,shotFacing:1,hp:HERO_MAX_HP,maxHp:HERO_MAX_HP,recoveryPending:false,terrainContact:null},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ammo:ROUTE_AMMO,ammoIdleFor:0,ammoReloadFor:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,recoveryReadyAt:0,shieldFor:0,graceFor:0,reserveShields:0,allyShieldProgress:0,allyHelpCount:0,
   lastPickup:null,lastTraversalBlock:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,phantomCloud:null,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:practice?startDistance:null,bossCooldown:0,storyLeg:null,arenaExit:null,
@@ -1133,7 +1133,21 @@ export function advanceRun(run,seconds,rng){
  advanceSlide(run,dt,!!duel||!run.boss&&!run.raid&&!run.player.isJacare&&!(run.mode==='story'&&storyApproachAt(run.routeDistance,run.bossesDefeated)));
  const moveSpeed=run.player.sliding?TERRAIN.slideSpeed:LATERAL_SPEED*(run.aid?.kind==='encourage'?1.2:1);
  const entering=run.boss?.combat&&run.boss.phase==='intro'&&playerX(run)>visibleWidth(run)-arenaReserve(run);
- run.player.x=entering?Math.max(visibleWidth(run)-arenaReserve(run),playerX(run)-230*dt):Math.max(bounds.min,Math.min(bounds.max,playerX(run)+(run.player.moveHeld||0)*moveSpeed*dt));
+ // O modo História visível usa controle manual: Flávio anda até o
+  // ponto de acompanhamento da câmera, que só então move o cenário.
+  // Recuar move Flávio dentro da tela, sem retroceder para fases vencidas.
+  // O Infinito e as simulações antigas mantêm a corrida automática.
+  const manualScroll=run.manualStory===true&&!bossStopsAutoRun(run);
+  let manualTravel=0;
+  if(manualScroll&&!entering&&run.player.moveHeld>0){
+   const step=moveSpeed*dt,anchor=Math.max(bounds.min,Math.min(bounds.max,visibleWidth(run)*.38));
+   const screenStep=Math.min(step,Math.max(0,anchor-playerX(run)));
+   run.player.x=Math.max(bounds.min,Math.min(bounds.max,playerX(run)+screenStep));
+   manualTravel=step-screenStep;
+  }else{
+   run.player.x=entering?Math.max(visibleWidth(run)-arenaReserve(run),playerX(run)-230*dt):Math.max(bounds.min,Math.min(bounds.max,playerX(run)+(run.player.moveHeld||0)*moveSpeed*dt));
+  }
+  if(manualScroll&&run.player.moveHeld)run.player.manualTravel=(run.player.manualTravel||0)+Math.abs(run.player.x-run.player.previousX)+manualTravel;
  if(bossStopsAutoRun(run)&&run.player.moveHeld)run.player.arenaTravel=(run.player.arenaTravel||0)+Math.abs(run.player.x-run.player.previousX);
  advanceAllies(run,dt);
  if(run.player.isJacare){
@@ -1145,7 +1159,7 @@ export function advanceRun(run,seconds,rng){
  run.player.restoreFlashFor=Math.max(0,run.player.restoreFlashFor-dt);
  if(run.nextBossAt===null)run.nextBossAt=run.mode==='story'?nextStoryBossDistance(0):nextBossDistance(0);
  if(run.nextRaid===null)run.nextRaid=18+random(rng)*12;
- const balance=difficultyAt(run.distance,run.elapsed),travel=bossStopsAutoRun(run)?0:balance.speed*assistance(run)*dt;run.distance+=travel;
+ const balance=difficultyAt(run.distance,run.elapsed),travel=bossStopsAutoRun(run)?0:run.manualStory?manualTravel:balance.speed*assistance(run)*dt;run.distance+=travel;
  if(!run.boss&&!run.terrain?.active?.flight&&!run.terrain?.active?.lesson){
   const stop=run.mode==='story'&&Number.isFinite(run.nextBossAt)&&run.routeDistance<=run.nextBossAt?run.nextBossAt:Infinity;
   const local=campaignRouteDistance(run)%SCENE_DISTANCE;
