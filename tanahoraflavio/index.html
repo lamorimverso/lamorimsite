@@ -67,11 +67,10 @@
 
 
       <section class="game-card" id="game" aria-labelledby="game-title">
-        <div class="game-heading">
-          <div><h2 id="game-title">Corre, Flávio!</h2></div>
-          <div class="game-actions"><button type="button" id="game-sound" class="game-sound" aria-label="Som do jogo" aria-pressed="true" title="Som ligado" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="sound-waves" d="M17 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/><path class="sound-off-mark" d="m17 9 5 6m0-6-5 6"/></svg><span class="sr-only" id="game-sound-label">Som ligado</span></button>
+        <div class="game-dashboard">
+          <div class="game-heading">
+            <h2 id="game-title">Corre, Flávio!</h2>
           </div>
-        </div>
         <div class="game-topline">
         <div class="game-scoreboard" aria-label="Placar">
           <div><span>Metros</span><strong id="game-score">0000</strong></div>
@@ -83,6 +82,9 @@
           <span class="game-stage-clock" id="game-stage-time">7.000 m até Rio</span>
           <div class="game-stage-progress" id="game-stage-progress" role="progressbar" aria-label="Progresso da fase" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div>
         </div>
+        </div>
+          <div class="game-actions"><button type="button" id="game-sound" class="game-sound" aria-label="Som do jogo" aria-pressed="true" title="Som ligado" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="sound-waves" d="M17 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/><path class="sound-off-mark" d="m17 9 5 6m0-6-5 6"/></svg><span class="sr-only" id="game-sound-label">Som ligado</span></button>
+          </div>
         </div>
         <div class="game-internal-metrics sr-only" aria-hidden="true">
           <span id="game-time">00:00</span>
