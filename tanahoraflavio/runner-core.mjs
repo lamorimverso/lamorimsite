@@ -3,15 +3,15 @@ export {stagePlanFor} from './runner-stage-director.mjs?v=071886f07909';
 import {HERO_MAX_HP,playerBodyFor} from './runner-body.mjs?v=57ec474fca38';
 import {createMovementSkills,movementProfileFor,rewardMovementVictory} from './runner-movement-skills.mjs?v=d0ad734b4838';
 export {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
-export {terrainProfileFor} from './runner-terrain.mjs?v=0311a46008ed';
-import {TERRAIN,STORY_DASH_RECOVERY_SECONDS,createTerrain,beginTerrain,beginGroundLesson,beginAirTransfer,aircraftHitFor,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer} from './runner-terrain.mjs?v=0311a46008ed';
-export {terrainSupportAt} from './runner-terrain.mjs?v=0311a46008ed';
+export {terrainProfileFor} from './runner-terrain.mjs?v=a3ce1f824971';
+import {TERRAIN,STORY_DASH_RECOVERY_SECONDS,createTerrain,beginTerrain,beginGroundLesson,beginAirTransfer,aircraftHitFor,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer} from './runner-terrain.mjs?v=a3ce1f824971';
+export {terrainSupportAt} from './runner-terrain.mjs?v=a3ce1f824971';
 import {stageRosterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 import {groundRhythmFor,groundStyleFor} from './runner-ground-rhythm.mjs?v=c282904db6c6';
 import {ROUTE_AMMO,advanceAmmo,addShieldPart} from './runner-supplies.mjs?v=44c67e8a5802';
 import {heroPowerFor,grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
 export {grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
-import {spawnStageEnemies} from './runner-story-rooms.mjs?v=c2ed431f592f';
+import {createStoryRoomState,spawnStageEnemies,stepStageEnemies,constrainStageAdvance,stepStoryRooms,restoreStoryCheckpoint,stageHazardHit} from './runner-story-rooms.mjs?v=56e5bf65f679';
 import {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=c4fcfde513ff';
 export {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=740e8ab135c4';
@@ -274,7 +274,7 @@ export function createRun({assisted=false,seed,mode='endless',practiceId,manualS
   randomState:seed===undefined?null:Number(seed)>>>0,
   damageRandomState:seed===undefined?null:(Number(seed)^0x9e3779b9)>>>0,
   ballot:{digits:'',message:''},
-  event:'',events:0,movementSkills:createMovementSkills(),lastSkillReward:null,terrain:createTerrain(),storyRooms:{seen:{},maxDistance:0},player:{airJumpsUsed:0,grounded:true,supportY:0,sliding:false,slideRemaining:0,slideLatched:false,slideCooldownFor:0,x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareProgress:0,jacareAge:0,nextJacareThreat:0,restoreFlashFor:0,coyoteUntil:0,jumpBufferedUntil:0,attackHeld:false,chargeFor:0,arenaTravel:0,manualTravel:0,attackFor:0,attackCooldown:0,shotFacing:1,hp:HERO_MAX_HP,maxHp:HERO_MAX_HP,recoveryPending:false,terrainContact:null},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ammo:ROUTE_AMMO,ammoIdleFor:0,ammoReloadFor:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
+  event:'',events:0,movementSkills:createMovementSkills(),lastSkillReward:null,terrain:createTerrain(),storyRooms:createStoryRoomState(),player:{airJumpsUsed:0,grounded:true,supportY:0,sliding:false,slideRemaining:0,slideLatched:false,slideCooldownFor:0,x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareProgress:0,jacareAge:0,nextJacareThreat:0,restoreFlashFor:0,coyoteUntil:0,jumpBufferedUntil:0,attackHeld:false,chargeFor:0,arenaTravel:0,manualTravel:0,attackFor:0,attackCooldown:0,shotFacing:1,hp:HERO_MAX_HP,maxHp:HERO_MAX_HP,recoveryPending:false,terrainContact:null},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ammo:ROUTE_AMMO,ammoIdleFor:0,ammoReloadFor:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,recoveryReadyAt:0,shieldFor:0,graceFor:0,reserveShields:0,allyShieldProgress:0,allyHelpCount:0,
   lastPickup:null,lastTraversalBlock:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,phantomCloud:null,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:practice?startDistance:null,bossCooldown:0,storyLeg:null,arenaExit:null,
@@ -676,6 +676,11 @@ function advanceHeroShots(run,dt){
   if(run.manualStory&&!run.boss){
    for(const enemy of run.obstacles){
     if(!isShootableStoryEnemy(enemy)||!segmentHitsBox(shot,enemy.x,enemy.x+enemy.width,enemy.platformY||0,(enemy.platformY||0)+enemy.height,radius))continue;
+    if(enemy.storyEnemyId){
+     enemy.hp=Math.max(0,(enemy.hp??1)-(shot.damage||1));
+     if(enemy.hp>0){enemy.hitFlashFor=.15;run.clearedAt={x:enemy.x+enemy.width/2,remaining:.2};return false;}
+     if(run.storyRooms?.defeated)run.storyRooms.defeated[enemy.storyEnemyId]=true;
+    }
     enemy.destroyed=true;enemy.passed=true;enemy.counted=true;
     run.defeatedEnemies=(run.defeatedEnemies||0)+1;
     run.clearedAt={x:enemy.x+enemy.width/2,remaining:.25};
@@ -1002,6 +1007,9 @@ function finishImpact(run,hit,fatalFall){
   run.graceFor=1.2;run.recoveryReadyAt=Math.max(run.recoveryReadyAt,run.elapsed+5);
   announce(run,'Flávio se machucou. Mais um impacto encerra a tentativa.');return;
  }
+ if(restoreStoryCheckpoint(run)){
+  clearRunInput(run);announce(run,'CHECKPOINT! Flávio voltou à última bandeira. Tentativas restantes: '+run.storyRooms.retries+'.');return;
+ }
  p.recoveryPending=false;run.status='over';run.heroShots=[];clearRunInput(run);
  announce(run,fatalFall?'Flávio caiu no vazio.':isJacareAmpoule(hit)?'Uma ampola cenográfica atingiu Flávio. A corrida terminou.':'A corrida terminou após o segundo impacto.');
 }
@@ -1201,6 +1209,7 @@ export function advanceRun(run,seconds,rng){
   }else{
    run.player.x=entering?Math.max(visibleWidth(run)-arenaReserve(run),playerX(run)-230*dt):Math.max(bounds.min,Math.min(bounds.max,playerX(run)+(run.player.moveHeld||0)*moveSpeed*dt));
   }
+  manualTravel=constrainStageAdvance(run,manualTravel,playerBodyFor(run.player));
   if(manualScroll&&run.player.moveHeld)run.player.manualTravel=(run.player.manualTravel||0)+Math.abs(run.player.x-run.player.previousX)+Math.abs(manualTravel);
  if(bossStopsAutoRun(run)&&run.player.moveHeld)run.player.arenaTravel=(run.player.arenaTravel||0)+Math.abs(run.player.x-run.player.previousX);
  advanceAllies(run,dt);
@@ -1233,6 +1242,7 @@ export function advanceRun(run,seconds,rng){
   run.routeDistance=Math.min(stop,raidStop,flightStop,lessonStop,run.routeDistance+routeTravel);
  }
  if(run.storyLeg&&!run.boss&&!run.terrain?.active?.flight)run.storyLeg.groundDistance=Math.min(run.storyLeg.requiredDistance,run.storyLeg.groundDistance+progressTravel);
+ stepStoryRooms(run,dt);
  run.bossCooldown=Math.max(0,run.bossCooldown-dt);
  if(run.phantomCloud){run.phantomCloud.remaining=Math.max(0,run.phantomCloud.remaining-dt);if(!run.phantomCloud.remaining)run.phantomCloud=null;}
  if(run.cameo){run.cameo.remaining-=dt;if(run.cameo.remaining<=0)run.cameo=null;}
@@ -1248,6 +1258,7 @@ export function advanceRun(run,seconds,rng){
  if(!run.player.isJacare&&run.player.grounded&&run.player.jumpBufferedUntil>0)jumpRun(run);
  if(!terrainHit||terrainHit.source!==run.player.terrainContact)run.player.terrainContact=null;
  run.shieldFor=Math.max(0,run.shieldFor-dt);run.graceFor=Math.max(0,run.graceFor-dt);
+ stepStageEnemies(run,dt);
  const castDeltas=new Map();
  for(const obstacle of run.obstacles){
   if(Number.isFinite(obstacle.storyWorldX)){obstacle.x=obstacle.storyWorldX-run.distance;continue;}
@@ -1464,7 +1475,7 @@ export function advanceRun(run,seconds,rng){
  if(terrainHit?.type==='terrain-gap'){finishImpact(run,terrainHit,true);return;}
  const protectedNow=run.shieldFor>0||run.graceFor>0;
  if(protectedNow&&!run.boss?.traversal)return;
- const hit=(terrainHit&&terrainHit.source!==run.player.terrainContact?terrainHit:null)||aircraftHitFor(run,playerBodyFor(run.player))||run.obstacles.find(o=>!o.passed&&!o.counted&&(!o.projectile||o.launched||!(o.waitFor>0))&&(!(o.falling||o.groundHazard)||o.age>=o.warningFor)&&overlapsPlayer(run,o));
+ const hit=(terrainHit&&terrainHit.source!==run.player.terrainContact?terrainHit:null)||aircraftHitFor(run,playerBodyFor(run.player))||stageHazardHit(run,playerBodyFor(run.player))||run.obstacles.find(o=>!o.passed&&!o.counted&&(!o.projectile||o.launched||!(o.waitFor>0))&&(!(o.falling||o.groundHazard)||o.age>=o.warningFor)&&overlapsPlayer(run,o));
  // Fiscal/Povo are traversal checks, not damaging duels: a blocked attempt
  // cannot clear the passage, even with an already-active reserve shield.
  if(run.boss?.traversal&&hit?.bossAttack){

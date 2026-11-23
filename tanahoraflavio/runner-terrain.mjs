@@ -1,6 +1,6 @@
 import {playerBodyFor,HERO_SLIDE_SECONDS,HERO_CROUCH_CLEARANCE} from './runner-body.mjs?v=57ec474fca38';
 import {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
-import {stagePlatformSupport} from './runner-story-rooms.mjs?v=c2ed431f592f';
+import {stagePlatformSupport} from './runner-story-rooms.mjs?v=56e5bf65f679';
 // Shared simulation/render geometry. x is logical screen-space; y is height
 // above WORLD.ground. Resizing translates shapes with the hero, never stretches
 // a jump or replaces an active hole with invisible ground.
