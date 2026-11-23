@@ -1151,6 +1151,10 @@ export function advanceRun(run,seconds,rng){
  if(run.status!=='running'||!Number.isFinite(seconds)||seconds<=0)return;
  if(typeof rng!=='function')rng=run.randomState===null||run.randomState===undefined?Math.random:()=>{run.randomState=nextSeed(run.randomState);return run.randomState/4294967296;};
  const dt=Math.min(seconds,.05);run.elapsed+=dt;
+ if(run.clearedAt){
+  run.clearedAt.remaining=Math.max(0,run.clearedAt.remaining-dt);
+  if(run.clearedAt.remaining<=0)run.clearedAt=null;
+ }
  if(run.arenaExit){run.arenaExit.age+=dt;if(run.arenaExit.age>=run.arenaExit.duration)run.arenaExit=null;}
  if(run.boss)run.boss.hurtFor=Math.max(0,(run.boss.hurtFor||0)-dt);
  if(run.lastSkillReward){run.lastSkillReward.remaining-=dt;if(run.lastSkillReward.remaining<=0)run.lastSkillReward=null;}

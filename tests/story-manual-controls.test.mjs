@@ -87,3 +87,11 @@ test('manual Story shots remove ground enemies, not barriers or Endless enemies'
  endless.obstacles.push(endlessEnemy);core.attackRun(endless);step(endless,45);
  assert.notEqual(endlessEnemy.destroyed,true);
 });
+
+
+test('Story impact sparkle ends after its short lifetime',()=>{
+ const run=isolated('story',true);
+ run.clearedAt={x:120,remaining:.25};
+ step(run,40);
+ assert.equal(run.clearedAt,null,'impact feedback must not leave permanent marks on the track');
+});
