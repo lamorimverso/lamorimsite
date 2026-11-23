@@ -26,7 +26,7 @@ jobs:
         env:
           PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/google-chrome
         run: node --test --test-concurrency=1 --test-name-pattern='(teclado atravessa toda a largura útil|seletor oferece dois modos jogáveis|campanha abre sem trocar o modo)' tests/ux-site.test.cjs
-      - name: Verify original retro city backdrops in Canvas and browser
+      - name: Verify optimized original retro city backdrops in Canvas and browser
         env:
           PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/google-chrome
         run: node --test --test-concurrency=1 tests/retro-parallax-background.test.mjs tests/arena-scenery.test.mjs tests/journey-scenery.test.mjs
