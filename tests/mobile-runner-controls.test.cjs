@@ -19,7 +19,7 @@ before(async()=>{
  browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{})});
 });
 after(async()=>{await browser?.close();await new Promise(resolve=>server?.close(resolve));});
-async function beginMobile(viewport){
+async function beginMobile(viewport,{mode='story'}={}){
  const context=await browser.newContext({viewport,hasTouch:true,isMobile:true});
  const page=await context.newPage(),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
@@ -28,6 +28,7 @@ async function beginMobile(viewport){
  await context.route('**/runner-core.mjs*',route=>route.fulfill({contentType:'text/javascript',body:source+'\nconst oldCreateRun=createRun;createRun=(...args)=>{const r=oldCreateRun(...args);globalThis.__touchRun=r;return r;};'}));
  await page.goto(base);
  await page.waitForFunction(()=>document.getElementById('game-start')?.disabled===false,null,{timeout:12000});
+ if(mode==='endless')await page.locator('#game-mode-infinite').check();
  await page.locator('#game-start').tap();
  await page.waitForFunction(()=>globalThis.__touchRun?.status==='running');
  await page.evaluate(()=>{
@@ -114,7 +115,7 @@ test('fullscreen request rejection safely falls back and settings retain gesture
   await page.locator('#game-settings summary').tap();
   const text=await page.locator('#game-instructions').textContent();
   assert.match(text,/deslize para os lados/i);
-  assert.match(text,/segundo.*dedo/i);
+  assert.match(text,/segure um dedo na pista e toque com outro/i);
   await page.locator('#game-fullscreen').tap();
   assert.equal(await page.locator('#game').getAttribute('data-mobile-fullscreen'),'true');
   assert.match(await page.locator('#game-fullscreen-note').textContent(),/barras do navegador podem permanecer/i);
@@ -140,7 +141,7 @@ test('real fullscreen event synchronizes the setting when browser exits',async()
  }finally{await context.close();}
 });
 test('second finger fires in boss encounter, releasing it does not interrupt first finger',async()=>{
- const {context,page,errors}=await beginMobile({width:390,height:844});
+ const {context,page,errors}=await beginMobile({width:390,height:844},{mode:'endless'});
  try{
   await page.evaluate(()=>{__touchRun.nextBossAt=0;__touchRun.bossBag=['lula'];});
   await page.waitForFunction(()=>__touchRun.boss?.type==='lula');
