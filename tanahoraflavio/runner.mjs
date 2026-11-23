@@ -1,4 +1,4 @@
-import {stageGuideFor} from './runner-stage-director.mjs?v=071886f07909';
+import {stageGuideFor} from './runner-stage-director.mjs?v=47d06b5bcfda';
 import {HURT_BODY_SCALE} from './runner-body.mjs?v=57ec474fca38';
 import {createPresentationDOM,createControlLabelReader} from './runner-presentation-cache.mjs?v=4712d27109dc';
 import {edgeThreatsFor,drawEdgeThreats} from './runner-edge-cues.mjs?v=b4b61c9e89df';
