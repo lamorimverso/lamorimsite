@@ -166,3 +166,58 @@ test('desktop preserves original keyboard controls and no mobile buttons appear'
   verifyErrors(errors);
  }finally{await context.close();}
 });
+
+function overlap(a,b){
+ return a.left<b.right-1&&b.left<a.right-1&&a.top<b.bottom-1&&b.top<a.bottom-1;
+}
+async function cleanDashboardMetrics(page){
+ return page.evaluate(()=>{
+  const box=selector=>{const r=document.querySelector(selector).getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height};};
+  return {
+   title:box('.game-dashboard .game-heading'),
+   board:box('.game-dashboard .game-scoreboard'),
+   sound:box('.game-dashboard .game-actions'),
+   settings:box('#game-settings summary'),
+   stage:box('.game-dashboard .game-stage-header'),
+   canvas:box('#runner-canvas'),
+   game:box('#game'),
+   viewportWidth:innerWidth,
+   overflow:document.documentElement.scrollWidth>innerWidth,
+   tinyLabels:[...document.querySelectorAll('.game-dashboard .game-scoreboard>div>span:not([hidden])')]
+     .filter(el=>getComputedStyle(el).display!=='none')
+     .map(el=>({label:el.textContent,tooWide:el.scrollWidth>el.clientWidth+2})),
+   stageProgress:box('#game-stage-progress')
+  };
+ });
+}
+for(const viewport of [{width:320,height:568},{width:390,height:844},{width:844,height:390},{width:1162,height:720}])
+test('clean dashboard avoids overlap and preserves readable stats: '+viewport.width+'x'+viewport.height,async()=>{
+ const {context,page,errors}=await beginMobile(viewport);
+ try{
+  const r=await cleanDashboardMetrics(page);
+  assert.equal(r.overflow,false,'no horizontal page overflow: '+JSON.stringify(r));
+  for(const [a,b] of [['title','board'],['title','sound'],['board','sound'],['sound','settings'],['board','settings']]){
+   assert.equal(overlap(r[a],r[b]),false,a+' and '+b+' must not overlap: '+JSON.stringify(r));
+  }
+  assert.ok(r.board.bottom<=r.stage.top+2,'stats remain above stage line: '+JSON.stringify(r));
+  assert.ok(r.stage.bottom<=r.canvas.top+2,'stage and progress do not cover the track: '+JSON.stringify(r));
+  assert.ok(r.settings.right<=r.game.right+2,'settings remains inside game card: '+JSON.stringify(r));
+  assert.ok(r.stageProgress.left>=r.stage.left-1&&r.stageProgress.right<=r.stage.right+1,'progress stays within stage');
+  assert.deepEqual(r.tinyLabels.filter(x=>x.tooWide),[],'all scoreboard labels remain readable');
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+test('clean fullscreen header stays separate from canvas and keeps gear accessible',async()=>{
+ const {context,page,errors}=await beginMobile({width:390,height:844});
+ try{
+  await page.evaluate(()=>{document.getElementById('game').requestFullscreen=undefined;});
+  await page.locator('#game-settings summary').tap();
+  await page.locator('#game-fullscreen').tap();
+  const r=await cleanDashboardMetrics(page);
+  assert.ok(r.title.bottom<=r.canvas.top+2,'brand does not cover fullscreen track: '+JSON.stringify(r));
+  assert.equal(overlap(r.title,r.settings),false);
+  assert.equal(overlap(r.sound,r.settings),false);
+  assert.ok(r.settings.right<=r.viewportWidth+1);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
