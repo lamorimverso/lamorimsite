@@ -79,6 +79,37 @@ for(const viewport of [{width:320,height:568},{width:390,height:844},{width:844,
    assert.deepEqual(errors,[]);
   }finally{await context.close();}
  });
+test('touch crouch button respects toggle mode and remains held after lifting a finger',async()=>{
+ const {context,page,errors}=await beginMobile({width:390,height:844});
+ try{
+  await page.evaluate(()=>{
+   const select=document.getElementById('game-crouch-mode');
+   select.value='toggle';select.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+  await send(page,'crouch','pointerdown',301);
+  await send(page,'crouch','pointerup',301);
+  assert.equal(await page.evaluate(()=>__touchRun.player.crouchHeld),true,'toggle mode must remain active after lifting the finger');
+  await send(page,'crouch','pointerdown',302);
+  await send(page,'crouch','pointerup',302);
+  assert.equal(await page.evaluate(()=>__touchRun.player.crouchHeld),false,'second tap should leave crouch mode');
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+test('landscape keeps both the track and entire touch dock in the available viewport',async()=>{
+ const {context,page,errors}=await beginMobile({width:844,height:390});
+ try{
+  const rects=await page.evaluate(()=>{
+   const canvas=document.getElementById('runner-canvas').getBoundingClientRect();
+   const dock=document.getElementById('game-mobile-controls').getBoundingClientRect();
+   return {canvas:{top:canvas.top,bottom:canvas.bottom,height:canvas.height},
+     dock:{top:dock.top,bottom:dock.bottom,height:dock.height},height:innerHeight};
+  });
+  assert.ok(rects.canvas.top>=0,'canvas cannot start above the visible screen: '+JSON.stringify(rects));
+  assert.ok(rects.canvas.bottom<=rects.height,'canvas cannot end below screen: '+JSON.stringify(rects));
+  assert.ok(rects.dock.bottom<=rects.height,'touch dock cannot fall below screen: '+JSON.stringify(rects));
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
 test('blur frees touch movement, keyboard accessibility click works, desktop dock stays hidden',async()=>{
  const {context,page,errors}=await beginMobile({width:390,height:844});
  try{
