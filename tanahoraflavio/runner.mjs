@@ -82,7 +82,7 @@ function initRunner() {
   let controlSettings=null,gamepadDriver=null;
   const gamepadHeld=new Set();
   const selectedMode=()=>$("game-mode-story").checked?"story":"endless";
-  let run=createRun({assisted:preferences.assisted,mode:selectedMode()}),frameId=0;
+  let run=createRun({assisted:preferences.assisted,mode:selectedMode(),manualStory:selectedMode()==="story"}),frameId=0;
   run.supportAvailable=false;
   const trackPointers=new Map(),moveKeys=new Set(),jumpKeys=createPressGate(),jumpSources=createHeldSources(),crouchSources=createHeldSources(),attackSources=createHeldSources();
   const attackButton=$("game-attack"),firePointers=new Set(),mouseHeld=new Map();
@@ -191,6 +191,7 @@ function initRunner() {
 
     ui.text("game-phase","Cenário "+(stage.index+1)+" de "+stages.length+" · "+(run.mode==="story"?"História "+Math.min(run.bossesDefeated,STORY_BOSS_COUNT)+"/"+STORY_BOSS_COUNT:"Volta "+lap));
     ui.text("game-stage-name",stage.name);
+    ui.text("game-mode-label",run.mode==="story"?"🎮 História · Movimento manual: ←/→ ou A/D":"🏃 Infinito · Corrida automática");
     const cast=characterProgressAt(run);
     ui.text("game-difficulty","Risco "+difficulty.level+" · "+cast.available+"/"+cast.total+" rivais");
     ui.data(section,'playerForm',run.player.isJacare?'jacare':run.player.hp===1?'hurt':'normal');
@@ -460,7 +461,7 @@ function initRunner() {
     audio.stop();audio.prime();audio.actorCue("flavio");voices.reset();lastRaidKey="";
     clearControls();
     shotSounds.reset();lastHeroShotHeard=0;
-    run=createRun({assisted:preferences.assisted,mode:practiceId?"story":selectedMode(),practiceId});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);encounterSounds.reset(run);movementSounds.reset(run);landingUntil=0;crouchPose=slidePose=slideTravel=0;lastPoseElapsed=0;
+    run=createRun({assisted:preferences.assisted,mode:practiceId?"story":selectedMode(),practiceId,manualStory:!practiceId&&selectedMode()==="story"});run.supportAvailable=supportReady;run.viewportWidth=virtualWidth;startRun(run);encounterSounds.reset(run);movementSounds.reset(run);landingUntil=0;crouchPose=slidePose=slideTravel=0;lastPoseElapsed=0;
     if(!supportReady)prepareSupport();
     $("game-settings").open=false;
     crouchPose=slidePose=slideTravel=0;
@@ -531,7 +532,7 @@ function initRunner() {
     moveRun(run,Number(right)-Number(left)||(pointer?.direction||0));
   }
   $("game-start").addEventListener("click",()=>begin());
-  $("game-mode-chooser").addEventListener("change",()=>{if(run.status==="ready"){run.mode=selectedMode();updateUI();draw();}});
+  $("game-mode-chooser").addEventListener("change",()=>{if(run.status==="ready"){run.mode=selectedMode();run.manualStory=run.mode==="story";updateUI();draw();}});
   for(const id of STORY_OPTIONAL_IDS){
     const b=optionalStoryBossAt(id),button=document.createElement('button');
     if(!b)continue;
@@ -764,7 +765,7 @@ function initRunner() {
     const facing=run.allyShieldFor>0?1:run.player.moveHeld<0?-1:1;
     // A corrida volta a usar sua passada ilustrada original. As duas ações
     // baixas selecionam quadros de sequências próprias, no mesmo apoio.
-    const phase=heroStridePhase(run);
+    const phase=run.manualStory&&!bossStopsAutoRun(run)?Math.max(0,run.player.manualTravel||0)/18:heroStridePhase(run);
     const crouchTarget=run.player.crouching&&!airborne,shooting=active&&run.player.attackFor>0;
     const sliding=active&&!airborne&&run.player.sliding;
     const poseDt=run.elapsed-lastPoseElapsed;
@@ -774,7 +775,7 @@ function initRunner() {
     else if(slidePose===0)slideTravel=0;
     const slidePhase=reduced?0:slideTravel;
     lastPoseElapsed=run.elapsed;
-    const runningStride=active&&(!bossStopsAutoRun(run)||!!run.player.moveHeld)&&!airborne&&!crouchTarget&&!run.player.isJacare;
+    const runningStride=active&&(!bossStopsAutoRun(run)&&!run.manualStory||!!run.player.moveHeld)&&!airborne&&!crouchTarget&&!run.player.isJacare;
     const support=terrainSupportAt(run,playerX(run)+18,13),floor=WORLD.ground-(support??0);
     // Pés e efeito de impacto assumem a altura do suporte real, sem levantar
     // o sprite inteiro para fazer a passada animada parecer mais forte.
@@ -815,7 +816,7 @@ function initRunner() {
         if(scale!==1){ctx.save();ctx.translate(pivot,feet);ctx.scale(scale,scale);ctx.translate(-pivot,-feet);}
         drawHeroShot(ctx,{x:pivot,y:feet,phase,age:HERO_SHOT_DURATION-run.player.attackFor,crouching:crouchTarget,crouchPose,sliding,slidePose,slidePhase,airborne,falling:run.player.velocity<0,reducedMotion:reduced,facing:run.player.shotFacing||1,alpha});
         if(scale!==1)ctx.restore();
-      }else drawActor(ctx,{type:"flavio",x:pivot,y:feet,scale:.95*scale,phase,standing:bossStopsAutoRun(run)&&!run.player.moveHeld,airborne,facing,
+      }else drawActor(ctx,{type:"flavio",x:pivot,y:feet,scale:.95*scale,phase,standing:(bossStopsAutoRun(run)||run.manualStory)&&!run.player.moveHeld,airborne,facing,
         falling:run.player.velocity<0,reducedMotion:reduced,landing:crouchTarget,crouchPose,sliding,slidePose,slidePhase,hurt:run.status==="over",alpha});
       if(run.player.restoreFlashFor>0&&!prefersReducedMotion()){
         ctx.save();ctx.globalAlpha=Math.min(.55,run.player.restoreFlashFor/.48*.55);
