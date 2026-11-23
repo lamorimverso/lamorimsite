@@ -732,16 +732,16 @@ function initRunner() {
     ctx.save();ctx.translate(bossX,bossY);
     drawHoverEnemy(ctx,{type:b.type,platform:!b.platformer,x:0,y:0,scale:pose.scale,phase,...presentation,hurt:b.hitFlashFor>0,reducedMotion:prefersReducedMotion(),classId:b.classId,armyVariant:b.stageId||STAGES[b.stageIndex]?.id,enraged:b.enraged});
     ctx.restore();
-    if(b.lastDamage?.remaining>0){
-      const hit=b.lastDamage,progress=1-hit.remaining/.8;
-      const label=(hit.critical?"CRÍTICO! ":"")+"−"+Number(hit.amount).toLocaleString("pt-BR",{maximumFractionDigits:1})+" PV";
-      ctx.save();ctx.globalAlpha=Math.min(1,hit.remaining*5);ctx.textAlign="center";
-      ctx.font=hit.critical?"850 17px system-ui":"750 15px system-ui";
-      const w=Math.min(virtualWidth-24,ctx.measureText(label).width+16);
-      const x=Math.max(w/2+12,Math.min(virtualWidth-w/2-12,bossX));
-      const y=Math.max(24,bossY-98-(prefersReducedMotion()?0:progress*16));
-      ctx.fillStyle=hit.critical?"#6c3b16":"#163f36";ctx.beginPath();ctx.roundRect(x-w/2,y-15,w,23,5);ctx.fill();
-      ctx.fillStyle="#fff";ctx.fillText(label,x,y+2,w-12);ctx.restore();
+    // O dano continua sendo aplicado na física e exibido pela barra de vida.
+    // Não exibir os antigos números flutuantes de PV sobre o chefão.
+    if(b.platformer&&arenaPose.state==='dash'&&!prefersReducedMotion()){
+      ctx.save();ctx.strokeStyle='#53717d55';ctx.lineWidth=1.6;
+      const behind=arenaPose.velocityX>0?-1:1;
+      for(let i=0;i<3;i++){
+        const tx=bossX+behind*(23+i*7),ty=WORLD.ground-5+i*2;
+        ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(tx+behind*(9+i*2),ty);ctx.stroke();
+      }
+      ctx.restore();
     }
     if(b.role)return;
     const counter=b.combat&&bossCounterWindow(b),cue=b.phase==='charge'?b.plannedAttack:bossCue();
