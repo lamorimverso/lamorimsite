@@ -64,6 +64,7 @@ body.finished .counter{display:none}
 .passport-track>span{display:block;height:100%;background:var(--purple);width:0}
 .game-stage-header{display:flex;justify-content:space-between;align-items:center;gap:10px;color:var(--muted);font-size:10px;min-height:16px}
 .game-stage-header strong{font-size:10px;color:var(--muted);font-weight:500}
+.game-stage-header .game-mode-label{display:block;max-width:100%;font-size:10px;line-height:1.4;color:var(--dark);font-weight:650}
 #game-difficulty{display:none}
 .game-stage-clock{text-align:right;font-variant-numeric:tabular-nums}
 .game-settings{margin:0;background:#fff}
