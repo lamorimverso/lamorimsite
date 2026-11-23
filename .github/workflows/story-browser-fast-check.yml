@@ -5,6 +5,8 @@ on:
       - feature/story-camera-jump-dash-20261123
     paths:
       - '.github/workflows/story-browser-fast-check.yml'
+      - 'tanahoraflavio/runner-scenery.mjs'
+      - 'tests/retro-parallax-background.test.mjs'
 jobs:
   browser-smoke:
     runs-on: ubuntu-latest
