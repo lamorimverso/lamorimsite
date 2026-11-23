@@ -54,7 +54,7 @@ test('manual Story buffers a jump just before landing and allows variable jump h
  const buffered=ready();
  Object.assign(buffered.player,{y:1,velocity:-210,grounded:false,supportY:0});
  assert.equal(core.jumpRun(buffered),false);
- step(buffered,2);
+ step(buffered,1);
  assert.equal(buffered.player.velocity,610,'landing should consume the buffered jump');
 
  const full=ready(),short=ready();
