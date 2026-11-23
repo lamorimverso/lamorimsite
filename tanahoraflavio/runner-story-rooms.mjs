@@ -87,7 +87,7 @@ export function constrainStageAdvance(r,travel,body){
  const gateRoom=Math.max(0,Math.floor((old+48)/ROOM_SIZE)),door=roomDoorFor(r,gateRoom);
  if(door.open){stateFor(r).opened[gateRoom]=true;return travel;}
  const limit=door.worldX-8;
- if(old>=limit||wanted<=limit)return travel;
+ if(old>limit+1e-5||wanted<=limit)return travel;
  let excess=wanted-limit;
  if(travel>0){const taken=Math.min(travel,excess);travel-=taken;excess-=taken;}
  if(excess>0)r.player.x=Math.max(r.player.previousX,r.player.x-excess);

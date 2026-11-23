@@ -25,7 +25,7 @@ test('camera can return to earlier rooms without gaining route progress twice',(
 });
 
 test('locked gate is solid and cannot be crossed without defeating both enemies',()=>{
- const r=ready(),door=roomDoorFor(r,0);r.distance=door.worldX-r.player.x-70;r.player.previousX=r.player.x;
+ const r=ready(),door=roomDoorFor(r,0);r.distance=door.worldX-r.player.x-70;r.player.previousX=r.player.x;core.moveRun(r,1);
  const blocked=constrainStageAdvance(r,120,{right:29});assert.ok(blocked<120);
  r.storyRooms.defeated['0:0']=true;r.storyRooms.defeated['0:1']=true;
  assert.equal(roomDoorFor(r,0).open,true);
@@ -59,4 +59,12 @@ test('scripted spikes hurt in Story and do not exist in Endless',()=>{
  const r=ready();r.distance=ROOM_SIZE+625-r.player.x;
  assert.ok(stageHazardHit(r,{left:4,right:29,height:48}));
  r.manualStory=false;assert.equal(stageHazardHit(r,{left:4,right:29,height:48}),null);
+});
+
+test('locked gate remains closed while the right key is continuously held',()=>{
+ const r=ready(),door=roomDoorFor(r,0);
+ r.distance=door.worldX-r.player.x-70;r.storyRooms.maxDistance=r.distance;
+ core.moveRun(r,1);tick(r,100);
+ const right=r.distance+r.player.x+29;
+ assert.ok(right<=door.worldX-8+1e-5,'the physical gate cannot be crossed by holding right');
 });

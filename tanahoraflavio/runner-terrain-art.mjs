@@ -1,4 +1,4 @@
-import {aircraftPoseFor} from './runner-terrain.mjs?v=a3ce1f824971';
+import {aircraftPoseFor} from './runner-terrain.mjs?v=47a8f957733b';
 import {drawTileSurface} from './runner-platform-room-art.mjs?v=344dcf5c7c31';
 // Shapes use the same logical x and height-above-ground as traversal physics.
 // No collision state is changed here, and no asset allocation is needed per frame.
