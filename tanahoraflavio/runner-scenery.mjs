@@ -222,9 +222,11 @@ function farBuildings(c,x,p,variant){
   const top=224-h;
   rect(c,x+dx,top,w,h,p.far,p.ink+'50',1);
   rect(c,x+dx+3,top+4,w-6,2,p.stone+'9c');
-  for(let row=0;row<2;row++)for(let col=0;col<2;col++){
-   const wx=x+dx+7+col*(w-14),wy=top+12+row*10;
-   if(wy<220)rect(c,wx,wy,4,5,(col+row+variant)%3===0?'#ffd997a3':p.stone+'ad');
+  // Janelas em pares (em vez de grade completa): preserva a luz
+  // retrofuturista com menos operações no Canvas, sobretudo no celular.
+  for(let col=0;col<2;col++){
+   const wx=x+dx+7+col*(w-14),wy=top+13+((col+variant)%2)*11;
+   if(wy<220)rect(c,wx,wy,4,6,(col+variant)%3===0?'#ffd997a3':p.stone+'ad');
   }
  }
  const roof=x+58;
