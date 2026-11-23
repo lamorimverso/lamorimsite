@@ -3,14 +3,15 @@ export {stagePlanFor} from './runner-stage-director.mjs?v=071886f07909';
 import {HERO_MAX_HP,playerBodyFor} from './runner-body.mjs?v=57ec474fca38';
 import {createMovementSkills,movementProfileFor,rewardMovementVictory} from './runner-movement-skills.mjs?v=d0ad734b4838';
 export {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
-export {terrainProfileFor} from './runner-terrain.mjs?v=d75123c1af20';
-import {TERRAIN,STORY_DASH_RECOVERY_SECONDS,createTerrain,beginTerrain,beginGroundLesson,beginAirTransfer,aircraftHitFor,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer} from './runner-terrain.mjs?v=d75123c1af20';
-export {terrainSupportAt} from './runner-terrain.mjs?v=d75123c1af20';
+export {terrainProfileFor} from './runner-terrain.mjs?v=0311a46008ed';
+import {TERRAIN,STORY_DASH_RECOVERY_SECONDS,createTerrain,beginTerrain,beginGroundLesson,beginAirTransfer,aircraftHitFor,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer} from './runner-terrain.mjs?v=0311a46008ed';
+export {terrainSupportAt} from './runner-terrain.mjs?v=0311a46008ed';
 import {stageRosterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 import {groundRhythmFor,groundStyleFor} from './runner-ground-rhythm.mjs?v=c282904db6c6';
 import {ROUTE_AMMO,advanceAmmo,addShieldPart} from './runner-supplies.mjs?v=44c67e8a5802';
 import {heroPowerFor,grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
 export {grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
+import {spawnStageEnemies} from './runner-story-rooms.mjs?v=c2ed431f592f';
 import {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=c4fcfde513ff';
 export {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=740e8ab135c4';
@@ -273,7 +274,7 @@ export function createRun({assisted=false,seed,mode='endless',practiceId,manualS
   randomState:seed===undefined?null:Number(seed)>>>0,
   damageRandomState:seed===undefined?null:(Number(seed)^0x9e3779b9)>>>0,
   ballot:{digits:'',message:''},
-  event:'',events:0,movementSkills:createMovementSkills(),lastSkillReward:null,terrain:createTerrain(),player:{airJumpsUsed:0,grounded:true,supportY:0,sliding:false,slideRemaining:0,slideLatched:false,slideCooldownFor:0,x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareProgress:0,jacareAge:0,nextJacareThreat:0,restoreFlashFor:0,coyoteUntil:0,jumpBufferedUntil:0,attackHeld:false,chargeFor:0,arenaTravel:0,manualTravel:0,attackFor:0,attackCooldown:0,shotFacing:1,hp:HERO_MAX_HP,maxHp:HERO_MAX_HP,recoveryPending:false,terrainContact:null},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ammo:ROUTE_AMMO,ammoIdleFor:0,ammoReloadFor:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
+  event:'',events:0,movementSkills:createMovementSkills(),lastSkillReward:null,terrain:createTerrain(),storyRooms:{seen:{},maxDistance:0},player:{airJumpsUsed:0,grounded:true,supportY:0,sliding:false,slideRemaining:0,slideLatched:false,slideCooldownFor:0,x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareProgress:0,jacareAge:0,nextJacareThreat:0,restoreFlashFor:0,coyoteUntil:0,jumpBufferedUntil:0,attackHeld:false,chargeFor:0,arenaTravel:0,manualTravel:0,attackFor:0,attackCooldown:0,shotFacing:1,hp:HERO_MAX_HP,maxHp:HERO_MAX_HP,recoveryPending:false,terrainContact:null},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ammo:ROUTE_AMMO,ammoIdleFor:0,ammoReloadFor:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,recoveryReadyAt:0,shieldFor:0,graceFor:0,reserveShields:0,allyShieldProgress:0,allyHelpCount:0,
   lastPickup:null,lastTraversalBlock:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,phantomCloud:null,
   boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:practice?startDistance:null,bossCooldown:0,storyLeg:null,arenaExit:null,
@@ -563,7 +564,7 @@ function aimAtStoryEnemy(run){
  const facing=run.player.shotFacing<0?-1:1,muzzle=heroMuzzleFor(run,facing);
  const target=run.obstacles.filter(isShootableStoryEnemy).filter(o=>(o.x+o.width/2-muzzle.x)*facing>0)
   .sort((a,b)=>(a.x+a.width/2-b.x-b.width/2)*facing)[0];
- return target?{x:target.x+target.width/2,y:Math.max(14,target.height*.58),facing}:null;
+ return target?{x:target.x+target.width/2,y:Math.max(14,(target.platformY||0)+target.height*.58),facing}:null;
 }
 export function attackRun(run){
  const b=run.boss,p=run.player,power=heroPowerFor(run),level=run.powerLevels?.[run.activePower]||1;
@@ -674,7 +675,7 @@ function advanceHeroShots(run,dt){
   }
   if(run.manualStory&&!run.boss){
    for(const enemy of run.obstacles){
-    if(!isShootableStoryEnemy(enemy)||!segmentHitsBox(shot,enemy.x,enemy.x+enemy.width,0,enemy.height,radius))continue;
+    if(!isShootableStoryEnemy(enemy)||!segmentHitsBox(shot,enemy.x,enemy.x+enemy.width,enemy.platformY||0,(enemy.platformY||0)+enemy.height,radius))continue;
     enemy.destroyed=true;enemy.passed=true;enemy.counted=true;
     run.defeatedEnemies=(run.defeatedEnemies||0)+1;
     run.clearedAt={x:enemy.x+enemy.width/2,remaining:.25};
@@ -898,7 +899,7 @@ function advanceBoss(run,dt,rng,balance){
 function overlapsPlayer(run,o){
  const p=run.player,body=playerBodyFor(p),x=playerX(run),left=x+body.left,right=x+body.right;
  const low=p.y+3,high=p.y+body.height;
- return right>o.x+3&&left<o.x+o.width-3&&(o.projectile||o.falling?low<o.y+o.height/2&&high>o.y-o.height/2:low<o.height&&high>0);
+ return right>o.x+3&&left<o.x+o.width-3&&(o.projectile||o.falling?low<o.y+o.height/2&&high>o.y-o.height/2:low<(o.platformY||0)+o.height&&high>(o.platformY||0));
 }
 function resolveBossDodges(run){
  if(!run.boss)return;
@@ -1185,10 +1186,22 @@ export function advanceRun(run,seconds,rng){
    const screenStep=Math.min(step,Math.max(0,anchor-playerX(run)));
    run.player.x=Math.max(bounds.min,Math.min(bounds.max,playerX(run)+screenStep));
    manualTravel=step-screenStep;
+  }else if(manualScroll&&!entering&&run.player.moveHeld<0&&!run.terrain?.active&&!run.raid){
+   const step=moveSpeed*dt,anchor=Math.max(bounds.min,Math.min(bounds.max,visibleWidth(run)*.25-run.cameraLead));
+   const screenStep=Math.min(step,Math.max(0,playerX(run)-anchor));
+   run.player.x=Math.max(bounds.min,playerX(run)-screenStep);
+   const backtrack=Math.min(Math.max(0,run.distance),step-screenStep);
+   manualTravel=-backtrack;
+   const remainder=step-screenStep-backtrack;
+   if(remainder>0)run.player.x=Math.max(bounds.min,playerX(run)-remainder);
+   if(backtrack>0){
+    for(const o of run.obstacles)if(!Number.isFinite(o.storyWorldX))o.x+=backtrack;
+    for(const item of run.pickups)item.x+=backtrack;
+   }
   }else{
    run.player.x=entering?Math.max(visibleWidth(run)-arenaReserve(run),playerX(run)-230*dt):Math.max(bounds.min,Math.min(bounds.max,playerX(run)+(run.player.moveHeld||0)*moveSpeed*dt));
   }
-  if(manualScroll&&run.player.moveHeld)run.player.manualTravel=(run.player.manualTravel||0)+Math.abs(run.player.x-run.player.previousX)+manualTravel;
+  if(manualScroll&&run.player.moveHeld)run.player.manualTravel=(run.player.manualTravel||0)+Math.abs(run.player.x-run.player.previousX)+Math.abs(manualTravel);
  if(bossStopsAutoRun(run)&&run.player.moveHeld)run.player.arenaTravel=(run.player.arenaTravel||0)+Math.abs(run.player.x-run.player.previousX);
  advanceAllies(run,dt);
  if(run.player.isJacare){
@@ -1200,8 +1213,10 @@ export function advanceRun(run,seconds,rng){
  run.player.restoreFlashFor=Math.max(0,run.player.restoreFlashFor-dt);
  if(run.nextBossAt===null)run.nextBossAt=run.mode==='story'?nextStoryBossDistance(0):nextBossDistance(0);
  if(run.nextRaid===null)run.nextRaid=18+random(rng)*12;
- const balance=difficultyAt(run.distance,run.elapsed),travel=bossStopsAutoRun(run)?0:run.manualStory?manualTravel:balance.speed*assistance(run)*dt;run.distance+=travel;
- if(!run.boss&&!run.terrain?.active?.flight&&!run.terrain?.active?.lesson){
+ const balance=difficultyAt(run.distance,run.elapsed),travel=bossStopsAutoRun(run)?0:run.manualStory?manualTravel:balance.speed*assistance(run)*dt;run.distance=Math.max(0,run.distance+travel);
+ const progressTravel=run.manualStory?Math.max(0,run.distance-(run.storyRooms?.maxDistance||0)):travel;
+  if(run.storyRooms)run.storyRooms.maxDistance=Math.max(run.storyRooms.maxDistance||0,run.distance);
+  if(!run.boss&&!run.terrain?.active?.flight&&!run.terrain?.active?.lesson){
   const stop=run.mode==='story'&&Number.isFinite(run.nextBossAt)&&run.routeDistance<=run.nextBossAt?run.nextBossAt:Infinity;
   const local=campaignRouteDistance(run)%SCENE_DISTANCE;
   const missingRaid=Number.isFinite(run.nextRaid)&&!run.practice&&!run.raidStageCoverage?.[raidStageKey(run)];
@@ -1213,11 +1228,11 @@ export function advanceRun(run,seconds,rng){
   const lessonStop=lessonPending(run)&&run.routeDistance<=lessonAt?lessonAt:Infinity;
   // Stretch nominal stage progress across the post-boss running interval.
   // Physical metres and road movement keep their normal speed; no checkpoint freeze.
-  const routeTravel=stageRouteTravel(run,travel,dt,{stageIndex:routeStageFor(run).index,missingRaid,raidTiming:RAID_TIMING,
+  const routeTravel=stageRouteTravel(run,progressTravel,dt,{stageIndex:routeStageFor(run).index,missingRaid,raidTiming:RAID_TIMING,
    jacareRecovery:JACARE_RECOVERY_SECONDS,checkpointAt:Math.min(flightStop,lessonStop,raidStop),clearanceSeconds:run.terrain.preparing?terrainEntryBudget(run):0});
   run.routeDistance=Math.min(stop,raidStop,flightStop,lessonStop,run.routeDistance+routeTravel);
  }
- if(run.storyLeg&&!run.boss&&!run.terrain?.active?.flight)run.storyLeg.groundDistance=Math.min(run.storyLeg.requiredDistance,run.storyLeg.groundDistance+travel);
+ if(run.storyLeg&&!run.boss&&!run.terrain?.active?.flight)run.storyLeg.groundDistance=Math.min(run.storyLeg.requiredDistance,run.storyLeg.groundDistance+progressTravel);
  run.bossCooldown=Math.max(0,run.bossCooldown-dt);
  if(run.phantomCloud){run.phantomCloud.remaining=Math.max(0,run.phantomCloud.remaining-dt);if(!run.phantomCloud.remaining)run.phantomCloud=null;}
  if(run.cameo){run.cameo.remaining-=dt;if(run.cameo.remaining<=0)run.cameo=null;}
@@ -1235,6 +1250,7 @@ export function advanceRun(run,seconds,rng){
  run.shieldFor=Math.max(0,run.shieldFor-dt);run.graceFor=Math.max(0,run.graceFor-dt);
  const castDeltas=new Map();
  for(const obstacle of run.obstacles){
+  if(Number.isFinite(obstacle.storyWorldX)){obstacle.x=obstacle.storyWorldX-run.distance;continue;}
   if(obstacle.reflected){advanceReflectedProjectile(run,obstacle,dt);continue;}
   if(obstacle.cast){const before=obstacle.x;advanceRegularShot(run,obstacle,dt);castDeltas.set(obstacle,obstacle.x-before);continue;}
   if(obstacle.groundHazard){obstacle.age+=dt;continue;}
@@ -1276,6 +1292,7 @@ export function advanceRun(run,seconds,rng){
   const activeDelta=Math.max(0,dt-(pickup.waitFor||0));pickup.waitFor=Math.max(0,(pickup.waitFor||0)-dt);
   pickup.x-=Number.isFinite(pickup.speed)?pickup.speed*activeDelta:travel;
  }
+ spawnStageEnemies(run);
  advanceHeroShots(run,dt);
  resolveBossDodges(run);
  if(run.status!=='running')return;
@@ -1301,6 +1318,10 @@ export function advanceRun(run,seconds,rng){
  else if(run.mode==='story'&&!run.raid&&storyApproachAt(run.routeDistance,run.bossesDefeated)){
   anchor=rehearseStoryBoss(run,balance);
   run.nextObstacle=Math.max(run.nextObstacle,1.5);
+ }
+ else if(run.manualStory&&!run.raid){
+  // Nas salas da História, inimigos fixos substituem ondas da corrida automática.
+  run.nextObstacle=Math.max(run.nextObstacle,1.2);
  }
  else{
   run.nextObstacle-=dt;
