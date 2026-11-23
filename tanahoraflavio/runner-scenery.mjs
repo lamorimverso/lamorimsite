@@ -232,7 +232,7 @@ function drawSkyObjects(c,width,time,reducedMotion){
   if(opacity<.005)return;
   const sun=index!==2;
   const x=width*(index===0?.17+.28*progress:index===1?.46+.30*progress:.25+.45*progress);
-  const y=index===0?103-51*progress:index===1?53+34*progress:72-21*Math.sin(progress*Math.PI);
+  const y=index===0?103-51*progress:index===1?53+34*progress:72-84*progress*(1-progress);
   const radius=sun?18:13;
   c.save();c.globalAlpha*=opacity;
   const halo=c.createRadialGradient(x,y,2,x,y,sun?90:66);
@@ -242,8 +242,7 @@ function drawSkyObjects(c,width,time,reducedMotion){
   c.fillStyle=halo;c.fillRect(x-95,y-95,190,190);
   if(sun){
    c.strokeStyle='#fff1ceb8';c.lineWidth=1.5;c.beginPath();
-   for(let k=0;k<8;k++){
-    const angle=k*Math.PI/4,dx=Math.cos(angle),dy=Math.sin(angle);
+   for(const [dx,dy] of [[1,0],[.7071,.7071],[0,1],[-.7071,.7071],[-1,0],[-.7071,-.7071],[0,-1],[.7071,-.7071]]){
     c.moveTo(x+dx*25,y+dy*25);c.lineTo(x+dx*33,y+dy*33);
    }c.stroke();
    oval(c,x,y,22,22,'#ffda97a6');
