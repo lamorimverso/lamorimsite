@@ -199,6 +199,117 @@ export function journeySceneryGeometry({routeDistance=0,distance=routeDistance,w
  ]};
 }
 
+
+// Cada 6.000 metros simulados o período muda: manhã -> tarde -> noite.
+// A transição começa antes da divisa e é contínua também no reinício do ciclo.
+export const DAY_PHASE_METRES=6000;
+const dayBlendMetres=1600;
+const lightPhases=[
+ {name:'manhã',top:[113,161,196],middle:[239,192,158],horizon:[253,224,194]},
+ {name:'tarde',top:[73,152,202],middle:[133,191,213],horizon:[214,230,211]},
+ {name:'noite',top:[17,29,64],middle:[36,54,94],horizon:[85,85,121]}
+];
+export function timeOfDayFor(distance=0){
+ const d=Number.isFinite(distance)?Math.max(0,distance):0;
+ const index=Math.floor(d/DAY_PHASE_METRES)%3;
+ const into=d%DAY_PHASE_METRES,nextIndex=(index+1)%3;
+ const blend=smooth((into-(DAY_PHASE_METRES-dayBlendMetres))/dayBlendMetres);
+ return {phase:lightPhases[index].name,next:lightPhases[nextIndex].name,
+  index,nextIndex,blend,progress:into/DAY_PHASE_METRES,
+  night:(index===2?1-blend:0)+(nextIndex===2?blend:0),
+  morning:(index===0?1-blend:0)+(nextIndex===0?blend:0)};
+}
+const lightMix=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
+function skyTimeGradient(c,time){
+ const current=lightPhases[time.index],next=lightPhases[time.nextIndex];
+ const gradient=c.createLinearGradient(0,0,0,246);
+ for(const [position,key] of [[0,'top'],[.57,'middle'],[1,'horizon']])
+  gradient.addColorStop(position,'rgb('+lightMix(current[key],next[key],time.blend).join(',')+')');
+ return gradient;
+}
+function drawSkyObjects(c,width,time,reducedMotion){
+ const body=(index,progress,opacity)=>{
+  if(opacity<.005)return;
+  const sun=index!==2;
+  const x=width*(index===0?.17+.28*progress:index===1?.46+.30*progress:.25+.45*progress);
+  const y=index===0?103-51*progress:index===1?53+34*progress:72-21*Math.sin(progress*Math.PI);
+  const radius=sun?18:13;
+  c.save();c.globalAlpha*=opacity;
+  const halo=c.createRadialGradient(x,y,2,x,y,sun?90:66);
+  halo.addColorStop(0,sun?'#ffedbc99':'#dee8ff7a');
+  halo.addColorStop(.35,sun?'#ffcc8a48':'#c6d7ff2b');
+  halo.addColorStop(1,'#ffffff00');
+  c.fillStyle=halo;c.fillRect(x-95,y-95,190,190);
+  if(sun){
+   c.strokeStyle='#fff1ceb8';c.lineWidth=1.5;c.beginPath();
+   for(let k=0;k<8;k++){
+    const angle=k*Math.PI/4,dx=Math.cos(angle),dy=Math.sin(angle);
+    c.moveTo(x+dx*25,y+dy*25);c.lineTo(x+dx*33,y+dy*33);
+   }c.stroke();
+   oval(c,x,y,22,22,'#ffda97a6');
+   oval(c,x,y,radius,radius,'#fff1c9');
+   oval(c,x-5,y-5,5,4,'#fff9efa8');
+  }else{
+   oval(c,x,y,16,16,'#dfeaff82');
+   oval(c,x,y,radius,radius,'#f4f1e9');
+   oval(c,x-4,y+3,3,2.5,'#9faac76b');
+   oval(c,x+5,y-4,2.5,2,'#a4b6cb55');
+  }
+  c.restore();
+ };
+ // Os astros entram e saem por opacidade, sem saltar de lugar na mudança.
+ body(time.index,reducedMotion?.5:time.progress,1-time.blend);
+ body(time.nextIndex,.06,time.blend);
+ if(time.night>.005){
+  c.save();c.globalAlpha*=time.night*.85;
+  const count=Math.min(38,Math.max(14,Math.ceil(width/24)));
+  c.fillStyle='#ecf2fff0';c.beginPath();
+  for(let i=0;i<count;i++){
+   const x=(i*173+33)%997/997*width,y=17+(i*71+13)%105;
+   const radius=i%7===0?1.25:.65;
+   c.moveTo(x+radius,y);c.ellipse(x,y,radius,radius,0,0,Math.PI*2);
+  }c.fill();
+  c.strokeStyle='#f2f4ffc4';c.lineWidth=.7;c.beginPath();
+  for(let i=2;i<count;i+=11){
+   const x=(i*173+33)%997/997*width,y=17+(i*71+13)%105;
+   c.moveTo(x-3,y);c.lineTo(x+3,y);c.moveTo(x,y-3);c.lineTo(x,y+3);
+  }c.stroke();c.restore();
+ }
+}
+function drawHighClouds(c,geometry,time,quiet){
+ c.save();c.globalAlpha*=1-.4*quiet;
+ c.strokeStyle=time.night>.5?'#b4c3df78':'#ffffff94';
+ c.lineWidth=1.35;c.lineCap='round';c.beginPath();
+ for(const item of geometry.clouds){
+  const x=item.x+22,y=item.y+20;
+  c.moveTo(x-54,y);c.bezierCurveTo(x-20,y-7,x+25,y+4,x+73,y-3);
+  c.moveTo(x-35,y+7);c.bezierCurveTo(x-3,y+3,x+30,y+12,x+56,y+5);
+ }c.stroke();
+ if(time.night>.005){
+  c.globalAlpha*=time.night*.40;c.fillStyle='#405a86';c.beginPath();
+  for(const item of geometry.clouds){
+   const x=item.x,y=item.y;
+   c.moveTo(x-30*item.scale,y+6*item.scale);
+   c.ellipse(x,y,40*item.scale,14*item.scale,0,0,Math.PI*2);
+  }c.fill();
+ }
+ c.restore();
+}
+function drawNightHorizon(c,geometry,night){
+ if(night<.005)return;
+ const width=geometry.width;
+ c.save();c.globalAlpha*=night*.23;c.fillStyle='#111c38';
+ c.fillRect(0,160,width,74);c.restore();
+ // A mesma malha fixa de janelas acompanha a paisagem sem piscadas.
+ c.save();c.globalAlpha*=night*.87;c.fillStyle='#ffe3a2';c.beginPath();
+ for(let i=0;i<Math.ceil(width/48)+1;i++){
+  const x=i*48+(i*13)%13,y=195+(i*17)%23;
+  c.rect(x,y,2.4,3);
+  if(i%3===0)c.rect(x+11,y-8,2,3);
+ }
+ c.fill();c.restore();
+}
+
 function paletteGradient(c,geometry,key,alpha=1){
  const gradient=c.createLinearGradient(0,0,geometry.width,0);
  for(const stop of geometry.paletteStops){
@@ -399,19 +510,24 @@ export function drawJourneyScenery(c,options={}){
  const geometry=journeySceneryGeometry(options),width=geometry.width;
  const quiet=Math.max(0,Math.min(1,Number(options.quiet)||0));
  const skyTop=-Math.max(0,Number(options.cameraLift)||0);
+ const time=timeOfDayFor(options.routeDistance??options.distance??0);
  c.save();
  try{
   c.fillStyle=paletteGradient(c,geometry,'sky');c.fillRect(0,skyTop,width,300-skyTop);
-  c.fillStyle=daylightGradient(c,geometry,0,246,.9);c.fillRect(0,skyTop,width,246-skyTop);
+  // O céu muda com o avanço da rota; o tom próprio de cada cidade segue visível.
+  c.save();c.globalAlpha*=.72;c.fillStyle=skyTimeGradient(c,time);
+  c.fillRect(0,skyTop,width,246-skyTop);c.restore();
+  c.fillStyle=daylightGradient(c,geometry,0,246,.82*(1-.55*time.night));
+  c.fillRect(0,skyTop,width,246-skyTop);
   // Faixas horizontais muito leves reforçam o contraste da cidade de
   // fundo sem copiar pixels do Mega Man nem competir com as balas.
   c.save();c.globalAlpha*=.35;
   const stripeColor=paletteGradient(c,geometry,'stone',.24);
   for(const y of [139,154,169])rect(c,0,y,width,1,stripeColor);
   c.restore();
-  oval(c,width-66,55,43,43,'#fff7d80e');oval(c,width-66,55,35,35,'#fff7d816');
-  oval(c,width-66,55,29,29,'#fff7d838');oval(c,width-66,55,21,21,'#fff9e5d9');
+  drawSkyObjects(c,width,time,options.reducedMotion===true);
   for(const item of geometry.clouds)cloud(c,item.x,item.y,item.scale);
+  drawHighClouds(c,geometry,time,quiet);
   const flightLift=geometry.flight?.lift??0;
   c.save();c.globalAlpha*=(1-.45*quiet)*(1-flightLift*.92);c.translate(0,geometry.flight?.shift??0);
   drawFarPlane(c,geometry.layers[0],width);
@@ -432,6 +548,7 @@ export function drawJourneyScenery(c,options={}){
    c.save();c.globalAlpha*=item.alpha*(1-flightLift);landmark(c,{id:item.stageId},palettes[item.stageId],item.x);c.restore();
   }
   drawFlightHorizon(c,geometry);drawWaypoint(c,geometry.waypoint,quiet);
+  drawNightHorizon(c,geometry,time.night);
   // Geography crosses the verge with a soft color band; the collision floor stays y=246.
   rect(c,0,234,width,12,paletteGradient(c,geometry,'near',.36));
   line(c,[[0,234],[width,234]],paletteGradient(c,geometry,'ink',.33),1);
