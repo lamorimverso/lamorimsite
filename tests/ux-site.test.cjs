@@ -901,7 +901,9 @@ test('campanha abre sem trocar o modo e alcança a primeira arena da História',
   assert.equal(await page.locator('#game-mode-story').isChecked(),true);await begin(page);
   assert.equal(await page.evaluate(()=>__testRun.mode),'story');
   await page.evaluate(()=>{const r=__testRun;r.routeDistance=21998;r.obstacles=[];r.pickups=[];r.nextRaid=Infinity;r.shieldFor=Infinity;});
+  await page.keyboard.down('d');
   await page.waitForFunction(()=>__testRun.boss?.combat===true);
+  await page.keyboard.up('d');
   assert.match(await page.locator('#game-boss-name').textContent(),/Ana Elisa.*Subchefe/);
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
