@@ -86,12 +86,19 @@ test('touch crouch button respects toggle mode and remains held after lifting a 
    const select=document.getElementById('game-crouch-mode');
    select.value='toggle';select.dispatchEvent(new Event('change',{bubbles:true}));
   });
+  const crouchButton=page.locator('[data-mobile-action="crouch"]');
   await send(page,'crouch','pointerdown',301);
   await send(page,'crouch','pointerup',301);
   assert.equal(await page.evaluate(()=>__touchRun.player.crouchHeld),true,'toggle mode must remain active after lifting the finger');
+  assert.equal(await crouchButton.getAttribute('aria-pressed'),'true','on-screen state reflects latched crouch');
+  await crouchButton.tap();
+  assert.equal(await page.evaluate(()=>__touchRun.player.crouchHeld),false,'a real touchscreen tap should deactivate the latched state exactly once');
+  assert.equal(await crouchButton.getAttribute('aria-pressed'),'false');
+  await crouchButton.tap();
+  assert.equal(await page.evaluate(()=>__touchRun.player.crouchHeld),true,'a second real touchscreen tap activates crouch again');
   await send(page,'crouch','pointerdown',302);
   await send(page,'crouch','pointerup',302);
-  assert.equal(await page.evaluate(()=>__touchRun.player.crouchHeld),false,'second tap should leave crouch mode');
+  assert.equal(await page.evaluate(()=>__touchRun.player.crouchHeld),false,'another input method can release a latched crouch');
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
