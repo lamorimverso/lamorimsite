@@ -8,6 +8,7 @@ Atualizado em 22/11/2026. Este documento descreve a arquitetura atual do minigam
 - **Modo História:** corrida automática com sequência de etapas, encontros especiais, confrontos e objetivo final.
 - **Jogador:** usa salto, abaixar/deslizar, deslocamento lateral para desviar, tiro e outros recursos disponíveis. A rota **não** depende de manter a tecla de avançar pressionada.
 - **Renderização:** HTML/CSS + Canvas 2D; as regras de jogo são executadas em JavaScript ES Modules. Não há servidor de jogo: a execução ocorre no navegador.
+- **Ciclo do cenário:** manhã, tarde e noite alternam a cada 6.000 m percorridos (18.000 m por ciclo completo), com transições graduais no céu, sol, lua, estrelas, nuvens e luzes distantes. O avanço usa a distância simulada, não o horário real. A iluminação não altera o piso de colisão nem as regras da corrida.
 
 ## Entrada e ciclo principal
 
