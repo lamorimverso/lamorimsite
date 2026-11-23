@@ -841,19 +841,24 @@ for(const viewport of [{width:390,height:844},{width:1440,height:900}])test(`are
   await page.waitForFunction(()=>__testRun.boss?.combat===true);
   assert.match(await page.locator('#game-boss-name').textContent(),/Ana Elisa.*Subchefe/);
   assert.match(await page.locator('#game-power').textContent(),/Energia 2\/2/);
-  assert.equal(await page.locator('#game-attack').isVisible(),true);
-  assert.equal((await page.locator('#game-attack').textContent()).trim(),'','tiro na arena usa apenas um ícone');
+  assert.equal(await page.locator('#game-attack').isVisible(),viewport.width>=500,'no mobile fire button: shoot with two fingers');
+  assert.equal((await page.locator('#game-attack').textContent()).trim(),'','shooting icon remains available for desktop');
   const hp=await incomingProjectile(page);
   if(viewport.width<500){
-   await page.locator('#game-attack').dispatchEvent('pointerdown',{button:0,pointerId:91,pointerType:'touch'});
+   const track=page.locator('#runner-canvas');
+   await track.dispatchEvent('pointerdown',{button:0,pointerId:90,pointerType:'touch',isPrimary:true,clientX:120,clientY:120});
+   await track.dispatchEvent('pointerdown',{button:0,pointerId:91,pointerType:'touch',isPrimary:false,clientX:200,clientY:120});
   }else{
    await page.locator('#runner-canvas').focus();await page.keyboard.down('j');
   }
   await page.waitForFunction(previous=>__testRun.boss.hp<previous,hp,{timeout:6000});
   assert.ok(await page.evaluate(()=>__testRun.shotsFired>0));
   assert.ok(Number(await page.locator('#game-boss-health').getAttribute('aria-valuenow'))<hp);
-  if(viewport.width<500)await page.locator('#game-attack').dispatchEvent('pointercancel',{pointerId:91,pointerType:'touch'});
-  else await page.keyboard.up('j');
+  if(viewport.width<500){
+   const track=page.locator('#runner-canvas');
+   await track.dispatchEvent('pointercancel',{pointerId:91,pointerType:'touch'});
+   await track.dispatchEvent('pointercancel',{pointerId:90,pointerType:'touch'});
+  }else await page.keyboard.up('j');
   assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),false);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   await fs.mkdir(path.resolve(__dirname,'../ux-captures'),{recursive:true});
@@ -998,7 +1003,9 @@ test('dedo no disparo do chefe não reaparece como tiro mantido após voltar à 
   await begin(page);
   await page.evaluate(()=>{const r=__testRun;r.nextRaid=r.nextObstacle=r.nextPower=r.nextPassport=Infinity;r.routeDistance=22000;r.nextBossAt=0;r.obstacles=[];r.pickups=[];r.shieldFor=Infinity;});
   await page.waitForFunction(()=>__testRun.boss?.phase==='charge');
-  await page.locator('#game-attack').dispatchEvent('pointerdown',{button:0,pointerId:97,pointerType:'touch'});
+  const track=page.locator('#runner-canvas');
+  await track.dispatchEvent('pointerdown',{button:0,pointerId:96,pointerType:'touch',isPrimary:true,clientX:110,clientY:110});
+  await track.dispatchEvent('pointerdown',{button:0,pointerId:97,pointerType:'touch',isPrimary:false,clientX:170,clientY:110});
   assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),true);
   await page.evaluate(()=>{__testRun.boss.hp=0;});
   await page.waitForFunction(()=>!__testRun.boss&&document.getElementById('game-attack').hidden);
