@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
-import {stagePlatforms,stagePlatformSupport,ROOM_SIZE,roomDoorFor,constrainStageAdvance,stepStoryRooms,restoreStoryCheckpoint,stageHazardHit} from '../tanahoraflavio/runner-story-rooms.mjs';
+import {stagePlatforms,stagePlatformSupport,stageGapAt,ROOM_SIZE,roomDoorFor,constrainStageAdvance,stepStoryRooms,restoreStoryCheckpoint,stageHazardHit} from '../tanahoraflavio/runner-story-rooms.mjs';
+import {terrainSupportAt} from '../tanahoraflavio/runner-terrain.mjs';
 const ready=()=>{const r=core.createRun({mode:'story',manualStory:true,seed:31});core.startRun(r);
  for(const k of ['nextObstacle','nextRaid','nextPickup','nextPassport','nextPower','nextSupportAt','nextAllyAt','nextBossAt'])r[k]=Infinity;
  r.terrain.nextAt=Infinity;r.graceFor=1000;return r;};
@@ -67,4 +68,36 @@ test('locked gate remains closed while the right key is continuously held',()=>{
  core.moveRun(r,1);tick(r,100);
  const right=r.distance+r.player.x+29;
  assert.ok(right<=door.worldX-8+1e-5,'the physical gate cannot be crossed by holding right');
+});
+
+test('sculpted floor gaps have matching visible geometry and physical falling support',()=>{
+ const r=ready();r.distance=2*ROOM_SIZE+620-r.player.x;
+ assert.equal(stageGapAt(r,r.player.x+16,12),true);
+ assert.equal(terrainSupportAt(r,r.player.x+16,12),null);
+ r.player.y=68;
+ assert.equal(terrainSupportAt(r,r.player.x+16,12),67,'upper platform bridges the pit');
+ r.manualStory=false;
+ assert.equal(stageGapAt(r,r.player.x+16,12),false);
+ assert.equal(terrainSupportAt(r,r.player.x+16,12),0);
+});
+test('the key on the fourth room is collectible only from its raised platform',()=>{
+ const r=ready();r.distance=3*ROOM_SIZE+560-r.player.x;
+ stepStoryRooms(r,1/60);assert.equal(Boolean(r.storyRooms.keys[3]),false);
+ r.player.y=77;stepStoryRooms(r,1/60);
+ assert.equal(r.storyRooms.keys[3],true);
+});
+test('fatal pit drops restore the latest Story checkpoint rather than ending Infinite',()=>{
+ const r=ready();r.distance=2*ROOM_SIZE+620-r.player.x;
+ r.storyRooms.maxDistance=r.distance;
+ tick(r,100);
+ assert.equal(r.status,'running');assert.equal(r.storyRooms.retries,2);
+ assert.equal(r.distance,0);assert.equal(r.player.hp,r.player.maxHp);
+});
+test('checkpoint recovery rewinds boss milestones to the checkpoint snapshot',()=>{
+ const r=ready();r.distance=3*ROOM_SIZE+10;r.storyRooms.maxDistance=r.distance;
+ r.routeDistance=2100;r.bossesDefeated=2;r.nextBossAt=4800;
+ stepStoryRooms(r,1/60);
+ r.bossesDefeated=3;r.nextBossAt=6000;
+ assert.equal(restoreStoryCheckpoint(r),true);
+ assert.equal(r.bossesDefeated,2);assert.equal(r.nextBossAt,4800);
 });

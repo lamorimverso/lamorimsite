@@ -3,10 +3,10 @@ export const ROOM_SIZE=1040;
 const plans=[
  {platforms:[[250,150,40],[470,180,70],[735,165,48]],hazards:[]},
  {platforms:[[255,170,53],[490,150,83],[740,170,55]],hazards:[[625,62,'spikes']]},
- {platforms:[[270,160,36],[500,190,67],[775,150,84]],hazards:[[650,62,'pulse']]},
+ {platforms:[[270,160,36],[500,190,67],[775,150,84]],gaps:[[575,132]],hazards:[[790,60,'pulse']]},
  {platforms:[[265,155,52],[495,165,77],[750,170,44]],hazards:[[690,50,'spikes']]},
  {platforms:[[225,175,45],[480,160,78],[730,175,57]],hazards:[[680,60,'pulse']]},
- {platforms:[[275,165,60],[520,180,90],[780,145,62]],hazards:[[710,70,'spikes']]},
+ {platforms:[[275,165,60],[520,180,90],[780,145,62]],gaps:[[610,124]],hazards:[[820,64,'spikes']]},
  {platforms:[[255,160,38],[465,170,68],[720,185,88]],hazards:[[635,64,'pulse']]},
  {platforms:[[230,170,50],[475,175,83],[750,165,48]],hazards:[[650,65,'spikes']]}
 ];
@@ -22,7 +22,7 @@ const palettes=[
 ];
 const sourceFor=n=>plans[((n%plans.length)+plans.length)%plans.length];
 export const createStoryRoomState=()=>({seen:{},defeated:{},opened:{},keys:{},maxDistance:0,room:0,retries:3,
- checkpoint:{room:0,distance:0,routeDistance:0,maxDistance:0},checkpointRoom:0,flashFor:0,transitionFor:0,blockedFor:0});
+ checkpoint:{room:0,distance:0,routeDistance:0,maxDistance:0,bossesDefeated:0,nextBossAt:null,storyLeg:null},checkpointRoom:0,flashFor:0,transitionFor:0,blockedFor:0});
 const stateFor=r=>{
  const s=r.storyRooms??(r.storyRooms=createStoryRoomState());
  s.defeated??={};s.opened??={};s.keys??={};s.retries??=3;s.room??=0;s.maxDistance??=0;
@@ -47,6 +47,16 @@ export function stagePlatforms(r){
  }
  return all;
 }
+export function stageGaps(r){
+ if(!roomActive(r))return [];
+ const d=r.distance||0,w=r.viewportWidth||900,first=Math.max(0,Math.floor(d/ROOM_SIZE)-1),last=Math.floor((d+w+50)/ROOM_SIZE)+1,gaps=[];
+ for(let k=first;k<=last;k++)for(const [at,width] of sourceFor(k).gaps||[]){
+  const worldX=k*ROOM_SIZE+at,x=worldX-d;
+  if(x+width>-30&&x<w+30)gaps.push({x,width,worldX,room:k});
+ }
+ return gaps;
+}
+export const stageGapAt=(r,x,half=0)=>stageGaps(r).some(g=>x-half>g.x&&x+half<g.x+g.width);
 export function stagePlatformSupport(r,x,half=0){
  if(!roomActive(r))return null;
  const p=stagePlatforms(r).filter(p=>x+half>p.x&&x-half<p.x+p.width&&(r.player.y||0)>=p.y-1e-8);
@@ -122,12 +132,14 @@ export function stepStoryRooms(r,dt){
  if(room!==s.room){s.room=room;s.transitionFor=.65;}
  const door=roomDoorFor(r,room);
  if(door.open)s.opened[room]=true;
- if(door.needsKey&&!s.keys[room]&&Math.abs(world-(room*ROOM_SIZE+590))<21&&(r.player.y||0)<55){
+ const keyBar=sourceFor(room).platforms[1],keyX=room*ROOM_SIZE+keyBar[0]+keyBar[1]/2;
+ if(door.needsKey&&!s.keys[room]&&Math.abs(world-keyX)<25&&Math.abs((r.player.y||0)-keyBar[2])<18){
   s.keys[room]=true;s.flashFor=.75;
  }
  if(room>0&&room%3===0&&room>s.checkpointRoom&&world>=room*ROOM_SIZE+84){
   s.checkpointRoom=room;s.checkpoint={room,distance:Math.max(0,room*ROOM_SIZE+100-120),
-   routeDistance:r.routeDistance,maxDistance:s.maxDistance};s.flashFor=1.1;
+   routeDistance:r.routeDistance,maxDistance:s.maxDistance,bossesDefeated:r.bossesDefeated,nextBossAt:r.nextBossAt,
+   storyLeg:r.storyLeg?{...r.storyLeg}:null};s.flashFor=1.1;
  }
 }
 export function restoreStoryCheckpoint(r){
@@ -136,6 +148,7 @@ export function restoreStoryCheckpoint(r){
  if(!cp||s.retries<=0)return false;
  s.retries--;
  r.distance=cp.distance;r.routeDistance=cp.routeDistance;s.maxDistance=cp.maxDistance;s.room=cp.room;
+ r.bossesDefeated=cp.bossesDefeated??0;r.nextBossAt=cp.nextBossAt??null;r.storyLeg=cp.storyLeg?{...cp.storyLeg}:null;
  for(const field of ['defeated','opened','keys']){
   for(const id of Object.keys(s[field]))if(Number(id.split(':')[0])>=cp.room)delete s[field][id];
  }
@@ -168,6 +181,12 @@ export function paintStagePlatforms(c,{run:r,ground=246,width=900}={}){
   c.fillStyle='#405c71';c.fillRect(x,ground+2,23,16);
   c.fillStyle='#b4d0d5';c.fillRect(x,ground+2,23,3);
  }
+ for(const gap of stageGaps(r)){
+  const x=Math.round(gap.x),w=Math.round(gap.width);
+  c.fillStyle='#152333';c.fillRect(x,ground,w,300-ground);
+  c.fillStyle='#6d8495';c.fillRect(x,ground,4,18);c.fillRect(x+w-4,ground,4,18);
+  c.fillStyle='#ebc787';c.fillRect(x-10,ground-3,10,3);c.fillRect(x+w,ground-3,10,3);
+ }
  for(const p of stagePlatforms(r)){
   const [dark,light,gold]=palettes[p.room%palettes.length],x=Math.round(p.x),y=Math.round(ground-p.y);
   c.fillStyle='#27384a';c.fillRect(x-2,y-2,p.width+4,21);
@@ -198,11 +217,11 @@ export function paintStagePlatforms(c,{run:r,ground=246,width=900}={}){
    c.restore();
   }
   if((k+1)%4===0&&!s.keys[k]){
-   const keyX=Math.round(k*ROOM_SIZE+590-d);
+   const bar=sourceFor(k).platforms[1],keyX=Math.round(k*ROOM_SIZE+bar[0]+bar[1]/2-d),y=ground-bar[2]-23;
    if(keyX>=0&&keyX<=width){
-    c.fillStyle='#f8e4a6';c.fillRect(keyX-2,ground-30,5,22);
-    c.fillRect(keyX+2,ground-13,9,5);
-    c.strokeStyle='#9b7738';c.lineWidth=3;c.beginPath();c.arc(keyX,ground-35,8,0,Math.PI*2);c.stroke();
+    c.fillStyle='#f8e4a6';c.fillRect(keyX-2,y-2,5,22);
+    c.fillRect(keyX+2,y+5,9,5);
+    c.strokeStyle='#9b7738';c.lineWidth=3;c.beginPath();c.arc(keyX,y-7,8,0,Math.PI*2);c.stroke();
    }
   }
   if(k>0&&k%3===0){
