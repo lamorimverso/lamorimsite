@@ -32,6 +32,10 @@ jobs:
         run: node tools/version-runner-assets.mjs --check
       - name: Verify preinstalled Chrome
         run: test -x /usr/bin/google-chrome
+      - name: Browser smoke check for manually controlled Story
+        env:
+          PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/google-chrome
+        run: node --test tests/story-platform-browser.test.cjs
       - name: Validate Story platform and checkpoint engine
         run: node --test tests/story-mega-rooms.test.mjs tests/story-manual-controls.test.mjs tests/story-camera-jump-dash.test.mjs
       - name: Test runner and desktop/mobile UI
