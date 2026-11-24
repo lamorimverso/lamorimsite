@@ -17,7 +17,7 @@ import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from 
 import {createAircraftWarningTracker,createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=37fd940420f1';
 import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=f8107568ec3b';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, releaseJumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, stagePlanFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=14bee58e345d";
+import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, releaseJumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, stagePlanFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=737687dc8502";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {heroStridePhase,bossStopsAutoRun} from './runner-drawn-motion.mjs?v=0d1971800c55';
 import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=700c55ebad49';
@@ -798,17 +798,8 @@ function initRunner() {
     ctx.save();ctx.translate(bossX,bossY);
     drawHoverEnemy(ctx,{type:b.type,platform:!b.platformer,x:0,y:0,scale:pose.scale,phase,...presentation,hurt:b.hitFlashFor>0,reducedMotion:prefersReducedMotion(),classId:b.classId,armyVariant:b.stageId||STAGES[b.stageIndex]?.id,enraged:b.enraged});
     ctx.restore();
-    if(b.lastDamage?.remaining>0){
-      const hit=b.lastDamage,progress=1-hit.remaining/.8;
-      const label=(hit.critical?"CRÍTICO! ":"")+"−"+Number(hit.amount).toLocaleString("pt-BR",{maximumFractionDigits:1})+" PV";
-      ctx.save();ctx.globalAlpha=Math.min(1,hit.remaining*5);ctx.textAlign="center";
-      ctx.font=hit.critical?"850 17px system-ui":"750 15px system-ui";
-      const w=Math.min(virtualWidth-24,ctx.measureText(label).width+16);
-      const x=Math.max(w/2+12,Math.min(virtualWidth-w/2-12,bossX));
-      const y=Math.max(24,bossY-98-(prefersReducedMotion()?0:progress*16));
-      ctx.fillStyle=hit.critical?"#6c3b16":"#163f36";ctx.beginPath();ctx.roundRect(x-w/2,y-15,w,23,5);ctx.fill();
-      ctx.fillStyle="#fff";ctx.fillText(label,x,y+2,w-12);ctx.restore();
-    }
+    // Damage remains in the engine and the life bar; the character's hurt
+    // frame communicates impact without floating RPG-style HP numbers.
     if(b.role)return;
     const counter=b.combat&&bossCounterWindow(b),cue=b.phase==='charge'?b.plannedAttack:bossCue();
     const showDodge=b.combat?b.phase==='charge':b.nextAttack<.65&&b.fired<b.total&&!run.obstacles.some(o=>o.bossAttack&&!o.counted);

@@ -10,27 +10,27 @@ const source=readFileSync(new URL('../tanahoraflavio/runner.mjs',import.meta.url
 const start=source.indexOf('  function bossFigure(){'),end=source.indexOf('  function character(){',start);
 const make=Function('env',`const {run,ctx,virtualWidth,WORLD,bossArenaPose,bossPresentationFor,campaignAccentFor,prefersReducedMotion,drawHoverEnemy,drawBossAccent}=env;${source.slice(start,end)};return bossFigure;`);
 function render({width=480,critical=true,remaining=.8,reduced=false}={}){
- const ctx=createCanvas(width,300).getContext('2d'),labels=[];
+ const ctx=createCanvas(width,300).getContext('2d'),labels=[],poses=[];
  const fillText=ctx.fillText.bind(ctx);
  ctx.fillText=(text,x,y,maxWidth)=>{labels.push({text,x,y,maxWidth});fillText(text,x,y,maxWidth);};
  ctx.globalAlpha=.65;ctx.fillStyle='#345678';const priorAlpha=ctx.globalAlpha;
  const run={elapsed:4,obstacles:[],boss:{type:'jones',stageId:'brasilia',role:'optional',phase:'recover',phaseFor:.5,age:4,
-  lastDamage:{amount:6.25,critical,remaining}}};
+  hitFlashFor:Math.min(.28,remaining),lastDamage:{amount:6.25,critical,remaining}}};
  make({run,ctx,virtualWidth:width,WORLD:{ground:246},bossArenaPose,bossPresentationFor,campaignAccentFor,
-  prefersReducedMotion:()=>reduced,drawHoverEnemy:()=>{},drawBossAccent})();
+  prefersReducedMotion:()=>reduced,drawHoverEnemy:(c,pose)=>poses.push(pose),drawBossAccent})();
  assert.equal(ctx.globalAlpha,priorAlpha);
- return labels;
+ return {labels,poses};
 }
-test('the real boss renderer shows the damage and critical distinction in both viewport sizes',()=>{
- for(const width of [480,900])for(const critical of [false,true]){
-  const [label]=render({width,critical});
-  assert.equal(label.text,critical?'CRÍTICO! −6,3 PV':'−6,3 PV');
-  assert.ok(label.x-label.maxWidth/2>=0&&label.x+label.maxWidth/2<=width);
-  assert.ok(label.y>=16&&label.y<=290);
+test('ordinary and critical hits draw no floating HP number at either viewport size',()=>{
+ for(const width of [480,900])for(const critical of [false,true])for(const reduced of [false,true]){
+  const {labels,poses}=render({width,critical,reduced});
+  assert.deepEqual(labels,[]);
+  assert.equal(poses.length,1);
+  assert.equal(poses[0].hurt,true,'the existing hurt drawing still gives immediate hit feedback');
  }
 });
-test('reduced motion keeps damage feedback stationary, and expired feedback disappears',()=>{
- assert.equal(render({reduced:true})[0].y,render({reduced:true,remaining:.4})[0].y);
- assert.ok(render({remaining:.4})[0].y<render()[0].y);
- assert.deepEqual(render({remaining:0}),[]);
+test('expired damage no longer selects the hurt drawing, and still emits no label',()=>{
+ const {labels,poses}=render({remaining:0});
+ assert.deepEqual(labels,[]);
+ assert.equal(poses[0].hurt,false);
 });
