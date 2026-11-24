@@ -26,7 +26,7 @@ import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=c0f55e6867c9
 import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=dbaac525a595";
 import { createGameAudio } from "./runner-audio.mjs?v=d93419fd0e46";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=d5e017561fd6";
-import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor } from "./runner-scenery.mjs?v=0c3d305739fb";
+import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor,createSceneryScroll,advanceSceneryScroll } from "./runner-scenery.mjs?v=8b0005a207e6";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
 
 import {allyById} from './runner-allies.mjs?v=d3b6a81b34b9';
@@ -69,7 +69,7 @@ function initRunner() {
     const saved=JSON.parse(localStorage.getItem(preferencesKey)||"{}");
     if(saved&&typeof saved==="object"){
       if(["hold","toggle"].includes(saved.crouchMode))preferences.crouchMode=saved.crouchMode;
-      if(["system","reduce"].includes(saved.effects))preferences.effects=saved.effects;
+      if(["system","reduce","full"].includes(saved.effects))preferences.effects=saved.effects;
       preferences.assisted=saved.assisted===true;
       preferences.controls=normalizeControls(saved.controls,saved.fireKey);
     }
@@ -86,6 +86,7 @@ function initRunner() {
   const selectedMode=()=>$("game-mode-story").checked?"story":"endless";
   let run=createRun({assisted:preferences.assisted,mode:selectedMode(),manualStory:false}),frameId=0;
   run.supportAvailable=false;
+  let sceneryRun=null,sceneryScroll=null;
   const trackPointers=new Map(),moveKeys=new Set(),jumpKeys=createPressGate(),jumpSources=createHeldSources(),crouchSources=createHeldSources(),attackSources=createHeldSources();
   const attackButton=$("game-attack"),firePointers=new Set(),mouseHeld=new Map();
   const frameClock=createFrameClock(performance.now());
@@ -118,7 +119,7 @@ function initRunner() {
   // A preferência pode mudar enquanto o jogo está aberto.
   const motionPreference = window.matchMedia?.("(prefers-reduced-motion: reduce)");
   const compactLandscape = window.matchMedia?.("(min-width:480px) and (orientation:landscape) and (max-height:600px)");
-  const prefersReducedMotion = () => preferences.effects==="reduce"||motionPreference?.matches === true;
+  const prefersReducedMotion = () => preferences.effects==="reduce"||preferences.effects==="system"&&motionPreference?.matches === true;
   function bossCue(){
     if(!run.boss)return null;
     const incoming=run.obstacles.filter(o=>o.bossAttack&&!o.counted&&!o.passed).sort((a,b)=>threatTimeToContact(run,a)-threatTimeToContact(run,b))[0];
@@ -973,8 +974,11 @@ function initRunner() {
     // the hero's proportions. The DOM meters remain fixed above the playfield.
     const cameraLift=Math.max(0,run.player.y+94+8-WORLD.ground);
     ctx.save();ctx.translate(0,cameraLift);
-    drawJourneyScenery(ctx,{cameraLift,flight:run.terrain?.active?.flight,routeDistance:run.routeDistance,campaignStages:run.mode==='story'?STORY_STAGE_IDS:undefined,openingDistance:run.mode==="story"?STORY_OPENING_DISTANCE:0,distance:run.distance,width:virtualWidth,reducedMotion:prefersReducedMotion(),quiet:run.aid?.kind==="quiet"?Math.max(0,Math.min(1,(6-run.aid.remaining)/.35,run.aid.remaining/.35)):0});
-    drawJourneyFinish(ctx,{width:virtualWidth,ground:WORLD.ground,distance:run.distance,stageId:routeStageFor(run).id,transition:routeTransitionFor(run),flight:!!run.terrain?.active?.flight,reducedMotion:prefersReducedMotion()});
+    if(sceneryRun!==run){sceneryRun=run;sceneryScroll=createSceneryScroll();}
+    const stageId=routeStageFor(run).id,transition=routeTransitionFor(run);
+    const scrollRegions=advanceSceneryScroll(sceneryScroll,{distance:run.distance,stageId,transition});
+    drawJourneyScenery(ctx,{cameraLift,scrollRegions,flight:run.terrain?.active?.flight,routeDistance:run.routeDistance,campaignStages:run.mode==='story'?STORY_STAGE_IDS:undefined,openingDistance:run.mode==="story"?STORY_OPENING_DISTANCE:0,distance:run.distance,width:virtualWidth,reducedMotion:prefersReducedMotion(),quiet:run.aid?.kind==="quiet"?Math.max(0,Math.min(1,(6-run.aid.remaining)/.35,run.aid.remaining/.35)):0});
+    drawJourneyFinish(ctx,{width:virtualWidth,ground:WORLD.ground,distance:run.distance,stageId,transition,flight:!!run.terrain?.active?.flight,reducedMotion:prefersReducedMotion()});
     drawRaidAtmosphere(ctx,{strength:raidMoodFor(run.raid),width:virtualWidth,distance:run.distance,reducedMotion:prefersReducedMotion()});
     drawTerrain(ctx,{terrain:run.terrain,ground:WORLD.ground,width:virtualWidth});
     if(run.boss?.combat)drawBossArena(ctx,{width:virtualWidth,ground:WORLD.ground,state:run.boss});

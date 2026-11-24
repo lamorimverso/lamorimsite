@@ -151,6 +151,76 @@ function flightMood(flight,reducedMotion){
  const lift=smooth((p-.09)/.24)*(1-smooth((p-.72)/.28));
  return {lift,shift:reducedMotion?0:42*lift,palette:blendPalette(paletteChannels[flight.from],paletteChannels[flight.to],smooth((p-.18)/.68))};
 }
+// A separate presentation clock: physical metres move the entire landscape;
+// route progress only chooses which city is loaded next. Every new region is
+// queued beyond the right edge and its tiles keep their identity until offscreen.
+const scrollPlanes=Object.freeze([
+ {id:'far',scale:.24,spacing:150},
+ {id:'middle',scale:.38,spacing:210},
+ {id:'landmark',scale:.56,spacing:440}
+]);
+const SCROLL_ENTRY=190,SCROLL_MARGIN=340,SCROLL_FEATHER=150;
+export function createSceneryScroll(){return {regions:[],lastDistance:0,lastStage:null};}
+export function advanceSceneryScroll(state,{distance=0,stageId='brasilia',transition}={}){
+ const travelled=Number.isFinite(distance)?Math.max(0,distance):0;
+ const current=Object.hasOwn(palettes,stageId)?stageId:'brasilia';
+ if(!state.regions.length||travelled<state.lastDistance){
+  state.regions=[{distance:-Infinity,stageId:current}];state.lastStage=current;
+ }
+ const last=state.regions.at(-1);
+ const incoming=transition?.to?.id;
+ const advancing=transition?.active&&transition.progress>=(transition.kind==='air-transfer'?.55:.15)&&Object.hasOwn(palettes,incoming);
+ // Do not undo a queued approach while its nominal stage is still current.
+ const target=advancing?incoming:state.lastStage===current?last.stageId:current;
+ if(target!==last.stageId){
+  if(last.distance===travelled)state.regions[state.regions.length-1]={distance:travelled,stageId:target};
+  else state.regions.push({distance:travelled,stageId:target});
+ }
+ state.lastDistance=travelled;state.lastStage=current;
+ // Keep the predecessor of the oldest potentially visible region. Memory
+ // stays bounded across long campaigns and infinite laps.
+ while(state.regions.length>1&&state.regions[1].distance<travelled-10000)state.regions.shift();
+ return state.regions;
+}
+function scrollRegionAt(regions,worldX,scale){
+ let region=regions[0];
+ for(let i=1;i<regions.length;i++){
+  if(worldX<regions[i].distance*scale+SCROLL_ENTRY)break;
+  region=regions[i];
+ }
+ return region.stageId;
+}
+function scrollPaletteAt(regions,worldX,scale){
+ let from=regions[0].stageId;
+ for(let i=1;i<regions.length;i++){
+  const next=regions[i],boundary=next.distance*scale+SCROLL_ENTRY;
+  if(worldX<boundary-SCROLL_FEATHER)return paletteChannels[from];
+  if(worldX<boundary+SCROLL_FEATHER)return blendPalette(paletteChannels[from],paletteChannels[next.stageId],smooth((worldX-boundary+SCROLL_FEATHER)/(2*SCROLL_FEATHER)));
+  from=next.stageId;
+ }
+ return paletteChannels[from];
+}
+function physicalSceneryGeometry(regions,travelled,width,mood){
+ const layers=scrollPlanes.map(({id,scale,spacing})=>{
+  const offset=travelled*scale;
+  const first=Math.floor((offset-width-SCROLL_MARGIN)/spacing),last=Math.ceil((offset+SCROLL_MARGIN)/spacing);
+  const segments=Array.from({length:last-first+1},(_,i)=>{
+   const segmentIndex=first+i,worldX=segmentIndex*spacing;
+   return {segmentIndex,stageId:scrollRegionAt(regions,worldX,scale),alpha:1,x:width+worldX-offset,width:spacing,stationary:false,continuous:true};
+  });
+  return {id,scale,segments};
+ });
+ const landmarks=layers[2].segments.map(({segmentIndex,stageId,x,alpha})=>({segmentIndex,stageId,x,alpha}));
+ const scale=layers[2].scale,flightLift=mood?.lift??0;
+ const paletteStops=Array.from({length:25},(_,i)=>{
+  const palette=scrollPaletteAt(regions,travelled*scale+width*i/24-width,scale);
+  return {offset:i/24,palette:flightLift>0?blendPalette(palette,mood.palette,flightLift):palette};
+ });
+ const next=regions.at(-1),x=width+(next.distance-travelled)*layers[1].scale+SCROLL_ENTRY;
+ const alpha=smooth((width+45-x)/75)*smooth((x+45)/75)*(1-flightLift);
+ return {layers,landmarks,paletteStops,waypoint:Number.isFinite(x)&&alpha>0?{stageId:next.stageId,alpha,x}:null,scrollDistance:travelled};
+}
+
 /**
  * Pure, unbounded route geometry shared by rendering and continuity tests.
  * Each segmentIndex is an occurrence on the journey (never modulo a route lap); only its
@@ -163,7 +233,7 @@ function flightMood(flight,reducedMotion){
  * the final 1,000 m of each place, so the route still communicates its next stop.
  * Palette channels are floating RGB triples; paletteStops offsets run from 0 to 1.
  */
-export function journeySceneryGeometry({routeDistance=0,distance=routeDistance,width=900,reducedMotion=false,openingDistance=0,campaignStages,flight}={}){
+export function journeySceneryGeometry({routeDistance=0,distance=routeDistance,width=900,reducedMotion=false,openingDistance=0,campaignStages,flight,scrollRegions}={}){
  const opening=Number.isFinite(openingDistance)?Math.max(0,openingDistance):0;
  const route=(Number.isFinite(routeDistance)?Math.max(0,routeDistance):0)-opening;
  // Abertura contínua: ocorrências anteriores à campanha também são Brasília.
@@ -192,10 +262,12 @@ export function journeySceneryGeometry({routeDistance=0,distance=routeDistance,w
   return {offset:i/24,palette:flightLift>0?blendPalette(palette,mood.palette,flightLift):palette};
  });
  const decorativeDistance=reducedMotion?0:travelled;
- return {width:w,layers,landmarks,paletteStops,flight:mood,waypoint:routeWaypoint(route,w,stageFor,reducedMotion,flightLift),roadOffset:wrap(decorativeDistance,98),clouds:[
-  {x:wrap(145-decorativeDistance*.016,w+140)-70,y:65,scale:.73},
-  {x:wrap(510-decorativeDistance*.019,w+160)-80,y:91,scale:.48},
-  {x:wrap(790-decorativeDistance*.011,w+120)-60,y:43,scale:.32}
+ const moving=!reducedMotion&&Array.isArray(scrollRegions)&&scrollRegions.length>0;
+ const physical=moving?physicalSceneryGeometry(scrollRegions,travelled,w,mood):null;
+ return {width:w,layers,landmarks,paletteStops,flight:mood,waypoint:routeWaypoint(route,w,stageFor,reducedMotion,flightLift),...physical,roadOffset:wrap(decorativeDistance,98),clouds:[
+  {x:wrap(145-decorativeDistance*(moving?.055:.016),w+140)-70,y:65,scale:.73},
+  {x:wrap(510-decorativeDistance*(moving?.085:.019),w+160)-80,y:91,scale:.48},
+  {x:wrap(790-decorativeDistance*(moving?.045:.011),w+120)-60,y:43,scale:.32}
  ]};
 }
 
@@ -301,8 +373,9 @@ function drawNightHorizon(c,geometry,night){
  c.fillRect(0,160,width,74);c.restore();
  // A mesma malha fixa de janelas acompanha a paisagem sem piscadas.
  c.save();c.globalAlpha*=night*.87;c.fillStyle='#ffe3a2';c.beginPath();
- for(let i=0;i<Math.ceil(width/48)+1;i++){
-  const x=i*48+(i*13)%13,y=195+(i*17)%23;
+ const offset=(geometry.scrollDistance||0)*.24,first=Math.floor(offset/48);
+ for(let i=first-1;i<first+Math.ceil(width/48)+2;i++){
+  const x=i*48-offset+wrap(i*13,13),y=195+wrap(i*17,23);
   c.rect(x,y,2.4,3);
   if(i%3===0)c.rect(x+11,y-8,2,3);
  }
@@ -364,9 +437,9 @@ function drawFarPlane(c,layer,width){
   if(segment.alpha<=0)continue;
   c.save();c.globalAlpha*=segment.alpha;
   const p=palettes[segment.stageId];
-  const count=segment.stationary?Math.ceil(width/154)+1:6;
+  const count=segment.continuous?1:segment.stationary?Math.ceil(width/154)+1:6;
   for(let i=0;i<count;i++){
-   const x=segment.stationary?i*154-30:segment.x+(360+i*1100)*layer.scale;
+   const x=segment.continuous?segment.x:segment.stationary?i*154-30:segment.x+(360+i*1100)*layer.scale;
    if(x+170<0||x-12>width)continue;
    farFeature(c,x,segment.stageId,p,wrap(segment.segmentIndex+i,3));
   }
@@ -400,9 +473,9 @@ function drawMiddlePlane(c,layer,width){
   if(segment.alpha<=0)continue;
   c.save();c.globalAlpha*=segment.alpha;
   const p=palettes[segment.stageId];
-  const count=segment.stationary?Math.ceil(width/270)+1:5;
+  const count=segment.continuous?1:segment.stationary?Math.ceil(width/270)+1:5;
   for(let i=0;i<count;i++){
-   const x=segment.stationary?i*270-70:segment.x+(100+i*1500)*layer.scale;
+   const x=segment.continuous?segment.x:segment.stationary?i*270-70:segment.x+(100+i*1500)*layer.scale;
    if(x+225<0||x-22>width)continue;
    middleFeature(c,x,segment.stageId,p,wrap(segment.segmentIndex+i,3));
   }
@@ -417,7 +490,7 @@ function drawAmbientDetails(c,geometry,{distance=0,reducedMotion=false}={}){
  const sway=reducedMotion?0:Math.sin(Math.max(0,distance)/235)*3;
  for(const seg of geometry.layers[1].segments){
   if(seg.alpha<=0)continue;
-  const x=seg.stationary?geometry.width*.6:seg.x+3650*geometry.layers[1].scale;
+  const x=seg.continuous?seg.x+90:seg.stationary?geometry.width*.6:seg.x+3650*geometry.layers[1].scale;
   if(x<-45||x>geometry.width+45)continue;
   const p=palettes[seg.stageId];c.save();c.globalAlpha*=.48*seg.alpha;
   if(seg.stageId==='brasilia'||seg.stageId==='brasilia-final'||seg.stageId==='argentina'||seg.stageId==='casa-branca'){
@@ -498,7 +571,7 @@ function drawFlightHorizon(c,geometry){
  const width=geometry.width;
  c.fillStyle=daylightGradient(c,geometry,146,248,.86);c.fillRect(0,146,width,102);
  for(let n=0;n<3;n++){
-  const x=width*(.18+n*.32),y=224-(n%2)*19;
+  const x=geometry.scrollDistance===undefined?width*(.18+n*.32):wrap((width+340)*n/3-geometry.scrollDistance*.065,width+340)-170,y=224-(n%2)*19;
   c.save();c.globalAlpha*=.53;cloud(c,x,y,1.08+width/2400);c.restore();
  }
  c.restore();
