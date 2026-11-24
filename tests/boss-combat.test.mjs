@@ -105,17 +105,18 @@ test('anúncios da História usam a identidade e o objetivo real dos 17 encontro
 test('bossFigure desenha o corpo na origem física do projétil inimigo nos dois modos',()=>{
  const source=readFileSync(new URL('../tanahoraflavio/runner.mjs',import.meta.url),'utf8');
  const start=source.indexOf('  function bossFigure(){'),end=source.indexOf('  function character(){',start);
- const make=Function('env','const {run,ctx,virtualWidth,WORLD,STAGES,bossArenaPose,bossPresentationFor,bossCounterWindow,enemyEmitterPose,enemyMotionFor,prefersReducedMotion,drawHoverEnemy,bossCue,campaignAccentFor}=env;'+source.slice(start,end)+';return bossFigure;');
+ const make=Function('env','const {run,ctx,virtualWidth,WORLD,STAGES,bossArenaPose,bossPresentationFor,bossCounterWindow,enemyEmitterPose,enemyMotionFor,prefersReducedMotion,drawHoverEnemy,bossCue,campaignAccentFor,drawBossAccent}=env;'+source.slice(start,end)+';return bossFigure;');
  for(const mode of ['story','endless'])for(const reduced of [true,false]){
   const r=core.createRun({mode});core.startRun(r);r.nextBossAt=0;r.nextRaid=Infinity;r.shieldFor=Infinity;
   if(mode==='story')r.bossesDefeated=1;
   core.advanceRun(r,dt,()=>.5);for(let i=0;i<120*4&&!r.obstacles.some(core.isHostileProjectile);i++)core.advanceRun(r,dt,()=>.5);
-  const state={x:0,y:0},stack=[];let drawn;
+  const state={x:0,y:0},stack=[];let drawn,accent;
   const ctx={save(){stack.push({...state});},restore(){Object.assign(state,stack.pop());},translate(x,y){state.x+=x;state.y+=y;},fillText(){},beginPath(){},ellipse(){},roundRect(){},fill(){},measureText(s){return {width:s.length*7};}};
   const draw=make({run:r,ctx,STAGES:core.STAGES,virtualWidth:900,WORLD:core.WORLD,bossArenaPose:core.bossArenaPose,bossPresentationFor:bosses.bossPresentationFor,bossCounterWindow:bosses.bossCounterWindow,campaignAccentFor,
    enemyEmitterPose:art.enemyEmitterPose,enemyMotionFor:art.enemyMotionFor,prefersReducedMotion:()=>reduced,
-   drawHoverEnemy(c,args){drawn={x:state.x+args.x,y:state.y+args.y};},bossCue:()=>({action:'jump'})});
+   drawHoverEnemy(c,args){drawn={x:state.x+args.x,y:state.y+args.y};},drawBossAccent(c,args){accent={x:state.x+args.x,y:state.y+args.y};},bossCue:()=>({action:'jump'})});
   draw();
+  assert.deepEqual(accent,drawn,'decorative accent and actor share the same physical origin');
   const shot=r.obstacles.find(core.isHostileProjectile),muzzle=combatGeometryFor(r.boss.type,{frame:2,facing:-1}).muzzle;
   assert.ok(Math.abs(shot.launchX-(drawn.x+muzzle.x))<15,mode+' arma deslocada horizontalmente');
   assert.ok(Math.abs((core.WORLD.ground-shot.launchY)-(drawn.y+muzzle.y))<8,mode+' arma deslocada verticalmente');

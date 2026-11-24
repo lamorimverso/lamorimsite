@@ -4,10 +4,11 @@ import {readFileSync} from 'node:fs';
 import {createCanvas} from '@napi-rs/canvas';
 import {bossArenaPose,bossPresentationFor} from '../tanahoraflavio/runner-bosses.mjs';
 import {campaignAccentFor} from '../tanahoraflavio/runner-campaign-art.mjs';
+import {drawBossAccent} from '../tanahoraflavio/runner-visual-finish.mjs';
 
 const source=readFileSync(new URL('../tanahoraflavio/runner.mjs',import.meta.url),'utf8');
 const start=source.indexOf('  function bossFigure(){'),end=source.indexOf('  function character(){',start);
-const make=Function('env',`const {run,ctx,virtualWidth,WORLD,bossArenaPose,bossPresentationFor,campaignAccentFor,prefersReducedMotion,drawHoverEnemy}=env;${source.slice(start,end)};return bossFigure;`);
+const make=Function('env',`const {run,ctx,virtualWidth,WORLD,bossArenaPose,bossPresentationFor,campaignAccentFor,prefersReducedMotion,drawHoverEnemy,drawBossAccent}=env;${source.slice(start,end)};return bossFigure;`);
 function render({width=480,critical=true,remaining=.8,reduced=false}={}){
  const ctx=createCanvas(width,300).getContext('2d'),labels=[];
  const fillText=ctx.fillText.bind(ctx);
@@ -16,7 +17,7 @@ function render({width=480,critical=true,remaining=.8,reduced=false}={}){
  const run={elapsed:4,obstacles:[],boss:{type:'jones',stageId:'brasilia',role:'optional',phase:'recover',phaseFor:.5,age:4,
   lastDamage:{amount:6.25,critical,remaining}}};
  make({run,ctx,virtualWidth:width,WORLD:{ground:246},bossArenaPose,bossPresentationFor,campaignAccentFor,
-  prefersReducedMotion:()=>reduced,drawHoverEnemy:()=>{}})();
+  prefersReducedMotion:()=>reduced,drawHoverEnemy:()=>{},drawBossAccent})();
  assert.equal(ctx.globalAlpha,priorAlpha);
  return labels;
 }
