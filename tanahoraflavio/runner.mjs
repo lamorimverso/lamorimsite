@@ -1,3 +1,4 @@
+import {storyBattleCue} from './runner-story-cue.mjs?v=427512503798';
 import {stageGuideFor} from './runner-stage-director.mjs?v=071886f07909';
 import {HURT_BODY_SCALE} from './runner-body.mjs?v=57ec474fca38';
 import {createPresentationDOM,createControlLabelReader} from './runner-presentation-cache.mjs?v=4712d27109dc';
@@ -280,12 +281,13 @@ function initRunner() {
     const reflected=run.obstacles.some(o=>o.reflected&&!o.destroyed);
     const intercept=!!b&&!b.traversal&&run.obstacles.some(o=>o.bossAttack&&isHostileProjectile(o));
     const opening=b?.combat&&!b.traversal&&bossCounterWindow(b).label;
+    const battle=storyBattleCue(b,{attack:combatCue||null,attackLabel:attackCueFor(combatCue)?.label,intercept,reflected,opening});
     const cue=$("game-battle-cue");
-    ui.prop(cue,'hidden',run.status!=="running"||!b?.role||(!opening&&!combatCue&&!b.traversal&&!reflected&&!intercept));
-    ui.data(cue,'opening',String(reflected||!!opening));
-    if(!cue.hidden){
-      ui.text("game-battle-attack",reflected?'Projétil devolvido':opening?'Guarda aberta':b.traversal?b.name:(attackCueFor(combatCue)?.label||b.powerName));
-      ui.text("game-battle-action",reflected?'Continue desviando':intercept?'Rebata ou desvie':opening?'Atire no chefão':combatCue?.action==='jump'?'Pule':combatCue?.action==='crouch'?'Abaixe':combatCue?.action==='move'?'Desvie para o lado':'Atravesse a passagem');
+    ui.prop(cue,'hidden',run.status!=="running"||!battle);
+    ui.data(cue,'opening',String(!!battle?.open));
+    if(!cue.hidden&&battle){
+      ui.text("game-battle-attack",battle.label);
+      ui.text("game-battle-action",battle.action);
     }
 
     const cameoAttack=run.cameo?run.obstacles.find(o=>o.sourceActor===run.cameo.type&&!o.passed):null;
