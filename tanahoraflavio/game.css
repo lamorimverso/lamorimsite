@@ -639,3 +639,7 @@ body.runner-fullscreen-fallback{overflow:hidden!important;overscroll-behavior:no
 .game-card:is(:fullscreen,[data-mobile-fullscreen="true"])[data-run-state="running"] .game-dashboard .game-stage-header{
  display:none;
 }
+
+/* Third mode opens its own fighting-game screen, leaving runner radio selection intact. */
+.game-mode-chooser .game-battle-link{display:flex;align-items:center;justify-content:center;grid-column:1/-1;min-height:34px;padding:5px 8px;border:1px solid #c9c5d3;border-radius:9px;color:var(--dark);background:#faf8ff;font-size:12px;font-weight:650;text-decoration:none;text-align:center}
+.game-mode-chooser .game-battle-link:focus-visible{outline:2px solid #74569d;outline-offset:2px}
