@@ -1,3 +1,4 @@
+import {drawJourneyFinish,drawBossAccent,drawImpactFinish,campaignResultText} from './runner-visual-finish.mjs?v=a460096a3333';
 import {storyBattleCue,storyRewardText} from './runner-story-cue.mjs?v=c7b38ccf12e2';
 import {stageGuideFor} from './runner-stage-director.mjs?v=071886f07909';
 import {HURT_BODY_SCALE} from './runner-body.mjs?v=57ec474fca38';
@@ -16,7 +17,7 @@ import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from 
 import {createAircraftWarningTracker,createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=37fd940420f1';
 import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=f8107568ec3b';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, releaseJumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, stagePlanFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=dfe8686f8787";
+import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, releaseJumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, stagePlanFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=14bee58e345d";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {heroStridePhase,bossStopsAutoRun} from './runner-drawn-motion.mjs?v=0d1971800c55';
 import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=700c55ebad49';
@@ -357,7 +358,7 @@ function initRunner() {
     ui.prop("game-start-hint",'hidden',run.status!=="ready");
     if(run.status==="won"){
       ui.text("game-overlay-title",run.practice?"Desafio concluído!":"História concluída!");
-      ui.text("game-overlay-copy",run.practice?"Você superou o desafio de "+run.practice.name+".":"Código 13 confirmado! Você concluiu a etapa final da campanha. "+score.toLocaleString("pt-BR")+" m percorridos.");
+      ui.text("game-overlay-copy",run.practice?"Você superou o desafio de "+run.practice.name+".":campaignResultText(run,score));
       ui.text("game-overlay-badge","Vitória fictícia");
       if(lastStatus!=="won")section.dispatchEvent(new Event("runner:won"));
     }
@@ -791,6 +792,7 @@ function initRunner() {
     if(b.platformer){
       ctx.save();ctx.fillStyle='#29233722';ctx.beginPath();ctx.ellipse(bossX,WORLD.ground+2,24-arenaPose.platformY*.08,4,0,0,Math.PI*2);ctx.fill();ctx.restore();
     }
+    drawBossAccent(ctx,{x:bossX,y:bossY,ground:WORLD.ground,color:campaignAccentFor(b.type)||b.color,...presentation,enraged:b.enraged,reducedMotion:prefersReducedMotion()});
     ctx.save();ctx.translate(bossX,bossY);
     drawHoverEnemy(ctx,{type:b.type,platform:!b.platformer,x:0,y:0,scale:pose.scale,phase,...presentation,hurt:b.hitFlashFor>0,reducedMotion:prefersReducedMotion(),classId:b.classId,armyVariant:b.stageId||STAGES[b.stageIndex]?.id,enraged:b.enraged});
     ctx.restore();
@@ -972,6 +974,7 @@ function initRunner() {
     const cameraLift=Math.max(0,run.player.y+94+8-WORLD.ground);
     ctx.save();ctx.translate(0,cameraLift);
     drawJourneyScenery(ctx,{cameraLift,flight:run.terrain?.active?.flight,routeDistance:run.routeDistance,campaignStages:run.mode==='story'?STORY_STAGE_IDS:undefined,openingDistance:run.mode==="story"?STORY_OPENING_DISTANCE:0,distance:run.distance,width:virtualWidth,reducedMotion:prefersReducedMotion(),quiet:run.aid?.kind==="quiet"?Math.max(0,Math.min(1,(6-run.aid.remaining)/.35,run.aid.remaining/.35)):0});
+    drawJourneyFinish(ctx,{width:virtualWidth,ground:WORLD.ground,distance:run.distance,stageId:routeStageFor(run).id,flight:!!run.terrain?.active?.flight,reducedMotion:prefersReducedMotion()});
     drawRaidAtmosphere(ctx,{strength:raidMoodFor(run.raid),width:virtualWidth,distance:run.distance,reducedMotion:prefersReducedMotion()});
     drawTerrain(ctx,{terrain:run.terrain,ground:WORLD.ground,width:virtualWidth});
     if(run.boss?.combat)drawBossArena(ctx,{width:virtualWidth,ground:WORLD.ground,state:run.boss});
@@ -989,6 +992,7 @@ function initRunner() {
     for(const item of run.obstacles){ctx.save();if(item.returning&&!item.reflected)ctx.globalAlpha*=.4;obstacle(item);ctx.restore();}
     for(const shot of run.heroShots||[])drawHeroProjectile(ctx,shot,WORLD.ground,{reducedMotion:prefersReducedMotion()});
     character();
+    if(run.clearedAt)drawImpactFinish(ctx,{x:run.clearedAt.x,y:WORLD.ground-15,remaining:run.clearedAt.remaining,reducedMotion:prefersReducedMotion()});
     ctx.restore();
     if(run.status==='running'){
       const cues=edgeThreatsFor(run.obstacles,virtualWidth,item=>threatTimeToContact(run,item));

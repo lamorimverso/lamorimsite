@@ -476,7 +476,7 @@ export function releaseJumpRun(run){
  // A História publicada também é automática. Preserve altura suficiente para
  // obstáculos baixos na pista; arenas e o protótipo manual retêm o corte clássico.
  const duel=!!b?.combat&&!b.traversal;
- const autoStory=run.mode==='story'&&!run.manualStory&&!b;
+ const autoStory=run.mode==='story'&&!run.manualStory&&!b&&!run.terrain?.active?.flight;
  const cutoff=autoStory?440:260;
  if(run.status!=='running'||!run.manualStory&&!duel&&!autoStory||p.isJacare||p.grounded||p.velocity<=cutoff)return false;
  p.velocity=cutoff;return true;

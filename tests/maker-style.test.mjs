@@ -22,10 +22,14 @@ test('releasing jump during an arena ascent gives a lower hop while holding keep
   assert.ok(high>95&&low<high-20);assert.equal(full.player.grounded,true);assert.equal(short.player.grounded,true);
  }
 });
-test('jump release does not alter running, flights, descending jumps or grounded input',()=>{
+test('Story route supports short jumps but flights, Endless, descending and grounded input keep their contracts',()=>{
  assert.equal(typeof core.releaseJumpRun,'function');
  const road=core.createRun({mode:'story'});core.startRun(road);core.jumpRun(road);
- assert.equal(core.releaseJumpRun(road),false);assert.equal(road.player.velocity,610);
+ assert.equal(core.releaseJumpRun(road),true);assert.equal(road.player.velocity,440);
+ const endless=core.createRun({mode:'endless'});core.startRun(endless);core.jumpRun(endless);
+ assert.equal(core.releaseJumpRun(endless),false);assert.equal(endless.player.velocity,610);
+ const flight=core.createRun({mode:'story'});core.startRun(flight);core.jumpRun(flight);flight.terrain.active={flight:{}};
+ assert.equal(core.releaseJumpRun(flight),false);assert.equal(flight.player.velocity,610);
  const r=duel();assert.equal(core.releaseJumpRun(r),false);
  core.jumpRun(r);r.player.velocity=-30;assert.equal(core.releaseJumpRun(r),false);assert.equal(r.player.velocity,-30);
  r.boss.traversal=true;r.player.velocity=500;assert.equal(core.releaseJumpRun(r),false);assert.equal(r.player.velocity,500);
