@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {storyBattleCue} from '../tanahoraflavio/runner-story-cue.mjs';
+import {storyBattleCue,storyRewardText} from '../tanahoraflavio/runner-story-cue.mjs';
 
 const boss={role:'map-boss',name:'Chefão',powerName:'Poder',phase:'attack'};
 test('a live hazard overrides the counter and returned projectile without a misleading green cue',()=>{
@@ -22,4 +22,14 @@ test('traversals and endless encounters keep their original roles',()=>{
 test('reflection alone and projectile-only defense are distinct',()=>{
  assert.deepEqual(storyBattleCue(boss,{reflected:true}),{label:'Projétil devolvido',action:'Continue desviando',open:true});
  assert.deepEqual(storyBattleCue(boss,{reflected:true,intercept:true}),{label:'Projétil inimigo',action:'Rebata ou desvie',open:false});
+});
+
+test('combined rewards announce both unlocks and max level accurately',()=>{
+ const skill={name:'Duplo pulo'},power={name:'Cruz de paraquedas',isNew:true,level:1};
+ const message=storyRewardText(skill,power,'K');
+ assert.match(message,/Duplo pulo.*K de novo no ar/);
+ assert.match(message,/PODER CONQUISTADO.*Cruz de paraquedas/);
+ assert.match(storyRewardText(null,{...power,isNew:false,upgraded:false,level:3},'K'),/NÍVEL MÁXIMO/);
+ assert.match(storyRewardText(null,{...power,isNew:false,upgraded:true,level:2},'K'),/PODER MELHORADO/);
+ assert.equal(storyRewardText(null,null,'K'),'');
 });

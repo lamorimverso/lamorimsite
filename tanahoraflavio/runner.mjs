@@ -1,4 +1,4 @@
-import {storyBattleCue} from './runner-story-cue.mjs?v=427512503798';
+import {storyBattleCue,storyRewardText} from './runner-story-cue.mjs?v=c7b38ccf12e2';
 import {stageGuideFor} from './runner-stage-director.mjs?v=071886f07909';
 import {HURT_BODY_SCALE} from './runner-body.mjs?v=57ec474fca38';
 import {createPresentationDOM,createControlLabelReader} from './runner-presentation-cache.mjs?v=4712d27109dc';
@@ -16,7 +16,7 @@ import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from 
 import {createAircraftWarningTracker,createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=37fd940420f1';
 import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=f8107568ec3b';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, releaseJumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, stagePlanFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=14de9930711d";
+import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, releaseJumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, stagePlanFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=dfe8686f8787";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {heroStridePhase,bossStopsAutoRun} from './runner-drawn-motion.mjs?v=0d1971800c55';
 import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=700c55ebad49';
@@ -178,8 +178,10 @@ function initRunner() {
     const switchLabel="Trocar arma · "+labels.power;
     ui.prop(cycle,'title',switchLabel);ui.attr(cycle,"aria-label",switchLabel);ui.text("game-weapon-effect",run.lastPowerReward&&compactLandscape?.matches?'Conquistado: '+run.lastPowerReward.name:weapon.description);
     const reward=$("game-power-reward"),skill=run.lastSkillReward;ui.prop(reward,'hidden',!(skill||run.lastPowerReward)||run.status!=="running");
-    if(skill)ui.text(reward,'HABILIDADE CONQUISTADA · '+skill.name+' · '+labels.jump+' de novo no ar');
-    else if(run.lastPowerReward)ui.text(reward,(run.lastPowerReward.isNew?'PODER CONQUISTADO · ':'PODER MELHORADO · ')+run.lastPowerReward.name+' · nível '+run.lastPowerReward.level);
+    if(skill||run.lastPowerReward){
+      ui.text(reward,storyRewardText(skill,run.lastPowerReward,labels.jump));
+      ui.prop(reward,'title',run.lastPowerReward?HERO_POWERS[run.lastPowerReward.id]?.description||'':'');
+    }
     ui.data(section,'heroPower',run.activePower);
     ui.prop("game-aid-bar",'hidden',run.status!=="running");
     const reserve=$("game-reserve-shield"),ally=allyById(run.aid?.id);
@@ -277,9 +279,14 @@ function initRunner() {
     const liveAttack=run.obstacles.filter(o=>!o.passed&&!o.counted)
       .sort((a,b)=>threatTimeToContact(run,a)-threatTimeToContact(run,b))[0];
     const liveCue=attackCueFor(liveAttack);
-    const b=run.boss,combatCue=b?.combat&&(b.phase==='charge'?b.plannedAttack:b.phase==='attack'&&liveAttack?.bossAttack?liveAttack:null);
+    const b=run.boss;
+    // Announce the specific committed threat, even during a phase boundary.
+    // Only suggest reflection for that very projectile, never a ground hazard.
+    const actualBossAttack=b?.combat?run.obstacles.filter(o=>o.bossAttack&&!o.destroyed&&!o.reflected&&(!o.passed&&!o.counted||isHostileProjectile(o)))
+      .sort((a,b)=>threatTimeToContact(run,a)-threatTimeToContact(run,b))[0]:null;
+    const combatCue=b?.combat&&(actualBossAttack||(b.phase==='charge'?b.plannedAttack:null));
     const reflected=run.obstacles.some(o=>o.reflected&&!o.destroyed);
-    const intercept=!!b&&!b.traversal&&run.obstacles.some(o=>o.bossAttack&&isHostileProjectile(o));
+    const intercept=!!b&&!b.traversal&&isHostileProjectile(actualBossAttack);
     const opening=b?.combat&&!b.traversal&&bossCounterWindow(b).label;
     const battle=storyBattleCue(b,{attack:combatCue||null,attackLabel:attackCueFor(combatCue)?.label,intercept,reflected,opening});
     const cue=$("game-battle-cue");

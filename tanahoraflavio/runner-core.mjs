@@ -473,8 +473,13 @@ export function jumpRun(run){
 }
 export function releaseJumpRun(run){
  const p=run.player,b=run.boss;
- if(run.status!=='running'||!run.manualStory&&(!b?.combat||b.traversal)||p.isJacare||p.grounded||p.velocity<=260)return false;
- p.velocity=260;return true;
+ // A História publicada também é automática. Preserve altura suficiente para
+ // obstáculos baixos na pista; arenas e o protótipo manual retêm o corte clássico.
+ const duel=!!b?.combat&&!b.traversal;
+ const autoStory=run.mode==='story'&&!run.manualStory&&!b;
+ const cutoff=autoStory?440:260;
+ if(run.status!=='running'||!run.manualStory&&!duel&&!autoStory||p.isJacare||p.grounded||p.velocity<=cutoff)return false;
+ p.velocity=cutoff;return true;
 }
 export function clearRunInput(run){
  run.player.moveHeld=0;run.player.crouchHeld=false;run.player.crouching=false;run.player.sliding=false;run.player.slideRemaining=0;run.player.slideLatched=false;run.player.jumpBufferedUntil=run.player.coyoteUntil=0;
@@ -1166,10 +1171,8 @@ export function advanceRun(run,seconds,rng){
  advanceSlide(run,dt,!!duel||!run.boss&&!run.raid&&!run.player.isJacare&&!(run.mode==='story'&&storyApproachAt(run.routeDistance,run.bossesDefeated)));
  const moveSpeed=run.player.sliding?TERRAIN.slideSpeed:LATERAL_SPEED*(run.aid?.kind==='encourage'?1.2:1);
  const entering=run.boss?.combat&&run.boss.phase==='intro'&&playerX(run)>visibleWidth(run)-arenaReserve(run);
- // O modo História visível usa controle manual: Flávio anda até o
-  // ponto de acompanhamento da câmera, que só então move o cenário.
-  // Recuar move Flávio dentro da tela, sem retroceder para fases vencidas.
-  // O Infinito e as simulações antigas mantêm a corrida automática.
+ // O protótipo manual permanece disponível para testes. A produção usa
+  // corrida automática nos dois modos. Recuar não retrocede fases vencidas.
   const manualScroll=run.manualStory===true&&!bossStopsAutoRun(run);
   // Antecipação suave: deixa até 5,5% da tela a mais à frente do
   // personagem. O recuo da câmera nunca move a estrada sem comando.

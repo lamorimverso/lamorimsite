@@ -14,3 +14,11 @@ export function storyBattleCue(boss,{attack=null,attackLabel,intercept=false,ref
  if(boss.phase==='recover')return cue('Recuperação','Atire ou recarregue');
  return null;
 }
+
+// Keep simultaneous unlocks visible; never promise an unlock the motor did not grant.
+export function storyRewardText(skill,power,jumpLabel){
+ const parts=[];
+ if(skill)parts.push('HABILIDADE CONQUISTADA · '+skill.name+' · '+jumpLabel+' de novo no ar');
+ if(power)parts.push((power.isNew?'PODER CONQUISTADO · ':power.upgraded?'PODER MELHORADO · ':'PODER NO NÍVEL MÁXIMO · ')+power.name+' · nível '+power.level);
+ return parts.join(' | ');
+}
