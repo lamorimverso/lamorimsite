@@ -6,9 +6,54 @@ const tones=Object.freeze({
  argentina:['#efc5a0','#7d91ac'],paraguai:['#e7b9a8','#587d71'],florida:['#f1b8c5','#617ba8'],
  'casa-branca':['#d1dfef','#526e8b'],'brasilia-final':['#efbfa0','#766a9d']
 });
-export function drawJourneyFinish(c,{width=900,ground=246,distance=0,stageId='brasilia',flight=false,reducedMotion=false}={}){
+// Repeating local scenery is driven by actual distance, independent of the
+// campaign's slower geographic clock. The original geographic layers still
+// determine when each city arrives; no game event is moved by this animation.
+export function localParallaxFor({width=900,distance=0,reducedMotion=false}={}){
+ const travel=reducedMotion?0:Math.max(0,Number.isFinite(distance)?distance:0);
+ return [[.075,148],[.145,112]].map(([scale,spacing])=>{
+  const offset=travel*scale,first=Math.floor(offset/spacing)-1;
+  return {scale,tiles:Array.from({length:Math.ceil(Math.max(0,width)/spacing)+3},(_,i)=>{
+   const index=first+i;return {index,x:index*spacing-offset};
+  })};
+ });
+}
+function mixHex(a,b,t){
+ return '#'+[1,3,5].map(i=>Math.round(parseInt(a.slice(i,i+2),16)*(1-t)+parseInt(b.slice(i,i+2),16)*t).toString(16).padStart(2,'0')).join('');
+}
+export function journeyFinishTones(stageId,transition){
+ const from=tones[transition?.from?.id]||tones[stageId]||tones.brasilia;
+ const to=tones[transition?.to?.id]||from;
+ const progress=clamp(transition?.progress??1);
+ return from.map((color,i)=>mixHex(color,to[i],progress));
+}
+function drawPassingDetails(c,{width,ground,travel,reducedMotion,light,shade}){
+ const layers=localParallaxFor({width,distance:travel,reducedMotion});
+ c.save();try{
+  // Two lightweight bands of silhouette detail, drawn as batched paths.
+  // Existing regional landmarks and enemies retain the foreground.
+  c.fillStyle=shade+'24';c.beginPath();
+  for(const {index,x} of layers[0].tiles){
+   const h=8+((index%3+3)%3)*4;
+   c.moveTo(x-24,ground-12);c.lineTo(x-24,ground-12-h);
+   c.lineTo(x-4,ground-15-h);c.lineTo(x+14,ground-12-h);
+   c.lineTo(x+14,ground-12);c.closePath();
+  }
+  c.fill();
+  c.strokeStyle=shade+'52';c.lineWidth=1.5;c.beginPath();
+  for(const {x} of layers[1].tiles){
+   c.moveTo(x,ground-12);c.lineTo(x,ground-30);c.lineTo(x+8,ground-32);
+   c.moveTo(x+17,ground-12);c.lineTo(x+17,ground-16);c.lineTo(x+43,ground-16);c.lineTo(x+43,ground-12);
+  }
+  c.stroke();
+  c.fillStyle=light+'8a';c.beginPath();
+  for(const {x} of layers[1].tiles)c.rect(x+5,ground-33,6,2);
+  c.fill();
+ }finally{c.restore();}
+}
+export function drawJourneyFinish(c,{width=900,ground=246,distance=0,stageId='brasilia',transition,flight=false,reducedMotion=false}={}){
  if(!(width>0)||!Number.isFinite(ground))return;
- const [light,shade]=tones[stageId]||tones.brasilia;
+ const [light,shade]=journeyFinishTones(stageId,transition);
  const travel=reducedMotion?0:Number(distance)||0;
  c.save();
  try{
@@ -17,6 +62,7 @@ export function drawJourneyFinish(c,{width=900,ground=246,distance=0,stageId='br
   tint.addColorStop(0,shade+'19');tint.addColorStop(.62,light+'12');tint.addColorStop(1,light+'00');
   c.fillStyle=tint;c.fillRect(0,0,width,154);
   if(flight)return;
+  drawPassingDetails(c,{width,ground,travel,reducedMotion,light,shade});
   // Foreground detail scrolls at a different rate from the city. All below the collision floor.
   c.fillStyle=shade+'22';c.fillRect(0,ground+39,width,15);
   c.fillStyle=light+'65';c.fillRect(0,ground+39,width,1);

@@ -1,4 +1,4 @@
-import {drawJourneyFinish,drawBossAccent,drawImpactFinish,campaignResultText} from './runner-visual-finish.mjs?v=a460096a3333';
+import {drawJourneyFinish,drawBossAccent,drawImpactFinish,campaignResultText} from './runner-visual-finish.mjs?v=3ab9249fcffb';
 import {storyBattleCue,storyRewardText} from './runner-story-cue.mjs?v=c7b38ccf12e2';
 import {stageGuideFor} from './runner-stage-director.mjs?v=071886f07909';
 import {HURT_BODY_SCALE} from './runner-body.mjs?v=57ec474fca38';
@@ -974,7 +974,7 @@ function initRunner() {
     const cameraLift=Math.max(0,run.player.y+94+8-WORLD.ground);
     ctx.save();ctx.translate(0,cameraLift);
     drawJourneyScenery(ctx,{cameraLift,flight:run.terrain?.active?.flight,routeDistance:run.routeDistance,campaignStages:run.mode==='story'?STORY_STAGE_IDS:undefined,openingDistance:run.mode==="story"?STORY_OPENING_DISTANCE:0,distance:run.distance,width:virtualWidth,reducedMotion:prefersReducedMotion(),quiet:run.aid?.kind==="quiet"?Math.max(0,Math.min(1,(6-run.aid.remaining)/.35,run.aid.remaining/.35)):0});
-    drawJourneyFinish(ctx,{width:virtualWidth,ground:WORLD.ground,distance:run.distance,stageId:routeStageFor(run).id,flight:!!run.terrain?.active?.flight,reducedMotion:prefersReducedMotion()});
+    drawJourneyFinish(ctx,{width:virtualWidth,ground:WORLD.ground,distance:run.distance,stageId:routeStageFor(run).id,transition:routeTransitionFor(run),flight:!!run.terrain?.active?.flight,reducedMotion:prefersReducedMotion()});
     drawRaidAtmosphere(ctx,{strength:raidMoodFor(run.raid),width:virtualWidth,distance:run.distance,reducedMotion:prefersReducedMotion()});
     drawTerrain(ctx,{terrain:run.terrain,ground:WORLD.ground,width:virtualWidth});
     if(run.boss?.combat)drawBossArena(ctx,{width:virtualWidth,ground:WORLD.ground,state:run.boss});
