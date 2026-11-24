@@ -40,7 +40,9 @@ const intersects=(a,b)=>a.left<b.right&&a.right>b.left&&a.bottom<b.top&&a.top>b.
 function addEffect(g,x,y,kind,color){g.effects.push({x,y,kind,color,life:.23});if(g.effects.length>30)g.effects.shift();}
 function resolveHit(g,from,to,damage,level,face,kind='strike'){
  if(to.hp<=0)return false;
- const front=face===to.face*-1,blocked=front&&to.y===0&&(to.state==='guard-low'?level!=='high':to.state==='guard-high'&&level!=='low');
+ const front=face===to.face*-1,guardState=to.state==='blockstun'?to.guardState:to.state;
+ const blocked=front&&to.y===0&&(guardState==='guard-low'?level!=='high':guardState==='guard-high'&&level!=='low');
+ to.guardState=blocked?guardState:null;
  const amount=Math.max(1,Math.round(damage*from.def.force*(blocked?.19:1)));
  to.hp=Math.max(0,to.hp-amount);from.meter=clamp(from.meter+(blocked?3:9),0,100);to.meter=clamp(to.meter+(blocked?5:7),0,100);
  to.stun=blocked?.15:kind==='special'?.34:.24;to.move=null;to.state=blocked?'blockstun':'hurt';to.vx=face*(blocked?100:180);to.age=0;
@@ -52,7 +54,7 @@ function launch(g,f,opponent){
  const p=f.def.power,behavior=p.behavior,count=Math.min(3,p.shots||1),speed=clamp(p.speed*.71,295,620);
  for(let i=0;i<count;i++){
   const offset=i-(count-1)/2;
-  g.projectiles.push({owner:f,face:f.face,x:f.x+f.face*40,y:f.y+66+offset*17,originY:f.y+66,vx:f.face*speed,vy:['arc','lob'].includes(behavior)?190:0,age:0,life:behavior==='return'?1.8:1.65,behavior,radius:clamp((p.radius||5)*1.25,11,27),damage:Math.max(5,Math.round((10+p.damage*4)/Math.sqrt(count))),color:p.color||'#dab7ff',type:p.projectiles?.[i]||p.projectile,offset,hit:false});
+  g.projectiles.push({owner:f,face:f.face,x:f.x+f.face*40,launchX:f.x+f.face*40,y:f.y+66+offset*17,originY:f.y+66,vx:f.face*speed,vy:['arc','lob'].includes(behavior)?190:0,age:0,life:behavior==='return'?1.8:1.65,behavior,radius:clamp((p.radius||5)*1.25,11,27),damage:Math.max(5,Math.round((10+p.damage*4)/Math.sqrt(count))),color:p.color||'#dab7ff',type:p.projectiles?.[i]||p.projectile,offset,hit:false});
  }
  if(g.projectiles.length>32)g.projectiles.splice(0,g.projectiles.length-32);
  addEffect(g,f.x+f.face*40,f.y+66,'cast',p.color);
@@ -75,8 +77,8 @@ function updateFighter(g,f,o,input,dt){
    }
   }
   // A connected light may link into a heavy during the recovery, not indefinitely.
-  const link=f.connected&&m.key==='light'&&f.age>=m.start+m.active&&f.buffer.findIndex(b=>b.action==='heavy');
-  if(link!==false&&link>=0&&f.connected&&m.key==='light'&&f.age>=m.start+m.active){f.buffer.splice(link,1);startMove(f,'heavy');}
+  const link=f.connected&&m.key==='light'&&f.age>=m.start+m.active?f.buffer.findIndex(b=>b.action==='heavy'):-1;
+  if(link>=0){f.buffer.splice(link,1);startMove(f,'heavy');}
   else if(f.age>=duration(m)){f.move=null;f.state='idle';}
  }else{
   const next=f.buffer.shift()?.action;
@@ -123,7 +125,8 @@ function cpu(g,b,p,dt){
 }
 function conclude(g){
  const [a,b]=g.fighters;
- const winner=a.hp===b.hp?-1:a.hp<=0?1:b.hp<=0?0:a.hp/a.maxHp>b.hp/b.maxHp?0:a.hp/a.maxHp<b.hp/b.maxHp?1:-1;
+ const delta=a.hp/a.maxHp-b.hp/b.maxHp;
+ const winner=Math.abs(delta)<1e-9?-1:delta>0?0:1;
  if(winner>=0)g.score[winner]++;
  g.result={winner,reason:a.hp<=0||b.hp<=0?'K.O.':'TEMPO'};
  g.status='roundover';g.phaseFor=2.1;
