@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {ROSTER,createBattle,stepBattle,STEP,queueAction} from '../tanahoraflavio/battle/battle-core.mjs';
+import {ROSTER,createBattle,stepBattle,STEP,queueAction,randomMatchup} from '../tanahoraflavio/battle/battle-core.mjs';
 const tick=(g,n,input={},cpuInput={})=>{for(let i=0;i<n;i++)stepBattle(g,i===0?input:{...input,press:[]},STEP,{cpuInput:i===0?cpuInput:{...cpuInput,press:[]}});};
 const fight=(opts={})=>{const g=createBattle(opts);tick(g,160);assert.equal(g.status,'fight');return g;};
 test('all selectable characters have individual powers and combat attributes',()=>{assert.equal(ROSTER.length,23);assert.ok(ROSTER.every(r=>r.power?.name&&r.hp>0&&r.speed>0));assert.ok(new Set(ROSTER.map(r=>r.power.name)).size===ROSTER.length);});
@@ -19,4 +19,15 @@ test('a hit-confirmed light attack may link into a heavy and award a combo',()=>
  const g=fight(),[a,b]=g.fighters;a.x=380;b.x=455;
  tick(g,15,{press:['light']});assert.ok(a.connected);
  tick(g,55,{press:['heavy']});assert.ok(a.combo>=2);assert.ok(b.hp<b.maxHp-10);
+});
+
+test('random matchup selects valid distinct fighters and a valid arena',()=>{
+ for(let i=0;i<=100;i++){
+  const match=randomMatchup(()=>i/100);
+  assert.ok(ROSTER.some(f=>f.id===match.player));
+  assert.ok(ROSTER.some(f=>f.id===match.boss));
+  assert.ok(match.boss!=='flavio'&&match.boss!==match.player);
+  const g=createBattle(match);
+  assert.equal(g.stage,match.stage);
+ }
 });

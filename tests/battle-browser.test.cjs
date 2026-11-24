@@ -28,6 +28,10 @@ for(const mobile of [false,true])test('Battle mode selects fighters, renders and
   await page.waitForFunction(()=>!document.getElementById('start').disabled,null,{timeout:20000});
   assert.equal(await page.locator('#players button').count(),23);
   assert.equal(await page.locator('#bosses button').count(),22);
+  await page.getByRole('button',{name:'Sortear duelo',exact:true}).click();
+  const selected=await page.locator('.fighter[aria-pressed="true"]').evaluateAll(nodes=>nodes.map(n=>n.dataset.id));
+  assert.equal(selected.length,2);assert.notEqual(selected[0],selected[1]);
+  assert.notEqual(selected[1],'flavio');
   await page.locator('#players').getByRole('button',{name:'Dilma',exact:true}).click();
   await page.locator('#bosses').getByRole('button',{name:'Xandão',exact:true}).click();
   await page.locator('#stage').selectOption('rio');

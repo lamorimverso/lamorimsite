@@ -1,4 +1,4 @@
-import {ROSTER,STAGES,WIDTH,GROUND,STEP,createBattle,stepBattle} from './battle-core.mjs?v=8123a285c167';
+import {ROSTER,STAGES,WIDTH,GROUND,STEP,createBattle,stepBattle,randomMatchup} from './battle-core.mjs?v=d00ae32cfef8';
 import {drawActor,loadSprites,drawProjectile} from '../runner-art.mjs?v=dbaac525a595';
 import {drawHoverEnemy} from '../runner-boss-art.mjs?v=c0f55e6867c9';
 import {drawScenery} from '../runner-scenery.mjs?v=ce0fa6b0d678';
@@ -9,6 +9,7 @@ function info(node,f){node.replaceChildren();const h=document.createElement('str
 function syncSelection(){for(const button of document.querySelectorAll('.fighter'))button.setAttribute('aria-pressed',String(button.dataset.id===(button.dataset.side==='p'?player:boss)));info($('player-detail'),lookup(player));info($('boss-detail'),lookup(boss));}
 function populate(){for(const [side,target] of [['p','players'],['b','bosses']]){for(const f of ROSTER.filter(f=>side==='p'||f.id!=='flavio')){const button=document.createElement('button');button.type='button';button.className='fighter';button.dataset.id=f.id;button.dataset.side=side;const face=document.createElement('canvas');face.width=48;face.height=48;face.setAttribute('aria-hidden','true');const label=document.createElement('span');label.textContent=f.name;button.append(face,label);button.onclick=()=>{if(side==='p')player=f.id;else boss=f.id;syncSelection();};$(target).append(button);}}for(const [id,name] of STAGES){const o=document.createElement('option');o.value=id;o.textContent=name;$('stage').append(o);}syncSelection();}
 populate();
+$('random-match').onclick=()=>{const match=randomMatchup();player=match.player;boss=match.boss;$('stage').value=match.stage;syncSelection();$('status').textContent=lookup(player).name+' × '+lookup(boss).name+' · '+STAGES.find(s=>s[0]===match.stage)[1];};
 function refreshPortraits(){for(const button of document.querySelectorAll('.fighter')){const portrait=button.querySelector('canvas');const p=portrait.getContext('2d');p.clearRect(0,0,48,48);p.save();p.translate(24,46);p.scale(.38,.38);if(button.dataset.id==='flavio')drawActor(p,{type:'flavio',x:0,y:0,standing:true,reducedMotion:true});else drawHoverEnemy(p,{type:button.dataset.id,platform:false,reducedMotion:true});p.restore();}}
 async function prepare(){try{await loadSprites();ready=true;refreshPortraits();$('status').textContent='Escolha o lutador, o chefão e a arena.';$('start').disabled=false;}catch{$('status').textContent='Não foi possível carregar os desenhos. Recarregue a página.';}}
 prepare();

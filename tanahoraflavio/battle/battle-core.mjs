@@ -10,6 +10,12 @@ export const ROSTER=Object.freeze(Object.entries(names).map(([id,name])=>{
 }));
 export const STAGES=Object.freeze([['brasilia','Brasília'],['rio','Rio de Janeiro'],['sao-paulo','São Paulo'],['argentina','Argentina'],['paraguai','Paraguai'],['florida','Flórida'],['casa-branca','Casa Branca']]);
 const lookup=id=>ROSTER.find(f=>f.id===id);
+export function randomMatchup(random=Math.random){
+ const choose=list=>{const r=Number(random());return list[Math.min(list.length-1,Math.max(0,Math.floor((Number.isFinite(r)?r:0)*list.length)))];};
+ const player=choose(ROSTER).id;
+ const boss=choose(ROSTER.filter(f=>f.id!=='flavio'&&f.id!==player)).id;
+ return {player,boss,stage:choose(STAGES)[0]};
+}
 export function createBattle({player='flavio',boss='xandao',stage='brasilia',difficulty='normal',seed=17}={}){
  const p=lookup(player),b=lookup(boss);
  if(!p||!b||boss==='flavio')throw Error('Lutador inválido');

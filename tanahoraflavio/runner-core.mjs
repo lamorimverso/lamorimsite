@@ -781,6 +781,26 @@ function takeBoss(run){
  while(run.bossBag.length){const type=run.bossBag.pop();if(type!=='bossonari'&&BOSS_GOALS[type])return type;}
  return BOSS_ROSTER[run.bossesDefeated%BOSS_ROSTER.length];
 }
+// Extra duel pressure is separate from physical contact, authored sequences,
+// and the counter reward. Assisted play and non-combat crossings keep the
+// original balance, as does the introductory Ana Elisa duel. Later stages
+// require more consistent execution without a tutorial progression regression.
+export function storyDuelChallenge(encounter,assisted=false){
+ if(!encounter||encounter.traversal||assisted||encounter.type==='ana-elisa')return {hpScale:1,pressure:0};
+ const stage=Math.max(0,Math.min(7,Number(encounter.stageIndex)||0));
+ const final=encounter.role==='final-boss';
+ return {hpScale:1.10+stage*.016+(final?.04:0),pressure:.065+stage*.012+(final?.02:0)};
+}
+export function applyStoryDuelTempo(boss){
+ if(!boss.combat||boss.traversal||!(boss.challengePressure>0)||boss.patternIndex<2)return;
+ const pressure=Math.min(.20,boss.challengePressure+(boss.hp<=boss.maxHp/2?.04:0));
+ // Never take away a signature counter window or the minimum authored tell.
+ // Contact timings, volley gaps and safety reservations remain untouched.
+ const shorten=(value,floor)=>Math.min(value,Math.max(floor,value*(1-pressure)));
+ boss.telegraph=shorten(boss.telegraph,.62);
+ boss.phaseFor=boss.telegraph;
+ if(!boss.plannedAttack?.counter)boss.recover=shorten(boss.recover,.62);
+}
 function beginBoss(run){
  if(run.mode==='story'&&pairRunRemaining(run)>1e-6)return;
  const encounter=run.mode==='story'?(run.practice||storyBossAt(run.bossesDefeated)):null;
@@ -795,8 +815,9 @@ function beginBoss(run){
   hitFlashFor:0,attackFlashFor:0,lastAction:null,actionStreak:0,
   plannedFor:0,plannedAttack:{...bossAttackFor(conf.foe.type,0,conf.round-1),approach:'diagonal'}};
  if(encounter){
-  Object.assign(run.boss,encounter,{combat:true,platformer:!encounter.traversal,maxHp:encounter.hp,hp:encounter.hp,age:0,phase:'intro',phaseFor:1.1,
-   total:encounter.hp,remaining:encounter.hp,fired:0,volleyLeft:0,evaded:0,plannedAttack:arenaPatternFor(encounter,0)});
+  const challenge=storyDuelChallenge(encounter,run.assisted),hp=Math.round(encounter.hp*challenge.hpScale);
+  Object.assign(run.boss,encounter,{combat:true,platformer:!encounter.traversal,maxHp:hp,hp,challengePressure:challenge.pressure,age:0,phase:'intro',phaseFor:1.1,
+   total:hp,remaining:hp,fired:0,volleyLeft:0,evaded:0,plannedAttack:arenaPatternFor(encounter,0)});
   run.heroShots=[];run.pickups=[];
   if(encounter.traversal)run.player.attackHeld=false;
  }else {const profile=bossProfileFor(type);Object.assign(run.boss,{maxHp:conf.attacks*2,hp:conf.attacks*2,age:0,classId:profile.classId,className:BOSS_CLASSES[profile.classId].name,rank:profile.rank,rankName:BOSS_RANKS[profile.rank-1],powerName:profile.powerName,attackTypes:profile.attackTypes,tactic:profile.tactic,weakness:profile.weakness,reward:profile.reward,rematchIndex:Math.floor(Math.max(0,conf.round-1)/BOSS_ROSTER.length)});}
@@ -856,7 +877,9 @@ function advanceBoss(run,dt,rng,balance){
   boss.stillFor=run.player.moveHeld?0:(boss.stillFor||0)+dt;
   const previousPhase=boss.phase;
   stepBossPhase(boss,dt,{...run.player,viewportWidth:visibleWidth(run),stillFor:boss.stillFor},rng);
-  if(previousPhase!==boss.phase&&boss.phase==='charge')boss.volleyPattern=boss.plannedAttack;
+  if(previousPhase!==boss.phase&&boss.phase==='charge'){
+   applyStoryDuelTempo(boss);boss.volleyPattern=boss.plannedAttack;
+  }
   if(boss.phase!=='attack'||boss.volleyLeft<=0)return;
  }else boss.age=(boss.age||0)+dt;
  boss.nextAttack-=dt;
