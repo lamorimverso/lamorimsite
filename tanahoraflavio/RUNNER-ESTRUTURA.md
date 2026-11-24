@@ -53,3 +53,10 @@ index.html
 6. Usar o histórico Git para rollback. A versão descartada do protótipo Mega Man permanece na branch `backup/antes-retorno-runner-2026-11-22`.
 
 A configuração de produção voltou a usar corrida automática nos dois modos. Rotinas de movimento manual podem continuar no motor para testes e confrontos específicos, mas não controlam o avanço padrão da campanha.
+
+## Continuidade do scroll e cadência visual (24/11/2026)
+
+- O caminho de scroll físico não cria a geometria geográfica descartada em cada quadro. Mantém a API de referência e a opção de movimento reduzido.
+- O desenho da paisagem amostra os dois últimos passos físicos (120 Hz) com o fator de interpolação do relógio. A posição renderizada permanece entre as posições simuladas, sem extrapolação nem retorno após um redesenho de interface. O motor, os projéteis, o herói e as colisões continuam usando suas coordenadas reais.
+- No modo completo, manhã/tarde/noite seguem a distância física mesmo com a rota geográfica retida; a opção reduzida conserva a apresentação anterior.
+- Testes adicionais cobrem cadência de 30 a 165 Hz, retomada, redesenho e diferença de iluminação em pixels. Estes testes verificam a matemática e a apresentação; não são uma medição de FPS em dispositivos físicos.

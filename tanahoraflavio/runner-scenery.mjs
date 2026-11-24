@@ -161,6 +161,15 @@ const scrollPlanes=Object.freeze([
 ]);
 const SCROLL_ENTRY=190,SCROLL_MARGIN=340,SCROLL_FEATHER=150;
 export function createSceneryScroll(){return {regions:[],lastDistance:0,lastStage:null};}
+// Rendering samples between the last two physics steps; never extrapolate,
+// rewind after an immediate UI redraw, or change any simulation coordinate.
+export function sampleSceneryDistance(previous,current,interpolation=1,lastPainted=0){
+ const now=Number.isFinite(current)?Math.max(0,current):0;
+ if(!Number.isFinite(previous)||previous>now||lastPainted>now)return now;
+ const before=Math.max(0,previous),alpha=Math.max(0,Math.min(1,Number.isFinite(interpolation)?interpolation:1));
+ const floor=Number.isFinite(lastPainted)?Math.max(0,lastPainted):0;
+ return Math.min(now,Math.max(floor,before+(now-before)*alpha));
+}
 export function advanceSceneryScroll(state,{distance=0,stageId='brasilia',transition}={}){
  const travelled=Number.isFinite(distance)?Math.max(0,distance):0;
  const current=Object.hasOwn(palettes,stageId)?stageId:'brasilia';
@@ -236,12 +245,23 @@ function physicalSceneryGeometry(regions,travelled,width,mood){
 export function journeySceneryGeometry({routeDistance=0,distance=routeDistance,width=900,reducedMotion=false,openingDistance=0,campaignStages,flight,scrollRegions}={}){
  const opening=Number.isFinite(openingDistance)?Math.max(0,openingDistance):0;
  const route=(Number.isFinite(routeDistance)?Math.max(0,routeDistance):0)-opening;
+ const travelled=Number.isFinite(distance)?Math.max(0,distance):Math.max(0,route);
+ const w=Number.isFinite(width)?Math.max(1,width):900;
+ const mood=flightMood(flight,reducedMotion),flightLift=mood?.lift??0;
+ const decorativeDistance=reducedMotion?0:travelled;
+ const moving=!reducedMotion&&Array.isArray(scrollRegions)&&scrollRegions.length>0;
+ const shared={width:w,flight:mood,roadOffset:wrap(decorativeDistance,98),clouds:[
+  {x:wrap(145-decorativeDistance*(moving?.055:.016),w+140)-70,y:65,scale:.73},
+  {x:wrap(510-decorativeDistance*(moving?.085:.019),w+160)-80,y:91,scale:.48},
+  {x:wrap(790-decorativeDistance*(moving?.045:.011),w+120)-60,y:43,scale:.32}
+ ]};
+ // The full-scroll path does not build a second, discarded legacy world
+ // (including its 25 palette blends) on every animation frame.
+ if(moving)return {...shared,...physicalSceneryGeometry(scrollRegions,travelled,w,mood)};
  // Abertura contínua: ocorrências anteriores à campanha também são Brasília.
  // Coordenadas negativas mantêm o parallax, sem congelar nem reiniciar o fundo.
  const campaign=Array.isArray(campaignStages)&&campaignStages.length>0&&campaignStages.every(id=>Object.hasOwn(palettes,id))?campaignStages:null;
  const stageFor=index=>campaign?campaign[Math.max(0,Math.min(campaign.length-1,index))]:stageAt(opening?Math.max(0,index):index);
- const travelled=Number.isFinite(distance)?Math.max(0,distance):route;
- const w=Number.isFinite(width)?Math.max(1,width):900;
  const index=Math.floor(route/segmentLength),anchor=w*.35;
  const amount=smooth((route-index*segmentLength-6000)/1000);
  const identities=[{segmentIndex:index,stageId:stageFor(index),alpha:1-amount},{segmentIndex:index+1,stageId:stageFor(index+1),alpha:amount}];
@@ -256,19 +276,11 @@ export function journeySceneryGeometry({routeDistance=0,distance=routeDistance,w
  const landmarks=reducedMotion?identities.map(identity=>({...identity,x:w*.70})):
   layers[2].segments.map(segment=>({segmentIndex:segment.segmentIndex,stageId:segment.stageId,alpha:1,x:segment.x+2500*layers[2].scale}));
  const uniform=reducedMotion?blendPalette(paletteChannels[stageFor(index)],paletteChannels[stageFor(index+1)],amount):null;
- const mood=flightMood(flight,reducedMotion),flightLift=mood?.lift??0;
  const paletteStops=Array.from({length:25},(_,i)=>{
   const palette=uniform||paletteAlongRoute(route+(w*i/24-anchor)/planeScales[2],stageFor);
   return {offset:i/24,palette:flightLift>0?blendPalette(palette,mood.palette,flightLift):palette};
  });
- const decorativeDistance=reducedMotion?0:travelled;
- const moving=!reducedMotion&&Array.isArray(scrollRegions)&&scrollRegions.length>0;
- const physical=moving?physicalSceneryGeometry(scrollRegions,travelled,w,mood):null;
- return {width:w,layers,landmarks,paletteStops,flight:mood,waypoint:routeWaypoint(route,w,stageFor,reducedMotion,flightLift),...physical,roadOffset:wrap(decorativeDistance,98),clouds:[
-  {x:wrap(145-decorativeDistance*(moving?.055:.016),w+140)-70,y:65,scale:.73},
-  {x:wrap(510-decorativeDistance*(moving?.085:.019),w+160)-80,y:91,scale:.48},
-  {x:wrap(790-decorativeDistance*(moving?.045:.011),w+120)-60,y:43,scale:.32}
- ]};
+ return {...shared,layers,landmarks,paletteStops,waypoint:routeWaypoint(route,w,stageFor,reducedMotion,flightLift)};
 }
 
 
@@ -582,7 +594,7 @@ export function drawJourneyScenery(c,options={}){
  const geometry=journeySceneryGeometry(options),width=geometry.width;
  const quiet=Math.max(0,Math.min(1,Number(options.quiet)||0));
  const skyTop=-Math.max(0,Number(options.cameraLift)||0);
- const time=timeOfDayFor(options.routeDistance??options.distance??0);
+ const time=timeOfDayFor(geometry.scrollDistance??options.routeDistance??options.distance??0);
  c.save();
  try{
   c.fillStyle=paletteGradient(c,geometry,'sky');c.fillRect(0,skyTop,width,300-skyTop);

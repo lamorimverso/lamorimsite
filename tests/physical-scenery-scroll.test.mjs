@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createCanvas} from '@napi-rs/canvas';
-import {createSceneryScroll,advanceSceneryScroll,journeySceneryGeometry,drawJourneyScenery} from '../tanahoraflavio/runner-scenery.mjs';
+import {createSceneryScroll,advanceSceneryScroll,journeySceneryGeometry,drawJourneyScenery,sampleSceneryDistance} from '../tanahoraflavio/runner-scenery.mjs';
 const stages=['brasilia','rio','sao-paulo','argentina','paraguai','florida','casa-branca','brasilia-final'];
 const make=(state,distance,stageId='brasilia',transition)=>advanceSceneryScroll(state,{distance,stageId,transition});
 const geom=(scrollRegions,distance,width=480,extra={})=>journeySceneryGeometry({scrollRegions,distance,width,routeDistance:20000,campaignStages:stages,openingDistance:20800,...extra});
@@ -64,4 +64,41 @@ test('restarts discard old regions; stationary combat freezes visual coordinates
  assert.deepEqual(a,b);
  const reset=geom(make(state,0,'brasilia'),0);
  assert.equal(state.regions.length,1);assert.ok(reset.layers.every(l=>l.segments.every(s=>s.stageId==='brasilia')));
+});
+
+test('scenery interpolation never predicts movement or rewinds on UI redraws',()=>{
+ assert.equal(sampleSceneryDistance(100,104,0),100);
+ assert.equal(sampleSceneryDistance(100,104,.5),102);
+ assert.equal(sampleSceneryDistance(100,104,1),104);
+ assert.equal(sampleSceneryDistance(100,104,2),104);
+ assert.equal(sampleSceneryDistance(100,104,.5,104),104);
+ assert.equal(sampleSceneryDistance(100,104,.5,120),104);
+ assert.equal(sampleSceneryDistance(104,0,.5,104),0);
+ assert.equal(sampleSceneryDistance(100,104,NaN),104);
+ assert.equal(sampleSceneryDistance(104,104,.25),104);
+});
+test('interpolated scroll follows a 120 Hz simulation evenly on common display refresh rates',()=>{
+ for(const hz of [30,60,90,120,144,165]){
+  const speed=360,tick=speed/120;
+  let last=0;
+  for(let frame=1;frame<=hz*2;frame++){
+   const elapsed=frame/hz,steps=Math.floor(elapsed*120+1e-8),current=steps*tick;
+   const alpha=Math.max(0,Math.min(1,elapsed*120-steps));
+   const visual=sampleSceneryDistance(Math.max(0,current-tick),current,alpha,last);
+   assert.ok(visual>=last&&visual<=current);
+   assert.ok(Math.abs(visual-Math.max(0,elapsed*speed-tick))<1e-7);
+   last=visual;
+  }
+ }
+});
+test('day and night progress by physical distance in full scroll with unchanged geography',()=>{
+ const state=createSceneryScroll(),scrollRegions=make(state,0);
+ function sample(distance){
+  const c=createCanvas(480,300).getContext('2d');
+  drawJourneyScenery(c,{scrollRegions,distance,routeDistance:20000,width:480,campaignStages:stages});
+  return {sky:[...c.getImageData(9,7,1,1).data],road:[...c.getImageData(9,252,1,1).data]};
+ }
+ const day=sample(7500),night=sample(13500),brightness=a=>a[0]+a[1]+a[2];
+ assert.ok(brightness(day.sky)>brightness(night.sky)+55);
+ assert.ok(day.road.every((v,i)=>Math.abs(v-night.road[i])<=2));
 });
