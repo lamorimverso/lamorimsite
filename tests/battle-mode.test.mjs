@@ -31,3 +31,12 @@ test('random matchup selects valid distinct fighters and a valid arena',()=>{
   assert.equal(g.stage,match.stage);
  }
 });
+
+test('arcade normals have distinct attack ranges and preserve low/high guard rules',()=>{
+ for(const key of ['medium','kickLow','kickMid','kickHigh']){
+  const g=fight(),[a,b]=g.fighters;a.x=380;b.x=465;
+  tick(g,45,{press:[key]});assert.ok(b.hp<b.maxHp,key+' must apply real damage');
+ }
+ const g=fight(),[a,b]=g.fighters;a.x=380;b.x=490;tick(g,45,{press:['kickMid']});assert.ok(b.hp<b.maxHp);
+ const h=fight(),[p,o]=h.fighters;p.x=380;o.x=465;tick(h,45,{press:['kickLow']},{guard:true,down:true});assert.ok(o.maxHp-o.hp<=3);
+});

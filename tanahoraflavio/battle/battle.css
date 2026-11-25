@@ -306,3 +306,24 @@ button:disabled {
     font-size:20px
   }
 }
+
+/* Arcade presentation — original artwork, responsive six-button layout. */
+#fight{border-radius:8px;background:#0b1120;padding:12px;border-color:#68758f}
+.matchhud{align-items:center;gap:12px;padding:8px 10px;background:linear-gradient(180deg,#293651,#11192b);border:1px solid #4f607b;border-radius:6px}
+.matchhud .name{color:#fff3d5;text-transform:uppercase;letter-spacing:.055em;text-shadow:0 2px #000}
+.matchhud .bar{height:20px;border:2px solid #c8b78e;border-radius:2px;box-shadow:0 2px 4px #0008}
+.matchhud .bar i{background:linear-gradient(180deg,#f7e47b,#8fc84c)}
+.matchhud .enemy .bar i{background:linear-gradient(180deg,#ffda89,#e46b4d)}
+.matchhud .energy{height:8px;border:1px solid #6983ac}
+.timer{font-size:clamp(21px,4vw,42px);color:#ffdf8b;text-shadow:0 2px #000}
+.timer small{font-size:10px;letter-spacing:.08em}
+.arena{border:2px solid #71809e;border-radius:4px;box-shadow:0 4px 18px #0008}
+.attacks{grid-template-columns:repeat(3,minmax(0,1fr));max-width:68%}
+.attacks button[data-action^="kick"]{background:#35436d}
+.touch button:focus-visible,.fighter:focus-visible{outline:2px solid #ffe199;outline-offset:2px}
+.touch .attacks button.active{background:#eac675;color:#202838}
+@media(max-width:600px){
+ #fight{padding:6px}.matchhud{gap:5px;padding:5px}.matchhud .bar{height:15px}
+ .touch{flex-wrap:wrap}.attacks{max-width:100%;flex:1 1 100%}.pad{margin:auto}
+ .attacks button{min-width:0;min-height:44px}
+}

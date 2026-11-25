@@ -32,14 +32,28 @@ function newRound(g){
 }
 const rng=g=>{g.seed=(Math.imul(g.seed,1664525)+1013904223)>>>0;return g.seed/4294967296;};
 const moves={light:{start:.085,active:.09,recover:.19,damage:7,reach:78,level:'mid'},heavy:{start:.19,active:.11,recover:.34,damage:13,reach:111,level:'high'},low:{start:.14,active:.1,recover:.29,damage:10,reach:94,level:'low'},air:{start:.10,active:.14,recover:.24,damage:10,reach:91,level:'high'},special:{start:.30,active:.08,recover:.43,damage:0,reach:0,level:'mid'}};
+// Six distinct arcade normals; legacy A/S and down+S retain their rules.
+Object.assign(moves,{
+ medium:{start:.13,active:.10,recover:.23,damage:9,reach:91,level:'mid'},
+ kickLow:{start:.10,active:.12,recover:.25,damage:8,reach:97,level:'low'},
+ kickMid:{start:.15,active:.12,recover:.27,damage:10,reach:118,level:'mid'},
+ kickHigh:{start:.22,active:.13,recover:.36,damage:14,reach:128,level:'high'}
+});
+const normalKeys=['light','medium','heavy','kickLow','kickMid','kickHigh'];
+const links={light:['medium','heavy','kickMid'],medium:['heavy','kickHigh'],kickLow:['kickMid','heavy'],kickMid:['kickHigh']};
 const duration=m=>m.start+m.active+m.recover;
 export function queueAction(f,action){
- if(['light','heavy','special','jump'].includes(action)&&!f.buffer.some(b=>b.action===action))f.buffer.push({action,ttl:.23});
+ if([...normalKeys,'special','jump'].includes(action)&&!f.buffer.some(b=>b.action===action))f.buffer.push({action,ttl:.23});
 }
 function startMove(f,key){
  if(key==='special'&&f.meter<30)return false;
  if(key==='special')f.meter-=30;
- f.move={...moves[key],key};f.state='attack';f.age=0;f.hit=false;f.connected=false;f.guard=0;return true;
+ const base=moves[key];if(!base)return false;
+ const style=f.def.style,normal=normalKeys.includes(key);
+ // Archetypes differ in reach and recovery without altering special costs or legacy damage.
+ const reachScale=normal?(style==='caster'?1.07:style==='sovereign'?1.04:1):1;
+ const recoveryScale=normal?(style==='gunner'?.90:style==='sovereign'?1.06:1):1;
+ f.move={...base,reach:base.reach*reachScale,recover:base.recover*recoveryScale,key};f.state='attack';f.age=0;f.hit=false;f.connected=false;f.guard=0;return true;
 }
 function body(f){const h=f.state==='crouch'||f.state==='guard-low'?77:126;return {left:f.x-26,right:f.x+26,bottom:f.y,top:f.y+h};}
 const intersects=(a,b)=>a.left<b.right&&a.right>b.left&&a.bottom<b.top&&a.top>b.bottom;
@@ -83,14 +97,14 @@ function updateFighter(g,f,o,input,dt){
    }
   }
   // A connected light may link into a heavy during the recovery, not indefinitely.
-  const link=f.connected&&m.key==='light'&&f.age>=m.start+m.active?f.buffer.findIndex(b=>b.action==='heavy'):-1;
-  if(link>=0){f.buffer.splice(link,1);startMove(f,'heavy');}
+  const link=f.connected&&links[m.key]&&f.age>=m.start+m.active?f.buffer.findIndex(b=>links[m.key].includes(b.action)):-1;
+  if(link>=0){const action=f.buffer.splice(link,1)[0].action;startMove(f,action);}
   else if(f.age>=duration(m)){f.move=null;f.state='idle';}
  }else{
   const next=f.buffer.shift()?.action;
   const guard=input.guard||axis===-f.face;
   if(next==='jump'&&grounded){f.vy=f.def.jump;f.state='jump';f.vx=axis*f.def.speed;}
-  else if(next&&next!=='jump'&&startMove(f,next==='heavy'?!grounded?'air':input.down?'low':'heavy':next==='light'&&!grounded?'air':next)){f.vx=0;}
+  else if(next&&next!=='jump'&&startMove(f,next==='heavy'?!grounded?'air':input.down?'low':'heavy':normalKeys.includes(next)&&!grounded?'air':next)){f.vx=0;}
   else if(!grounded){f.state='jump';f.vx=axis*f.def.speed*.8;}
   else if(input.down){f.state=guard?'guard-low':'crouch';f.vx=0;}
   else if(guard&&(input.guard||Math.abs(o.x-f.x)<170)){f.state='guard-high';f.vx=input.guard?0:axis*f.def.speed*.52;}
@@ -115,18 +129,42 @@ function updateProjectiles(g,dt){
  for(let i=0;i<g.projectiles.length;i++)for(let j=i+1;j<g.projectiles.length;j++){const a=g.projectiles[i],b=g.projectiles[j];if(a.life>0&&b.life>0&&a.owner!==b.owner&&Math.hypot(a.x-b.x,a.y-b.y)<a.radius+b.radius){a.life=b.life=0;addEffect(g,(a.x+b.x)/2,(a.y+b.y)/2,'guard','#d3e9ff');}}
  g.projectiles=g.projectiles.filter(p=>p.life>0&&p.x>-80&&p.x<WIDTH+80);
 }
+// Tactical preferences remain deterministic for replay and are not omniscient.
+const tactics={
+ flavio:[105,.25,.42],pf:[95,.40,.24],army:[105,.36,.30],janones:[75,.23,.55],
+ joice:[135,.35,.37],soraya:[155,.44,.26],boulos:[78,.20,.63],haddad:[160,.55,.22],
+ simone:[145,.48,.28],dino:[112,.42,.32],xandao:[104,.43,.38],lula:[126,.42,.39],
+ dilma:[168,.54,.25],bossonari:[85,.30,.58],'meme-army':[93,.28,.56],
+ 'ana-elisa':[142,.51,.30],rick:[84,.25,.61],sofia:[103,.32,.50],guilherme:[88,.24,.60],
+ erika:[150,.52,.28],jones:[118,.40,.46],maestro:[92,.31,.53],capita:[153,.49,.29]
+};
 function cpu(g,b,p,dt){
  g.aiFor-=dt;if(g.aiFor>0)return {...g.aiInput,press:[]};
- const hard=g.difficulty==='hard',easy=g.difficulty==='easy',distance=Math.abs(p.x-b.x),toward=p.x>b.x?'right':'left';
+ const hard=g.difficulty==='hard',easy=g.difficulty==='easy',distance=Math.abs(p.x-b.x);
+ const toward=p.x>b.x?'right':'left',away=toward==='right'?'left':'right';
+ const [spacing,ranged,aggression]=tactics[b.def.id]||[105,.36,.40];
  g.aiFor=(hard?.13:easy?.33:.22)+rng(g)*.13;
  const chance=rng(g),input={press:[]};
  if(b.stun>0||b.move){g.aiInput=input;return input;}
- if(p.move&&p.age<p.move.start+.06&&distance<145&&chance<(hard?.74:easy?.25:.48)){input.guard=true;input.down=p.move.level==='low';}
- else if(distance>165&&b.meter>=30&&chance<(hard?.63:.36)){input.press=['special'];}
- else if(distance>90){input[toward]=true;if(distance>210&&chance<.22)input.press=['jump'];}
- else if(chance<.16){input.guard=true;}
- else if(chance<.58){input.press=['light'];}
- else {input.down=chance>.83;input.press=['heavy'];}
+ const threat=g.projectiles.some(q=>q.owner===p&&q.life>0&&Math.abs(q.x-b.x)<145&&Math.sign(q.vx)===Math.sign(b.x-q.x)&&Math.abs(q.y-(b.y+60))<70);
+ if((threat||p.move&&p.age<p.move.start+.06&&distance<145)&&chance<(hard?.74:easy?.25:.48)){
+  input.guard=true;input.down=p.move?.level==='low';
+ }else if(distance>125&&b.meter>=30&&chance<ranged*(hard?1.25:easy?.7:1)){
+  input.press=['special'];
+ }else if(distance>spacing+12){
+  input[toward]=true;if(distance>210&&chance<aggression*.45)input.press=['jump'];
+ }else if(distance<spacing-26&&spacing>115&&chance<ranged*.45){
+  input[away]=true;
+ }else if(distance>115){
+  input[toward]=true;
+ }else if(chance<.10){
+  input.guard=true;
+ }else if(chance<.10+aggression*.5){
+  input.press=['light'];
+ }else{
+  const choices=b.def.style==='sovereign'?['heavy','kickHigh','kickMid']:b.def.style==='gunner'?['medium','kickLow','light']:['medium','kickMid','kickLow','heavy'];
+  input.press=[choices[Math.floor(rng(g)*choices.length)]];
+ }
  g.aiInput={...input,press:[]};return input;
 }
 function conclude(g){
