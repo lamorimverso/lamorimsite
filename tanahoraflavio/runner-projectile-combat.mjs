@@ -1,10 +1,10 @@
-import {PLAYER,playerX,visibleWidth} from './runner-run-geometry.mjs?v=f21951232de3';
+import {PLAYER,playerX,visibleWidth} from './runner-run-geometry.mjs?v=e55c2c4eae5e';
 import {random,nextSeed} from './runner-random.mjs?v=8de9f87c7593';
 import {heroPowerFor} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
 import {advanceAmmo} from './runner-supplies.mjs?v=44c67e8a5802';
 import {HERO_SHOT_DURATION,DUEL_CHARGE_SECONDS,heroShotPose} from './runner-hero-shot.mjs?v=7aa1e19e9838';
 import {playerBodyFor} from './runner-body.mjs?v=57ec474fca38';
-import {bossArenaPose,bossCounterWindow} from './runner-bosses.mjs?v=f8107568ec3b';
+import {bossArenaPose,bossCounterWindow} from './runner-bosses.mjs?v=dae0075d20c5';
 
 export function setAttackRun(run,active){
  run.player.attackHeld=!!active&&run.status==='running'&&!run.player.isJacare&&!run.boss?.traversal;

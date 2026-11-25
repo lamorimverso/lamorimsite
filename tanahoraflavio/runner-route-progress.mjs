@@ -1,5 +1,5 @@
 import {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS} from './runner-route-data.mjs?v=c4fcfde513ff';
-import {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=f8107568ec3b';
+import {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=dae0075d20c5';
 
 export function stageAt(seconds,stages=STAGES) {
  const s=Number.isFinite(seconds)?Math.max(0,seconds):0;

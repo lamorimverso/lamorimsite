@@ -2,7 +2,7 @@ import {STAGES,STORY_STAGES,SCENE_DISTANCE} from './runner-route-data.mjs?v=c4fc
 import {bossMechanicFor} from './runner-boss-mechanics.mjs?v=640e2bd41abb';
 import {BOSS_RANKS,bossProfileFor} from './runner-boss-profiles.mjs?v=740e8ab135c4';
 import {bossFlightPose} from './runner-boss-flight.mjs?v=a2f8750919e6';
-import {platformBossPose} from './runner-platform-boss.mjs?v=06f6bd14b28a';
+import {platformBossPose} from './runner-platform-boss.mjs?v=402197255f2a';
 // Encontros ficcionais: quatro classes por cenário, sem mudar identidades.
 
 export const STORY_OPENING_DISTANCE=20800;

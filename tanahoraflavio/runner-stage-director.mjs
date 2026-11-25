@@ -1,5 +1,5 @@
 import {SCENE_DISTANCE,STAGES,STORY_STAGES} from './runner-route-data.mjs?v=c4fcfde513ff';
-import {STORY_OPENING_DISTANCE,STORY_ENCOUNTERS,storyBossAt,bossRoleLabel,storyApproachAt} from './runner-bosses.mjs?v=f8107568ec3b';
+import {STORY_OPENING_DISTANCE,STORY_ENCOUNTERS,storyBossAt,bossRoleLabel,storyApproachAt} from './runner-bosses.mjs?v=dae0075d20c5';
 
 export const RAID_HANDOFF_SECONDS=4.5;
 export const PAIR_RUN_DISTANCE=100000;

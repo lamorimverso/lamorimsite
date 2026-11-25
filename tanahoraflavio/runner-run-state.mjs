@@ -1,9 +1,9 @@
-import {WORLD,PLAYER} from './runner-run-geometry.mjs?v=f21951232de3';
+import {WORLD,PLAYER} from './runner-run-geometry.mjs?v=e55c2c4eae5e';
 import {HERO_MAX_HP} from './runner-body.mjs?v=57ec474fca38';
 import {createMovementSkills} from './runner-movement-skills.mjs?v=d0ad734b4838';
 import {createTerrain} from './runner-terrain.mjs?v=d75123c1af20';
 import {ROUTE_AMMO} from './runner-supplies.mjs?v=44c67e8a5802';
-import {STORY_OPENING_DISTANCE,optionalStoryBossAt} from './runner-bosses.mjs?v=f8107568ec3b';
+import {STORY_OPENING_DISTANCE,optionalStoryBossAt} from './runner-bosses.mjs?v=dae0075d20c5';
 import {SCENE_DISTANCE} from './runner-route-data.mjs?v=c4fcfde513ff';
 
 export const announce = (run,text) => {run.event=text;run.events++;};
