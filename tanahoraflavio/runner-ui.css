@@ -1,0 +1,179 @@
+/* Alpha visual da corrida: somente apresentação, sem alterar dimensões ou regras. */
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) {
+  --alpha-accent: #4338a3;
+  --alpha-ink: #20213b;
+  --alpha-muted: #555a72;
+  --alpha-line: #d7daea;
+  background: #f8f9fd;
+  border-color: var(--alpha-line);
+  box-shadow: 0 8px 28px #24264b12;
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-heading h2 {
+  color: var(--alpha-ink);
+  letter-spacing: -.035em;
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-dashboard .game-scoreboard {
+  background: #fff;
+  border-color: var(--alpha-line);
+  box-shadow: none;
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-dashboard .game-scoreboard strong {
+  color: var(--alpha-ink);
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-dashboard .game-scoreboard span,
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-dashboard .game-stage-clock {
+  color: var(--alpha-muted);
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-dashboard .game-stage-progress {
+  background: #e0e3f0;
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-dashboard .game-stage-progress > span {
+  background: var(--alpha-accent);
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-viewport {
+  border-color: var(--alpha-line);
+  box-shadow: none;
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-mode-chooser label,
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-mode-chooser .game-battle-link {
+  background: #fff;
+  color: var(--alpha-ink);
+  border-color: var(--alpha-line);
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-mode-chooser label:has(input:checked) {
+  background: #eeedff;
+  color: #31277c;
+  border-color: var(--alpha-accent);
+  box-shadow: inset 0 0 0 1px var(--alpha-accent);
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-mode-chooser input {
+  accent-color: var(--alpha-accent);
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-mode-chooser label:has(input:focus-visible),
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-mode-chooser .game-battle-link:focus-visible {
+  outline: 2px solid var(--alpha-accent);
+  outline-offset: 2px;
+}
+
+/* UI follow-up: scope to the runner, preserve canvas geometry and input events. */
+#game .game-dashboard .game-scoreboard #game-form-status {
+  color: #683a24;
+  background: #f9e8d2;
+}
+#game .game-dashboard .game-stage-clock {
+  max-width: 100%;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+#game .game-dashboard .game-stage-header {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 42%);
+}
+#game .game-dashboard .game-stage-header > div:first-child {
+  min-width: 0;
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-controls #game-start:not(:disabled) {
+  background: var(--alpha-accent);
+  border-color: var(--alpha-accent);
+  color: #fff;
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-controls #game-start:not(:disabled):hover {
+  background: #352a87;
+}
+#game .game-mode-chooser .game-battle-link {
+  min-height: 44px;
+}
+#game #game-settings > .game-settings-content {
+  color: #20213b;
+  border-color: #d7daea;
+  scrollbar-gutter: stable;
+}
+#game #game-settings .game-instructions {
+  color: #41465c;
+  font-size: 13px;
+  line-height: 1.55;
+}
+#game .game-help-line {
+  display: block;
+}
+#game .game-help-line + .game-help-line {
+  margin-top: 8px;
+}
+#game #game-settings .game-options-note,
+#game #game-control-bindings .control-bindings-device,
+#game #game-control-bindings .control-bindings-status {
+  color: #4d5268;
+  font-size: 12px;
+}
+#game #game-settings select,
+#game #game-control-bindings button,
+#game #game-practice button {
+  min-height: 44px;
+}
+#game #game-control-bindings .control-bindings-scroll {
+  max-height: 240px;
+  border-color: #d7daea;
+}
+#game #game-control-bindings .control-binding {
+  font-size: 12px;
+}
+#game #game-control-bindings .control-binding[aria-pressed="true"] {
+  border-color: #4338a3;
+  background: #eeedff;
+  color: #31277c;
+}
+#game :is(button, a, summary, select, input):focus-visible {
+  outline: 3px solid #7257a2;
+  outline-offset: 2px;
+}
+#game :is(#game-weapon-cycle, #game-reserve-shield, #game-attack):focus-visible {
+  outline-color: #ffe396;
+}
+#game .game-combat-hud .combat-tag {
+  color: #fff;
+  background: #21384c;
+}
+#game .game-battle-cue {
+  background: #fff8ed;
+}
+#game .game-battle-cue[data-opening="true"] {
+  background: #f1f8ec;
+}
+#game[data-run-state="ready"] .game-start-hint {
+  color: #312b48;
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+#game .game-hint-touch { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  #game .game-hint-touch { display: inline; }
+  #game .game-hint-keyboard { display: none; }
+}
+@media (max-width: 759px) {
+  #game .game-dashboard .game-stage-header {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 44%);
+  }
+  #game .game-dashboard .game-stage-clock {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+  #game #game-control-bindings .control-binding {
+    font-size: 11px;
+  }
+}
+@media (max-width: 479px) {
+  #game .game-mode-chooser label {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  #game #game-settings .game-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+#game:is(:fullscreen,[data-mobile-fullscreen="true"]) .game-dashboard .game-stage-clock,
+#game:is(:fullscreen,[data-mobile-fullscreen="true"]) .game-dashboard #game-stage-name {
+  color: #f3f5fa;
+}
+#game:is(:fullscreen,[data-mobile-fullscreen="true"]) :is(.game-sound, .game-settings summary):focus-visible {
+  outline-color: #ffe396;
+}
