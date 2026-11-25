@@ -1,4 +1,4 @@
-import {ROSTER,STAGES,WIDTH,GROUND,STEP,createBattle,stepBattle,randomMatchup} from './battle-core.mjs?v=d00ae32cfef8';
+import {ROSTER,STAGES,WIDTH,GROUND,STEP,createBattle,stepBattle,randomMatchup} from './battle-core.mjs?v=898ff997b13a';
 import {drawActor,loadSprites,drawProjectile} from '../runner-art.mjs?v=dbaac525a595';
 import {drawHoverEnemy} from '../runner-boss-art.mjs?v=c0f55e6867c9';
 import {drawScenery} from '../runner-scenery.mjs?v=ce0fa6b0d678';
@@ -14,8 +14,8 @@ function refreshPortraits(){for(const button of document.querySelectorAll('.figh
 async function prepare(){try{await loadSprites();ready=true;refreshPortraits();$('status').textContent='Escolha o lutador, o chefão e a arena.';$('start').disabled=false;}catch{$('status').textContent='Não foi possível carregar os desenhos. Recarregue a página.';}}
 prepare();
 function clear(){held.clear();pressed=[];for(const b of document.querySelectorAll('.touch button'))b.classList.remove('active');}
-const mapping={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'jump',ArrowDown:'down',KeyA:'light',KeyS:'heavy',KeyD:'guard',KeyF:'special'};
-const actions=new Set(['jump','light','heavy','special']);
+const mapping={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'jump',ArrowDown:'down',KeyA:'light',KeyQ:'medium',KeyS:'heavy',KeyZ:'kickLow',KeyX:'kickMid',KeyC:'kickHigh',KeyD:'guard',KeyF:'special'};
+const actions=new Set(['jump','light','medium','heavy','kickLow','kickMid','kickHigh','special']);
 function press(source,action){if(held.has(source))return;held.set(source,action);if(actions.has(action))pressed.push(action);}
 function release(source){held.delete(source);}
 addEventListener('keydown',e=>{if(!g||$('fight').hidden||!mapping[e.code]||e.ctrlKey||e.metaKey||e.altKey)return;e.preventDefault();if(!e.repeat)press(e.code,mapping[e.code]);});
@@ -32,7 +32,7 @@ function actor(f){
  else {c.scale(-f.face,low?.68:1);if(f.state==='walk'&&!reduced.matches)c.translate(0,Math.sin(f.walk*Math.PI/2)*2);drawHoverEnemy(c,{type:f.def.id,platform:false,scale:1.24,phase,preparing:wind,attacking:active,recovering:!!attack&&!wind&&!active,hurt:hit,reducedMotion:reduced.matches,classId:f.def.style,action:attack?.level==='low'?'crouch':'jump',progress:attack?Math.min(1,f.age/(attack.start+attack.active)):0,stageId:g.stage});}
  c.restore();
  if(guard){c.save();c.strokeStyle='#9edbff';c.lineWidth=3;c.globalAlpha=.8;c.translate(f.x,y);c.scale(f.face,1);c.beginPath();c.ellipse(12,-(low?44:69),37,low?43:68,0,-1.4,1.4);c.stroke();c.restore();}
- if(active&&attack.key!=='special'){c.save();c.strokeStyle='#fff0b6';c.lineWidth=5;c.globalAlpha=.65;c.beginPath();const yy=y-(attack.level==='low'?34:81);c.moveTo(f.x+f.face*22,yy-24);c.quadraticCurveTo(f.x+f.face*attack.reach,yy-28,f.x+f.face*(attack.reach-6),yy+18);c.stroke();c.restore();}
+ if(active&&attack.key!=='special'){c.save();c.strokeStyle='#fff0b6';c.lineWidth=5;c.globalAlpha=.65;c.beginPath();const yy=y-(attack.level==='low'?34:attack.key.startsWith('kick')?63:81);c.moveTo(f.x+f.face*22,yy-24);c.quadraticCurveTo(f.x+f.face*attack.reach,yy-28,f.x+f.face*(attack.reach-6),yy+18);c.stroke();c.restore();}
 }
 function meter(id,value){const el=$(id);el.style.width=value+'%';el.parentElement.setAttribute('aria-valuenow',String(Math.round(value)));}
 function render(){
