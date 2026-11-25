@@ -1,0 +1,56 @@
+/* Alpha visual da corrida: somente apresentação, sem alterar dimensões ou regras. */
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) {
+  --alpha-accent: #4338a3;
+  --alpha-ink: #20213b;
+  --alpha-muted: #555a72;
+  --alpha-line: #d7daea;
+  background: #f8f9fd;
+  border-color: var(--alpha-line);
+  box-shadow: 0 8px 28px #24264b12;
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-heading h2 {
+  color: var(--alpha-ink);
+  letter-spacing: -.035em;
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-dashboard .game-scoreboard {
+  background: #fff;
+  border-color: var(--alpha-line);
+  box-shadow: none;
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-dashboard .game-scoreboard strong {
+  color: var(--alpha-ink);
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-dashboard .game-scoreboard span,
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-dashboard .game-stage-clock {
+  color: var(--alpha-muted);
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-dashboard .game-stage-progress {
+  background: #e0e3f0;
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-dashboard .game-stage-progress > span {
+  background: var(--alpha-accent);
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-viewport {
+  border-color: var(--alpha-line);
+  box-shadow: none;
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-mode-chooser label,
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-mode-chooser .game-battle-link {
+  background: #fff;
+  color: var(--alpha-ink);
+  border-color: var(--alpha-line);
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-mode-chooser label:has(input:checked) {
+  background: #eeedff;
+  color: #31277c;
+  border-color: var(--alpha-accent);
+  box-shadow: inset 0 0 0 1px var(--alpha-accent);
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-mode-chooser input {
+  accent-color: var(--alpha-accent);
+}
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-mode-chooser label:has(input:focus-visible),
+#game:not(:fullscreen):not([data-mobile-fullscreen="true"]) .game-mode-chooser .game-battle-link:focus-visible {
+  outline: 2px solid var(--alpha-accent);
+  outline-offset: 2px;
+}
