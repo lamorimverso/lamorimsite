@@ -1,34 +1,48 @@
+import {WORLD,PLAYER,MIN_VIEWPORT_WIDTH,visibleWidth,arenaReserve,frontContact,playerX,playerBounds} from './runner-run-geometry.mjs?v=f21951232de3';
+export {WORLD,PLAYER,playerX,playerBounds};
+import {random,nextSeed,createSeededRandom} from './runner-random.mjs?v=8de9f87c7593';
+export {createSeededRandom};
+import {PURSUERS,CHARACTER_UNLOCK_LEVEL,unlockedCharacters,characterProgressAt,chooseProgressiveCharacter,foeFor,difficultyAt,pursuitAt} from './runner-difficulty.mjs?v=4e2a76163482';
+export {PURSUERS,CHARACTER_UNLOCK_LEVEL,unlockedCharacters,characterProgressAt,difficultyAt,pursuitAt};
+import {announce,createRunState,startRun,ballotDigit,ballotClear,ballotConfirm,togglePause,scoreFor} from './runner-run-state.mjs?v=45eb697d2387';
+export {startRun,ballotDigit,ballotClear,ballotConfirm,togglePause,scoreFor};
+import {assistance,REACTION_GAP,threatTimeToContact,threatReservation,threatMotion,rearMotion} from './runner-threat-timing.mjs?v=267f5133b709';
+export {threatTimeToContact};
+import {projectileStyle,ATTACK_NAMES,attackCueFor} from './runner-attack-cues.mjs?v=5545f4acc1e6';
+export {projectileStyle,ATTACK_NAMES,attackCueFor};
+import {BOSS_ROSTER,bossAtRound,bossAttackFor,nextBossDistance,takeBoss,storyDuelChallenge,applyStoryDuelTempo} from './runner-boss-rules.mjs?v=4a94f7ed2f96';
+export {BOSS_ROSTER,bossAtRound,bossAttackFor,storyDuelChallenge,applyStoryDuelTempo};
+import {setAttackRun,heroMuzzleFor,isHostileProjectile,attackRun,projectileFlightY,storyVolleyPendingVictory,advanceReflectedProjectile,advanceHeroShots} from './runner-projectile-combat.mjs?v=260f593e4ff3';
+export {setAttackRun,heroMuzzleFor,isHostileProjectile,attackRun};
+import {campaignRouteDistance,routeClock,routeStagesFor,routeStageFor,groundLessonFor,lessonPending,nextAirTransfer,routeTransitionFor,stageAt,stageTransitionAt} from './runner-route-progress.mjs?v=adaaacdf6859';
+export {campaignRouteDistance,routeStagesFor,routeStageFor,routeTransitionFor,stageAt,stageTransitionAt};
 import {stageRouteTravel,RAID_HANDOFF_SECONDS,PAIR_RUN_DISTANCE,pairRunRemaining} from './runner-stage-director.mjs?v=071886f07909';
 export {stagePlanFor} from './runner-stage-director.mjs?v=071886f07909';
-import {HERO_MAX_HP,playerBodyFor} from './runner-body.mjs?v=57ec474fca38';
-import {createMovementSkills,movementProfileFor,rewardMovementVictory} from './runner-movement-skills.mjs?v=d0ad734b4838';
+import {playerBodyFor} from './runner-body.mjs?v=57ec474fca38';
+import {movementProfileFor,rewardMovementVictory} from './runner-movement-skills.mjs?v=d0ad734b4838';
 export {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
 export {terrainProfileFor} from './runner-terrain.mjs?v=d75123c1af20';
-import {TERRAIN,STORY_DASH_RECOVERY_SECONDS,createTerrain,beginTerrain,beginGroundLesson,beginAirTransfer,aircraftHitFor,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer} from './runner-terrain.mjs?v=d75123c1af20';
+import {TERRAIN,STORY_DASH_RECOVERY_SECONDS,beginTerrain,beginGroundLesson,beginAirTransfer,aircraftHitFor,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer} from './runner-terrain.mjs?v=d75123c1af20';
 export {terrainSupportAt} from './runner-terrain.mjs?v=d75123c1af20';
 import {stageRosterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 import {groundRhythmFor,groundStyleFor} from './runner-ground-rhythm.mjs?v=c282904db6c6';
-import {ROUTE_AMMO,advanceAmmo,addShieldPart} from './runner-supplies.mjs?v=44c67e8a5802';
-import {heroPowerFor,grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
+import {ROUTE_AMMO,addShieldPart} from './runner-supplies.mjs?v=44c67e8a5802';
+import {grantBossPower} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
 export {grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
-import {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=c4fcfde513ff';
+import {STAGES,SCENE_DISTANCE,ROUTE_DISTANCE} from './runner-route-data.mjs?v=c4fcfde513ff';
 export {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS,ROUTE_DISTANCE} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=740e8ab135c4';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=bb7820d6e288';
 import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
-import {HERO_SHOT_DURATION,DUEL_CHARGE_SECONDS,heroShotPose} from './runner-hero-shot.mjs?v=7aa1e19e9838';
+
 import {regularCastMuzzle} from './runner-cast-pose.mjs?v=8f2c5aee1585';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=d3b6a81b34b9';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
-import {BOSS_ARENA_RESERVE,BOSS_RUN_INTERVAL,BOSS_CLASSES,STORY_ENCOUNTERS,STORY_OPENING_DISTANCE,storyBossAt,optionalStoryBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossCounterWindow,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=f8107568ec3b';
+import {BOSS_RUN_INTERVAL,BOSS_CLASSES,STORY_ENCOUNTERS,storyBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=f8107568ec3b';
 export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=f8107568ec3b';
 export {bossArenaPose} from './runner-bosses.mjs?v=f8107568ec3b';
 // Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
 import {bossStopsAutoRun} from './runner-drawn-motion.mjs?v=0d1971800c55';
-export const WORLD = Object.freeze({width:900,height:300,ground:246});
-// Envelope de todas as poses no atlas a .95 de escala, incluindo o agachamento.
-// A mesma margem serve ao jacaré e evita deslocar o herói ao trocar de postura.
-export const PLAYER = Object.freeze({x:120,width:34,height:58,visualLeft:-26,visualRight:75});
 export const JACARE_RECOVERY_SECONDS = 10;
 export const GAME_MODES = Object.freeze(['endless','story']);
 export const STORY_BOSS_COUNT = STORY_ENCOUNTERS;
@@ -40,38 +54,6 @@ const RAID_WARNING_FOR=1.2,RAID_ACTIVE_FOR=10,RAID_AUDIO_MARGIN_FOR=1;
 // sem alongar os dez segundos de perigos ativos.
 export const RAID_TIMING=Object.freeze({warningFor:RAID_WARNING_FOR,activeFor:RAID_ACTIVE_FOR,audioMarginFor:RAID_AUDIO_MARGIN_FOR,
  recoveryFor:Math.max(2,(Number(ARCHIVE_VOICES.joice.durationSeconds)||0)+RAID_AUDIO_MARGIN_FOR-RAID_WARNING_FOR-RAID_ACTIVE_FOR)});
-export const PURSUERS = Object.freeze([
- {type:'pf',name:'Polícia Federal',short:'PF',width:34,height:44,color:'#284c70'},
- {type:'janones',name:'Janones',short:'Janones',width:36,height:46,color:'#346a9c'},
- {type:'army',name:'Exército',short:'Exército',width:40,height:47,color:'#64734c'},
- {type:'meme-army',name:'Exército de memes do Lula',short:'Memes',width:46,height:44,color:'#b44d67'},
- {type:'bossonari',name:'Bossonari',short:'Bossonari',width:56,height:58,color:'#7a4f8d'},
- {type:'boulos',name:'Boulos',short:'Boulos',width:38,height:46,color:'#765488'},
- {type:'dino',name:'Flávio Dino',short:'Dino',width:40,height:48,color:'#8a6247'},
- {type:'xandao',name:'Xandão',short:'Xandão',width:40,height:49,color:'#493f62'},
- {type:'haddad',name:'Haddad',short:'Taxad',width:40,height:48,color:'#286779'},
- {type:'lula',name:'Lula',short:'Lula',width:46,height:50,color:'#aa3c50'},
- {type:'dilma',name:'Dilma Rousseff',short:'Dilma',width:36,height:46,color:'#b74250'},
- {type:'simone',name:'Simone Tebet',short:'Simone',meme:'Gostosas do Lula',memeKind:'adesivo cenográfico; não fala autêntica',width:36,height:46,color:'#586fa2'},
- {type:'soraya',name:'Soraya Thronicke',short:'Soraya',width:38,height:46,color:'#866548'},
- {type:'orla-runner',name:'Patrulheiro da orla',short:'Orla',width:38,height:44,color:'#417382'},
- {type:'paulista-runner',name:'Corredor da Paulista',short:'Paulista',width:37,height:43,color:'#8375a4'},
- {type:'route-scout',name:'Batedor da rota',short:'Batedor',width:38,height:45,color:'#96805a'},
- {type:'terminal-guard',name:'Guarda do terminal',short:'Terminal',width:37,height:44,color:'#567889'},
- {type:'arrow-panel',name:'Painel de setas',short:'Painel',width:39,height:33,color:'#725bb4'},
- {type:'lula-runner',name:'Corredor do Exército do Lula',short:'Corredor',width:38,height:45,color:'#ab4556'},
- {type:'ze-gotinha-rival',name:'Zé Gotinha rival',short:'Gotinha rival',width:32,height:43,color:'#8f477f'},
- {type:'meme-ghost',name:'Aparição do Fantasma',short:'Aparição',width:42,height:42,color:'#8f477f'},
- {type:'barrier',name:'Barreira',short:'Barreira',width:44,height:32,color:'#c48845'},
- {type:'case',name:'Mala',short:'Mala',width:38,height:36,color:'#906490'}
-].map((p,index)=>Object.freeze({...p,index})));
-export const BOSS_ROSTER = Object.freeze(['haddad','lula','xandao','janones','pf']);
-const BOSS_GOALS = Object.freeze({
- haddad:{attacks:9,goalKind:'papers'},
- lula:{attacks:10,goalKind:'patterns'},
- xandao:{attacks:12,goalKind:'hammer-mandado'},janones:{attacks:9,goalKind:'urgent'},pf:{attacks:8,goalKind:'blitz'},
- army:{attacks:8,goalKind:'flares'},bossonari:{attacks:14,goalKind:'phantoms'}
-});
 export const PICKUPS = Object.freeze([
  Object.freeze({type:'passport',name:'Passaporte',value:10,purpose:'100 passaportes = +1 continuação'}),
  Object.freeze({type:'shield',name:'Parte de escudo',value:0,purpose:'6 partes = 1 escudo de reserva'}),
@@ -85,99 +67,6 @@ export const RAID_FACTS = Object.freeze([
  {title:'Decisão · 2021',text:'Em 2021, o STF anulou quatro relatórios do Coaf usados no caso.',source:'STF · 30/11/2021',url:'https://portal.stf.jus.br/noticias/verNoticiaDetalhe.asp?idConteudo=477496'},
  {title:'Arquivo · 2020',text:'Fabrício Queiroz e outros 15 investigados também foram denunciados pelo MP-RJ.',source:'MP-RJ · 04/11/2020',url:'https://www.mprj.mp.br/web/guest/visualizar?noticiaId=96203'}
 ].map(Object.freeze));
-const POOLS = [
- ['pf','barrier','janones','boulos','army'],['janones','army','barrier','pf'],
- ['pf','barrier','case','dino','army'],['army','pf','case','janones'],['army','pf','case'],['pf','janones','army','dino','case','barrier']
-];
-// Desbloqueio por risco: cada ator entra em cena após o jogador aprender a
-// reagir aos anteriores. Chefões mantêm a ordem e os marcos da História.
-export const CHARACTER_UNLOCK_LEVEL=Object.freeze({
- pf:1,barrier:1,dilma:1,
- janones:2,simone:2,
- army:3,case:3,soraya:3,
- boulos:4,
- 'meme-army':5,
- dino:6
-});
-const GROUND_CAST=Object.freeze(['pf','barrier','janones','army','case','boulos','dino']);
-const OVERHEAD_CAST=Object.freeze(['dilma','simone','soraya','meme-army']);
-export function unlockedCharacters(level,role='all'){
- const rank=Math.max(1,Math.min(10,Math.floor(Number(level)||1)));
- return (role==='ground'?GROUND_CAST:role==='overhead'?OVERHEAD_CAST:[...GROUND_CAST,...OVERHEAD_CAST])
-  .filter(type=>CHARACTER_UNLOCK_LEVEL[type]<=rank);
-}
-export function characterProgressAt(run){
- const level=difficultyAt(run.distance,run.elapsed).level;
- const available=unlockedCharacters(level).filter(type=>type!=='barrier'&&type!=='case');
- const all=unlockedCharacters(10).filter(type=>type!=='barrier'&&type!=='case');
- return {level,available:available.length,total:all.length,characters:available};
-}
-// Um ator novo aparece antes da repetição do elenco antigo, sem deixar
-// dois ataques seguidos com o mesmo personagem quando há alternativas.
-function chooseProgressiveCharacter(options,rng,seen=[],last=null){
- const fresh=options.filter(type=>!seen.includes(type));
- const eligible=fresh.length?fresh:options.filter(type=>type!==last);
- const choices=eligible.length?eligible:options;
- return choices[Math.floor(random(rng)*choices.length)];
-}
-const random = rng => Math.max(0,Math.min(.999999999,Number(rng())||0));
-const nextSeed = seed => (Math.imul(seed,1664525)+1013904223)>>>0;
-export function createSeededRandom(seed=0){
- let state=Number(seed)>>>0;
- return ()=>{state=nextSeed(state);return state/4294967296;};
-}
-const foeFor = type => PURSUERS.find(p=>p.type===type)||null;
-// Mantém stageAt em escala de 20 unidades por cenário, mas o percurso real
-// é SCENE_DISTANCE metros. Assim o cenário exige 7 km de fuga, não 20 s fixos.
-export const campaignRouteDistance = run => Math.max(0,run.routeDistance-(run.mode==='story'?STORY_OPENING_DISTANCE:0));
-const routeClock = run => campaignRouteDistance(run) / SCENE_DISTANCE * SCENE_SECONDS;
-export const routeStagesFor=run=>run.mode==='story'?STORY_STAGES:STAGES;
-export const routeStageFor=run=>stageAt(routeClock(run),routeStagesFor(run));
-function groundLessonRoute(stages,offset){
- return Object.freeze({lessonAt:offset+2*SCENE_DISTANCE+760,lessonExit:offset+2*SCENE_DISTANCE+1180,lessonStage:stages[2]});
-}
-const STORY_LESSON=groundLessonRoute(STORY_STAGES,STORY_OPENING_DISTANCE),ENDLESS_LESSON=groundLessonRoute(STAGES,0);
-const groundLessonFor=run=>run.mode==='story'?STORY_LESSON:ENDLESS_LESSON;
-const lessonPending=run=>!run.practice&&!run.terrain?.lessonCompleted&&Number.isFinite(run.terrain?.nextAt);
-function nextAirTransfer(run){
- if(run.practice||!Number.isFinite(run.terrain?.nextAt))return null;
- const stageIndex=Math.floor(campaignRouteDistance(run)/SCENE_DISTANCE),stages=routeStagesFor(run),story=run.mode==='story';
- // Only the first two departures stay on land. A new endless lap may fly
- // even through those same places after the original lesson is behind it.
- if(stageIndex<2||story&&stageIndex+1>=stages.length)return null;
- const from=stages[stageIndex%stages.length],to=stages[(stageIndex+1)%stages.length];
- const changesRegion=from.region&&to.region&&from.region!==to.region;
- if(from.country===to.country&&!changesRegion)return null;
- const arrival=(story?STORY_OPENING_DISTANCE:0)+(stageIndex+1)*SCENE_DISTANCE;
- return {from,to,boardAt:arrival-1400,arrival};
-}
-export function routeTransitionFor(run){
- const stages=routeStagesFor(run),flight=run.terrain?.active?.flight,arrival=run.terrain?.lastFlightArrival;
- if(flight){
-  const from=stages.find(stage=>stage.id===flight.from),to=stages.find(stage=>stage.id===flight.to);
-  if(from&&to)return {from,to,progress:flight.progress,active:true,kind:'air-transfer',phase:flight.phase};
- }
- const distance=run.routeDistance-arrival;
- if(Number.isFinite(arrival)&&distance>=0&&distance<SCENE_DISTANCE*.1){
-  const stage=routeStageFor(run);return {from:stage,to:stage,progress:1,active:false};
- }
- return stageTransitionAt(routeClock(run),stages);
-}
-
-const MIN_VIEWPORT_WIDTH=480;
-const visibleWidth = run => Math.max(MIN_VIEWPORT_WIDTH,Math.min(900,Number(run.viewportWidth)||WORLD.width));
-const announce = (run,text) => {run.event=text;run.events++;};
-const assistance = run => run.assisted ? .82 : 1;
-// Primeiro contato horizontal usa o mesmo recuo de 3 px da colisão abaixo.
-export const playerX = run => Number.isFinite(run.player.x)?run.player.x:PLAYER.x;
-const arenaReserve=run=>run.boss?.traversal?326:BOSS_ARENA_RESERVE;
-export const playerBounds = run => ({min:-PLAYER.visualLeft,max:visibleWidth(run)-(run.boss?.combat&&run.boss.phase!=='intro'?arenaReserve(run):PLAYER.visualRight)});
-const frontContact = run => playerX(run)+PLAYER.width-6;
-const REACTION_GAP = .82;
-// A full marked-lane escape can close opposing contacts by almost a second
-// at their 180px/s clearance floor, even after the marker itself has ended.
-const OPPOSING_ESCAPE_RESERVE=.95;
-// A retaguarda se aproxima pela esquerda; outras ameaças continuam pela direita.
 const JUMP_BUFFER_SECONDS = .12;
 const EDGE_JUMP_GRACE = .08;
 const STORY_JUMP_BUFFER_SECONDS = .15;
@@ -189,99 +78,8 @@ const isJacareAmpoule=o=>o.falling&&o.owner==='pfizer'&&o.type==='pfizer-ampoule
 const hasJacareVolley=run=>run.obstacles.some(isJacareAmpoule);
 const JACARE_RESTORE_GRACE = .55;
 const JACARE_RESTORE_FLASH = .48;
-export function threatTimeToContact(run,o){
- if(o.cast)return (o.waitFor||0)+o.cast.flightFor-o.cast.flightAge;
- if(o.groundHazard)return o.warningFor-o.age;
- if(o.falling)return o.warningFor+o.fallFor*.7-o.age;
- if(o.approach==='rear')return (o.waitFor||0)+(playerX(run)+5-(o.x+o.width-3))/-o.speed;
- if(o.bossFlight&&!o.returning){
-  const distance=o.x-frontContact(run),coast=o.bossFlight.remaining*o.bossFlight.speed;
-  if(distance>0&&coast>0)return (o.waitFor||0)+(distance<=coast?distance/o.bossFlight.speed:o.bossFlight.remaining+(distance-coast)/o.speed);
- }
- return (o.waitFor||0)+(o.x-frontContact(run))/o.speed;
-}
-// Zonas persistentes reservam também sua janela ativa antes da próxima onda.
-const threatReservation = (run,o) => threatTimeToContact(run,o)+(o.groundHazard?o.activeFor:0);
-
-export function difficultyAt(distance,elapsed=0) {
- const d=Number.isFinite(distance)?Math.max(0,distance):0,t=Number.isFinite(elapsed)?Math.max(0,elapsed):0;
- // Pressão cresce por várias voltas em vez de saturar na primeira.
- // O tempo e a distância continuam contínuos ao atravessar os cenários.
- const pressure=1-Math.exp(-(d/45000+t/360)),endurance=1-Math.exp(-d/180000),p=d/(d+10000);
- return {level:1+Math.floor(9*pressure)+Math.floor(6*endurance),pressure,endurance,
-  speed:270+170*pressure+95*endurance,obstacleGap:Math.max(.86,1.70-.66*pressure-.18*endurance),
-  pickupGap:12+8*p,passportGap:5.2+1.2*p,powerGap:24+32*p,
-  bossApproach:Math.max(.72,1.15-.33*pressure-.10*endurance),obstacleApproach:Math.max(.82,1.65-.73*pressure-.10*endurance)};
-}
-// Uma onda mais rápida nunca alcança a anterior e forma um par impossível.
-function threatSpeed(run,x,seconds,visibleX=x){
- if(run.aid?.kind==='telegraph')seconds+=run.aid.warningBonus??.24;
- const contactX=frontContact(run),rearContact=playerX(run)+5;
- const pending=run.obstacles.filter(o=>!o.passed&&(o.cast||o.x>contactX)&&o.speed>0)
-  .map(o=>threatReservation(run,o));
- // Opposite directions need room for one body-width of lateral escape
- // after a ground marker; that movement closes their two contact times.
- const rear=run.obstacles.filter(o=>!o.passed&&!o.counted&&o.approach==='rear'&&o.speed<0)
-  .map(o=>threatReservation(run,o))
-  .filter(t=>t>0).map(t=>t+OPPOSING_ESCAPE_RESERVE);
- const speed=Math.max(1,visibleX-contactX)/seconds*assistance(run);
- const drops=run.obstacles.filter(o=>o.falling||o.groundHazard).map(o=>threatReservation(run,o)).filter(t=>t>0);
- const nextContact=Math.max((x-contactX)/speed,...pending.concat(rear,drops).map(t=>t+REACTION_GAP));
- return Math.max(1,x-contactX)/nextContact;
-}
-function threatMotion(run,x,seconds,visibleX=x){
- const requested=threatSpeed(run,x,seconds,visibleX),speed=Math.max(180,requested);
- // O tempo extra vira antecipação visível, sem alongar a travessia física.
- return {speed,waitFor:Math.max(0,(x-frontContact(run))/requested-(x-frontContact(run))/speed)};
-}
-export function projectileStyle(type){
- return ({wind:'wind','budget-sheets':'paper',receipts:'paper','paper-gate':'paper',mandado:'paper',
- hammer:'metal',handcuffs:'metal',barrier:'metal',stamp:'metal','parachute-cross':'fall',
- 'meme-ghost':'ghost',lhand:'glide',message:'glide','cloroquina-prop':'metal','ivermectina-prop':'metal'})[type]||'glide';
-}
-export function stageAt(seconds,stages=STAGES) {
- const s=Number.isFinite(seconds)?Math.max(0,seconds):0;
- const index=Math.floor((s+1e-7)/SCENE_SECONDS);
- return stages===STORY_STAGES?stages[Math.min(index,stages.length-1)]:stages[index%stages.length];
-}
-export function stageTransitionAt(seconds,stages=STAGES) {
- const s=Number.isFinite(seconds)?Math.max(0,seconds):0,current=stageAt(s,stages);
- const index=Math.round(s/SCENE_SECONDS),boundary=index*SCENE_SECONDS;
- if(index<1||stages===STORY_STAGES&&index>=stages.length||Math.abs(s-boundary)>=2)return {from:current,to:current,progress:1,active:false};
- const linear=Math.max(0,Math.min(1,(s-boundary+2)/4));
- return {from:stages[(index-1)%stages.length],to:stages[index%stages.length],progress:linear*linear*(3-2*linear),active:true};
-}
-export function pursuitAt(seconds,rng=()=>.5,level=10,seen=[],last=null) {
- const stagePool=POOLS[stageAt(seconds).index];
- const pool=stagePool.filter(type=>CHARACTER_UNLOCK_LEVEL[type]<=level);
- return foeFor(chooseProgressiveCharacter(pool.length?pool:['pf'],rng,seen,last));
-}
-// Retaguarda usa a mesma janela de leitura, sem disputar o contato com um perigo frontal.
-function rearMotion(run,x,width){
- const contactX=frontContact(run),rearContact=playerX(run)+5;
- const front=run.obstacles.filter(o=>!o.passed&&(o.cast||o.x>contactX)&&o.speed>0).map(o=>threatReservation(run,o)+OPPOSING_ESCAPE_RESERVE);
- const rear=run.obstacles.filter(o=>!o.passed&&!o.counted&&o.approach==='rear'&&o.speed<0).map(o=>threatReservation(run,o));
- const drops=run.obstacles.filter(o=>o.falling||o.groundHazard).map(o=>threatReservation(run,o));
- const seconds=Math.max(run.assisted?1.22:1.06,...front.concat(rear,drops).filter(t=>t>0).map(t=>t+REACTION_GAP));
- const distance=rearContact-(x+width-3),requested=distance/seconds,speed=Math.max(180,requested);
- return {speed:-speed,waitFor:Math.max(0,seconds-distance/speed)};
-}
-export function createRun({assisted=false,seed,mode='endless',practiceId,manualStory=false}={}) {
- const practice=mode==='story'?optionalStoryBossAt(practiceId):null;
- const startDistance=practice?STORY_OPENING_DISTANCE+practice.stageIndex*SCENE_DISTANCE+practice.distance:0;
- return {status:'ready',mode:mode==='story'?'story':'endless',manualStory:mode==='story'&&manualStory===true,assisted:assisted===true,practice,elapsed:0,distance:startDistance,routeDistance:startDistance,viewportWidth:WORLD.width,cameraLead:0,bonus:0,collected:0,passports:0,lives:1,
-  randomState:seed===undefined?null:Number(seed)>>>0,
-  damageRandomState:seed===undefined?null:(Number(seed)^0x9e3779b9)>>>0,
-  ballot:{digits:'',message:''},
-  event:'',events:0,movementSkills:createMovementSkills(),lastSkillReward:null,terrain:createTerrain(),player:{airJumpsUsed:0,grounded:true,supportY:0,sliding:false,slideRemaining:0,slideLatched:false,slideCooldownFor:0,x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareProgress:0,jacareAge:0,nextJacareThreat:0,restoreFlashFor:0,coyoteUntil:0,jumpBufferedUntil:0,attackHeld:false,chargeFor:0,arenaTravel:0,manualTravel:0,attackFor:0,attackCooldown:0,shotFacing:1,hp:HERO_MAX_HP,maxHp:HERO_MAX_HP,recoveryPending:false,terrainContact:null},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ammo:ROUTE_AMMO,ammoIdleFor:0,ammoReloadFor:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
-  nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,recoveryReadyAt:0,shieldFor:0,graceFor:0,reserveShields:0,allyShieldProgress:0,allyHelpCount:0,
-  lastPickup:null,lastTraversalBlock:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,phantomCloud:null,
-  boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:practice?startDistance:null,bossCooldown:0,storyLeg:null,arenaExit:null,
-  raid:null,nextRaid:null,raids:0,raidStages:{},raidStageCoverage:{},lastFact:-1,cameo:null,overheadCount:0,lastOverheadActor:null,
-  seenOverheadActors:[],seenGroundActors:[],lastGroundActor:null,
-  lastAction:null,actionStreak:0,attackStyles:[],nextAllyAt:14000,alliesMet:0,
-  nextSupportAt:18000,supportAvailable:true,ally:null,aid:null,allyVisits:{},lastAllyId:null,creditCooldown:0};
-}
+// Public facade retained for consumers and browser regression instrumentation.
+export function createRun(options={}){return createRunState(options);}
 // Reenquadra ondas ainda à frente, preservando prazo de contato e trajetória.
  // Contatos iniciados preservam sua posição relativa ao herói reenquadrado.
 export function resizeRun(run,width){
@@ -338,26 +136,6 @@ export function resizeRun(run,width){
   const source=moved.get(p.anchor);if(!source){p.x+=delta;continue;}
   p.x+=source.delta;p.speed=source.speed;p.waitFor=source.waitFor;
  }
-}
-export function startRun(run){if(run.status==='ready')run.status='running';}
-// Urna exclusivamente fictícia, sem integração eleitoral, coleta ou transmissão de votos.
-export function ballotDigit(run,digit){
- if(run.status!=='ballot'||!/^[0-9]$/.test(String(digit))||run.ballot.digits.length>=2)return false;
- run.ballot.digits+=String(digit);run.ballot.message='';return true;
-}
-export function ballotClear(run){
- if(run.status!=='ballot')return false;
- run.ballot.digits='';run.ballot.message='';return true;
-}
-export function ballotConfirm(run){
- if(run.mode!=='story'||run.status!=='ballot')return false;
- if(run.ballot.digits==='13'){
-  run.status='won';announce(run,'HISTÓRIA CONCLUÍDA! Código 13 confirmado. Você venceu a etapa final.');return 'won';
- }
- if(run.ballot.digits==='22'){
-  run.status='prison';announce(run,'Código 22 confirmado. Flávio foi preso! A campanha recomeça.');return 'prison';
- }
- run.ballot.message='Código inválido. Corrija e tente novamente.';return 'invalid';
 }
 // Movimento independente do avanço automático e limitado apenas pelo sprite.
 export function moveRun(run,direction){
@@ -485,222 +263,6 @@ export function clearRunInput(run){
  run.player.moveHeld=0;run.player.crouchHeld=false;run.player.crouching=false;run.player.sliding=false;run.player.slideRemaining=0;run.player.slideLatched=false;run.player.jumpBufferedUntil=run.player.coyoteUntil=0;
  run.player.attackHeld=false;run.player.chargeFor=0;
 }
-export function setAttackRun(run,active){
- run.player.attackHeld=!!active&&run.status==='running'&&!run.player.isJacare&&!run.boss?.traversal;
- if(!run.player.attackHeld)run.player.chargeFor=0;
- return run.player.attackHeld;
-}
-export function heroMuzzleFor(run,facing=1){
- const {muzzle}=heroShotPose({facing,crouching:run.player.crouching,sliding:run.player.sliding,airborne:run.player.y>0});
- const scale=playerBodyFor(run.player).scale;
- return {x:playerX(run)+PLAYER.width/2+muzzle.x*scale,y:run.player.y-muzzle.y*scale};
-}
-// A seleção de projéteis só inclui ameaças já lançadas; o chefão tem alvo próprio.
-// Zé rival reutiliza trajetória de quique, mas continua sendo um personagem.
-const nonProjectileBodies=new Set(['povo','crowd-lane','ze-gotinha-rival','lula-runner','orla-runner','paulista-runner','route-scout','terminal-guard']);
-const shootableStoryEnemies=new Set(['pf','janones','army','boulos','dino','orla-runner','paulista-runner','route-scout','terminal-guard','lula-runner']);
-const isShootableStoryEnemy=o=>!!o&&!o.projectile&&!o.falling&&!o.groundHazard&&!o.passed&&!o.counted&&!o.destroyed&&shootableStoryEnemies.has(o.type);
-export function isHostileProjectile(o){
- return !!o?.projectile&&!nonProjectileBodies.has(o.type)&&!o.falling&&!o.groundHazard&&!o.reflected&&!o.destroyed&&
-  (o.launched||!o.cast&&!o.storyVolley&&!(o.waitFor>0))&&(!o.passed&&!o.counted||o.returning&&!o.contactHit);
-}
-function projectileFlightY(o,x){
- const landingX=(o.laneX??o.targetX+PLAYER.width/2-6)+o.width/2;
- const span=Math.max(1,o.launchX-landingX);
- const u=Math.max(0,Math.min(1,(o.launchX-(x+o.width/2))/span));
- if(!Number.isFinite(u)||!Number.isFinite(o.launchY)||!Number.isFinite(o.targetY))return o.y;
- let y=o.launchY+(o.targetY-o.launchY)*u+Math.sin(Math.PI*u)*(o.arcHeight||0);
- if(o.curve){
-  const envelope=Math.sin(Math.PI*u)**2,cycle=Math.sin(u*Math.PI*2*(o.waveCycles||1)),amplitude=o.waveAmplitude||16;
-  y+=(o.curve==='bounce'?Math.abs(cycle):cycle)*amplitude*envelope;
-  if(o.action==='crouch')y=Math.max(48+o.height/2,y);
-  else if(u>=.72)y=Math.min(26,y);
- }
- return y;
-}
-function projectileAt(o,seconds){
- if(o.cast){
-  const c=o.cast,time=c.flightAge+seconds,u=Math.min(1,time/c.flightFor);
-  return {x:c.fromX+(c.toX-c.fromX)*u-o.speed*Math.max(0,time-c.flightFor),y:c.fromY+(o.targetY-c.fromY)*u};
- }
- const coasting=o.bossFlight&&!o.returning?Math.min(seconds,o.bossFlight.remaining):0;
- const left=o.x-(o.speed||0)*(seconds-coasting)-(o.bossFlight?.speed||0)*coasting;
- return {x:left+o.width/2,y:o.returning?o.y:projectileFlightY(o,left)};
-}
-function aimAtProjectile(run,power){
- const center=playerX(run)+PLAYER.width/2;
- const candidates=run.obstacles.filter(isHostileProjectile)
-  .sort((a,b)=>Math.abs(a.x+a.width/2-center)-Math.abs(b.x+b.width/2-center));
- for(const target of candidates){
-  const facing=target.x+target.width/2<center?-1:1,muzzle=heroMuzzleFor(run,facing);
-  if((target.x+target.width/2-muzzle.x)*facing<=0)continue;
-  // Procura o primeiro ponto futuro alcançável onde os dois trajetos se cruzam.
-  // Amostra a aceleração e a curva já comprometidas do inimigo, sem mirar em seu autor.
-  for(let i=1;i<=72;i++){
-   const time=i/60,anticipated=projectileAt(target,time);
-   if((anticipated.x-muzzle.x)*facing<=0)break;
-   if(Math.hypot(anticipated.x-muzzle.x,anticipated.y-muzzle.y)<=time*power.speed){
-    const lift=shotLift(power.behavior,Math.min(1,time/Math.max(.15,time)));
-    return {...anticipated,y:anticipated.y-lift,facing};
-   }
-  }
- }
- return null;
-}
-function shotLift(behavior,progress){
- const envelope=Math.sin(Math.PI*progress);
- return behavior==='lob'?60*envelope:behavior==='arc'?30*envelope:behavior==='heavy'?18*envelope:
-  behavior==='bounce'?28*Math.abs(Math.sin(progress*Math.PI*3)):behavior==='orbit'?22*Math.sin(progress*Math.PI*4)*envelope:behavior==='gust'?8*Math.sin(progress*Math.PI*5)*envelope:0;
-}
-function aimAtBoss(run,power){
- const boss=run.boss;
- if(!boss||boss.traversal||boss.phase==='intro'||boss.hp<=0)return null;
- const muzzle=heroMuzzleFor(run,1);let time=0,pose;
- // Lead the moving platform using the same clock as its visible trajectory.
- for(let i=0;i<5;i++){
-  pose=bossArenaPose({...boss,age:boss.age+time,motionClock:(boss.motionClock||0)+time},visibleWidth(run));
-  const y=pose.platformY+48;time=Math.hypot(pose.x-muzzle.x,y-muzzle.y)/power.speed;
- }
- return {x:pose.x,y:pose.platformY+48,facing:1};
-}
-function aimAtStoryEnemy(run){
- if(!run.manualStory||run.boss)return null;
- const facing=run.player.shotFacing<0?-1:1,muzzle=heroMuzzleFor(run,facing);
- const target=run.obstacles.filter(isShootableStoryEnemy).filter(o=>(o.x+o.width/2-muzzle.x)*facing>0)
-  .sort((a,b)=>(a.x+a.width/2-b.x-b.width/2)*facing)[0];
- return target?{x:target.x+target.width/2,y:Math.max(14,target.height*.58),facing}:null;
-}
-export function attackRun(run){
- const b=run.boss,p=run.player,power=heroPowerFor(run),level=run.powerLevels?.[run.activePower]||1;
- const limit=b?.combat&&!b.traversal&&run.activePower==='ivermectina'?3:18;
- const charged=!!b?.combat&&!b.traversal&&p.attackHeld&&(p.chargeFor||0)>=DUEL_CHARGE_SECONDS-1e-8&&run.ammo>=2;
- if(run.status!=='running'||!(run.ammo>0)||p.isJacare||b?.traversal||b?.phase==='intro'||p.attackCooldown>0&&!charged||(run.heroShots?.length||0)>=limit)return false;
- const ammoCost=charged?2:1;
- const target=b?.combat?aimAtBoss(run,power)||aimAtProjectile(run,power):
-  run.manualStory?aimAtStoryEnemy(run)||aimAtProjectile(run,power):aimAtProjectile(run,power)||aimAtBoss(run,power);
- p.shotFacing=target?.facing??(run.manualStory?(p.shotFacing<0?-1:1):1);
- const {x,y}=heroMuzzleFor(run,p.shotFacing),targetX=target?.x??x+p.shotFacing*160,targetY=target?.y??y;
- const dx=p.shotFacing*Math.max(1,(targetX-x)*p.shotFacing),dy=targetY-y,distance=Math.max(1,Math.hypot(dx,dy)),angle=Math.atan2(dy,dx);
- for(let i=0;i<power.shots;i++){
-  const spread=power.behavior==='fan'?(i-1)*power.spread:0,offset=power.behavior==='stack'?(i-1)*18:power.behavior==='double'?(i-.5)*12:0;
-  const vx=Math.cos(angle+spread)*power.speed,vy=Math.sin(angle+spread)*power.speed;
-  (run.heroShots??=[]).push({type:run.activePower==='ivermectina'?'hero-ivermectina':power.projectiles?.[i]||power.projectile,powerId:run.activePower,
-   behavior:power.behavior,x,y:y+offset,originX:x,originY:y+offset,previousX:x,previousY:y+offset,vx,vy,age:0,flightFor:Math.max(.15,distance/power.speed),
-   radius:power.radius+(charged?4:0),cancels:power.cancels+(charged?1:0),damage:power.damage*(1+(level-1)*.12)*(charged?2.1:1),charged,ammoCost});
- }
- run.ammo-=ammoCost;run.ammoIdleFor=0;run.ammoReloadFor=0;
- if(charged){p.chargeFor=0;p.chargedFlashFor=.22;}
- p.attackCooldown=power.cooldown*(1-(level-1)*.06);p.attackFor=HERO_SHOT_DURATION;run.shotsFired=(run.shotsFired||0)+1;return true;
-}
-function segmentHitsBox(shot,minX,maxX,minY,maxY,radius=0){
- const dx=shot.x-shot.previousX,dy=shot.y-shot.previousY;let near=0,far=1;
- for(const [origin,delta,min,max] of [[shot.previousX,dx,minX-radius,maxX+radius],[shot.previousY,dy,minY-radius,maxY+radius]]){
-  if(Math.abs(delta)<1e-8){if(origin<min||origin>max)return false;}
-  else{const a=(min-origin)/delta,z=(max-origin)/delta;near=Math.max(near,Math.min(a,z));far=Math.min(far,Math.max(a,z));}
- }return near<=far;
-}
-function rollBossDamage(run,basis){
- // Sorteio por acerto, separado da IA: FPS e padrões do chefe não alteram o dano.
- const draw=()=>{
-  if(run.damageRandomState==null)run.damageRandomState=(random(Math.random)*4294967296)>>>0;
-  run.damageRandomState=nextSeed(run.damageRandomState);
-  return run.damageRandomState/4294967296;
- };
- const critical=draw()<.14,variation=.85+draw()*.30;
- return {damage:basis*variation*(critical?1.5:1),critical};
-}
-function applyBossHit(boss,hit){
- if(boss.combat&&boss.hurtFor>0)return;
- const previousHp=boss.hp;
- boss.hp=Math.max(0,boss.hp-hit.damage);boss.hitFlashFor=boss.combat?.28:.16;
- if(boss.combat)boss.hurtFor=.28;
- if(previousHp>boss.hp)boss.lastDamage={amount:previousHp-boss.hp,critical:hit.critical===true,remaining:.8};
- if(hit.weakness)boss.weaknessFlashFor=.3;
-}
-function interceptProjectile(run,shot,o){
- const boss=run.boss;
- if(o.bossAttack&&boss&&!boss.traversal&&(o.owner===boss.type||o.storyVolley&&o.owner==null)){
-  // Guarda o bônus na interceptação. O PV continua intocado até a volta física.
-  const weakness=boss.weakness&&shot.powerId===boss.weakness;
-  const earned=boss.counterReady;
-  const basis=boss.combat?2.6:Math.max(2,boss.maxHp*.12);
-  const hit=rollBossDamage(run,basis*Math.max(.84,Math.min(1.55,shot.damage||1))*(earned?1+earned.damage*.16:1)*(weakness?1.35:1));
-  boss.counterReady=null;
-  if(!boss.combat&&!o.counted)boss.remaining=Math.max(0,boss.remaining-1);
-  Object.assign(o,{reflected:true,returning:true,passed:true,counted:true,resolved:true,waitFor:0,speed:-510,
-   reflection:{boss,...hit,weakness,age:0}});
- }else{o.destroyed=true;o.counted=true;o.passed=true;}
- run.clearedAt={x:o.x+o.width/2,remaining:.25};
-}
-// Uma sequência comprometida mantém as ameaças reais mesmo após o golpe
-// letal e dá tempo de ler a pausa; nenhum novo ataque é preparado por isso.
-function storyVolleyPendingVictory(boss){
- const settle=boss.volleyPattern?.finishBeforeVictory;
- return boss.combat&&settle>0&&(boss.phase==='attack'||
-  boss.phase==='recover'&&boss.recover-boss.phaseFor<Math.min(settle,boss.recover));
-}
-function advanceReflectedProjectile(run,o,dt){
- const reflected=o.reflection,boss=run.boss;
- if(!boss||reflected.boss!==boss||boss.traversal||boss.hp<=0&&!storyVolleyPendingVictory(boss)){o.destroyed=true;return;}
- reflected.age+=dt;
- const pose=bossArenaPose(boss,visibleWidth(run));
- const x=o.x+o.width/2,dx=pose.x-x,dy=pose.platformY+48-o.y,distance=Math.hypot(dx,dy),pace=610*dt;
- if(distance<=24+pace){
-  applyBossHit(boss,reflected);
-  o.destroyed=true;return;
- }
- if(reflected.age>2){o.destroyed=true;return;}
- o.x+=dx/distance*pace;o.y+=dy/distance*pace;
-}
-function advanceHeroShots(run,dt){
- const p=run.player;p.attackCooldown=Math.max(0,(p.attackCooldown||0)-dt);p.attackFor=Math.max(0,(p.attackFor||0)-dt);
- advanceAmmo(run,dt);
- const charging=run.boss?.combat&&!run.boss.traversal&&run.boss.phase!=='intro'&&p.attackHeld&&!p.isJacare&&run.ammo>=2;
- p.chargeFor=charging?Math.min(DUEL_CHARGE_SECONDS,(p.chargeFor||0)+dt):0;
- p.chargedFlashFor=Math.max(0,(p.chargedFlashFor||0)-dt);
- if(p.attackHeld)attackRun(run);
- run.heroShots=(run.heroShots||[]).filter(shot=>{
-  shot.previousX=shot.x;shot.previousY=shot.y;shot.age+=dt;
-  if(shot.behavior==='homing'){
-   const boss=run.boss,pose=boss?.combat&&!boss.traversal&&boss.hp>0?bossArenaPose(boss,visibleWidth(run)):null;
-   const target=pose?{x:pose.x,y:pose.platformY+48}:run.obstacles.filter(isHostileProjectile).sort((a,b)=>Math.hypot(a.x+a.width/2-shot.x,a.y-shot.y)-Math.hypot(b.x+b.width/2-shot.x,b.y-shot.y))[0];
-   if(target){const dx=target.x+(target.width||0)/2-shot.x,dy=target.y-shot.y,d=Math.max(1,Math.hypot(dx,dy)),k=Math.min(1,dt*4);shot.vx+=(dx/d*540-shot.vx)*k;shot.vy+=(dy/d*540-shot.vy)*k;}
-  }
-  if(shot.behavior==='return'&&shot.age>shot.flightFor*1.2&&!shot.returned){shot.vx=-shot.vx;shot.vy=-shot.vy*.5;shot.returned=true;}
-  shot.x+=shot.vx*dt;
-  const progress=Math.min(1,shot.age/(shot.flightFor||1)),previous=Math.min(1,Math.max(0,shot.age-dt)/(shot.flightFor||1));
-  shot.y+=shot.vy*dt+shotLift(shot.behavior,progress)-shotLift(shot.behavior,previous);
-  if(shot.age>3||shot.x<-40||shot.x>visibleWidth(run)+40||shot.y<-50||shot.y>360)return false;
-  const radius=shot.behavior==='wave'?Math.min(34,shot.radius+shot.age*30):shot.radius||0;
-  for(const o of run.obstacles){
-   if(!isHostileProjectile(o)||!segmentHitsBox(shot,o.x,o.x+o.width,o.y-o.height/2,o.y+o.height/2,radius))continue;
-   interceptProjectile(run,shot,o);
-   if(shot.cancels>0){shot.cancels--;continue;}return false;
-  }
-  if(run.manualStory&&!run.boss){
-   for(const enemy of run.obstacles){
-    if(!isShootableStoryEnemy(enemy)||!segmentHitsBox(shot,enemy.x,enemy.x+enemy.width,0,enemy.height,radius))continue;
-    enemy.destroyed=true;enemy.passed=true;enemy.counted=true;
-    run.defeatedEnemies=(run.defeatedEnemies||0)+1;
-    run.clearedAt={x:enemy.x+enemy.width/2,remaining:.25};
-    return false;
-   }
-  }
-  const boss=run.boss;
-  if(boss&&!boss.traversal&&boss.phase!=='intro'&&boss.hp>0){
-   const pose=bossArenaPose(boss,visibleWidth(run));
-   // The body and deck share the drawn position. A shot is consumed once,
-   // including wave/fan powers; rebounding a hostile shot remains stronger.
-   if(segmentHitsBox(shot,pose.x-30,pose.x+30,pose.platformY+8,pose.platformY+100,radius)){
-    const weakness=boss.weakness===shot.powerId;
-    const opening=boss.combat?Math.min(2.2,bossCounterWindow(boss).damage):1;
-    const hit=rollBossDamage(run,(boss.combat?1.1:Math.max(1.5,boss.maxHp*.075))*Math.max(.84,Math.min(shot.charged?3.1:1.55,shot.damage||1))*(weakness?1.35:1)*opening);
-    applyBossHit(boss,{...hit,weakness});return false;
-   }
-  }
-  return true;
- });
-}
 // A intenção permanece durante o salto, sem encolher a colisão no ar.
 // Soltar/cancelar limpa também uma intenção ainda aguardando o pouso.
 export function crouchRun(run,active){
@@ -708,98 +270,6 @@ export function crouchRun(run,active){
  const next=!run.player.isJacare&&run.player.crouchHeld&&run.player.grounded!==false&&Math.abs(run.player.y-(run.player.supportY??0))<1e-8&&run.player.velocity===0;
  run.player.crouching=next;if(!next)finishStoryDash(run);if(!active)run.player.slideLatched=false;
  return next;
-}
-// Interno ao motor/testes; não há comando de pausa na interface.
-export function togglePause(run){if(run.status==='running')run.status='paused';else if(run.status==='paused')run.status='running';}
-// O placar agora é a quilometragem percorrida em metros; coletas não alteram metros.
-export function scoreFor(run){return Math.floor(run.distance);}
-// Uma fonte única para os nomes das armas, a instrução de esquiva e o HUD.
-export const ATTACK_NAMES=Object.freeze({
- wind:'Vendaval da Dilma',
- 'network-panel':'Painéis em rede','signal-pulse':'Virada de turno','arrow-panel':'Painel de setas',
- 'garden-box':'Jardineiras móveis','stage-spotlight':'Holofotes cruzados','rotating-sign':'Placas móveis',
- 'debate-card':'Debate em três tempos','baton-wave':'Contratempo da maré','wind-flag':'Bandeiras cruzadas',
- 'inspection-gate':'Cancela dupla','crowd-lane':'Corredor da praça','lula-runner':'Corredor do Exército do Lula',
- 'ze-gotinha-rival':'Zé Gotinha rival','orla-runner':'Patrulheiro da orla','paulista-runner':'Corredor da Paulista',
- 'route-scout':'Batedor da rota','terminal-guard':'Guarda do terminal',
- 'budget-sheets':'Planilhas voadoras de Simone',
- 'parachute-cross':'Cruzes de paraquedas de Soraya',
- handcuffs:'Algemas da PF / Joice',
- 'meme-ghost':'Investida do Fantasma do Comunismo',
- pf:'Agente da PF',army:'Soldado do Exército',janones:'Janones em perseguição',
- boulos:'Boulos em perseguição',dino:'Dino em perseguição',
- receipts:'Recibos TAXA de Haddad','paper-gate':'Papéis TAXA de Haddad',
- stamp:'Carimbo TAXA de Haddad',lhand:'Gestos em L de Lula',
- hammer:'Martelo de Xandão',mandado:'Mandado de Xandão',
- message:'Mensagens urgentes de Janones',barrier:'Barreira da PF',
- 'falling-case':'Mala em queda','rolling-case':'Mala rolando',case:'Mala',
- 'court-seal':'Selo do tribunal de Dino','signal-flare':'Sinalizador da patrulha','terere-gourd':'Tereré de Santiago Peña','harp-note':'Notas de harpa de Santiago Peña',
- popcorn:'Pipoca','cloroquina-prop':'Cloroquina cenográfica de Bossonari',
- 'ivermectina-prop':'Ivermectina cenográfica de Bossonari',
- 'pfizer-ampoule':'Ampola cenográfica da Pfizer'
-});
-export function attackCueFor(attack){
- if(!attack)return null;
- const label=ATTACK_NAMES[attack.type]||'Perigo';
- const action=attack.action==='move'?'move':attack.action==='crouch'?'crouch':'jump';
- const verb=action==='move'?'Saia do alvo':action==='crouch'?'Abaixe':'Pule';
- return {label,action,verb,short:(action==='move'?'↔ ':action==='crouch'?'↓ ':'↑ ')+verb+' · '+label,
-  instruction:(attack.approach==='rear'?'Por trás! ':'')+verb+' para escapar de '+label+'.'};
-}
-
-export function bossAtRound(round,type) {
- const safe=Math.max(0,Math.floor(Number.isFinite(round)?round:0)),level=Math.floor(safe/BOSS_ROSTER.length)+1;
- const foe=foeFor(type||BOSS_ROSTER[safe%BOSS_ROSTER.length]),goal=BOSS_GOALS[foe.type],attacks=goal.attacks+(foe.type==='bossonari'?0:2*Math.min(2,level-1));
- const noun=({haddad:'papéis',lula:'gestos em L',xandao:'martelos e mandados',janones:'mensagens em três blocos',pf:'bloqueios da blitz',bossonari:'frascos cenográficos',army:'sinalizadores'})[foe.type];
- return {foe,level,supreme:foe.type==='lula',round:safe+1,goalKind:goal.goalKind,attacks,
-  objective:'Desvie de '+attacks+' '+noun+'. '+({
-    haddad:'Pule os papéis baixos e abaixe dos recibos altos.',
-    lula:'Observe os gestos em L: pule os baixos e abaixe dos altos.',
-    xandao:'Pule os martelos baixos e abaixe dos mandados altos.',
-    janones:'Mensagens urgentes: alterne salto e agachamento.',
-    pf:'Blitz: pule barreiras, abaixe das algemas e saia dos alvos marcados.',
-    army:'Pule ou abaixe dos sinalizadores e leia o aviso da patrulha.',bossonari:'Pule ou abaixe dos frascos cenográficos de Bossonari.'
-   }[foe.type]||'Leia o próximo aviso antes de reagir.'),
-  interval:foe.type==='bossonari'?1.18:Math.max(1.04,1.32-.08*BOSS_ROSTER.indexOf(foe.type)-.04*(level-1))};
-}
-// Padrões próprios incluem repetições; o aviso sempre consulta esta mesma fonte.
-export function bossAttackFor(type,fired,round=0) {
- const patterns={haddad:['crouch','jump','jump','crouch','crouch','jump','crouch','jump','jump'],
-  lula:['jump','crouch','jump','jump','crouch','crouch','jump','crouch','jump','crouch'],
-  xandao:['jump','jump','crouch','jump','crouch','crouch','jump','crouch','jump','crouch','crouch','jump'],
-  janones:['jump','crouch','jump','crouch','jump','crouch','jump','jump','crouch'],pf:['jump','crouch','move','jump','crouch','move','jump','crouch'],
-  bossonari:['jump','crouch','jump','crouch','jump','jump','crouch','jump','crouch','jump','crouch','jump','crouch','jump']};
- const sequence=patterns[type]||bossProfileFor(type)?.sequence||patterns.haddad,index=Math.max(0,Math.floor(Number(fired)||0))+2*Math.floor(Math.max(0,round)/BOSS_ROSTER.length);
- const action=sequence[index%sequence.length];
- return {type:bossWeaponFor(type,index,action)||'receipts',action};
-}
-// Primeiro marco após21km; cada vitória reserva mais7km de corrida.
-// Um marco alcançado fica pendente enquanto houver evento ou cooldown.
-function nextBossDistance(count){return 22000+count*7000;}
-function takeBoss(run){
- // O bag explícito mantém a seleção determinística usada por integrações/testes.
- while(run.bossBag.length){const type=run.bossBag.pop();if(type!=='bossonari'&&BOSS_GOALS[type])return type;}
- return BOSS_ROSTER[run.bossesDefeated%BOSS_ROSTER.length];
-}
-// Extra duel pressure is separate from physical contact, authored sequences,
-// and the counter reward. Assisted play and non-combat crossings keep the
-// original balance, as does the introductory Ana Elisa duel. Later stages
-// require more consistent execution without a tutorial progression regression.
-export function storyDuelChallenge(encounter,assisted=false){
- if(!encounter||encounter.traversal||assisted||encounter.type==='ana-elisa')return {hpScale:1,pressure:0};
- const stage=Math.max(0,Math.min(7,Number(encounter.stageIndex)||0));
- const final=encounter.role==='final-boss';
- return {hpScale:1.10+stage*.016+(final?.04:0),pressure:.065+stage*.012+(final?.02:0)};
-}
-export function applyStoryDuelTempo(boss){
- if(!boss.combat||boss.traversal||!(boss.challengePressure>0)||boss.patternIndex<2)return;
- const pressure=Math.min(.20,boss.challengePressure+(boss.hp<=boss.maxHp/2?.04:0));
- // Never take away a signature counter window or the minimum authored tell.
- // Contact timings, volley gaps and safety reservations remain untouched.
- const shorten=(value,floor)=>Math.min(value,Math.max(floor,value*(1-pressure)));
- boss.telegraph=shorten(boss.telegraph,.62);
- boss.phaseFor=boss.telegraph;
- if(!boss.plannedAttack?.counter)boss.recover=shorten(boss.recover,.62);
 }
 function beginBoss(run){
  if(run.mode==='story'&&pairRunRemaining(run)>1e-6)return;
