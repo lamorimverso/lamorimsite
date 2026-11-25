@@ -1,6 +1,5 @@
 // Replays full, independent versions of the game in headless Chrome.
 // All synthetic stepping is inserted in a response intercepted by this tool.
-const {chromium}=require('playwright');
 const {mkdir,readFile,writeFile}=require('node:fs/promises');
 const {extname,resolve,sep}=require('node:path');
 const {execFileSync}=require('node:child_process');
@@ -38,7 +37,28 @@ const instrument=`
     }
   };
 `;
+// Only the current candidate is a release gate; the historical baseline is diagnostic.
+function validateCandidateReport(report){
+ const failures=[];
+ for(const width of [390,1440])for(const scene of ['pista','duelo','viagem']){
+  const label=width+'px/'+scene;
+  const runs=report.runs.filter(run=>run.version==='candidato'&&run.width===width&&run.scene===scene);
+  if(runs.length!==1||runs[0].reached!==true){failures.push(label+': checkpoint ausente, duplicado ou não alcançado');continue;}
+  const timing=runs[0].timing||[];
+  for(const rate of [30,60,120]){
+   const samples=timing.filter(sample=>sample.rate===rate);
+   const sample=samples[0];
+   if(samples.length!==1||sample.reached!==true||sample.frames!==rate||
+      !Number.isFinite(sample.p95Ms)||!Number.isFinite(sample.peakMs)||
+      sample.p95Ms<0||sample.peakMs<sample.p95Ms){
+    failures.push(label+'/'+rate+'Hz: medição ausente ou inválida');
+   }
+  }
+ }
+ assert.equal(failures.length,0,'Replay obrigatório incompleto: '+failures.join('; '));
+}
 async function main(){
+ const {chromium}=require('playwright');
  const [baseline,candidate,out]=process.argv.slice(2);
  assert.ok(baseline&&candidate&&out,'Uso: node tools/capture-runner-experience.cjs BASE CANDIDATO SAIDA');
  await mkdir(out,{recursive:true});
@@ -73,12 +93,12 @@ async function main(){
       document.getElementById('runner-canvas').scrollIntoView({block:'center'});
       return window.__experienceQA.replay(scene,pilotCounter,reference);
      },{scene,reference:version==='base'});
-     report.runs.push({version,width,scene,...result});
+     report.runs.push({version,width,...result,routeScene:result.scene,scene});
      if(!result.reached){process.stderr.write(`${version} ${width} ${scene} não alcançado (${JSON.stringify(result)})\n`);continue;}
      await page.screenshot({path:resolve(out,`prompt-${version}-${width}-${scene}.png`),animations:'disabled'});
      report.runs.at(-1).timing=await page.evaluate(async({scene,reference})=>{
       const {pilotCounter}=await import('/tools/story-pilot.mjs');
-      return [30,60,120].map(rate=>{window.__experienceQA.replay(scene,pilotCounter,reference);return window.__experienceQA.measure(rate,pilotCounter);});
+      return [30,60,120].map(rate=>{const replay=window.__experienceQA.replay(scene,pilotCounter,reference);return replay.reached?{...window.__experienceQA.measure(rate,pilotCounter),reached:true}:{rate,reached:false};});
      },{scene,reference:version==='base'});
     }
     assert.deepEqual(errors,[],`${version} ${width}`);
@@ -88,5 +108,7 @@ async function main(){
  report.revisions=Object.fromEntries([['base',baseline],['candidato',candidate]].map(([name,cwd])=>[name,execFileSync('git',['rev-parse','HEAD'],{cwd,encoding:'utf8'}).trim()]));
  await writeFile(resolve(out,'prompt-experiencia.json'),JSON.stringify(report,null,2)+'\n');
  console.log(JSON.stringify(report));
+ validateCandidateReport(report);
 }
-main().catch(error=>{console.error(error);process.exitCode=1;});
+module.exports={validateCandidateReport};
+if(require.main===module)main().catch(error=>{console.error(error);process.exitCode=1;});
