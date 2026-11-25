@@ -93,7 +93,7 @@ async function main(){
       document.getElementById('runner-canvas').scrollIntoView({block:'center'});
       return window.__experienceQA.replay(scene,pilotCounter,reference);
      },{scene,reference:version==='base'});
-     report.runs.push({version,width,scene,...result});
+     report.runs.push({version,width,...result,routeScene:result.scene,scene});
      if(!result.reached){process.stderr.write(`${version} ${width} ${scene} não alcançado (${JSON.stringify(result)})\n`);continue;}
      await page.screenshot({path:resolve(out,`prompt-${version}-${width}-${scene}.png`),animations:'disabled'});
      report.runs.at(-1).timing=await page.evaluate(async({scene,reference})=>{
