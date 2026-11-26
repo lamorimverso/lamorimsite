@@ -25,7 +25,7 @@ export {terrainProfileFor} from './runner-terrain.mjs?v=d75123c1af20';
 import {TERRAIN,STORY_DASH_RECOVERY_SECONDS,beginTerrain,beginGroundLesson,beginAirTransfer,aircraftHitFor,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer} from './runner-terrain.mjs?v=d75123c1af20';
 export {terrainSupportAt} from './runner-terrain.mjs?v=d75123c1af20';
 import {stageRosterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
-import {groundRhythmFor,groundStyleFor} from './runner-ground-rhythm.mjs?v=c282904db6c6';
+import {groundRhythmFor,groundStyleFor} from './runner-ground-rhythm.mjs?v=6e4ca3cd0545';
 import {ROUTE_AMMO,addShieldPart} from './runner-supplies.mjs?v=44c67e8a5802';
 import {grantBossPower} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
 export {grantBossPower,equipHeroPower,cycleHeroPower} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
@@ -804,7 +804,7 @@ export function advanceRun(run,seconds,rng){
    const raidActive=run.raid?.phase==='active';
    const stageId=routeStageFor(run).id,route=campaignRouteDistance(run);
    const lap=run.mode==='story'?0:Math.floor(route/ROUTE_DISTANCE);
-   const priorRhythm=run.groundRhythm?.stageId===stageId&&run.groundRhythm.lap===lap?run.groundRhythm:null;
+   const priorRhythm=run.groundRhythm?.lap===lap&&(run.mode!=='story'||run.groundRhythm.stageId===stageId)?run.groundRhythm:null;
    const chapter=priorRhythm?.beat??0,cursor=priorRhythm?.lessonCursor??0;
    const rhythm=!run.raid&&run.elapsed>=10?groundRhythmFor({mode:run.mode,stageId,lap,beat:chapter,lessonCursor:cursor,lastBoss:run.lastBoss,
     localDistance:route%SCENE_DISTANCE,capped:balance.pressure>=.995&&balance.endurance>=.99}):null;
