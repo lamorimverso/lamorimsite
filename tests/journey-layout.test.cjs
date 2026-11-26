@@ -355,3 +355,49 @@ test('Flávio percorre os quadros de corrida durante a partida em ambos os modos
   }finally{await context.close();}
  }
 });
+
+for(const [mode,viewport] of [['story',{width:390,height:844}],['endless',{width:900,height:720}]])test('o cenário passa na corrida com redução automática de efeitos: '+mode,async()=>{
+ const {context,page,errors}=await open(viewport,{instrument:true,reducedMotion:'reduce'});
+ try{
+  await page.locator(mode==='story'?'#game-mode-story':'#game-mode-infinite').check();
+  await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+  await page.evaluate(()=>{
+   const r=__journeyRun;
+   for(const key of ['nextObstacle','nextBossAt','nextRaid','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[key]=Infinity;
+   r.obstacles=[];r.pickups=[];
+  });
+  assert.equal(await page.locator('#game').getAttribute('data-reduced-motion'),'true','OS reduced motion still applies to effects');
+  await page.waitForFunction(()=>__journeyRun.distance>50);
+  const before=await page.evaluate(()=>({distance:__journeyRun.distance,scroll:__sceneGeometry.scrollDistance,clouds:__sceneGeometry.clouds,layers:__sceneGeometry.layers.map(l=>({scale:l.scale,segment:l.segments.find(s=>s.x>=__sceneGeometry.width*.25&&s.x<=__sceneGeometry.width)}))}));
+  assert.ok(Number.isFinite(before.scroll),'the live runner must select physical scrolling, not static geometry');
+  assert.ok(before.layers.every(l=>l.segment));
+  await page.waitForFunction(d=>__journeyRun.distance>d+100,before.distance);
+  const after=await page.evaluate(b=>({scroll:__sceneGeometry.scrollDistance,clouds:__sceneGeometry.clouds,positions:b.layers.map((l,i)=>__sceneGeometry.layers[i].segments.find(s=>s.segmentIndex===l.segment.segmentIndex)?.x),status:__journeyRun.status,mode:__journeyRun.mode}),before);
+  assert.ok(after.scroll>before.scroll+70);
+  for(let i=0;i<3;i++)assert.ok(Math.abs(before.layers[i].segment.x-after.positions[i]-(after.scroll-before.scroll)*before.layers[i].scale)<1e-6,'physical parallax layer '+i+' moves left');
+  assert.deepEqual(after.clouds,before.clouds);
+  assert.equal(after.status,'running');assert.equal(after.mode,mode);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+test('a opção explícita de efeitos reduzidos mantém o cenário estático durante a corrida',async()=>{
+ const {context,page,errors}=await open({width:390,height:844},{instrument:true,reducedMotion:'no-preference'});
+ try{
+  await page.locator('#game-settings summary').click();
+  await page.locator('#game-effects').selectOption('reduce');
+  await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
+  await page.evaluate(()=>{
+   const r=__journeyRun;
+   for(const key of ['nextObstacle','nextBossAt','nextRaid','nextAllyAt','nextSupportAt','nextPower','nextPassport'])r[key]=Infinity;
+   r.obstacles=[];r.pickups=[];
+  });
+  await page.waitForFunction(()=>__journeyRun.distance>50);
+  const before=await page.evaluate(()=>({distance:__journeyRun.distance,road:__sceneGeometry.roadOffset,layers:__sceneGeometry.layers.map(l=>l.segments.map(s=>({x:s.x,stationary:s.stationary})))}));
+  await page.waitForFunction(d=>__journeyRun.distance>d+100,before.distance);
+  const after=await page.evaluate(()=>({road:__sceneGeometry.roadOffset,layers:__sceneGeometry.layers.map(l=>l.segments.map(s=>({x:s.x,stationary:s.stationary})))}));
+  assert.equal(before.road,0);assert.equal(after.road,0);
+  assert.ok(after.layers.every(l=>l.every(s=>s.stationary)));
+  assert.deepEqual(after.layers,before.layers);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});

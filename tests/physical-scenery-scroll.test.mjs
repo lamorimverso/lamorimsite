@@ -102,3 +102,32 @@ test('day and night progress by physical distance in full scroll with unchanged 
  assert.ok(brightness(day.sky)>brightness(night.sky)+55);
  assert.ok(day.road.every((v,i)=>Math.abs(v-night.road[i])<=2));
 });
+
+test('automatic reduced effects preserve all physical scenery planes while decorative clouds stay still',()=>{
+ for(const width of [480,900]){
+  const state=createSceneryScroll(),regions=make(state,1000);
+  const options={reducedMotion:true,scrollWorld:true};
+  const a=geom(regions,1000,width,options),b=geom(regions,1100,width,options);
+  assert.equal(a.scrollDistance,1000);assert.equal(b.scrollDistance,1100);
+  for(let i=0;i<3;i++){
+   const visible=a.layers[i].segments.filter(seg=>seg.x>=0&&seg.x<=width);
+   assert.ok(visible.length>0);
+   for(const segment of visible){
+    const next=find(b.layers[i].segments,segment.segmentIndex);
+    assert.ok(next);assert.equal(next.stageId,segment.stageId);
+    assert.ok(Math.abs(segment.x-next.x-100*a.layers[i].scale)<1e-7);
+   }
+  }
+  assert.deepEqual(a.clouds,b.clouds,'optional cloud drift remains reduced');
+  assert.notEqual(a.roadOffset,b.roadOffset,'road moves with the physical journey');
+  assert.deepEqual(b,geom(regions,1100,width,options),'no time-based drift at rest');
+  const frame=distance=>{
+   const c=createCanvas(width,300).getContext('2d');
+   drawJourneyScenery(c,{scrollRegions:regions,distance,routeDistance:20000,width,...options});
+   return c.getImageData(0,106,width,126).data;
+  };
+  const before=frame(1000),after=frame(1100);let changed=0;
+  for(let i=0;i<before.length;i+=4)if(Math.abs(before[i]-after[i])+Math.abs(before[i+1]-after[i+1])+Math.abs(before[i+2]-after[i+2])>15)changed++;
+  assert.ok(changed>1000,'buildings and monuments, not only road marks, move with automatic reduced effects: '+changed);
+ }
+});

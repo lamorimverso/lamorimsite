@@ -242,15 +242,17 @@ function physicalSceneryGeometry(regions,travelled,width,mood){
  * the final 1,000 m of each place, so the route still communicates its next stop.
  * Palette channels are floating RGB triples; paletteStops offsets run from 0 to 1.
  */
-export function journeySceneryGeometry({routeDistance=0,distance=routeDistance,width=900,reducedMotion=false,openingDistance=0,campaignStages,flight,scrollRegions}={}){
+export function journeySceneryGeometry({routeDistance=0,distance=routeDistance,width=900,reducedMotion=false,scrollWorld=false,openingDistance=0,campaignStages,flight,scrollRegions}={}){
  const opening=Number.isFinite(openingDistance)?Math.max(0,openingDistance):0;
  const route=(Number.isFinite(routeDistance)?Math.max(0,routeDistance):0)-opening;
  const travelled=Number.isFinite(distance)?Math.max(0,distance):Math.max(0,route);
  const w=Number.isFinite(width)?Math.max(1,width):900;
  const mood=flightMood(flight,reducedMotion),flightLift=mood?.lift??0;
  const decorativeDistance=reducedMotion?0:travelled;
- const moving=!reducedMotion&&Array.isArray(scrollRegions)&&scrollRegions.length>0;
- const shared={width:w,flight:mood,roadOffset:wrap(decorativeDistance,98),clouds:[
+ // Gameplay-linked translation is independent of optional decorative animation.
+ // An explicit static-background preference still uses the stationary path.
+ const moving=(!reducedMotion||scrollWorld)&&Array.isArray(scrollRegions)&&scrollRegions.length>0;
+ const shared={width:w,flight:mood,roadOffset:wrap(moving?travelled:decorativeDistance,98),clouds:[
   {x:wrap(145-decorativeDistance*(moving?.055:.016),w+140)-70,y:65,scale:.73},
   {x:wrap(510-decorativeDistance*(moving?.085:.019),w+160)-80,y:91,scale:.48},
   {x:wrap(790-decorativeDistance*(moving?.045:.011),w+120)-60,y:43,scale:.32}
