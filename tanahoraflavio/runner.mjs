@@ -628,14 +628,18 @@ function initRunner() {
     lastPointerAt=performance.now();
     event.preventDefault();resumeFromGesture();canvas.focus({preventScroll:true});
     if(event.pointerType!=="touch"||run.status!=="running"){jump();return;}
-    if(event.isPrimary===false&&run.boss&&!run.boss.traversal){
+    const primaryPointer=[...trackPointers.values()].find(pointer=>pointer.primary);
+    const stationaryRouteTouch=!run.boss&&!run.player.crouchHeld&&primaryPointer?.action==='pending';
+    if(event.isPrimary===false&&!run.boss?.traversal&&(run.boss||stationaryRouteTouch)){
+      // Resting the first finger supports fire; releasing it must not also jump.
+      if(stationaryRouteTouch)primaryPointer.usedForFire=true;
       const source='touch-fire:'+event.pointerId;
       trackPointers.set(event.pointerId,{action:'fire'});
       fire(source,true);
       try{canvas.setPointerCapture?.(event.pointerId);}catch{}
       return;
     }
-    const pointer={x:event.clientX,y:event.clientY,action:"pending"};
+    const pointer={x:event.clientX,y:event.clientY,primary:event.isPrimary!==false,action:"pending"};
     if(run.player.crouchHeld&&(preferences.crouchMode==="hold"||trackPointers.size>0)){pointer.action="jump";jump('touch:'+event.pointerId);}
     trackPointers.set(event.pointerId,pointer);
     try{canvas.setPointerCapture?.(event.pointerId);}catch{/* Eventos assistivos podem não ter contato nativo. */}
@@ -662,7 +666,7 @@ function initRunner() {
     if(pointer.action==="move")updateMovement();
     if(pointer.action==="jump")releaseJump('touch:'+event.pointerId);
     if(pointer.action==="fire")fire('touch-fire:'+event.pointerId,false);
-    if(pointer.action==="pending"&&event.type==="pointerup")jump();
+    if(pointer.action==="pending"&&!pointer.usedForFire&&event.type==="pointerup")jump();
     if(pointer.action==="crouch"&&preferences.crouchMode==="hold"){crouchSources.set("touch:"+event.pointerId,false);crouch(crouchSources.active);}
   }
   canvas.addEventListener("pointerup",releaseTrackPointer);
@@ -734,7 +738,7 @@ function initRunner() {
     fullscreenNote.textContent=fallbackFullscreen
       ?'O navegador não permite tela cheia nativa. A pista ocupa a área disponível; barras do navegador podem permanecer. Use esta opção para sair.'
       :active?'Tela cheia ativa. Abra a engrenagem e escolha Sair da tela cheia para voltar.'
-        :'Sem botões direcionais: toque para pular, deslize para desviar ou abaixar; nos chefes, toque com um segundo dedo para atirar.';
+        :'Sem botões direcionais: toque para pular e deslize para desviar ou abaixar. Na corrida, mantenha um dedo parado e toque com o segundo para atirar. Nos chefes, o segundo dedo também dispara.';
   }
   async function toggleFullscreen(){
     if(document.fullscreenElement===section){
