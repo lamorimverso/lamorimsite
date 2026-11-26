@@ -1,10 +1,10 @@
-import {PLAYER,playerX,visibleWidth} from './runner-run-geometry.mjs?v=f21951232de3';
+import {PLAYER,playerX,visibleWidth} from './runner-run-geometry.mjs?v=c7879509d7af';
 import {random,nextSeed} from './runner-random.mjs?v=8de9f87c7593';
 import {heroPowerFor} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
 import {advanceAmmo} from './runner-supplies.mjs?v=44c67e8a5802';
 import {HERO_SHOT_DURATION,DUEL_CHARGE_SECONDS,heroShotPose} from './runner-hero-shot.mjs?v=7aa1e19e9838';
 import {playerBodyFor} from './runner-body.mjs?v=57ec474fca38';
-import {bossArenaPose,bossCounterWindow} from './runner-bosses.mjs?v=f8107568ec3b';
+import {bossArenaPose,bossCounterWindow} from './runner-bosses.mjs?v=d257c721afc8';
 
 export function setAttackRun(run,active){
  run.player.attackHeld=!!active&&run.status==='running'&&!run.player.isJacare&&!run.boss?.traversal;
@@ -19,8 +19,10 @@ export function heroMuzzleFor(run,facing=1){
 // A seleção de projéteis só inclui ameaças já lançadas; o chefão tem alvo próprio.
 // Zé rival reutiliza trajetória de quique, mas continua sendo um personagem.
 const nonProjectileBodies=new Set(['povo','crowd-lane','ze-gotinha-rival','lula-runner','orla-runner','paulista-runner','route-scout','terminal-guard']);
-const shootableStoryEnemies=new Set(['pf','janones','army','boulos','dino','orla-runner','paulista-runner','route-scout','terminal-guard','lula-runner']);
-const isShootableStoryEnemy=o=>!!o&&!o.projectile&&!o.falling&&!o.groundHazard&&!o.passed&&!o.counted&&!o.destroyed&&shootableStoryEnemies.has(o.type);
+const shootableGroundEnemies=new Set(['pf','janones','army','boulos','dino','orla-runner','paulista-runner','route-scout','terminal-guard','lula-runner']);
+const isShootableGroundEnemy=o=>!!o&&!o.projectile&&!o.falling&&!o.groundHazard&&!o.passed&&!o.counted&&!o.destroyed&&shootableGroundEnemies.has(o.type);
+// Only explicitly hostile ground fighters receive health. Civic bodies, terrain and warnings remain untouched.
+const groundEnemyHealth=o=>['army','dino','boulos'].includes(o.type)?2.4:1;
 export function isHostileProjectile(o){
  return !!o?.projectile&&!nonProjectileBodies.has(o.type)&&!o.falling&&!o.groundHazard&&!o.reflected&&!o.destroyed&&
   (o.launched||!o.cast&&!o.storyVolley&&!(o.waitFor>0))&&(!o.passed&&!o.counted||o.returning&&!o.contactHit);
@@ -84,10 +86,10 @@ function aimAtBoss(run,power){
  }
  return {x:pose.x,y:pose.platformY+48,facing:1};
 }
-function aimAtStoryEnemy(run){
- if(!run.manualStory||run.boss)return null;
- const facing=run.player.shotFacing<0?-1:1,muzzle=heroMuzzleFor(run,facing);
- const target=run.obstacles.filter(isShootableStoryEnemy).filter(o=>(o.x+o.width/2-muzzle.x)*facing>0)
+function aimAtGroundEnemy(run){
+ if(run.boss)return null;
+ const facing=run.manualStory&&run.player.shotFacing<0?-1:1,muzzle=heroMuzzleFor(run,facing);
+ const target=run.obstacles.filter(isShootableGroundEnemy).filter(o=>(o.x+o.width/2-muzzle.x)*facing>0)
   .sort((a,b)=>(a.x+a.width/2-b.x-b.width/2)*facing)[0];
  return target?{x:target.x+target.width/2,y:Math.max(14,target.height*.58),facing}:null;
 }
@@ -98,7 +100,7 @@ export function attackRun(run){
  if(run.status!=='running'||!(run.ammo>0)||p.isJacare||b?.traversal||b?.phase==='intro'||p.attackCooldown>0&&!charged||(run.heroShots?.length||0)>=limit)return false;
  const ammoCost=charged?2:1;
  const target=b?.combat?aimAtBoss(run,power)||aimAtProjectile(run,power):
-  run.manualStory?aimAtStoryEnemy(run)||aimAtProjectile(run,power):aimAtProjectile(run,power)||aimAtBoss(run,power);
+  run.manualStory?aimAtGroundEnemy(run)||aimAtProjectile(run,power):aimAtProjectile(run,power)||aimAtGroundEnemy(run)||aimAtBoss(run,power);
  p.shotFacing=target?.facing??(run.manualStory?(p.shotFacing<0?-1:1):1);
  const {x,y}=heroMuzzleFor(run,p.shotFacing),targetX=target?.x??x+p.shotFacing*160,targetY=target?.y??y;
  const dx=p.shotFacing*Math.max(1,(targetX-x)*p.shotFacing),dy=targetY-y,distance=Math.max(1,Math.hypot(dx,dy)),angle=Math.atan2(dy,dx);
@@ -130,6 +132,13 @@ function rollBossDamage(run,basis){
  const critical=draw()<.14,variation=.85+draw()*.30;
  return {damage:basis*variation*(critical?1.5:1),critical};
 }
+// Compress high values rather than flatten all heavy normal weapons at 1.55.
+// Starter, charged shots and reflected damage keep their established balance.
+function directDamageMultiplier(shot){
+ const damage=Math.max(.84,shot.damage||1);
+ if(shot.charged)return Math.min(3.1,damage);
+ return Math.min(2.4,damage<=1.55?damage:1.55+(damage-1.55)*.45);
+}
 function applyBossHit(boss,hit){
  if(boss.combat&&boss.hurtFor>0)return;
  const previousHp=boss.hp;
@@ -149,7 +158,7 @@ function interceptProjectile(run,shot,o){
   boss.counterReady=null;
   if(!boss.combat&&!o.counted)boss.remaining=Math.max(0,boss.remaining-1);
   Object.assign(o,{reflected:true,returning:true,passed:true,counted:true,resolved:true,waitFor:0,speed:-510,
-   reflection:{boss,...hit,weakness,age:0}});
+   reflection:{boss,...hit,weakness,earnedCounter:!!earned,age:0}});
  }else{o.destroyed=true;o.counted=true;o.passed=true;}
  run.clearedAt={x:o.x+o.width/2,remaining:.25};
 }
@@ -164,13 +173,16 @@ export function advanceReflectedProjectile(run,o,dt){
  const reflected=o.reflection,boss=run.boss;
  if(!boss||reflected.boss!==boss||boss.traversal||boss.hp<=0&&!storyVolleyPendingVictory(boss)){o.destroyed=true;return;}
  reflected.age+=dt;
+ if(reflected.age>2){o.destroyed=true;return;}
  const pose=bossArenaPose(boss,visibleWidth(run));
  const x=o.x+o.width/2,dx=pose.x-x,dy=pose.platformY+48-o.y,distance=Math.hypot(dx,dy),pace=610*dt;
  if(distance<=24+pace){
+  // Preserve the earned opening consumed at interception through a recent
+  // hit's protection. Ordinary returns retain their existing collision rule.
+  if(boss.combat&&reflected.earnedCounter&&boss.hurtFor>0)return;
   applyBossHit(boss,reflected);
   o.destroyed=true;return;
  }
- if(reflected.age>2){o.destroyed=true;return;}
  o.x+=dx/distance*pace;o.y+=dy/distance*pace;
 }
 export function advanceHeroShots(run,dt){
@@ -198,12 +210,16 @@ export function advanceHeroShots(run,dt){
    interceptProjectile(run,shot,o);
    if(shot.cancels>0){shot.cancels--;continue;}return false;
   }
-  if(run.manualStory&&!run.boss){
+  if(!run.boss){
    for(const enemy of run.obstacles){
-    if(!isShootableStoryEnemy(enemy)||!segmentHitsBox(shot,enemy.x,enemy.x+enemy.width,0,enemy.height,radius))continue;
-    enemy.destroyed=true;enemy.passed=true;enemy.counted=true;
-    run.defeatedEnemies=(run.defeatedEnemies||0)+1;
+    if(!isShootableGroundEnemy(enemy)||!segmentHitsBox(shot,enemy.x,enemy.x+enemy.width,0,enemy.height,radius))continue;
+    // Keep light enemies one-shot with IVER; tougher fighters reward heavier earned powers.
+    enemy.hitPoints=Math.max(0,(enemy.hitPoints??groundEnemyHealth(enemy))-Math.max(.1,shot.damage||1));
     run.clearedAt={x:enemy.x+enemy.width/2,remaining:.25};
+    if(enemy.hitPoints<=1e-8){
+     enemy.destroyed=true;enemy.passed=true;enemy.counted=true;
+     run.defeatedEnemies=(run.defeatedEnemies||0)+1;
+    }
     return false;
    }
   }
@@ -215,7 +231,7 @@ export function advanceHeroShots(run,dt){
    if(segmentHitsBox(shot,pose.x-30,pose.x+30,pose.platformY+8,pose.platformY+100,radius)){
     const weakness=boss.weakness===shot.powerId;
     const opening=boss.combat?Math.min(2.2,bossCounterWindow(boss).damage):1;
-    const hit=rollBossDamage(run,(boss.combat?1.1:Math.max(1.5,boss.maxHp*.075))*Math.max(.84,Math.min(shot.charged?3.1:1.55,shot.damage||1))*(weakness?1.35:1)*opening);
+    const hit=rollBossDamage(run,(boss.combat?1.1:Math.max(1.5,boss.maxHp*.075))*directDamageMultiplier(shot)*(weakness?1.35:1)*opening);
     applyBossHit(boss,{...hit,weakness});return false;
    }
   }

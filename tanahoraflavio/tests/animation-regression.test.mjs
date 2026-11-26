@@ -18,6 +18,19 @@ function canvas(){
   ctx[name]=(...args)=>calls.push([name,...args]);
  return ctx;
 }
+test('coletas animam sem deslocar a posição e ficam estáveis com movimento reduzido',()=>{
+ for(const type of ['passport','shield']){
+  function frame(phase,reducedMotion){
+   const c=canvas(),fills=[];
+   c.fill=()=>fills.push([c.fillStyle,c.globalAlpha]);
+   art.drawItem(c,{type,x:125,y:215,phase,reducedMotion});
+   assert.deepEqual(c.calls.find(call=>call[0]==='translate'),['translate',125,215]);
+   return {calls:c.calls,fills};
+  }
+  assert.notDeepEqual(frame(0,false),frame(2,false),type);
+  assert.deepEqual(frame(0,true),frame(2,true),type);
+ }
+});
 test('corpo de cada família de projétil anima sem depender somente das partículas',()=>{
  for(const [type,style] of [['lhand','glide'],['message','glide'],['receipts','paper'],['hammer','metal'],['wind','wind'],['meme-ghost','ghost'],['parachute-cross','fall']]){
   const item={type,flightStyle:style,x:200,width:46,height:44,y:70,launchX:350,action:'jump',launched:true};

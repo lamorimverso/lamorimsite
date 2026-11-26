@@ -9,11 +9,12 @@ test('vencer Dilma concede e equipa vento; a revanche melhora o mesmo poder sem 
  assert.equal(typeof core.grantBossPower,'function');core.grantBossPower(r,'dilma');assert.equal(r.powerLevels.dilma,2);assert.equal(r.ownedPowers.filter(id=>id==='dilma').length,1);
  assert.equal(core.grantBossPower(r,'santiago'),false);assert.deepEqual(core.createRun().ownedPowers,['ivermectina']);
 });
-test('disparo funciona na corrida, passa por um perseguidor e intercepta um projétil sem gastar passaportes',()=>{
+test('tiros na corrida derrotam um perseguidor hostil e interceptam um projétil sem gastar passaportes',()=>{
  const r=make(),body={type:'pf',x:320,width:34,height:44,speed:0,action:'jump'},y=core.heroMuzzleFor(r).y;
  r.passports=8;r.obstacles=[body,{type:'message',x:455,width:34,height:44,y,speed:100,projectile:true,launched:true,launchX:472,targetX:r.player.x+17,launchY:y,targetY:y}];
  assert.equal(core.setAttackRun(r,true),true);assert.equal(core.attackRun(r),true);step(r,1);
- assert.deepEqual(r.obstacles,[body]);assert.equal(r.passports,8);assert.equal(r.status,'running');
+ assert.equal(body.destroyed,true);assert.equal(body.hitPoints,0);assert.equal(r.defeatedEnemies,1);
+ assert.deepEqual(r.obstacles,[]);assert.equal(r.passports,8);assert.equal(r.status,'running');
 });
 test('vento herdado da Dilma dispersa projéteis; trocar poder respeita bloqueios e mantém o tiro em voo',()=>{
  const r=make();assert.equal(typeof core.equipHeroPower,'function');assert.equal(core.equipHeroPower(r,'dilma'),false);

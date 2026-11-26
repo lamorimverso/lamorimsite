@@ -1,4 +1,4 @@
-import {playerX,frontContact} from './runner-run-geometry.mjs?v=f21951232de3';
+import {playerX,frontContact} from './runner-run-geometry.mjs?v=c7879509d7af';
 
 export const assistance = run => run.assisted ? .82 : 1;
 export const REACTION_GAP = .82;

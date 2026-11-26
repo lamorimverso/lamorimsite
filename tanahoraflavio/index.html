@@ -29,7 +29,7 @@
   <link rel="stylesheet" href="game.css?v=59f6ada42459">
   <link rel="stylesheet" href="runner-ui.css?v=855d464b3185">
   <script defer src="page-layout.js?v=69f225a085c7"></script>
-  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=daf0abd9162b"></script>
+  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=6b487c16f506"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -121,7 +121,7 @@
           <p id="game-voice-note" class="game-voice-note sr-only" role="status" aria-live="polite" hidden></p>
           <div id="game-jacare-progress" class="game-jacare-progress" role="progressbar" aria-label="Tempo da transformação em jacaré" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0" hidden><span id="game-jacare-count" aria-hidden="true">10 s</span><span id="game-jacare-hint" class="game-jacare-hint" aria-hidden="true">Retorno automático</span></div>
                             <canvas id="runner-canvas" width="900" height="300" tabindex="0" role="img" aria-label="Pista do jogo Corre, Flávio!" aria-describedby="game-instructions">Seu navegador não oferece Canvas. A contagem regressiva continua disponível acima.</canvas>
-          <div id="game-battle-cue" class="game-battle-cue" hidden><small id="game-battle-attack"></small><strong id="game-battle-action"></strong></div>
+          <div id="game-battle-cue" class="game-battle-cue sr-only" role="status" aria-live="polite" hidden><small id="game-battle-attack"></small><strong id="game-battle-action"></strong></div>
           <div class="game-combat-hud" id="game-combat-hud" hidden>
             <div class="combat-player">
               <div class="combat-columns">
@@ -133,7 +133,7 @@
 <div class="game-boss" id="game-boss" hidden aria-label="Confronto com chefe">
           <div class="game-boss-heading sr-only"><span>CHEFÃO</span><strong id="game-boss-name">Próximo confronto</strong></div>
           <div class="game-boss-health" id="game-boss-health" role="progressbar" aria-label="Ataques superados" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0"><span id="game-boss-progress"></span></div>
-          <canvas id="game-boss-portrait" class="combat-portrait" width="48" height="48" aria-hidden="true"></canvas><span id="game-boss-tag" class="combat-tag" aria-hidden="true">CHEFE</span><small class="game-boss-weapon sr-only" id="game-boss-weapon">Desvie dos ataques para fugir</small>
+          <canvas id="game-boss-portrait" class="combat-portrait" width="48" height="48" aria-hidden="true"></canvas><span id="game-boss-tag" class="combat-tag sr-only" aria-hidden="true">CHEFE</span><small class="game-boss-weapon sr-only" id="game-boss-weapon">Desvie dos ataques para fugir</small>
         </div>
             <p id="game-power-reward" class="game-power-reward" role="status" hidden></p>
           </div>

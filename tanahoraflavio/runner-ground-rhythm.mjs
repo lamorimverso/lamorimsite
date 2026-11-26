@@ -14,10 +14,14 @@ const route=Object.freeze({
  'brasilia-final':profile(['rear','overhead'],.02,{rear:1.20,front:.90,rolling:1.10},.025,.99)
 });
 const cappedRotation=Object.freeze(['front','rear','drop','rolling']);
+const cappedOpenings=Object.freeze([...cappedRotation,'overhead']);
 export function groundRhythmFor({mode,stageId,localDistance,beat,lessonCursor=0,lastBoss,lap,capped}){
  if(mode!=='story'){
   if(!capped)return null;
-  return {opening:beat===0&&localDistance<1400?cappedRotation[lap%cappedRotation.length]:null,
+  // Bosses and terrain can skip a stage's opening. Complete the late-route
+  // sequence at the next eligible ground spawns anywhere in the same lap.
+  const opening=lessonCursor<cappedOpenings.length?cappedOpenings[(lap+lessonCursor)%cappedOpenings.length]:null;
+  return {opening,
    crouchShift:0,styles:{[cappedRotation[lap%cappedRotation.length]]:1.4},markerShift:0,pace:[.99,1.06,.97][lap%3]};
  }
  const p=route[stageId];if(!p)return null;

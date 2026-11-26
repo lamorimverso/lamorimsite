@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../runner-core.mjs';
-import * as difficulty from '../runner-difficulty.mjs?v=4e2a76163482';
-import * as geometry from '../runner-run-geometry.mjs?v=f21951232de3';
+import * as difficulty from '../runner-difficulty.mjs?v=6b03eb98d51a';
+import * as geometry from '../runner-run-geometry.mjs?v=c7879509d7af';
 import * as random from '../runner-random.mjs?v=8de9f87c7593';
-import * as combat from '../runner-projectile-combat.mjs?v=260f593e4ff3';
-import * as state from '../runner-run-state.mjs?v=45eb697d2387';
-import * as boss from '../runner-boss-rules.mjs?v=4a94f7ed2f96';
-import * as timing from '../runner-threat-timing.mjs?v=267f5133b709';
+import * as combat from '../runner-projectile-combat.mjs?v=1ef113bebba8';
+import * as state from '../runner-run-state.mjs?v=4bc8847f5e88';
+import * as boss from '../runner-boss-rules.mjs?v=9b629ab47d68';
+import * as timing from '../runner-threat-timing.mjs?v=dcb3c4040ae9';
 import * as cues from '../runner-attack-cues.mjs?v=5545f4acc1e6';
 
 test('public core bindings remain compatible with the extracted modules',()=>{
