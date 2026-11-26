@@ -22,8 +22,8 @@ import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {heroStridePhase,bossStopsAutoRun} from './runner-drawn-motion.mjs?v=0d1971800c55';
 import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=700c55ebad49';
 import {bossCounterWindow} from './runner-bosses.mjs?v=f8107568ec3b';
-import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=c0f55e6867c9';
-import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=dbaac525a595";
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=920e5365d0c0';
+import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=bc3e0a2584cf";
 import { createGameAudio } from "./runner-audio.mjs?v=d93419fd0e46";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=d5e017561fd6";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor,createSceneryScroll,advanceSceneryScroll,sampleSceneryDistance } from "./runner-scenery.mjs?v=ce0fa6b0d678";
@@ -956,9 +956,10 @@ function initRunner() {
       drawActor(ctx,{type:"ze-gotinha",x:item.x,y:WORLD.ground,scale:.72,phase:run.elapsed*10});return;
     }
     const phase=run.status==="running"?run.elapsed*6:0;
-    const bob=prefersReducedMotion()?0:Math.sin(phase+item.x*.017)*1.3;
-    const pulse=prefersReducedMotion()?1:1+.035*Math.sin(phase+item.x*.012);
-    drawItem(ctx,{type:item.type,x:item.x,y:WORLD.ground-item.y+bob,scale:(item.type==="shield"?.86:.8)*pulse});
+    const reducedMotion=prefersReducedMotion();
+    const bob=reducedMotion?0:Math.sin(phase+item.x*.017)*1.3;
+    const pulse=reducedMotion?1:1+.035*Math.sin(phase+item.x*.012);
+    drawItem(ctx,{type:item.type,x:item.x,y:WORLD.ground-item.y+bob,scale:(item.type==="shield"?.86:.8)*pulse,phase,reducedMotion});
   }
   function draw(visualDistance=run.distance) {
     ctx.setTransform(canvas.width/virtualWidth,0,0,canvas.height/WORLD.height,0,0);

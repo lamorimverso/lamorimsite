@@ -125,9 +125,28 @@ export function drawPhantomCloud(c,{x=0,y=0,phase=0,hitFor=0,reducedMotion=false
  }
  c.restore();
 }
-export function drawItem(c,{type,x,y,scale=1}){
+export function drawItem(c,{type,x,y,scale=1,phase=0,reducedMotion=false}){
  c.save();c.translate(x,y);c.scale(scale,scale);
- if(type==='shield'){
+ if(type==='passport'){
+  const turn=reducedMotion?0:Math.sin(phase*.8);
+  c.rotate(.16+turn*.14);c.scale(1-Math.abs(turn)*.14,1);
+  box(c,-10,-16,24,34,'#f3d69c',4);
+  box(c,-13,-18,24,35,'#245d75',4);
+  line(c,[[-9,-13],[-9,12]],'#559eab',1.6);
+  line(c,[[-6,-12],[7,-12]],'#a1c8c9',1.2);
+  oval(c,0,-2,6,6,'#245d75','#f6cc78',1.3);
+  oval(c,0,-2,2.5,6,'#245d75','#f6cc78',1);
+  line(c,[[-5,-2],[5,-2]],'#f6cc78',1);
+  line(c,[[-5,9],[5,9]],'#f6cc78',1.4);
+ }else if(type==='shield'){
+  const gleam=reducedMotion?1:.72+.28*Math.cos(phase*1.1);
+  path(c,[[-16,-15],[0,-21],[16,-15],[15,1],[11,10],[0,19],[-11,10],[-15,1]],'#2e625d');
+  path(c,[[-12,-12],[0,-17],[12,-12],[11,1],[7,8],[0,14],[-7,8],[-11,1]],'#68bfa9','#c4e6b7');
+  path(c,[[-13,1],[-4,1],[-4,-5],[4,-5],[4,1],[13,1],[8,10],[0,16],[-8,10]],'#429784','#2e625d');
+  oval(c,0,3,2.8,2.8,'#b88e4e',null);
+  c.globalAlpha*=gleam;
+  oval(c,0,3,2.8,2.8,'#ffe397',null);
+ }else if(type==='active-shield'){
   path(c,[[-15,-17],[0,-22],[15,-17],[13,5],[7,13],[0,19],[-7,13],[-13,5]],'#3d669b');
   path(c,[[-11,-14],[0,-18],[11,-14],[9,3],[0,13],[-9,3]],'#1e426f','#e9c776');
   // Américas estilizadas; referência visual original, não um brasão oficial.
@@ -185,7 +204,7 @@ export function drawProtection(c,{x,y,crouching=false,remaining=0,foreground=fal
  c.globalAlpha*=Math.min(1,remaining/.65);
  const cx=x+(crouching?49:44),cy=y-(crouching?24:29);
  line(c,[[cx-22,cy+4],[cx-8,cy+2]],'#754e3b',5);
- drawItem(c,{type:'shield',x:cx,y:cy,scale:crouching?1.1:1.4});
+ drawItem(c,{type:'active-shield',x:cx,y:cy,scale:crouching?1.1:1.4});
  c.restore();
 }
 // As poses de corrida são essenciais; reduzir efeitos só retira balanço e poeira.
