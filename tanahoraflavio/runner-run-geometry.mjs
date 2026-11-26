@@ -1,4 +1,4 @@
-import {BOSS_ARENA_RESERVE} from './runner-bosses.mjs?v=d257c721afc8';
+import {BOSS_ARENA_RESERVE} from './runner-bosses.mjs?v=a359288d2758';
 
 export const WORLD = Object.freeze({width:900,height:300,ground:246});
 // Envelope de todas as poses no atlas a .95 de escala, incluindo o agachamento.

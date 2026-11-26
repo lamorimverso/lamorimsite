@@ -26,10 +26,10 @@
   <title>Tá na hora, Flávio! · Contagem e minigame</title>
 
   <link rel="stylesheet" href="control-settings.css?v=1c20042497ae">
-  <link rel="stylesheet" href="game.css?v=59f6ada42459">
+  <link rel="stylesheet" href="game.css?v=e16863dbe61c">
   <link rel="stylesheet" href="runner-ui.css?v=855d464b3185">
   <script defer src="page-layout.js?v=69f225a085c7"></script>
-  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=f68745887950"></script>
+  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=5addbb8800d1"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -106,9 +106,10 @@
               <label class="assist-option" for="game-assist"><input id="game-assist" type="checkbox" disabled>Ritmo mais tranquilo</label>
             </div>
             <section class="story-extras" aria-labelledby="game-practice-title">
-              <h3 id="game-practice-title">Desafios opcionais</h3>
-              <div id="game-practice" aria-label="Escolher subchefe opcional"></div>
-              <p class="game-options-note">Cada desafio começa uma partida separada no respectivo mapa.</p>
+              <h3 id="game-practice-title">Treinar chefões</h3>
+              <button type="button" id="game-exit-practice" class="game-primary" hidden>Voltar à corrida</button>
+              <div id="game-practice" aria-label="Escolher encontro para treino"></div>
+              <p class="game-options-note">Entre direto em qualquer chefe ou travessia da História. O treino começa uma tentativa separada e não altera o recorde da corrida.</p>
             </section>
             <section class="game-itinerary" aria-labelledby="game-itinerary-heading"><h3 id="game-itinerary-heading">Rota e chefões</h3>
               <ol class="game-route" id="game-route" aria-label="Rota da corrida"></ol>

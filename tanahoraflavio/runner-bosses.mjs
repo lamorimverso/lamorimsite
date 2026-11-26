@@ -73,6 +73,12 @@ export function optionalStoryBossAt(id){
  const entry=optional.find(row=>row[0]===id);
  return entry?campaignBoss({type:entry[0],name:entry[1],stageIndex:entry[2],role:'optional',distance:3400}):null;
 }
+export function storyPracticeBossAt(id){
+ if(typeof id!=='string')return null;
+ if(id.startsWith('optional-'))return optionalStoryBossAt(id.slice('optional-'.length));
+ const index=encounters.findIndex(({type})=>id===type||id==='campaign-'+type);
+ return storyBossAt(index)||optionalStoryBossAt(id);
+}
 export function nextStoryBossDistance(index){
  const b=encounters[index];return Number.isInteger(index)&&b?STORY_OPENING_DISTANCE+b.stageIndex*SCENE_DISTANCE+b.distance:Infinity;
 }
