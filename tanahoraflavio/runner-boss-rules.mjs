@@ -1,4 +1,4 @@
-import {foeFor} from './runner-difficulty.mjs?v=0605af32924f';
+import {foeFor} from './runner-difficulty.mjs?v=6b03eb98d51a';
 import {bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mjs?v=740e8ab135c4';
 
 export const BOSS_ROSTER = Object.freeze(['haddad','lula','xandao','janones','pf']);

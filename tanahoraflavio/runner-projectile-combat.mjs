@@ -1,10 +1,10 @@
-import {PLAYER,playerX,visibleWidth} from './runner-run-geometry.mjs?v=e55c2c4eae5e';
+import {PLAYER,playerX,visibleWidth} from './runner-run-geometry.mjs?v=c7879509d7af';
 import {random,nextSeed} from './runner-random.mjs?v=8de9f87c7593';
 import {heroPowerFor} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
 import {advanceAmmo} from './runner-supplies.mjs?v=44c67e8a5802';
 import {HERO_SHOT_DURATION,DUEL_CHARGE_SECONDS,heroShotPose} from './runner-hero-shot.mjs?v=7aa1e19e9838';
 import {playerBodyFor} from './runner-body.mjs?v=57ec474fca38';
-import {bossArenaPose,bossCounterWindow} from './runner-bosses.mjs?v=dae0075d20c5';
+import {bossArenaPose,bossCounterWindow} from './runner-bosses.mjs?v=d257c721afc8';
 
 export function setAttackRun(run,active){
  run.player.attackHeld=!!active&&run.status==='running'&&!run.player.isJacare&&!run.boss?.traversal;
@@ -149,7 +149,7 @@ function interceptProjectile(run,shot,o){
   boss.counterReady=null;
   if(!boss.combat&&!o.counted)boss.remaining=Math.max(0,boss.remaining-1);
   Object.assign(o,{reflected:true,returning:true,passed:true,counted:true,resolved:true,waitFor:0,speed:-510,
-   reflection:{boss,...hit,weakness,age:0}});
+   reflection:{boss,...hit,weakness,earnedCounter:!!earned,age:0}});
  }else{o.destroyed=true;o.counted=true;o.passed=true;}
  run.clearedAt={x:o.x+o.width/2,remaining:.25};
 }
@@ -164,13 +164,16 @@ export function advanceReflectedProjectile(run,o,dt){
  const reflected=o.reflection,boss=run.boss;
  if(!boss||reflected.boss!==boss||boss.traversal||boss.hp<=0&&!storyVolleyPendingVictory(boss)){o.destroyed=true;return;}
  reflected.age+=dt;
+ if(reflected.age>2){o.destroyed=true;return;}
  const pose=bossArenaPose(boss,visibleWidth(run));
  const x=o.x+o.width/2,dx=pose.x-x,dy=pose.platformY+48-o.y,distance=Math.hypot(dx,dy),pace=610*dt;
  if(distance<=24+pace){
+  // Preserve the earned opening consumed at interception through a recent
+  // hit's protection. Ordinary returns retain their existing collision rule.
+  if(boss.combat&&reflected.earnedCounter&&boss.hurtFor>0)return;
   applyBossHit(boss,reflected);
   o.destroyed=true;return;
  }
- if(reflected.age>2){o.destroyed=true;return;}
  o.x+=dx/distance*pace;o.y+=dy/distance*pace;
 }
 export function advanceHeroShots(run,dt){

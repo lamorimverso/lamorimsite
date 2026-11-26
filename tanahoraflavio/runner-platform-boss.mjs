@@ -3,7 +3,11 @@
 // Ported to this engine's y-up coordinates and narrow-screen reaction corridor.
 const clamp=n=>Math.max(0,Math.min(1,n));
 const smooth=n=>{const u=clamp(n);return u*u*(3-2*u);};
-function hash(text,seed){for(const ch of text)seed=(Math.imul(seed,31)+ch.charCodeAt(0))>>>0;return seed;}
+function hash(text,seed){
+ for(const ch of text)seed=(Math.imul(seed,31)+ch.charCodeAt(0))>>>0;
+ // Mix high bits before choosing an order; odd multiplication preserves seed parity.
+ return (seed^(seed>>>16))>>>0;
+}
 // Each fighter has an individual cadence and committed movement vocabulary.
 // [cycle seconds, first move, second move, leap height, first start, second start].
 const movement=Object.freeze({
