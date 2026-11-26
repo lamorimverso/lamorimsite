@@ -17,9 +17,9 @@ function until(r,predicate,maxSeconds=15){
  assert.ok(predicate(),'expected game state never occurred');
 }
 
-test('a shot only destroys active hostile projectiles; bodies and ground structures stay unchanged',()=>{
+test('a shot intercepts active hostile projectiles while civic bodies and ground structures stay unchanged',()=>{
  const r=scene(null),m=core.heroMuzzleFor(r);
- const body={type:'pf',x:m.x+60,width:45,height:75,speed:0};
+ const body={type:'povo',x:m.x+60,width:45,height:75,speed:0};
  const barrier={type:'barrier',x:m.x+112,width:40,height:75,speed:0};
  const civic={type:'crowd-lane',x:m.x+130,width:50,height:56,falling:true,y:m.y,age:0,warningFor:8,fallFor:.4,speed:0};
  const bouncingBody={type:'ze-gotinha-rival',x:m.x+172,width:24,height:35,speed:0,projectile:true,launched:true,y:m.y};
@@ -62,6 +62,56 @@ test('natural boomerang return without Flávio firing cannot damage a boss',()=>
  until(r,()=>r.obstacles.some(o=>o.returning));
  until(r,()=>r.boss.phase==='recover');
  assert.equal(r.boss.hp,hp);assert.equal(r.shotsFired,0);
+});
+
+test('an earned reflected counter waits through hurt protection and applies its stored damage only once',()=>{
+ for(const fps of [30,60,120]){
+  const r=scene(),boss=r.boss;
+  boss.reducedMotion=true;until(r,()=>r.obstacles.some(o=>o.launched));
+  const returned=r.obstacles.find(o=>o.launched);
+  Object.assign(returned,{arcHeight:0,curve:null,launchY:48,targetY:48,y:48});
+  Object.assign(boss,{phase:'recover',phaseFor:10,recover:10,counterReady:{damage:2}});
+  assert.equal(core.attackRun(r),true);until(r,()=>returned.reflected===true);
+  assert.equal(returned.reflection.earnedCounter,true);assert.equal(boss.counterReady,null);
+  const hp=boss.hp,damage=returned.reflection.damage;
+  const pose=core.bossArenaPose(boss,480);
+  Object.assign(returned,{x:pose.x-returned.width/2,y:pose.platformY+48});
+  boss.hurtFor=.1;
+  const damageState=r.damageRandomState;
+  core.advanceRun(r,1/fps);
+  assert.equal(boss.hp,hp,'the existing protection must still block immediate damage');
+  assert.ok(r.obstacles.includes(returned),'the earned counter must remain visible until the protection ends');
+  for(let i=0;i<fps;i++)core.advanceRun(r,1/fps);
+  assert.equal(boss.hp,hp-damage,'the stored counter damage is applied exactly once');
+  assert.equal(returned.destroyed,true);assert.ok(!r.obstacles.includes(returned));
+  assert.equal(r.damageRandomState,damageState,'waiting must not reroll damage');
+ }
+});
+
+test('a blocked earned counter still expires at its flight lifetime limit',()=>{
+ const r=scene('lula'),boss=r.boss,hp=boss.hp;
+ Object.assign(boss,{phase:'recover',phaseFor:10,recover:10,reducedMotion:true,hurtFor:5});
+ const pose=core.bossArenaPose(boss,480);
+ const returned={type:'lhand',projectile:true,reflected:true,returning:true,passed:true,counted:true,
+  x:pose.x-10,y:pose.platformY+48,width:20,height:20,speed:-510,reflection:{boss,damage:3,earnedCounter:true,age:1.98}};
+ r.obstacles=[returned];
+ core.advanceRun(r,dt);assert.ok(r.obstacles.includes(returned));
+ for(let i=0;i<6;i++)core.advanceRun(r,dt);
+ assert.equal(boss.hp,hp);assert.equal(returned.destroyed,true);assert.ok(!r.obstacles.includes(returned));
+});
+
+test('an ordinary reflection still obeys hurt protection without receiving an earned counter',()=>{
+ const r=scene(),boss=r.boss;
+ boss.reducedMotion=true;until(r,()=>r.obstacles.some(o=>o.launched));
+ const returned=r.obstacles.find(o=>o.launched);
+ Object.assign(returned,{arcHeight:0,curve:null,launchY:48,targetY:48,y:48});
+ Object.assign(boss,{phase:'recover',phaseFor:10,recover:10,counterReady:null});
+ assert.equal(core.attackRun(r),true);until(r,()=>returned.reflected===true);
+ assert.equal(returned.reflection.earnedCounter,false);
+ const hp=boss.hp,pose=core.bossArenaPose(boss,480);
+ Object.assign(returned,{x:pose.x-returned.width/2,y:pose.platformY+48});boss.hurtFor=.1;
+ core.advanceRun(r,dt);
+ assert.equal(boss.hp,hp);assert.equal(returned.destroyed,true);assert.ok(!r.obstacles.includes(returned));
 });
 
 

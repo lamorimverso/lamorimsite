@@ -155,6 +155,41 @@ test('second finger fires in boss encounter, releasing it does not interrupt fir
   verifyErrors(errors);
  }finally{await context.close();}
 });
+for(const mode of ['story','endless'])for(const releasePrimaryFirst of [false,true])
+test(`stationary two-finger route fire hits an enemy without jumping: ${mode}, primary first ${releasePrimaryFirst}`,async()=>{
+ const {context,page,errors}=await beginMobile({width:390,height:844},{mode});
+ try{
+  const before=await page.evaluate(()=>{
+   const r=__touchRun;
+   r.obstacles=[{type:'pf',x:r.player.x+180,width:34,height:80,speed:0,action:'jump'}];
+   return {distance:r.distance,ammo:r.ammo};
+  });
+  await touch(page,'pointerdown',601);
+  await touch(page,'pointerdown',602,{primary:false,x:160,y:125});
+  assert.equal(await page.evaluate(()=>__touchRun.player.attackHeld),true,'stationary supporting finger enables route fire');
+  await page.waitForFunction(()=>__touchRun.defeatedEnemies===1);
+  const after=await page.evaluate(()=>({boss:__touchRun.boss,distance:__touchRun.distance,ammo:__touchRun.ammo,shots:__touchRun.shotsFired}));
+  assert.equal(after.boss,null);
+  assert.ok(after.distance>before.distance,'the route keeps advancing while shooting');
+  assert.ok(after.shots>0&&after.ammo<before.ammo,'real shots consume the existing route ammunition');
+  if(releasePrimaryFirst){
+   await touch(page,'pointerup',601);
+   assert.equal(await page.evaluate(()=>__touchRun.player.attackHeld),true,'the second finger remains in control of fire');
+  }
+  await touch(page,releasePrimaryFirst?'pointercancel':'pointerup',602,{primary:false,x:160,y:125});
+  if(!releasePrimaryFirst)await touch(page,'pointerup',601);
+  const released=await page.evaluate(()=>({held:__touchRun.player.attackHeld,y:__touchRun.player.y,velocity:__touchRun.player.velocity,shots:__touchRun.shotsFired,elapsed:__touchRun.elapsed}));
+  assert.equal(released.held,false,'releasing or cancelling the firing touch stops fire');
+  assert.equal(released.y,0,'the supporting touch is not also a jump');
+  assert.equal(released.velocity,0);
+  await page.waitForFunction(elapsed=>__touchRun.elapsed>elapsed+.4,released.elapsed);
+  assert.equal(await page.evaluate(()=>__touchRun.shotsFired),released.shots,'no stale touch keeps firing');
+  await touch(page,'pointerdown',603);
+  await touch(page,'pointerup',603);
+  await page.waitForFunction(()=>__touchRun.player.y>0);
+  verifyErrors(errors);
+ }finally{await context.close();}
+});
 test('desktop preserves original keyboard controls and no mobile buttons appear',async()=>{
  const context=await browser.newContext({viewport:{width:900,height:720}});
  try{

@@ -73,7 +73,7 @@ test('manual Story remembers direction and shoots to the left after movement is 
  assert.ok(run.heroShots[0].vx<0);
 });
 
-test('manual Story shots remove ground enemies, not barriers or Endless enemies',()=>{
+test('shots remove hostile ground enemies in manual Story and Endless but not barriers',()=>{
  const story=isolated('story',true),enemy={type:'pf',x:story.player.x+180,width:34,height:44,speed:0,action:'jump'};
  story.obstacles.push(enemy);
  assert.equal(core.attackRun(story),true);step(story,75);
@@ -85,7 +85,8 @@ test('manual Story shots remove ground enemies, not barriers or Endless enemies'
  assert.notEqual(barrier.destroyed,true);
  const endless=isolated('endless',false),endlessEnemy={type:'pf',x:endless.player.x+180,width:34,height:80,speed:0,action:'jump'};
  endless.obstacles.push(endlessEnemy);core.attackRun(endless);step(endless,45);
- assert.notEqual(endlessEnemy.destroyed,true);
+ assert.equal(endlessEnemy.destroyed,true);
+ assert.equal(endless.defeatedEnemies,1);
 });
 
 
@@ -94,4 +95,24 @@ test('Story impact sparkle ends after its short lifetime',()=>{
  run.clearedAt={x:120,remaining:.25};
  step(run,40);
  assert.equal(run.clearedAt,null,'impact feedback must not leave permanent marks on the track');
+});
+
+test('earned heavy weapons trade cadence for power against tough enemies during continuous travel',()=>{
+ for(const mode of ['story','endless']){
+  const light=isolated(mode),heavy=isolated(mode);
+  const target=r=>({type:'army',x:core.heroMuzzleFor(r).x+120,width:40,height:88,speed:0,action:'jump'});
+  const a=target(light),b=target(heavy);
+  light.obstacles.push(a);heavy.obstacles.push(b);
+  assert.ok(core.grantBossPower(heavy,'dino'));
+  assert.equal(core.attackRun(light),true);assert.equal(core.attackRun(heavy),true);
+  assert.ok(heavy.player.attackCooldown>light.player.attackCooldown);
+  assert.ok(heavy.heroShots[0].damage>light.heroShots[0].damage);
+  assert.ok(heavy.heroShots[0].vx<light.heroShots[0].vx);
+  step(light,95);step(heavy,95);
+  assert.ok(a.hitPoints>0&&a.hitPoints<2.4);
+  assert.notEqual(a.destroyed,true);
+  assert.equal(b.destroyed,true);
+  assert.equal(heavy.defeatedEnemies,1);
+  assert.ok(heavy.routeDistance>0);
+ }
 });

@@ -29,7 +29,7 @@
   <link rel="stylesheet" href="game.css?v=59f6ada42459">
   <link rel="stylesheet" href="runner-ui.css?v=855d464b3185">
   <script defer src="page-layout.js?v=69f225a085c7"></script>
-  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=daf0abd9162b"></script>
+  <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=f68745887950"></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -94,7 +94,7 @@
         </div>
         <details class="game-settings" id="game-settings"><summary title="Configurações de comandos"><span aria-hidden="true">⚙</span><span class="sr-only">Comandos</span></summary>
           <div class="game-settings-content">
-            <p class="game-instructions" id="game-instructions"><span class="game-help-line">Configure teclado, mouse e controle. Nos dois modos, a corrida avança automaticamente. Na História, solte o botão de pulo durante a subida para um salto curto ou segure para alcançar plataformas mais altas. Na arena, o mesmo controle ajusta o salto. No Infinito e nas travessias aéreas, a corrida mantém o salto clássico. </span><span class="game-help-line">A arma básica permite até três tiros simultâneos. Abaixe enquanto avança para deslizar sob passagens baixas. Pule os vãos e pouse nas plataformas. Vença Soraya na História ou cinco chefes no Infinito para ganhar duplo pulo: aperte pular novamente no ar. Itens de aliados dão um escudo frontal de 3 s; seis ajudas também guardam uma reserva. </span><span class="game-help-line">No celular, toque na pista para pular, deslize para os lados para desviar, deslize para cima para saltar e para baixo para abaixar. Durante o combate, segure um dedo na pista e toque com outro para atirar. Você pode ativar a tela cheia nesta engrenagem; em navegadores sem suporte nativo, o jogo ocupa a área disponível da página. </span><span class="game-help-line">Dois impactos encerram a tentativa. Rachadinha cenográfica cura a forma machucada. Uma continuação guardada pode ser usada no resultado, quando a pista permite. Use A/D ou ←/→ para mudar de posição e desviar, sem precisar segurar uma direção para correr. Abaixe enquanto se move para deslizar sob passagens baixas. Na História, os chefes e eventos aparecem ao longo da corrida. O jogo fica parado enquanto você ajusta os comandos.</span></p>
+            <p class="game-instructions" id="game-instructions"><span class="game-help-line">Configure teclado, mouse e controle. Nos dois modos, a corrida avança automaticamente. Na História, solte o botão de pulo durante a subida para um salto curto ou segure para alcançar plataformas mais altas. Na arena, o mesmo controle ajusta o salto. No Infinito e nas travessias aéreas, a corrida mantém o salto clássico. </span><span class="game-help-line">A arma básica permite até três tiros simultâneos. Abaixe enquanto avança para deslizar sob passagens baixas. Pule os vãos e pouse nas plataformas. Vença Soraya na História ou cinco chefes no Infinito para ganhar duplo pulo: aperte pular novamente no ar. Itens de aliados dão um escudo frontal de 3 s; seis ajudas também guardam uma reserva. </span><span class="game-help-line">No celular, toque na pista para pular, deslize para os lados para desviar, deslize para cima para saltar e para baixo para abaixar. Na corrida e nos chefes, segure um dedo na pista e toque com outro para atirar; na corrida, mantenha o primeiro dedo parado. Se estiver deslizando para os lados ou abaixado, o segundo dedo continua pulando. Você pode ativar a tela cheia nesta engrenagem; em navegadores sem suporte nativo, o jogo ocupa a área disponível da página. </span><span class="game-help-line">Dois impactos encerram a tentativa. Rachadinha cenográfica cura a forma machucada. Uma continuação guardada pode ser usada no resultado, quando a pista permite. Use A/D ou ←/→ para mudar de posição e desviar, sem precisar segurar uma direção para correr. Abaixe enquanto se move para deslizar sob passagens baixas. Na História, os chefes e eventos aparecem ao longo da corrida. O jogo fica parado enquanto você ajusta os comandos.</span></p>
             <div id="game-control-bindings"></div>
             <div class="game-fullscreen-setting">
               <button type="button" id="game-fullscreen" aria-pressed="false" aria-describedby="game-fullscreen-note" disabled>⛶ Jogar em tela cheia</button>
@@ -121,7 +121,7 @@
           <p id="game-voice-note" class="game-voice-note sr-only" role="status" aria-live="polite" hidden></p>
           <div id="game-jacare-progress" class="game-jacare-progress" role="progressbar" aria-label="Tempo da transformação em jacaré" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0" hidden><span id="game-jacare-count" aria-hidden="true">10 s</span><span id="game-jacare-hint" class="game-jacare-hint" aria-hidden="true">Retorno automático</span></div>
                             <canvas id="runner-canvas" width="900" height="300" tabindex="0" role="img" aria-label="Pista do jogo Corre, Flávio!" aria-describedby="game-instructions">Seu navegador não oferece Canvas. A contagem regressiva continua disponível acima.</canvas>
-          <div id="game-battle-cue" class="game-battle-cue" hidden><small id="game-battle-attack"></small><strong id="game-battle-action"></strong></div>
+          <div id="game-battle-cue" class="game-battle-cue sr-only" role="status" aria-live="polite" hidden><small id="game-battle-attack"></small><strong id="game-battle-action"></strong></div>
           <div class="game-combat-hud" id="game-combat-hud" hidden>
             <div class="combat-player">
               <div class="combat-columns">
@@ -133,7 +133,7 @@
 <div class="game-boss" id="game-boss" hidden aria-label="Confronto com chefe">
           <div class="game-boss-heading sr-only"><span>CHEFÃO</span><strong id="game-boss-name">Próximo confronto</strong></div>
           <div class="game-boss-health" id="game-boss-health" role="progressbar" aria-label="Ataques superados" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0"><span id="game-boss-progress"></span></div>
-          <canvas id="game-boss-portrait" class="combat-portrait" width="48" height="48" aria-hidden="true"></canvas><span id="game-boss-tag" class="combat-tag" aria-hidden="true">CHEFE</span><small class="game-boss-weapon sr-only" id="game-boss-weapon">Desvie dos ataques para fugir</small>
+          <canvas id="game-boss-portrait" class="combat-portrait" width="48" height="48" aria-hidden="true"></canvas><span id="game-boss-tag" class="combat-tag sr-only" aria-hidden="true">CHEFE</span><small class="game-boss-weapon sr-only" id="game-boss-weapon">Desvie dos ataques para fugir</small>
         </div>
             <p id="game-power-reward" class="game-power-reward" role="status" hidden></p>
           </div>

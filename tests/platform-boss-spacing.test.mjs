@@ -76,3 +76,18 @@ test('the ground renderer keeps distinct Corre Flavio bodies and removes the flo
  }
  for(let i=1;i<bodies.length;i++)assert.notDeepEqual(bodies[i],bodies[0],'boss identities must not reuse one placeholder');
 });
+
+// Movement identity must change more than the sprite or projectile name.
+test('each ground fighter has a distinct continuous patrol and keeps a fair reaction corridor',()=>{
+ const seen=new Set();
+ for(let index=0;index<17;index++){
+  const r=scene(index),b=r.boss;if(!b?.platformer)continue;
+  const poses=Array.from({length:1200},(_,i)=>core.bossArenaPose({...b,age:1.1+i/120,phase:'recover'},480));
+  const signature=poses.filter((_,i)=>i%12===0).map(p=>[Math.round(p.x),Math.round(p.platformY)]).join('|');
+  assert.ok(!seen.has(signature),b.type+' must have its own movement rhythm');seen.add(signature);
+  assert.ok(poses.some(p=>p.platformY>=60),b.type+' must leap');
+  assert.ok(poses.every(p=>p.x>=348&&p.x<=428&&p.platformY>=0&&p.platformY<=96));
+  for(let i=1;i<poses.length;i++)assert.ok(Math.hypot(poses[i].x-poses[i-1].x,poses[i].platformY-poses[i-1].platformY)<8);
+ }
+ assert.ok(seen.size>=10);
+});

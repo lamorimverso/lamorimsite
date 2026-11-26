@@ -1,6 +1,6 @@
 import {drawJourneyFinish,drawBossAccent,drawImpactFinish,campaignResultText} from './runner-visual-finish.mjs?v=3ab9249fcffb';
 import {storyBattleCue,storyRewardText} from './runner-story-cue.mjs?v=c7b38ccf12e2';
-import {stageGuideFor} from './runner-stage-director.mjs?v=071886f07909';
+import {stageGuideFor} from './runner-stage-director.mjs?v=26985c10d94a';
 import {HURT_BODY_SCALE} from './runner-body.mjs?v=57ec474fca38';
 import {createPresentationDOM,createControlLabelReader} from './runner-presentation-cache.mjs?v=4712d27109dc';
 import {edgeThreatsFor,drawEdgeThreats} from './runner-edge-cues.mjs?v=b4b61c9e89df';
@@ -15,15 +15,15 @@ import {createMovementSoundDirector,movementIsAirborne} from './runner-movement-
 import {HERO_SHOT_DURATION,DUEL_CHARGE_SECONDS,drawHeroCharge,drawHeroProjectile} from './runner-hero-shot.mjs?v=7aa1e19e9838';
 import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=8f2c5aee1585';
 import {createAircraftWarningTracker,createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=37fd940420f1';
-import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=f8107568ec3b';
+import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=d257c721afc8';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, releaseJumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, stagePlanFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=211dea59788d";
+import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, releaseJumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, stagePlanFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=73bd1fc69372";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {heroStridePhase,bossStopsAutoRun} from './runner-drawn-motion.mjs?v=0d1971800c55';
 import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=700c55ebad49';
-import {bossCounterWindow} from './runner-bosses.mjs?v=f8107568ec3b';
-import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=c0f55e6867c9';
-import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=dbaac525a595";
+import {bossCounterWindow} from './runner-bosses.mjs?v=d257c721afc8';
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=920e5365d0c0';
+import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=bc3e0a2584cf";
 import { createGameAudio } from "./runner-audio.mjs?v=d93419fd0e46";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=d5e017561fd6";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor,createSceneryScroll,advanceSceneryScroll,sampleSceneryDistance } from "./runner-scenery.mjs?v=ce0fa6b0d678";
@@ -628,14 +628,18 @@ function initRunner() {
     lastPointerAt=performance.now();
     event.preventDefault();resumeFromGesture();canvas.focus({preventScroll:true});
     if(event.pointerType!=="touch"||run.status!=="running"){jump();return;}
-    if(event.isPrimary===false&&run.boss&&!run.boss.traversal){
+    const primaryPointer=[...trackPointers.values()].find(pointer=>pointer.primary);
+    const stationaryRouteTouch=!run.boss&&!run.player.crouchHeld&&primaryPointer?.action==='pending';
+    if(event.isPrimary===false&&!run.boss?.traversal&&(run.boss||stationaryRouteTouch)){
+      // Resting the first finger supports fire; releasing it must not also jump.
+      if(stationaryRouteTouch)primaryPointer.usedForFire=true;
       const source='touch-fire:'+event.pointerId;
       trackPointers.set(event.pointerId,{action:'fire'});
       fire(source,true);
       try{canvas.setPointerCapture?.(event.pointerId);}catch{}
       return;
     }
-    const pointer={x:event.clientX,y:event.clientY,action:"pending"};
+    const pointer={x:event.clientX,y:event.clientY,primary:event.isPrimary!==false,action:"pending"};
     if(run.player.crouchHeld&&(preferences.crouchMode==="hold"||trackPointers.size>0)){pointer.action="jump";jump('touch:'+event.pointerId);}
     trackPointers.set(event.pointerId,pointer);
     try{canvas.setPointerCapture?.(event.pointerId);}catch{/* Eventos assistivos podem não ter contato nativo. */}
@@ -662,7 +666,7 @@ function initRunner() {
     if(pointer.action==="move")updateMovement();
     if(pointer.action==="jump")releaseJump('touch:'+event.pointerId);
     if(pointer.action==="fire")fire('touch-fire:'+event.pointerId,false);
-    if(pointer.action==="pending"&&event.type==="pointerup")jump();
+    if(pointer.action==="pending"&&!pointer.usedForFire&&event.type==="pointerup")jump();
     if(pointer.action==="crouch"&&preferences.crouchMode==="hold"){crouchSources.set("touch:"+event.pointerId,false);crouch(crouchSources.active);}
   }
   canvas.addEventListener("pointerup",releaseTrackPointer);
@@ -734,7 +738,7 @@ function initRunner() {
     fullscreenNote.textContent=fallbackFullscreen
       ?'O navegador não permite tela cheia nativa. A pista ocupa a área disponível; barras do navegador podem permanecer. Use esta opção para sair.'
       :active?'Tela cheia ativa. Abra a engrenagem e escolha Sair da tela cheia para voltar.'
-        :'Sem botões direcionais: toque para pular, deslize para desviar ou abaixar; nos chefes, toque com um segundo dedo para atirar.';
+        :'Sem botões direcionais: toque para pular e deslize para desviar ou abaixar. Na corrida, mantenha um dedo parado e toque com o segundo para atirar. Nos chefes, o segundo dedo também dispara.';
   }
   async function toggleFullscreen(){
     if(document.fullscreenElement===section){
@@ -956,9 +960,10 @@ function initRunner() {
       drawActor(ctx,{type:"ze-gotinha",x:item.x,y:WORLD.ground,scale:.72,phase:run.elapsed*10});return;
     }
     const phase=run.status==="running"?run.elapsed*6:0;
-    const bob=prefersReducedMotion()?0:Math.sin(phase+item.x*.017)*1.3;
-    const pulse=prefersReducedMotion()?1:1+.035*Math.sin(phase+item.x*.012);
-    drawItem(ctx,{type:item.type,x:item.x,y:WORLD.ground-item.y+bob,scale:(item.type==="shield"?.86:.8)*pulse});
+    const reducedMotion=prefersReducedMotion();
+    const bob=reducedMotion?0:Math.sin(phase+item.x*.017)*1.3;
+    const pulse=reducedMotion?1:1+.035*Math.sin(phase+item.x*.012);
+    drawItem(ctx,{type:item.type,x:item.x,y:WORLD.ground-item.y+bob,scale:(item.type==="shield"?.86:.8)*pulse,phase,reducedMotion});
   }
   function draw(visualDistance=run.distance) {
     ctx.setTransform(canvas.width/virtualWidth,0,0,canvas.height/WORLD.height,0,0);
