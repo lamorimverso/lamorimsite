@@ -17,8 +17,8 @@ const storyStages=[
 const crossings=['fiscal','povo','renato-freitas'];
 const settings={mode:'story',seed:17};
 
-function enterPractice(practiceId,width=900){
- const run=core.createRun({...settings,practiceId});
+function enterPractice(practiceId,width=900,assisted=false){
+ const run=core.createRun({...settings,practiceId,assisted});
  core.resizeRun(run,width);
  core.startRun(run);
  core.advanceRun(run,DT);
@@ -129,17 +129,17 @@ test('invalid, mismatched and non-Story practice IDs keep the ordinary run facto
  assert.deepEqual(core.createRun({...endless,practiceId:'lula'}),core.createRun(endless));
 });
 
-test('all 22 encounters can be won in practice without continuing the campaign',()=>{
+test('all 22 encounters can be won in practice on both difficulties without continuing the campaign',()=>{
  const ids=storyStages.flatMap(([,mandatory,optional])=>[...mandatory,...optional]);
- for(const id of ids)for(const width of [480,900]){
-  const run=enterPractice(id,width);
+ for(const id of ids)for(const width of [480,900])for(const assisted of [false,true]){
+  const run=enterPractice(id,width,assisted);
   const traversal=crossings.includes(id);
   if(traversal)assert.equal(core.attackRun(run),false,id);
   for(let frame=0;frame<120*100&&run.status==='running';frame++){
    pilotCounter(run);
    core.advanceRun(run,DT);
   }
-  assert.equal(run.lastBoss,id,`${id}/${width}: ${JSON.stringify(run.lastHit)}`);
+  assert.equal(run.lastBoss,id,`${id}/${width}/assisted=${assisted}: ${JSON.stringify(run.lastHit)}`);
   assert.equal(run.status,'won',id);
   assert.equal(run.boss,null,id);
   assert.equal(run.storyLeg,null,id);
