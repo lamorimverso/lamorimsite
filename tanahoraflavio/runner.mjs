@@ -26,7 +26,7 @@ import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=920e5365d0c0
 import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=bc3e0a2584cf";
 import { createGameAudio } from "./runner-audio.mjs?v=d93419fd0e46";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=d5e017561fd6";
-import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor,createSceneryScroll,advanceSceneryScroll,sampleSceneryDistance } from "./runner-scenery.mjs?v=ce0fa6b0d678";
+import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor,createSceneryScroll,advanceSceneryScroll,sampleSceneryDistance } from "./runner-scenery.mjs?v=676455e9f788";
 import { createFrameClock,resetFrameClock,advanceFrameClock } from "./runner-clock.mjs?v=81383aa71924";
 
 import {allyById} from './runner-allies.mjs?v=d3b6a81b34b9';
@@ -980,8 +980,11 @@ function initRunner() {
     const scrollRegions=advanceSceneryScroll(sceneryScroll,{distance:run.distance,stageId,transition});
     lastPaintedSceneryDistance=sampleSceneryDistance(visualDistance,run.distance,0,lastPaintedSceneryDistance);
     const reducedMotion=prefersReducedMotion();
-    drawJourneyScenery(ctx,{cameraLift,scrollRegions,flight:run.terrain?.active?.flight,routeDistance:run.routeDistance,campaignStages:run.mode==='story'?STORY_STAGE_IDS:undefined,openingDistance:run.mode==="story"?STORY_OPENING_DISTANCE:0,distance:lastPaintedSceneryDistance,width:virtualWidth,reducedMotion,quiet:run.aid?.kind==="quiet"?Math.max(0,Math.min(1,(6-run.aid.remaining)/.35,run.aid.remaining/.35)):0});
-    drawJourneyFinish(ctx,{width:virtualWidth,ground:WORLD.ground,distance:lastPaintedSceneryDistance,stageId,transition,flight:!!run.terrain?.active?.flight,reducedMotion});
+    // Automatic reduced effects must not freeze the landscape during travel.
+    // The explicit reduced option remains available for a stationary background.
+    const scrollWorld=preferences.effects!=="reduce";
+    drawJourneyScenery(ctx,{cameraLift,scrollRegions,scrollWorld,flight:run.terrain?.active?.flight,routeDistance:run.routeDistance,campaignStages:run.mode==='story'?STORY_STAGE_IDS:undefined,openingDistance:run.mode==="story"?STORY_OPENING_DISTANCE:0,distance:lastPaintedSceneryDistance,width:virtualWidth,reducedMotion,quiet:run.aid?.kind==="quiet"?Math.max(0,Math.min(1,(6-run.aid.remaining)/.35,run.aid.remaining/.35)):0});
+    drawJourneyFinish(ctx,{width:virtualWidth,ground:WORLD.ground,distance:lastPaintedSceneryDistance,stageId,transition,flight:!!run.terrain?.active?.flight,reducedMotion:!scrollWorld});
     drawRaidAtmosphere(ctx,{strength:raidMoodFor(run.raid),width:virtualWidth,distance:lastPaintedSceneryDistance,reducedMotion});
     drawTerrain(ctx,{terrain:run.terrain,ground:WORLD.ground,width:virtualWidth});
     if(run.boss?.combat)drawBossArena(ctx,{width:virtualWidth,ground:WORLD.ground,state:run.boss});
