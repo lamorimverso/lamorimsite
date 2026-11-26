@@ -149,8 +149,19 @@ for(const width of [390,900])test(`treino direto seleciona, repete e encerra enc
    r.obstacles=[{type:'barrier',action:'jump',x:r.player.x,width:48,height:80,speed:0}];
   });
   await page.waitForFunction(()=>__testRun.status==='over');
+  assert.match(await page.locator('#game-status').textContent(),/Toque em Repetir treino\./);
   await page.getByRole('button',{name:'Repetir treino',exact:true}).click();
   await page.waitForFunction(()=>__testRun.status==='running'&&__testRun.boss?.type==='lula');
+  await page.locator('#game-settings summary').click();
+  await page.locator('[data-practice-id="povo"]').click();
+  await page.waitForFunction(()=>__testRun.status==='running'&&__testRun.boss?.type==='povo');
+  await page.waitForFunction(()=>Number(document.getElementById('game-score').textContent.replace(/\D/g,''))>321);
+  await page.evaluate(()=>{
+   const r=__testRun;r.player.hp=1;r.player.y=0;r.shieldFor=r.graceFor=0;
+   r.obstacles=[{type:'barrier',action:'jump',x:r.player.x,width:48,height:80,speed:0}];
+  });
+  await page.waitForFunction(()=>__testRun.status==='over');
+  assert.equal(await page.evaluate(()=>localStorage.getItem('tanahoraflavio.runner.best.metres.v2')),'321','a traversal training score above the record never overwrites it');
   await page.locator('#game-settings summary').click();
   await page.locator('[data-practice-id="jones"]').click();
   await page.waitForFunction(()=>__testRun.boss?.type==='jones');
@@ -1708,16 +1719,16 @@ test('Povo Brasileiro é travessia sem mira, disparo ou barra de vida',async()=>
  }finally{await context.close();}
 });
 
-test('desafio opcional de Sofia começa no mapa paulista sem abrir urna',async()=>{
+test('treino opcional de Sofia começa no mapa paulista sem abrir urna',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:390,height:844}});
  try{
   await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
   await page.locator('#game-settings summary').click();
-  await page.getByRole('button',{name:'Sofia Favero · São Paulo',exact:true}).click();
+  await page.locator('[data-practice-id="sofia"]').click();
   await page.waitForFunction(()=>__testRun.boss?.type==='sofia');
   assert.match(await page.locator('#game-stage-name').textContent(),/São Paulo/);
   await page.evaluate(()=>{__testRun.boss.hp=0;});
-  await page.getByText('Desafio concluído!',{exact:true}).waitFor();
+  await page.getByText('Treino concluído!',{exact:true}).waitFor();
   assert.equal(await page.locator('#game-ballot').isVisible(),false);
   assert.deepEqual(errors,[]);
  }finally{await context.close();}

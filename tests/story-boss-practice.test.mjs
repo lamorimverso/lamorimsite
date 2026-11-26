@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
-import {nextStoryBossDistance} from '../tanahoraflavio/runner-bosses.mjs';
 import {pilotCounter} from '../tools/story-pilot.mjs';
 
 const DT=1/120;
@@ -24,6 +23,23 @@ function enterPractice(practiceId,width=900){
  core.startRun(run);
  core.advanceRun(run,DT);
  return run;
+}
+
+function crossingOpening(run,id,maxFrames){
+ let entry;
+ for(let frame=0;frame<maxFrames&&run.status==='running';frame++){
+  pilotCounter(run);
+  if(run.reserveShields&&run.shieldFor<=0)core.activateReserveShield(run);
+  core.advanceRun(run,DT);
+  if(run.boss?.type!==id)continue;
+  entry??={distance:run.distance,elapsed:run.elapsed};
+  const attack=run.obstacles.find(o=>o.bossAttack&&o.owner===id);
+  if(attack){
+   return {speed:(run.distance-entry.distance)/(run.elapsed-entry.elapsed),
+    attackAt:run.boss.age,attack:{...attack,x:attack.x-core.playerX(run)}};
+  }
+ }
+ assert.fail(`Crossing ${id} did not launch: ${run.status} · ${JSON.stringify(run.lastHit)}`);
 }
 
 test('direct practice opens every Story encounter in its own stage with canonical and actor IDs',()=>{
@@ -59,28 +75,26 @@ test('practice preserves the challenge of the final duel on both difficulty sett
  }
 });
 
-test('a practice crossing preserves its arena pace and opening attack with a fresh score',()=>{
- const practice=core.createRun({...settings,practiceId:'fiscal'});
- const campaign=core.createRun(settings),index=8;
- const distance=nextStoryBossDistance(index);
- campaign.bossesDefeated=index;
- campaign.distance=campaign.routeDistance=campaign.nextBossAt=distance;
- campaign.terrain.nextAt=Infinity;
- assert.equal(core.scoreFor(practice),0);
- const practiceStart=practice.distance;
+test('late practice crossings match the running tempo and opening attack of a complete Story route',()=>{
+ const campaign=core.createRun(settings);
+ core.resizeRun(campaign,480);
  core.startRun(campaign);
- core.startRun(practice);
- for(let frame=0;frame<480&&!campaign.obstacles.some(o=>o.bossAttack);frame++){
-  core.advanceRun(campaign,DT);
-  core.advanceRun(practice,DT);
+ for(const id of ['fiscal','povo']){
+  const reference=crossingOpening(campaign,id,120*4200);
+  const practice=core.createRun({...settings,practiceId:id});
+  const practiceStart=practice.distance;
+  assert.equal(core.scoreFor(practice),0,id);
+  core.resizeRun(practice,480);
+  core.startRun(practice);
+  const direct=crossingOpening(practice,id,120*5);
+  // Campaign play adds elapsed time and metres on each flight and detour.
+  assert.ok(Math.abs(direct.speed-reference.speed)<reference.speed*.01,`${id}: ${direct.speed} vs ${reference.speed} m/s`);
+  assert.equal(direct.attackAt,reference.attackAt,id);
+  assert.deepEqual(direct.attack,reference.attack,id);
+  assert.equal(practice.routeDistance,campaign.routeDistance,id);
+  assert.equal(core.scoreFor(practice),Math.floor(practice.distance-practiceStart),id);
+  assert.equal(core.scoreFor(campaign),Math.floor(campaign.distance),id);
  }
- assert.equal(campaign.boss?.type,'fiscal');
- const attack=campaign.obstacles.find(o=>o.bossAttack);
- assert.equal(attack?.type,'inspection-gate');
- assert.equal(practice.distance-practiceStart,campaign.distance-distance);
- assert.deepEqual(practice.obstacles.find(o=>o.bossAttack),attack);
- assert.equal(core.scoreFor(practice),Math.floor(campaign.distance-distance));
- assert.equal(core.scoreFor(campaign),Math.floor(campaign.distance));
 });
 
 test('mandatory practice equips preceding Story rewards without awarding campaign progress',()=>{
@@ -103,6 +117,7 @@ test('mandatory practice equips preceding Story rewards without awarding campaig
  const optional=enterPractice('maestro');
  assert.deepEqual(optional.ownedPowers,['ivermectina']);
  assert.equal(optional.movementSkills.doubleJump,false);
+ assert.equal(optional.distance,optional.routeDistance);
 });
 
 test('invalid, mismatched and non-Story practice IDs keep the ordinary run factory',()=>{

@@ -5,21 +5,25 @@ import {createTerrain} from './runner-terrain.mjs?v=d75123c1af20';
 import {ROUTE_AMMO} from './runner-supplies.mjs?v=44c67e8a5802';
 import {STORY_OPENING_DISTANCE,storyBossAt,storyPracticeBossAt} from './runner-bosses.mjs?v=a359288d2758';
 import {SCENE_DISTANCE} from './runner-route-data.mjs?v=c4fcfde513ff';
+import {PAIR_RUN_DISTANCE} from './runner-stage-director.mjs?v=66988b8ff9e6';
 import {grantBossPower} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
 
 export const announce = (run,text) => {run.event=text;run.events++;};
-const practiceStartDistance=practice=>practice?STORY_OPENING_DISTANCE+practice.stageIndex*SCENE_DISTANCE+practice.distance:0;
+const practiceDistance=(practice,stageDistance)=>practice?STORY_OPENING_DISTANCE+practice.stageIndex*stageDistance+practice.distance:0;
+// Mandatory encounters include the full running legs that the map compresses.
+const practiceStartDistance=practice=>practiceDistance(practice,practice?.role==='optional'?SCENE_DISTANCE:PAIR_RUN_DISTANCE);
 export function createRunState({assisted=false,seed,mode='endless',practiceId,manualStory=false}={}) {
  const practice=mode==='story'?storyPracticeBossAt(practiceId):null;
  const startDistance=practiceStartDistance(practice);
- const run={status:'ready',mode:mode==='story'?'story':'endless',manualStory:mode==='story'&&manualStory===true,assisted:assisted===true,practice,elapsed:0,distance:startDistance,routeDistance:startDistance,viewportWidth:WORLD.width,cameraLead:0,bonus:0,collected:0,passports:0,lives:1,
+ const startRouteDistance=practiceDistance(practice,SCENE_DISTANCE);
+ const run={status:'ready',mode:mode==='story'?'story':'endless',manualStory:mode==='story'&&manualStory===true,assisted:assisted===true,practice,elapsed:0,distance:startDistance,routeDistance:startRouteDistance,viewportWidth:WORLD.width,cameraLead:0,bonus:0,collected:0,passports:0,lives:1,
   randomState:seed===undefined?null:Number(seed)>>>0,
   damageRandomState:seed===undefined?null:(Number(seed)^0x9e3779b9)>>>0,
   ballot:{digits:'',message:''},
   event:'',events:0,movementSkills:createMovementSkills(),lastSkillReward:null,terrain:createTerrain(),player:{airJumpsUsed:0,grounded:true,supportY:0,sliding:false,slideRemaining:0,slideLatched:false,slideCooldownFor:0,x:PLAYER.x,moveHeld:0,y:0,velocity:0,crouching:false,crouchHeld:false,isJacare:false,jacareProgress:0,jacareAge:0,nextJacareThreat:0,restoreFlashFor:0,coyoteUntil:0,jumpBufferedUntil:0,attackHeld:false,chargeFor:0,arenaTravel:0,manualTravel:0,attackFor:0,attackCooldown:0,shotFacing:1,hp:HERO_MAX_HP,maxHp:HERO_MAX_HP,recoveryPending:false,terrainContact:null},obstacles:[],pickups:[],heroShots:[],shotsFired:0,ammo:ROUTE_AMMO,ammoIdleFor:0,ammoReloadFor:0,ownedPowers:['ivermectina'],powerLevels:{ivermectina:1},activePower:'ivermectina',lastPowerReward:null,defeatedEnemies:0,lastHit:null,
   nextObstacle:1.5,nextPickup:0,nextPassport:4.8,nextPower:7,recoveryReadyAt:0,shieldFor:0,graceFor:0,reserveShields:0,allyShieldProgress:0,allyHelpCount:0,
   lastPickup:null,lastTraversalBlock:null,spawnedObstacles:0,spawnedPickups:0,spawnedPowers:0,phantomCloud:null,
-  boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:practice?startDistance:null,bossCooldown:0,storyLeg:null,arenaExit:null,
+  boss:null,bossBag:[],lastBoss:null,bossesDefeated:0,nextBossAt:practice?startRouteDistance:null,bossCooldown:0,storyLeg:null,arenaExit:null,
   raid:null,nextRaid:null,raids:0,raidStages:{},raidStageCoverage:{},lastFact:-1,cameo:null,overheadCount:0,lastOverheadActor:null,
   seenOverheadActors:[],seenGroundActors:[],lastGroundActor:null,
   lastAction:null,actionStreak:0,attackStyles:[],nextAllyAt:14000,alliesMet:0,

@@ -17,7 +17,7 @@ import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from 
 import {createAircraftWarningTracker,createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=37fd940420f1';
 import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=a359288d2758';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, releaseJumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, stagePlanFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=3b2a540f40b7";
+import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, releaseJumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, stagePlanFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=7e70b882c7d3";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {heroStridePhase,bossStopsAutoRun} from './runner-drawn-motion.mjs?v=0d1971800c55';
 import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=700c55ebad49';
@@ -372,7 +372,7 @@ function initRunner() {
       if(lastStatus!=="over")section.dispatchEvent(new Event("runner:over"));
     }
     if(renderedRoute!==stages||lastStatus!==run.status||lastStage!==stage.index||lastCollected!==run.collected||lastPower!==power||lastLives!==run.lives||lastEvents!==run.events){
-      let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="ballot"?"Etapa final: digite dois números na urna fictícia.":run.status==="prison"?"Flávio foi preso. A campanha vai recomeçar.":run.status==="won"?(run.practice?"Treino concluído.":"História concluída. Todas as "+STORY_BOSS_COUNT+" etapas foram superadas."):run.status==="over"?outcomeTitle+" "+outcomeHint+" "+score+" metros percorridos. Toque em Tentar de novo.":stage.name+" · pule ou abaixe conforme o perigo.";
+      let message=run.status==="ready"?"Tudo pronto. A corrida começa quando você quiser.":run.status==="ballot"?"Etapa final: digite dois números na urna fictícia.":run.status==="prison"?"Flávio foi preso. A campanha vai recomeçar.":run.status==="won"?(run.practice?"Treino concluído.":"História concluída. Todas as "+STORY_BOSS_COUNT+" etapas foram superadas."):run.status==="over"?outcomeTitle+" "+outcomeHint+" "+score+" metros percorridos. Toque em "+(run.practice?"Repetir treino":"Tentar de novo")+".":stage.name+" · pule ou abaixe conforme o perigo.";
       if(run.status==="running"){
         if(run.events>lastEvents)message=run.event;
         else if(lastCollected!==run.collected)message="Passaporte coletado. Faltam "+(100-run.passports%100)+" para uma continuação.";
