@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../runner-core.mjs';
-import * as route from '../runner-route-progress.mjs?v=adaaacdf6859';
+import * as route from '../runner-route-progress.mjs?v=2029c607cc61';
 import {STAGES,STORY_STAGES,SCENE_DISTANCE,SCENE_SECONDS} from '../runner-route-data.mjs?v=c4fcfde513ff';
 
 test('the core keeps its public route API and canonical stage objects',()=>{
