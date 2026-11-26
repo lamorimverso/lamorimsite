@@ -17,9 +17,9 @@ function until(r,predicate,maxSeconds=15){
  assert.ok(predicate(),'expected game state never occurred');
 }
 
-test('a shot only destroys active hostile projectiles; bodies and ground structures stay unchanged',()=>{
+test('a shot intercepts active hostile projectiles while civic bodies and ground structures stay unchanged',()=>{
  const r=scene(null),m=core.heroMuzzleFor(r);
- const body={type:'pf',x:m.x+60,width:45,height:75,speed:0};
+ const body={type:'povo',x:m.x+60,width:45,height:75,speed:0};
  const barrier={type:'barrier',x:m.x+112,width:40,height:75,speed:0};
  const civic={type:'crowd-lane',x:m.x+130,width:50,height:56,falling:true,y:m.y,age:0,warningFor:8,fallFor:.4,speed:0};
  const bouncingBody={type:'ze-gotinha-rival',x:m.x+172,width:24,height:35,speed:0,projectile:true,launched:true,y:m.y};

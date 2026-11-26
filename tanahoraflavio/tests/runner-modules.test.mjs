@@ -4,7 +4,7 @@ import * as core from '../runner-core.mjs';
 import * as difficulty from '../runner-difficulty.mjs?v=4e2a76163482';
 import * as geometry from '../runner-run-geometry.mjs?v=f21951232de3';
 import * as random from '../runner-random.mjs?v=8de9f87c7593';
-import * as combat from '../runner-projectile-combat.mjs?v=260f593e4ff3';
+import * as combat from '../runner-projectile-combat.mjs?v=eec167f5d0ab';
 import * as state from '../runner-run-state.mjs?v=45eb697d2387';
 import * as boss from '../runner-boss-rules.mjs?v=4a94f7ed2f96';
 import * as timing from '../runner-threat-timing.mjs?v=267f5133b709';
