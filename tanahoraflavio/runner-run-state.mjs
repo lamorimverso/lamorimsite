@@ -1,16 +1,18 @@
-import {WORLD,PLAYER} from './runner-run-geometry.mjs?v=c7879509d7af';
+import {WORLD,PLAYER} from './runner-run-geometry.mjs?v=6561adb004e2';
 import {HERO_MAX_HP} from './runner-body.mjs?v=57ec474fca38';
-import {createMovementSkills} from './runner-movement-skills.mjs?v=d0ad734b4838';
+import {createMovementSkills,rewardMovementVictory} from './runner-movement-skills.mjs?v=d0ad734b4838';
 import {createTerrain} from './runner-terrain.mjs?v=d75123c1af20';
 import {ROUTE_AMMO} from './runner-supplies.mjs?v=44c67e8a5802';
-import {STORY_OPENING_DISTANCE,optionalStoryBossAt} from './runner-bosses.mjs?v=d257c721afc8';
+import {STORY_OPENING_DISTANCE,storyBossAt,storyPracticeBossAt} from './runner-bosses.mjs?v=a359288d2758';
 import {SCENE_DISTANCE} from './runner-route-data.mjs?v=c4fcfde513ff';
+import {grantBossPower} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
 
 export const announce = (run,text) => {run.event=text;run.events++;};
+const practiceStartDistance=practice=>practice?STORY_OPENING_DISTANCE+practice.stageIndex*SCENE_DISTANCE+practice.distance:0;
 export function createRunState({assisted=false,seed,mode='endless',practiceId,manualStory=false}={}) {
- const practice=mode==='story'?optionalStoryBossAt(practiceId):null;
- const startDistance=practice?STORY_OPENING_DISTANCE+practice.stageIndex*SCENE_DISTANCE+practice.distance:0;
- return {status:'ready',mode:mode==='story'?'story':'endless',manualStory:mode==='story'&&manualStory===true,assisted:assisted===true,practice,elapsed:0,distance:startDistance,routeDistance:startDistance,viewportWidth:WORLD.width,cameraLead:0,bonus:0,collected:0,passports:0,lives:1,
+ const practice=mode==='story'?storyPracticeBossAt(practiceId):null;
+ const startDistance=practiceStartDistance(practice);
+ const run={status:'ready',mode:mode==='story'?'story':'endless',manualStory:mode==='story'&&manualStory===true,assisted:assisted===true,practice,elapsed:0,distance:startDistance,routeDistance:startDistance,viewportWidth:WORLD.width,cameraLead:0,bonus:0,collected:0,passports:0,lives:1,
   randomState:seed===undefined?null:Number(seed)>>>0,
   damageRandomState:seed===undefined?null:(Number(seed)^0x9e3779b9)>>>0,
   ballot:{digits:'',message:''},
@@ -22,6 +24,15 @@ export function createRunState({assisted=false,seed,mode='endless',practiceId,ma
   seenOverheadActors:[],seenGroundActors:[],lastGroundActor:null,
   lastAction:null,actionStreak:0,attackStyles:[],nextAllyAt:14000,alliesMet:0,
   nextSupportAt:18000,supportAvailable:true,ally:null,aid:null,allyVisits:{},lastAllyId:null,creditCooldown:0};
+ // Equip rewards available before a mandatory encounter without completing its route.
+ for(let i=0;i<(practice?.index??0);i++){
+  const earlier=storyBossAt(i);
+  if(earlier.traversal)continue;
+  grantBossPower(run,earlier.type);
+  rewardMovementVictory(run,earlier);
+ }
+ run.lastPowerReward=run.lastSkillReward=null;
+ return run;
 }
 export function startRun(run){if(run.status==='ready')run.status='running';}
 // Urna exclusivamente fictícia, sem integração eleitoral, coleta ou transmissão de votos.
@@ -45,5 +56,5 @@ export function ballotConfirm(run){
 }
 // Interno ao motor/testes; não há comando de pausa na interface.
 export function togglePause(run){if(run.status==='running')run.status='paused';else if(run.status==='paused')run.status='running';}
-// O placar agora é a quilometragem percorrida em metros; coletas não alteram metros.
-export function scoreFor(run){return Math.floor(run.distance);}
+// O placar conta os metros percorridos desde o começo da tentativa.
+export function scoreFor(run){return Math.floor(run.distance-practiceStartDistance(run.practice));}

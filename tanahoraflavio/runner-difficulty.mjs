@@ -1,5 +1,5 @@
 import {random} from './runner-random.mjs?v=8de9f87c7593';
-import {stageAt} from './runner-route-progress.mjs?v=b8383b9dcb79';
+import {stageAt} from './runner-route-progress.mjs?v=ee711fd51f3a';
 
 export const PURSUERS = Object.freeze([
  {type:'pf',name:'Polícia Federal',short:'PF',width:34,height:44,color:'#284c70'},

@@ -1,23 +1,23 @@
-import {WORLD,PLAYER,MIN_VIEWPORT_WIDTH,visibleWidth,arenaReserve,frontContact,playerX,playerBounds} from './runner-run-geometry.mjs?v=c7879509d7af';
+import {WORLD,PLAYER,MIN_VIEWPORT_WIDTH,visibleWidth,arenaReserve,frontContact,playerX,playerBounds} from './runner-run-geometry.mjs?v=6561adb004e2';
 export {WORLD,PLAYER,playerX,playerBounds};
 import {random,nextSeed,createSeededRandom} from './runner-random.mjs?v=8de9f87c7593';
 export {createSeededRandom};
-import {PURSUERS,CHARACTER_UNLOCK_LEVEL,unlockedCharacters,characterProgressAt,chooseProgressiveCharacter,foeFor,difficultyAt,pursuitAt} from './runner-difficulty.mjs?v=6b03eb98d51a';
+import {PURSUERS,CHARACTER_UNLOCK_LEVEL,unlockedCharacters,characterProgressAt,chooseProgressiveCharacter,foeFor,difficultyAt,pursuitAt} from './runner-difficulty.mjs?v=9c65e484cb70';
 export {PURSUERS,CHARACTER_UNLOCK_LEVEL,unlockedCharacters,characterProgressAt,difficultyAt,pursuitAt};
-import {announce,createRunState,startRun,ballotDigit,ballotClear,ballotConfirm,togglePause,scoreFor} from './runner-run-state.mjs?v=4bc8847f5e88';
+import {announce,createRunState,startRun,ballotDigit,ballotClear,ballotConfirm,togglePause,scoreFor} from './runner-run-state.mjs?v=52679931ca11';
 export {startRun,ballotDigit,ballotClear,ballotConfirm,togglePause,scoreFor};
-import {assistance,REACTION_GAP,threatTimeToContact,threatReservation,threatMotion,rearMotion} from './runner-threat-timing.mjs?v=dcb3c4040ae9';
+import {assistance,REACTION_GAP,threatTimeToContact,threatReservation,threatMotion,rearMotion} from './runner-threat-timing.mjs?v=f309aa6ac16a';
 export {threatTimeToContact};
 import {projectileStyle,ATTACK_NAMES,attackCueFor} from './runner-attack-cues.mjs?v=5545f4acc1e6';
 export {projectileStyle,ATTACK_NAMES,attackCueFor};
-import {BOSS_ROSTER,bossAtRound,bossAttackFor,nextBossDistance,takeBoss,storyDuelChallenge,applyStoryDuelTempo} from './runner-boss-rules.mjs?v=9b629ab47d68';
+import {BOSS_ROSTER,bossAtRound,bossAttackFor,nextBossDistance,takeBoss,storyDuelChallenge,applyStoryDuelTempo} from './runner-boss-rules.mjs?v=c153f9a51b4d';
 export {BOSS_ROSTER,bossAtRound,bossAttackFor,storyDuelChallenge,applyStoryDuelTempo};
-import {setAttackRun,heroMuzzleFor,isHostileProjectile,attackRun,projectileFlightY,storyVolleyPendingVictory,advanceReflectedProjectile,advanceHeroShots} from './runner-projectile-combat.mjs?v=1ef113bebba8';
+import {setAttackRun,heroMuzzleFor,isHostileProjectile,attackRun,projectileFlightY,storyVolleyPendingVictory,advanceReflectedProjectile,advanceHeroShots} from './runner-projectile-combat.mjs?v=4aff21d9b75c';
 export {setAttackRun,heroMuzzleFor,isHostileProjectile,attackRun};
-import {campaignRouteDistance,routeClock,routeStagesFor,routeStageFor,groundLessonFor,lessonPending,nextAirTransfer,routeTransitionFor,stageAt,stageTransitionAt} from './runner-route-progress.mjs?v=b8383b9dcb79';
+import {campaignRouteDistance,routeClock,routeStagesFor,routeStageFor,groundLessonFor,lessonPending,nextAirTransfer,routeTransitionFor,stageAt,stageTransitionAt} from './runner-route-progress.mjs?v=ee711fd51f3a';
 export {campaignRouteDistance,routeStagesFor,routeStageFor,routeTransitionFor,stageAt,stageTransitionAt};
-import {stageRouteTravel,RAID_HANDOFF_SECONDS,PAIR_RUN_DISTANCE,pairRunRemaining} from './runner-stage-director.mjs?v=26985c10d94a';
-export {stagePlanFor} from './runner-stage-director.mjs?v=26985c10d94a';
+import {stageRouteTravel,RAID_HANDOFF_SECONDS,PAIR_RUN_DISTANCE,pairRunRemaining} from './runner-stage-director.mjs?v=66988b8ff9e6';
+export {stagePlanFor} from './runner-stage-director.mjs?v=66988b8ff9e6';
 import {playerBodyFor} from './runner-body.mjs?v=57ec474fca38';
 import {movementProfileFor,rewardMovementVictory} from './runner-movement-skills.mjs?v=d0ad734b4838';
 export {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
@@ -38,9 +38,9 @@ import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
 import {regularCastMuzzle} from './runner-cast-pose.mjs?v=8f2c5aee1585';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=d3b6a81b34b9';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
-import {BOSS_RUN_INTERVAL,BOSS_CLASSES,STORY_ENCOUNTERS,storyBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=d257c721afc8';
-export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=d257c721afc8';
-export {bossArenaPose} from './runner-bosses.mjs?v=d257c721afc8';
+import {BOSS_RUN_INTERVAL,BOSS_CLASSES,STORY_ENCOUNTERS,storyBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=a359288d2758';
+export {STORY_OPENING_DISTANCE} from './runner-bosses.mjs?v=a359288d2758';
+export {bossArenaPose} from './runner-bosses.mjs?v=a359288d2758';
 // Mundo lógico fixo: física, sorteios e temporizadores independem da tela e do FPS.
 import {bossStopsAutoRun} from './runner-drawn-motion.mjs?v=0d1971800c55';
 export const JACARE_RECOVERY_SECONDS = 10;
@@ -409,7 +409,7 @@ function resolveBossDodges(run){
  if(boss.combat&&!boss.traversal&&!run.practice&&run.bossesDefeated<STORY_BOSS_COUNT)run.arenaExit={phase:'exit',age:0,duration:.65,color:boss.color,reducedMotion:run.reducedMotion===true};
  if(run.mode==='story'&&!run.practice&&boss.role==='map-boss')run.storyLeg={fromStage:boss.stageIndex,requiredDistance:PAIR_RUN_DISTANCE,groundDistance:0};
  run.heroShots=[];run.player.attackHeld=false;run.player.chargeFor=0;run.obstacles=[];
- if(run.practice){run.status='won';run.nextBossAt=Infinity;clearRunInput(run);announce(run,'Desafio opcional concluído.');return;}
+ if(run.practice){run.status='won';run.nextBossAt=Infinity;clearRunInput(run);announce(run,'Treino concluído.');return;}
  if(run.mode==='story'&&run.bossesDefeated>=STORY_BOSS_COUNT){
   run.status='ballot';run.nextBossAt=Infinity;run.obstacles=[];run.pickups=[];run.phantomCloud=null;
   run.ballot={digits:'',message:''};clearRunInput(run);
@@ -696,6 +696,7 @@ export function advanceRun(run,seconds,rng){
  run.player.restoreFlashFor=Math.max(0,run.player.restoreFlashFor-dt);
  if(run.nextBossAt===null)run.nextBossAt=run.mode==='story'?nextStoryBossDistance(0):nextBossDistance(0);
  if(run.nextRaid===null)run.nextRaid=18+random(rng)*12;
+ if(run.practice&&!run.boss)beginBoss(run);
  const balance=difficultyAt(run.distance,run.elapsed),travel=bossStopsAutoRun(run)?0:run.manualStory?manualTravel:balance.speed*assistance(run)*dt;run.distance+=travel;
  if(!run.boss&&!run.terrain?.active?.flight&&!run.terrain?.active?.lesson){
   const stop=run.mode==='story'&&Number.isFinite(run.nextBossAt)&&run.routeDistance<=run.nextBossAt?run.nextBossAt:Infinity;

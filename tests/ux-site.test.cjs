@@ -107,6 +107,64 @@ async function begin(page){
  await page.evaluate(()=>{if(globalThis.__testRun)__testRun.nextObstacle=1000;});
 }
 
+for(const width of [390,900])test(`treino direto seleciona, repete e encerra encontros sem alterar o recorde: ${width}px`,async()=>{
+ const mobile=width===390;
+ const {context,page,errors}=await open({instrument:true,viewport:{width,height:mobile?844:720},hasTouch:mobile,isMobile:mobile,
+  init:()=>localStorage.setItem('tanahoraflavio.runner.best.metres.v2','321')});
+ try{
+  await page.waitForFunction(()=>document.getElementById('game-start').disabled===false,null,{timeout:12000});
+  await page.locator('#game-settings summary').click();
+  assert.equal(await page.locator('#game-practice button').count(),22,'all mandatory and optional encounters are selectable');
+  const ids=await page.locator('#game-practice button').evaluateAll(buttons=>buttons.map(button=>button.dataset.practiceId));
+  assert.equal(new Set(ids).size,22);
+  for(const id of ['ana-elisa','povo','lula','jones'])assert.ok(ids.includes(id),id+' is available');
+  await page.locator('[data-practice-id="lula"]').click();
+  await page.waitForFunction(()=>__testRun.boss?.type==='lula'&&__testRun.boss.phase!=='intro');
+  assert.equal(await page.locator('#game-settings').evaluate(node=>node.open),false);
+  assert.equal(await page.evaluate(()=>__testRun.practice.role),'final-boss');
+  assert.match(await page.locator('#game-phase').textContent(),/Treino/);
+  assert.equal(await page.locator('#game-stage-progress').isVisible(),false,'practice does not display campaign progress');
+  assert.equal(await page.locator('#game-route .is-done').count(),0,'practice does not mark earlier maps completed');
+  const track=page.locator('#runner-canvas');
+  await track.focus();
+  if(mobile){
+   await track.dispatchEvent('pointerdown',{button:0,pointerId:801,pointerType:'touch',isPrimary:true,clientX:110,clientY:110});
+   await track.dispatchEvent('pointerdown',{button:0,pointerId:802,pointerType:'touch',isPrimary:false,clientX:170,clientY:110});
+  }else await page.keyboard.down('j');
+  await page.waitForFunction(()=>__testRun.shotsFired>0);
+  if(mobile){
+   await track.dispatchEvent('pointerup',{pointerId:802,pointerType:'touch'});
+   await track.dispatchEvent('pointercancel',{pointerId:801,pointerType:'touch'});
+  }else await page.keyboard.up('j');
+  assert.equal(await page.evaluate(()=>__testRun.player.attackHeld),false);
+  await page.evaluate(()=>{__testRun.boss.hp=0;});
+  await page.waitForFunction(()=>__testRun.status==='won');
+  assert.equal(await page.locator('#game-ballot').isVisible(),false,'the training final never opens the campaign ballot');
+  assert.match(await page.locator('#game-overlay-title').textContent(),/Treino concluído/);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('tanahoraflavio.runner.best.metres.v2')),'321');
+  await page.getByRole('button',{name:'Repetir treino',exact:true}).click();
+  await page.waitForFunction(()=>__testRun.status==='running'&&__testRun.boss?.type==='lula');
+  await page.evaluate(()=>{
+   const r=__testRun;r.player.hp=1;r.player.y=0;r.shieldFor=r.graceFor=0;
+   r.obstacles=[{type:'barrier',action:'jump',x:r.player.x,width:48,height:80,speed:0}];
+  });
+  await page.waitForFunction(()=>__testRun.status==='over');
+  await page.getByRole('button',{name:'Repetir treino',exact:true}).click();
+  await page.waitForFunction(()=>__testRun.status==='running'&&__testRun.boss?.type==='lula');
+  await page.locator('#game-settings summary').click();
+  await page.locator('[data-practice-id="jones"]').click();
+  await page.waitForFunction(()=>__testRun.boss?.type==='jones');
+  assert.deepEqual(await page.evaluate(()=>__testRun.ownedPowers),['ivermectina'],'switching to an optional encounter starts an independent run');
+  await page.locator('#game-settings summary').click();
+  await page.getByRole('button',{name:'Voltar à corrida',exact:true}).click();
+  await page.waitForFunction(()=>__testRun.status==='running'&&!__testRun.practice&&!__testRun.boss);
+  assert.equal(await page.evaluate(()=>__testRun.bossesDefeated),0);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('tanahoraflavio.runner.best.metres.v2')),'321');
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+
 test('a route gap has visible terrain and its own outcome instead of a police capture',async()=>{
  const {context,page,errors}=await open({instrument:true,viewport:{width:900,height:720}});
  try{
@@ -708,7 +766,7 @@ test('HUD do chefão fica no canto direito da pista sem deslocar pista ou contro
 for(const initialSearch of ['', '?ui=20261111-run-controls', '?ui=20261115-custom-controls', '?ui=20261115-wide-game'])test('HTML antigo no cache se atualiza sem travar a inicialização '+initialSearch,async()=>{
  const {context,page,errors}=await open({legacyFirst:true,initialSearch});
  try{
-  await page.waitForURL(url=>url.searchParams.get('ui')==='20261115-campaign-hierarchy', {timeout:4000});
+  await page.waitForURL(url=>url.searchParams.get('ui')==='20261126-direct-practice', {timeout:4000});
   await page.getByRole('button',{name:'Começar corrida',exact:true}).waitFor();
   assert.equal(await page.locator('#game-settings').count(),1);
   assert.match(await page.locator('#days').textContent(),/^\d+$/);

@@ -321,11 +321,11 @@ body{background-color:#fff;background-image:radial-gradient(ellipse at 50% 210px
 @media(max-width:600px){.game-combat-hud .game-power-reward{top:54px;left:8px;right:8px;max-width:calc(100% - 16px)}}
 
 /* Campanha ampliada: a pista permanece em foco e cada aviso ocupa uma linha. */
-.story-extras h3{font-size:12px;margin:0 0 6px}
+.story-extras h3{font-size:14px;margin:0 0 6px}
 #game-practice{display:flex;flex-wrap:wrap;gap:6px}
-#game-practice button{padding:6px 9px;min-height:36px;color:var(--dark);background:#faf8fc;border:1px solid var(--line);border-radius:7px;font:inherit;font-size:11px;cursor:pointer}
+#game-practice button{padding:8px 10px;min-height:44px;color:var(--dark);background:#faf8fc;border:1px solid var(--line);border-radius:7px;font:inherit;font-size:14px;cursor:pointer}
 .story-extras .game-options-note{margin:6px 0 0}
-.game-card[data-run-state="running"] .story-extras{display:none}
+.game-card[data-run-state="running"]:not([data-practice="true"]) .story-extras{display:none}
 .game-battle-cue{position:absolute;z-index:4;left:50%;top:9px;transform:translateX(-50%);width:max-content;max-width:40%;padding:4px 9px;border:1px solid #dfb87e;border-radius:8px;background:#fff8edae;color:#633c20;line-height:1.17;text-align:center;pointer-events:none}
 .game-battle-cue[hidden]{display:none}
 .game-battle-cue small,.game-battle-cue strong{display:block;white-space:normal}
