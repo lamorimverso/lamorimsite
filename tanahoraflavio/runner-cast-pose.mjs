@@ -8,6 +8,7 @@ function joint(x,y){return {x,y};}
 /** Pure standing rig. Feet stay planted through breathing, charging and recoil. */
 export function standingEnemyPose({phase=0,preparing=false,attacking=false,recovering=false,hurt=false,reducedMotion=false,classId='sentinel',action='jump',progress}={}){
  const t=reducedMotion?0:(Number.isFinite(phase)?phase:0),breath=reducedMotion?0:Math.sin(t*.32),kind=canonicalClass(classId);
+ const weight=Math.sin(t*.17);
  const state=hurt?'recoil':attacking?'release':preparing?'charge':recovering?'recover':'idle';
  const u=Math.max(0,Math.min(1,Number.isFinite(progress)?progress:reducedMotion?1:(1+Math.sin(t*.65))*.5));
  const ease=u*u*(3-2*u);
@@ -29,21 +30,23 @@ export function standingEnemyPose({phase=0,preparing=false,attacking=false,recov
  });
  const charge=shape(windups[action]||windups.jump),release=shape(releases[action]||releases.jump,true);
  const mix=(a,b,k)=>a.map((v,i)=>[v[0]+(b[i][0]-v[0])*k,v[1]+(b[i][1]-v[1])*k]);
- let endpoints=idle,lean=breath*.8;
+ let endpoints=idle,lean=breath*.8+weight*1.5;
  if(state==='charge'){endpoints=mix(idle,charge,ease);lean=2+ease*3;}
  else if(state==='release'){
   // Fast extension, then follow-through. Every release remains a movement.
   const k=u<.4?u/.4:1-(u-.4)*.27;endpoints=mix(charge,release,k);lean=3-k*7;
  }else if(state==='recover'){endpoints=mix(release,idle,ease);lean=-4*(1-ease);}
  else if(state==='recoil'){endpoints=[[-22,-55],[-4,-64],[31,-49],[27,-31]];lean=5;}
- const bob=breath*.9-(state==='charge'?ease*1.5:0),shoulders=joint(lean,-63+bob),neck=joint(lean,-69+bob);
+ const bob=breath*1.35-(state==='charge'?ease*1.5:0),shoulders=joint(lean,-63+bob),neck=joint(lean,-69+bob);
  const left={hip:joint(-9+lean*.25,-34+bob),knee:joint(-11+lean*.35,-17),foot:joint(-13,0)};
  const right={hip:joint(9+lean*.25,-34+bob),knee:joint(12+lean*.35,-17),foot:joint(15,0)};
  const arms={};for(const [i,side] of ['left','right'].entries()){
-  const sign=i?1:-1,elbow=endpoints[i*2],hand=endpoints[i*2+1],sway=state==='idle'?breath*(i?-1.8:1.8):0;
-  arms[side]={shoulder:joint(sign*17+lean,-61+bob),elbow:joint(elbow[0]+lean,elbow[1]+bob+sway),hand:joint(hand[0]+lean,hand[1]+bob+sway),open:state==='charge'||state==='release'||kind==='caster'||kind==='sovereign'};
+  const sign=i?1:-1,elbow=endpoints[i*2],hand=endpoints[i*2+1];
+  const swing=state==='idle'?sign*weight:0;
+  arms[side]={shoulder:joint(sign*17+lean,-61+bob),elbow:joint(elbow[0]+lean+swing,elbow[1]+bob+swing),
+   hand:joint(hand[0]+lean+swing*2.8,hand[1]+bob+swing*2.2+breath*sign),open:state==='charge'||state==='release'||kind==='caster'||kind==='sovereign'};
  }
- return {state,bob,lean,neck,shoulders,left,right,arms,headTilt:state==='recoil'?.12:state==='release'?-.06:breath*.025,motor:reducedMotion?0:(1+Math.sin(t*1.8))*.5};
+ return {state,bob,lean,neck,shoulders,left,right,arms,headTilt:state==='recoil'?.12:state==='release'?-.06:breath*.032+weight*.022,motor:reducedMotion?0:(1+Math.sin(t*1.8))*.5};
 }
 
 

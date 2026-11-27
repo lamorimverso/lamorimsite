@@ -1,4 +1,4 @@
-import {drawCampaignFigure,drawCampaignFigurePortrait} from './runner-sprites.mjs?v=d315d90b4c8a';
+import {drawCampaignFigure,drawCampaignFigurePortrait} from './runner-sprites.mjs?v=6eb9a984d6e6';
 // Complete illustrated campaign characters. The original vectors remain a
 // loading fallback; encounter props and presentation anchors stay independent.
 const INK='#292337',CREAM='#fff5de',RIM='#ffe7bd74';
@@ -350,7 +350,9 @@ function drawStageAccessory(c,d,p,a){
 /** Draws a complete original figure around the same deck anchor as atlas bosses. */
 export function drawCampaignBoss(c,{type,pose:p,...options}={}){
  if(!Object.hasOwn(CHARACTER_DESIGN,type)||!p)return false;
- if(drawCampaignFigure(c,{type,state:p.state,phase:p.phase??options.phase,progress:p.progress??options.progress,reducedMotion:p.reducedMotion??options.reducedMotion}))return true;
+ const phase=p.phase??options.phase??0;
+ if(drawCampaignFigure(c,{type,state:p.state,phase:p.state==='idle'?0:phase,idleTime:phase/10,
+  progress:p.progress??options.progress,reducedMotion:p.reducedMotion??options.reducedMotion}))return true;
  const a=CAST[type],d=CHARACTER_DESIGN[type];
  if(!p.campaignPose)p=campaignBossPoseFor(type,p,options);
  c.save();

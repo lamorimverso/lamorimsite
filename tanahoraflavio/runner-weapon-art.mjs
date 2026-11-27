@@ -1,5 +1,5 @@
-import {CAMPAIGN_PROP_COLORS,drawCampaignProp} from './runner-campaign-art.mjs?v=700c55ebad49';
-import {drawIllustratedProp} from './runner-sprites.mjs?v=d315d90b4c8a';
+import {CAMPAIGN_PROP_COLORS,drawCampaignProp} from './runner-campaign-art.mjs?v=b607bf48f7f7';
+import {drawIllustratedProp} from './runner-sprites.mjs?v=6eb9a984d6e6';
 // Complete, resolution-independent weapon bodies. Width scales uniformly;
 // height changes the actual construction (cords, handles, sheet arrangements),
 // never stretches a finished image or its lettering along one axis.

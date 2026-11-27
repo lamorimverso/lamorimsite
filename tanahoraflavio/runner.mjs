@@ -10,20 +10,20 @@ import {normalizeControls,keyboardActionFor,mouseActionFor,keyLabel} from './run
 import {createControlSettings} from './runner-control-settings.mjs?v=25524a717d9e';
 import {createGamepadDriver} from './runner-gamepad.mjs?v=18383546c2cd';
 import {HERO_POWERS,heroPowerFor,cycleHeroPower} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
-import {updateCombatHUD} from './runner-combat-hud.mjs?v=b96950bfabe4';
+import {updateCombatHUD} from './runner-combat-hud.mjs?v=2b10455871eb';
 import {createMovementSoundDirector,movementIsAirborne} from './runner-movement-audio.mjs?v=31522b0ccc1e';
-import {HERO_SHOT_DURATION,DUEL_CHARGE_SECONDS,drawHeroCharge,drawHeroProjectile} from './runner-hero-shot.mjs?v=7aa1e19e9838';
-import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=8f2c5aee1585';
+import {HERO_SHOT_DURATION,DUEL_CHARGE_SECONDS,drawHeroCharge,drawHeroProjectile} from './runner-hero-shot.mjs?v=0fb287e4bef1';
+import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from './runner-cast-pose.mjs?v=8687397dc018';
 import {createAircraftWarningTracker,createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=37fd940420f1';
 import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=a359288d2758';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, releaseJumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, stagePlanFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=d8afa968b57b";
+import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, releaseJumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, stagePlanFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=a6338099d38c";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {heroStridePhase,bossStopsAutoRun} from './runner-drawn-motion.mjs?v=0d1971800c55';
-import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=700c55ebad49';
+import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=b607bf48f7f7';
 import {bossCounterWindow} from './runner-bosses.mjs?v=a359288d2758';
-import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=8ddae5b2d6d3';
-import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=635052b7861d";
+import {drawHoverEnemy,drawBossArena} from './runner-boss-art.mjs?v=7f0a4354ab6b';
+import { drawHeroShot, drawActor, drawItem, drawThreat, drawProjectile, enemyEmitterPose, loadSprites, drawSpritePortrait, enemyMotionFor, crouchAnimationStep, drawProtection, drawJacare, jacareBlendFor, drawFallingThreat, drawManholeThreat, drawMemeArmy, drawBossOfBosses, drawPhantomCloud, drawComunismoGhostBoss, drawEnemyActor, CORE_SPRITE_SHEET_COUNT } from "./runner-art.mjs?v=99220b167c4b";
 import { createGameAudio } from "./runner-audio.mjs?v=d93419fd0e46";
 import { ARCHIVE_VOICES } from "./runner-voice-data.mjs?v=d5e017561fd6";
 import { drawJourneyScenery, drawRaidAtmosphere, raidMoodFor,createSceneryScroll,advanceSceneryScroll,sampleSceneryDistance } from "./runner-scenery.mjs?v=f18cb77b75fc";
@@ -881,7 +881,7 @@ function initRunner() {
         if(scale!==1){ctx.save();ctx.translate(pivot,feet);ctx.scale(scale,scale);ctx.translate(-pivot,-feet);}
         drawHeroShot(ctx,{x:pivot,y:feet,phase,age:HERO_SHOT_DURATION-run.player.attackFor,crouching:crouchTarget,crouchPose,sliding,slidePose,slidePhase,airborne,falling:run.player.velocity<0,reducedMotion:reduced,facing:run.player.shotFacing||1,alpha});
         if(scale!==1)ctx.restore();
-      }else drawActor(ctx,{type:"flavio",x:pivot,y:feet,scale:.95*scale,phase,standing:(bossStopsAutoRun(run)||run.manualStory)&&!run.player.moveHeld,airborne,facing,
+      }else drawActor(ctx,{type:"flavio",x:pivot,y:feet,scale:.95*scale,phase,idleTime:run.elapsed,standing:(bossStopsAutoRun(run)||run.manualStory)&&!run.player.moveHeld,airborne,facing,
         falling:run.player.velocity<0,reducedMotion:reduced,landing:crouchTarget,crouchPose,sliding,slidePose,slidePhase,hurt:run.status==="over",alpha});
       if(run.player.restoreFlashFor>0&&!prefersReducedMotion()){
         ctx.save();ctx.globalAlpha=Math.min(.55,run.player.restoreFlashFor/.48*.55);

@@ -1,5 +1,5 @@
-import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=1fe368645d13';
-import {drawCombatSprite} from './runner-sprites.mjs?v=d315d90b4c8a';
+import {drawCompleteWeapon} from './runner-weapon-art.mjs?v=f8c6e616b86c';
+import {drawCombatSprite} from './runner-sprites.mjs?v=6eb9a984d6e6';
 import {HERO_POWERS} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=bb7820d6e288';
 import {heroActionMuzzleFor} from './runner-hero-actions.mjs?v=540e224a66e3';
@@ -28,6 +28,19 @@ export function heroShotPose({age=0,crouching=false,sliding=false,airborne=false
   muzzle:!airborne&&(crouching||sliding)?heroActionMuzzleFor(state,facing,sliding):combatGeometryFor(airborne?'flavio-air-shot':'flavio',{frame:2,scale:.95,facing}).muzzle};
 }
 
+const objectMotion={return:[19,.39],orbit:[24,.52],bounce:[17,.32],arc:[13,.26],lob:[12,.33],homing:[21,.24],ghost:[16,.18]};
+function drawPowerWake(c,behavior,time,color){
+ const flowing=behavior==='wave'||behavior==='gust'||behavior==='orbit'||behavior==='ghost';
+ c.strokeStyle=color;c.globalAlpha*=.65;c.lineWidth=flowing?2:3;c.lineCap='round';
+ c.beginPath();
+ if(flowing){
+  const ripple=Math.sin(time*23)*5;
+  c.moveTo(-27,-5);c.quadraticCurveTo(-18,-8+ripple,-6,-2);
+  c.moveTo(-30,5);c.quadraticCurveTo(-20,8-ripple,-8,2);
+ }else{c.moveTo(-18,0);c.lineTo(-5,0);}
+ c.stroke();c.globalAlpha/=.65;
+}
+
 /** Complete bottle projectile; its proportions stay fixed while following the shot. */
 export function drawHeroProjectile(c,shot,ground=230,{reducedMotion=false}={}){
  if(shot.charged){
@@ -37,11 +50,14 @@ export function drawHeroProjectile(c,shot,ground=230,{reducedMotion=false}={}){
   c.strokeStyle='#fff6d3';c.beginPath();c.moveTo(-28,-5);c.lineTo(-14,-5);c.moveTo(-32,5);c.lineTo(-16,5);c.stroke();c.restore();
  }
  if(shot.powerId&&shot.powerId!=='ivermectina'){
-  const power=HERO_POWERS[shot.powerId],size=shot.behavior==='gust'?46:shot.behavior==='wave'?Math.min(56,24+shot.age*44):shot.behavior==='heavy'?30:24;
+  const {behavior}=shot,age=Number(shot.age)||0,time=reducedMotion?0:age;
+  const power=HERO_POWERS[shot.powerId],size=behavior==='gust'?46:behavior==='wave'?Math.min(56,24+age*44):behavior==='heavy'?30:24;
   c.save();c.translate(shot.x,ground-shot.y);c.rotate(Math.atan2(-shot.vy,shot.vx));
-  c.strokeStyle=power?.color||'#d7bff0';c.globalAlpha*=.65;c.lineWidth=3;c.beginPath();c.moveTo(-18,0);c.lineTo(-5,0);c.stroke();c.globalAlpha/=.65;
+  drawPowerWake(c,behavior,time,power?.color||'#d7bff0');
+  const swing=objectMotion[behavior];
+  if(time&&swing)c.rotate(Math.sin(time*swing[0])*swing[1]);
   if(shot.type==='meme-ghost')drawCombatSprite(c,{type:'meme-army',x:0,y:14,scale:.28,frame:2,facing:1});
-  else{c.rotate(Math.PI/2);c.translate(0,size/2);drawCompleteWeapon(c,{type:shot.type,width:size,height:size,phase:shot.age*35,reducedMotion});}
+  else{c.rotate(Math.PI/2);c.translate(0,size/2);drawCompleteWeapon(c,{type:shot.type,width:size,height:size,phase:time*35,reducedMotion});}
   c.restore();return;
  }
  c.save();c.translate(shot.x,ground-shot.y);c.rotate(Math.atan2(-shot.vy,shot.vx));

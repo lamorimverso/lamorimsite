@@ -1,6 +1,6 @@
 import {ROSTER,STAGES,WIDTH,GROUND,STEP,createBattle,stepBattle,randomMatchup} from './battle-core.mjs?v=898ff997b13a';
-import {drawActor,loadSprites,drawProjectile} from '../runner-art.mjs?v=635052b7861d';
-import {drawHoverEnemy} from '../runner-boss-art.mjs?v=8ddae5b2d6d3';
+import {drawActor,loadSprites,drawProjectile} from '../runner-art.mjs?v=99220b167c4b';
+import {drawHoverEnemy} from '../runner-boss-art.mjs?v=7f0a4354ab6b';
 import {drawScenery} from '../runner-scenery.mjs?v=f18cb77b75fc';
 const $=id=>document.getElementById(id),canvas=$('canvas'),c=canvas.getContext('2d'),reduced=matchMedia('(prefers-reduced-motion: reduce)');
 let player='flavio',boss='xandao',g=null,raf=0,last=0,acc=0,ready=false,held=new Map(),pressed=[];
@@ -26,10 +26,19 @@ $('start').onclick=start;$('rematch').onclick=start;$('select-back').onclick=()=
 function frame(now){if(!g)return;if(!last)last=now;acc+=Math.min(.10,(now-last)/1000);last=now;let n=0;while(acc>=STEP&&n++<12){const input={press:pressed.splice(0)};for(const a of held.values())input[a]=true;stepBattle(g,input);acc-=STEP;}render();if(g.status!=='finished')raf=requestAnimationFrame(frame);else clear();}
 function actor(f){
  const y=GROUND-f.y,attack=f.move,hit=f.state==='hurt',low=['crouch','guard-low'].includes(f.state),guard=['guard-high','guard-low','blockstun'].includes(f.state),wind=!!attack&&f.age<attack.start,active=!!attack&&f.age>=attack.start&&f.age<attack.start+attack.active;
+ const recovering=!!attack&&!wind&&!active;
+ const progress=attack?Math.min(1,wind?f.age/attack.start:active?(f.age-attack.start)/attack.active:(f.age-attack.start-attack.active)/attack.recover):0;
+ const walking=f.state==='walk',phase=walking?f.walk:g.elapsed*10;
  c.save();c.globalAlpha=.20;c.fillStyle='#182036';c.beginPath();c.ellipse(f.x,GROUND+3,32,6,0,0,Math.PI*2);c.fill();c.restore();
- c.save();c.translate(f.x,y);const phase=reduced.matches?0:f.state==='walk'?f.walk:g.elapsed*8;
- if(f.def.id==='flavio'){drawActor(c,{type:'flavio',x:0,y:0,scale:1.4,phase,facing:f.face,standing:f.state!=='walk',airborne:f.y>0,crouchPose:low?1:0,attacking:active,preparing:wind,hurt:hit,reducedMotion:reduced.matches});}
- else {c.scale(-f.face,low?.68:1);if(f.state==='walk'&&!reduced.matches)c.translate(0,Math.sin(f.walk*Math.PI/2)*2);drawHoverEnemy(c,{type:f.def.id,platform:false,scale:1.24,phase,preparing:wind,attacking:active,recovering:!!attack&&!wind&&!active,hurt:hit,reducedMotion:reduced.matches,classId:f.def.style,action:attack?.level==='low'?'crouch':'jump',progress:attack?Math.min(1,f.age/(attack.start+attack.active)):0,stageId:g.stage});}
+ c.save();c.translate(f.x,y);
+ if(f.def.id==='flavio'){
+  drawActor(c,{type:'flavio',scale:1.4,phase,idleTime:g.elapsed,facing:f.face,standing:!walking,airborne:f.y>0,
+   crouchPose:low?1:0,attacking:active,preparing:wind,recovering,hurt:hit,progress,combatStance:true,reducedMotion:reduced.matches});
+ }else if(!walking||!drawActor(c,{type:f.def.id,scale:1.24,phase,facing:f.face,strideOnly:true,reducedMotion:reduced.matches})){
+  c.scale(-f.face,low?.68:1);
+  drawHoverEnemy(c,{type:f.def.id,platform:false,scale:1.24,phase,preparing:wind,attacking:active,recovering,hurt:hit,
+   reducedMotion:reduced.matches,classId:f.def.style,action:attack?.level==='low'?'crouch':'jump',progress,stageId:g.stage});
+ }
  c.restore();
  if(guard){c.save();c.strokeStyle='#9edbff';c.lineWidth=3;c.globalAlpha=.8;c.translate(f.x,y);c.scale(f.face,1);c.beginPath();c.ellipse(12,-(low?44:69),37,low?43:68,0,-1.4,1.4);c.stroke();c.restore();}
  if(active&&attack.key!=='special'){c.save();c.strokeStyle='#fff0b6';c.lineWidth=5;c.globalAlpha=.65;c.beginPath();const yy=y-(attack.level==='low'?34:attack.key.startsWith('kick')?63:81);c.moveTo(f.x+f.face*22,yy-24);c.quadraticCurveTo(f.x+f.face*attack.reach,yy-28,f.x+f.face*(attack.reach-6),yy+18);c.stroke();c.restore();}
