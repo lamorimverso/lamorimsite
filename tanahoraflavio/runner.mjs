@@ -4,8 +4,8 @@ import {stageGuideFor} from './runner-stage-director.mjs?v=66988b8ff9e6';
 import {HURT_BODY_SCALE} from './runner-body.mjs?v=57ec474fca38';
 import {createPresentationDOM,createControlLabelReader} from './runner-presentation-cache.mjs?v=4712d27109dc';
 import {edgeThreatsFor,drawEdgeThreats} from './runner-edge-cues.mjs?v=b4b61c9e89df';
-import {drawTerrain,drawSlideContact} from './runner-terrain-art.mjs?v=d58971ff04da';
-import {TERRAIN,terrainSupportAt} from './runner-terrain.mjs?v=d75123c1af20';
+import {drawTerrain,drawSlideContact} from './runner-terrain-art.mjs?v=3108e6f96826';
+import {TERRAIN,terrainSupportAt} from './runner-terrain.mjs?v=b0dd3b328059';
 import {normalizeControls,keyboardActionFor,mouseActionFor,keyLabel} from './runner-control-map.mjs?v=568387e3f764';
 import {createControlSettings} from './runner-control-settings.mjs?v=25524a717d9e';
 import {createGamepadDriver} from './runner-gamepad.mjs?v=18383546c2cd';
@@ -17,7 +17,7 @@ import {regularEmitterPose,regularEmitterExitPose,regularCastPresentation} from 
 import {createAircraftWarningTracker,createEncounterSoundTracker,createShotSoundTracker} from './runner-shot-events.mjs?v=37fd940420f1';
 import {bossPresentationFor,bossRoleLabel,STORY_OPTIONAL_IDS,optionalStoryBossAt,storyBossAt} from './runner-bosses.mjs?v=a359288d2758';
 import {createVoiceDirector} from './runner-voice-director.mjs?v=405b7acd6323';
-import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, releaseJumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, stagePlanFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=0c7d14efa024";
+import { WORLD, PLAYER, JACARE_RECOVERY_SECONDS, STORY_BOSS_COUNT, STAGES, SCENE_DISTANCE, RAID_FACTS, difficultyAt, characterProgressAt, attackCueFor, isHostileProjectile, ballotDigit, ballotClear, ballotConfirm, createRun, resizeRun, startRun, canContinueRun, continueRun, moveRun, playerX, threatTimeToContact, jumpRun, releaseJumpRun, crouchRun, clearRunInput, advanceRun, routeStageFor, routeStagesFor, routeTransitionFor, scoreFor, stagePlanFor, bossAttackFor,attackRun,setAttackRun,activateReserveShield,bossArenaPose,heroMuzzleFor,campaignRouteDistance,STORY_OPENING_DISTANCE } from "./runner-core.mjs?v=62705b6793ed";
 import {STORY_STAGE_IDS} from './runner-route-data.mjs?v=c4fcfde513ff';
 import {heroStridePhase,bossStopsAutoRun} from './runner-drawn-motion.mjs?v=0d1971800c55';
 import {campaignAccentFor,drawCampaignCrowd} from './runner-campaign-art.mjs?v=b607bf48f7f7';
@@ -549,7 +549,7 @@ function initRunner() {
     if(controlsOpen()){moveRun(run,0);return;}
     const actions=[...moveKeys].map(code=>keyboardActionFor(preferences.controls,code)).concat([...mouseHeld.values()]);
     const right=actions.includes('right')||gamepadHeld.has('right'),left=actions.includes('left')||gamepadHeld.has('left');
-    const pointer=[...trackPointers.values()].filter(p=>p.action==="move").at(-1);
+    const pointer=[...trackPointers.values()].filter(p=>p.action==="move"||p.action==="crouch"&&p.direction).at(-1);
     moveRun(run,Number(right)-Number(left)||(pointer?.direction||0));
   }
   function restart(){begin(run.practice?.id);}
@@ -649,15 +649,19 @@ function initRunner() {
     try{canvas.setPointerCapture?.(event.pointerId);}catch{/* Eventos assistivos podem não ter contato nativo. */}
   },{passive:false});
   canvas.addEventListener("pointermove",event=>{
-    const pointer=trackPointers.get(event.pointerId);if(!pointer||!["pending","move"].includes(pointer.action))return;
+    const pointer=trackPointers.get(event.pointerId);if(!pointer||!["pending","move","crouch"].includes(pointer.action))return;
     const dx=event.clientX-pointer.x,dy=event.clientY-pointer.y;
     if(pointer.action==="move"){event.preventDefault();pointer.direction=Math.abs(dx)<8?0:Math.sign(dx);updateMovement();return;}
+    if(pointer.action==="crouch"){
+      event.preventDefault();pointer.direction=Math.abs(dx)<(pointer.direction?8:22)?0:Math.sign(dx);updateMovement();return;
+    }
     if(Math.max(Math.abs(dx),Math.abs(dy))<22)return;
     event.preventDefault();
     if(Math.abs(dx)>Math.abs(dy)){pointer.action="move";pointer.direction=Math.sign(dx);updateMovement();return;}
     if(dy<0){pointer.action="jump";jump('touch:'+event.pointerId);}
     else{
-      pointer.action="crouch";
+      pointer.action="crouch";pointer.direction=Math.abs(dx)>=22?Math.sign(dx):0;
+      updateMovement();
       if(preferences.crouchMode==="toggle")crouchSources.toggle("touch-toggle");
       else crouchSources.set("touch:"+event.pointerId,true);
       crouch(crouchSources.active);
@@ -667,7 +671,7 @@ function initRunner() {
     const pointer=trackPointers.get(event.pointerId);if(!pointer)return;
     lastPointerAt=performance.now();
     trackPointers.delete(event.pointerId);
-    if(pointer.action==="move")updateMovement();
+    if(pointer.action==="move"||pointer.action==="crouch")updateMovement();
     if(pointer.action==="jump")releaseJump('touch:'+event.pointerId);
     if(pointer.action==="fire")fire('touch-fire:'+event.pointerId,false);
     if(pointer.action==="pending"&&!pointer.usedForFire&&event.type==="pointerup")jump();
@@ -827,7 +831,7 @@ function initRunner() {
   function character(){
     const airborne=movementIsAirborne(run.player),reduced=prefersReducedMotion();
     const active=run.status==="running",decorative=active&&!reduced;
-    const facing=run.allyShieldFor>0?1:run.manualStory?(run.player.shotFacing<0?-1:1):run.player.moveHeld<0?-1:1;
+    const facing=run.player.sliding&&run.player.moveHeld?Math.sign(run.player.moveHeld):run.allyShieldFor>0?1:run.manualStory?(run.player.shotFacing<0?-1:1):run.player.moveHeld<0?-1:1;
     // A corrida volta a usar sua passada ilustrada original. As duas ações
     // baixas selecionam quadros de sequências próprias, no mesmo apoio.
     const phase=run.manualStory&&!bossStopsAutoRun(run)?Math.max(0,run.player.manualTravel||0)/18:heroStridePhase(run);
@@ -858,7 +862,7 @@ function initRunner() {
       ctx.save();ctx.globalAlpha*=.45*fading;ctx.strokeStyle="#536e76";ctx.lineWidth=1.1;
       ctx.beginPath();ctx.ellipse(playerX(run)+17,feet+1,13+11*(1-fading),2.7,0,0,Math.PI*2);ctx.stroke();ctx.restore();
     }
-    if(sliding)drawSlideContact(ctx,{x:playerX(run)+17,y:feet,age:run.elapsed,reducedMotion:reduced});
+    if(sliding)drawSlideContact(ctx,{x:playerX(run)+17,y:feet,age:run.elapsed,reducedMotion:reduced,direction:run.player.moveHeld});
     const protection={x:playerX(run)+17,y:feet,crouching:crouchTarget||run.player.isJacare,remaining:run.shieldFor};
     ctx.save();
     if(!shooting&&decorative&&runningStride){

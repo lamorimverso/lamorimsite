@@ -1,4 +1,4 @@
-import {aircraftPoseFor} from './runner-terrain.mjs?v=d75123c1af20';
+import {aircraftPoseFor} from './runner-terrain.mjs?v=b0dd3b328059';
 import {drawTileSurface} from './runner-platform-room-art.mjs?v=344dcf5c7c31';
 // Shapes use the same logical x and height-above-ground as traversal physics.
 // No collision state is changed here, and no asset allocation is needed per frame.
@@ -123,13 +123,13 @@ export function drawTerrain(c,{terrain,ground=246,width=900}={}){
  c.restore();
 }
 
-export function drawSlideContact(c,{x,y,age=0,reducedMotion=false}={}){
+export function drawSlideContact(c,{x,y,age=0,reducedMotion=false,direction=1}={}){
  if(reducedMotion)return;
- const phase=age*15;
+ const phase=age*15,sign=direction<0?-1:1;
  c.save();c.globalAlpha*=.5;
  for(let i=0;i<3;i++){
   const offset=(phase+i*5)%17;
-  line(c,x-16-offset,y-1-i*1.7,x-9-offset,y-1-i*1.7,i===1?'#f3ecd2':'#77908f',1.3);
+  line(c,x-sign*(16+offset),y-1-i*1.7,x-sign*(9+offset),y-1-i*1.7,i===1?'#f3ecd2':'#77908f',1.3);
  }
  c.restore();
 }

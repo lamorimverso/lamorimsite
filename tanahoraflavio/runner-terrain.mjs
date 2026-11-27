@@ -94,20 +94,25 @@ export function terrainSupportAt(run,x,halfWidth=0){
 export function advanceSlide(run,dt,allowed){
  const p=run.player,duel=!!run.boss&&!run.boss.traversal;
  if(run.manualStory)p.slideCooldownFor=Math.max(0,(p.slideCooldownFor||0)-dt);
- const moving=duel?p.moveHeld!==0:p.moveHeld>0;
+ // Both directions use the same bounded slide; reversing on the route
+ // ends the old slide before a new directional command can start one.
+ const direction=Math.sign(p.moveHeld||0),moving=direction!==0;
  const wants=allowed&&p.grounded!==false&&p.velocity===0&&p.crouchHeld&&moving;
- if(!p.crouchHeld||!moving)p.slideLatched=false;
- if(!wants){
+ const reversed=!duel&&moving&&p.slideLatched&&p.slideDirection&&direction!==p.slideDirection;
+ if(!p.crouchHeld||!moving||reversed){p.slideLatched=false;p.slideDirection=0;}
+ if(!wants||reversed&&p.sliding){
   if(run.manualStory&&p.sliding)p.slideCooldownFor=STORY_DASH_RECOVERY_SECONDS;
   p.sliding=false;p.slideRemaining=0;return;
  }
  if(!p.sliding&&!p.slideLatched){
+  p.slideDirection=direction;
   // Um comando enviado durante a recuperação é consumido: soltar e
   // pressionar novamente impede investidas automáticas em sequência.
   if(run.manualStory&&p.slideCooldownFor>1e-8){p.slideLatched=true;return;}
   p.sliding=true;p.slideLatched=true;p.slideRemaining=TERRAIN.slideFor;
  }
  if(p.sliding){
+  p.slideDirection=direction;
   p.slideRemaining=Math.max(0,p.slideRemaining-dt);
   if(p.slideRemaining<=1e-8){
    p.sliding=false;
