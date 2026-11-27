@@ -86,12 +86,13 @@ function aimAtBoss(run,power){
  }
  return {x:pose.x,y:pose.platformY+48,facing:1};
 }
+const groundAimHeight=enemy=>Math.max(14,enemy.height*.58);
 function aimAtGroundEnemy(run){
  if(run.boss)return null;
  const facing=run.manualStory&&run.player.shotFacing<0?-1:1,muzzle=heroMuzzleFor(run,facing);
  const target=run.obstacles.filter(isShootableGroundEnemy).filter(o=>(o.x+o.width/2-muzzle.x)*facing>0)
   .sort((a,b)=>(a.x+a.width/2-b.x-b.width/2)*facing)[0];
- return target?{x:target.x+target.width/2,y:Math.max(14,target.height*.58),facing}:null;
+ return target?{x:target.x+target.width/2,y:groundAimHeight(target),facing,groundTarget:target}:null;
 }
 export function attackRun(run){
  const b=run.boss,p=run.player,power=heroPowerFor(run),level=run.powerLevels?.[run.activePower]||1;
@@ -109,6 +110,7 @@ export function attackRun(run){
   const vx=Math.cos(angle+spread)*power.speed,vy=Math.sin(angle+spread)*power.speed;
   (run.heroShots??=[]).push({type:run.activePower==='ivermectina'?'hero-ivermectina':power.projectiles?.[i]||power.projectile,powerId:run.activePower,
    behavior:power.behavior,x,y:y+offset,originX:x,originY:y+offset,previousX:x,previousY:y+offset,vx,vy,age:0,flightFor:Math.max(.15,distance/power.speed),
+   groundTarget:power.behavior==='homing'?target?.groundTarget:null,
    radius:power.radius+(charged?4:0),cancels:power.cancels+(charged?1:0),damage:power.damage*(1+(level-1)*.12)*(charged?2.1:1),charged,ammoCost});
  }
  run.ammo-=ammoCost;run.ammoIdleFor=0;run.ammoReloadFor=0;
@@ -196,7 +198,12 @@ export function advanceHeroShots(run,dt){
   shot.previousX=shot.x;shot.previousY=shot.y;shot.age+=dt;
   if(shot.behavior==='homing'){
    const boss=run.boss,pose=boss?.combat&&!boss.traversal&&boss.hp>0?bossArenaPose(boss,visibleWidth(run)):null;
-   const target=pose?{x:pose.x,y:pose.platformY+48}:run.obstacles.filter(isHostileProjectile).sort((a,b)=>Math.hypot(a.x+a.width/2-shot.x,a.y-shot.y)-Math.hypot(b.x+b.width/2-shot.x,b.y-shot.y))[0];
+   // Keep the selected ground fighter in sight until it leaves play.
+   if(!isShootableGroundEnemy(shot.groundTarget)||!run.obstacles.includes(shot.groundTarget))shot.groundTarget=null;
+   const groundTarget=shot.groundTarget;
+   const target=pose?{x:pose.x,y:pose.platformY+48}:
+    groundTarget?{x:groundTarget.x+groundTarget.width/2,y:groundAimHeight(groundTarget)}:
+    run.obstacles.filter(isHostileProjectile).sort((a,b)=>Math.hypot(a.x+a.width/2-shot.x,a.y-shot.y)-Math.hypot(b.x+b.width/2-shot.x,b.y-shot.y))[0];
    if(target){const dx=target.x+(target.width||0)/2-shot.x,dy=target.y-shot.y,d=Math.max(1,Math.hypot(dx,dy)),k=Math.min(1,dt*4);shot.vx+=(dx/d*540-shot.vx)*k;shot.vy+=(dy/d*540-shot.vy)*k;}
   }
   if(shot.behavior==='return'&&shot.age>shot.flightFor*1.2&&!shot.returned){shot.vx=-shot.vx;shot.vy=-shot.vy*.5;shot.returned=true;}

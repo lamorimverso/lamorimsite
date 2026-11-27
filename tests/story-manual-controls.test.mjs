@@ -116,3 +116,37 @@ test('earned heavy weapons trade cadence for power against tough enemies during 
   assert.ok(heavy.routeDistance>0);
  }
 });
+
+test('the homing power tracks the selected ground enemy in both directions in manual Story',()=>{
+ for(const facing of [-1,1]){
+  const run=isolated('story',true);
+  run.player.x=450;
+  core.moveRun(run,facing);core.moveRun(run,0);
+  const muzzle=core.heroMuzzleFor(run,facing),projectileX=muzzle.x+facing*102;
+  const enemy={type:'pf',x:muzzle.x+facing*185-15,width:30,height:44,speed:facing*20,action:'jump'};
+  const projectile={type:'message',x:projectileX-12,width:24,height:20,y:160,speed:0,
+   projectile:true,launched:true,launchX:projectileX,targetX:muzzle.x-10,launchY:160,targetY:160};
+  run.obstacles=[enemy,projectile];
+  assert.ok(core.grantBossPower(run,'lula'));
+  assert.equal(core.attackRun(run),true);
+  step(run,72);
+  assert.equal(enemy.destroyed,true,`ground enemy in direction ${facing}`);
+  assert.equal(run.defeatedEnemies,1);
+  assert.ok(run.obstacles.includes(projectile),'the unrelated aerial attack must remain in play');
+ }
+});
+
+test('the homing power can intercept an aerial shot when its ground target leaves play',()=>{
+ const run=isolated('story',true),muzzle=core.heroMuzzleFor(run);
+ const enemy={type:'pf',x:muzzle.x+170,width:30,height:44,speed:20,action:'jump'};
+ const projectileX=muzzle.x+150,y=muzzle.y+40;
+ const projectile={type:'message',x:projectileX-12,width:24,height:36,y,speed:0,
+  projectile:true,launched:true,launchX:projectileX,targetX:muzzle.x-10,launchY:y,targetY:y};
+ run.obstacles=[enemy,projectile];
+ assert.ok(core.grantBossPower(run,'lula'));
+ assert.equal(core.attackRun(run),true);
+ run.obstacles=[projectile];
+ step(run,90);
+ assert.equal(projectile.destroyed,true);
+ assert.equal(run.defeatedEnemies,0);
+});
