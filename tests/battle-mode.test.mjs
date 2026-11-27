@@ -40,3 +40,17 @@ test('arcade normals have distinct attack ranges and preserve low/high guard rul
  const g=fight(),[a,b]=g.fighters;a.x=380;b.x=490;tick(g,45,{press:['kickMid']});assert.ok(b.hp<b.maxHp);
  const h=fight(),[p,o]=h.fighters;p.x=380;o.x=465;tick(h,45,{press:['kickLow']},{guard:true,down:true});assert.ok(o.maxHp-o.hp<=3);
 });
+
+test('aerial normals retain horizontal steering, including reversal, without changing gravity or committed ground attacks',()=>{
+ for(const player of ['flavio','xandao','dilma']){
+  const g=fight({player}),a=g.fighters[0];tick(g,12,{right:true,press:['jump']});
+  assert.ok(a.y>0);const x=a.x,y=a.y,vy=a.vy;
+  tick(g,12,{right:true,press:['light']});
+  assert.equal(a.move?.key,'air');assert.ok(Math.abs(a.x-x-12*STEP*a.def.speed*.8)<1e-6);
+  assert.ok(a.y>y);assert.ok(a.vy<vy);const right=a.x;
+  tick(g,12,{left:true});
+  assert.equal(a.move?.key,'air');assert.ok(Math.abs(right-a.x-12*STEP*a.def.speed*.8)<1e-6);
+ }
+ const g=fight(),a=g.fighters[0],x=a.x;
+ tick(g,20,{right:true,press:['heavy']});assert.equal(a.move?.key,'heavy');assert.equal(a.x,x);
+});

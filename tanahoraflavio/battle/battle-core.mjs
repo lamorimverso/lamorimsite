@@ -88,7 +88,10 @@ function updateFighter(g,f,o,input,dt){
  if(!f.move&&f.stun<=0)f.face=o.x>=f.x?1:-1;
  if(f.stun>0){f.stun=Math.max(0,f.stun-dt);f.vx*=Math.exp(-9*dt);if(!f.stun){f.state='idle';f.vx=0;}}
  else if(f.move){
-  const m=f.move,old=f.age;f.age+=dt;f.vx*=Math.exp(-12*dt);
+  const m=f.move,old=f.age;f.age+=dt;
+  // Preserve the same aerial steering during aerial normals as during jumps.
+  // Ground strikes and specials keep their committed recovery and facing.
+  f.vx=m.key==='air'?(grounded?0:axis*f.def.speed*.8):f.vx*Math.exp(-12*dt);
   if(!f.hit&&old<m.start+m.active&&f.age>=m.start){
    if(m.key==='special'){f.hit=true;launch(g,f,o);}
    else {
@@ -104,7 +107,7 @@ function updateFighter(g,f,o,input,dt){
   const next=f.buffer.shift()?.action;
   const guard=input.guard||axis===-f.face;
   if(next==='jump'&&grounded){f.vy=f.def.jump;f.state='jump';f.vx=axis*f.def.speed;}
-  else if(next&&next!=='jump'&&startMove(f,next==='heavy'?!grounded?'air':input.down?'low':'heavy':normalKeys.includes(next)&&!grounded?'air':next)){f.vx=0;}
+  else if(next&&next!=='jump'&&startMove(f,next==='heavy'?!grounded?'air':input.down?'low':'heavy':normalKeys.includes(next)&&!grounded?'air':next)){f.vx=!grounded&&f.move.key==='air'?axis*f.def.speed*.8:0;}
   else if(!grounded){f.state='jump';f.vx=axis*f.def.speed*.8;}
   else if(input.down){f.state=guard?'guard-low':'crouch';f.vx=0;}
   else if(guard&&(input.guard||Math.abs(o.x-f.x)<170)){f.state='guard-high';f.vx=input.guard?0:axis*f.def.speed*.52;}
