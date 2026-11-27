@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as core from '../tanahoraflavio/runner-core.mjs';
-import {pilotCounter} from '../tools/story-pilot.mjs';
+import {pilotCounter,pilotDodge} from '../tools/story-pilot.mjs';
+import {arenaPatternFor,bossPresentationFor,bossArenaPose} from '../tanahoraflavio/runner-bosses.mjs';
 
 const DT=1/120;
 const storyStages=[
@@ -168,4 +169,41 @@ test('a repeated practice and a new campaign each start with fresh run state',()
  assert.deepEqual(campaign.ownedPowers,['ivermectina']);
  assert.equal(campaign.movementSkills.doubleJump,false);
  assert.deepEqual(campaign.ballot,{digits:'',message:''});
+});
+
+
+test('every direct arena exposes its own authored opening and windup before its first attack',()=>{
+ const ids=storyStages.flatMap(([,mandatory,optional])=>[...mandatory,...optional]).filter(id=>!crossings.includes(id));
+ const signatures=new Set();
+ for(const id of ids){
+  const example=enterPractice(id);
+  const opening=arenaPatternFor(example.boss,0);
+  assert.ok(opening.signature,id);
+  assert.ok(!signatures.has(opening.signature),`${id}: repeated opening ${opening.signature}`);
+  signatures.add(opening.signature);
+  for(const width of [480,900])for(const assisted of [false,true]){
+   const label=`${id}/${width}/assisted=${assisted}`,run=enterPractice(id,width,assisted);
+   let prepared=false,attack=false;
+   const poses=new Set();
+   for(let frame=0;frame<120*15&&run.status==='running'&&run.boss;frame++){
+    const boss=run.boss;
+    const cue=bossPresentationFor(boss,run.obstacles,{continuousCast:true});
+    const pose=bossArenaPose(boss,width);
+    assert.ok(Number.isFinite(pose.x)&&Number.isFinite(pose.platformY),label);
+    assert.ok(cue.progress>=0&&cue.progress<=1,label);
+    assert.ok(Number(cue.preparing)+Number(cue.attacking)+Number(cue.recovering)<=1,label);
+    poses.add(`${Math.round(pose.x)},${Math.round(pose.platformY)}`);
+    if(cue.preparing)prepared=true;
+    if(run.obstacles.some(o=>o.bossAttack&&o.owner===id)){
+     attack=true;break;
+    }
+    pilotDodge(run);
+    core.advanceRun(run,DT);
+   }
+   assert.ok(prepared,`${label}: missing windup`);
+   assert.ok(attack,`${label}: missing attack`);
+   assert.ok(poses.size>1,`${label}: static arena pose`);
+   assert.equal(run.shotsFired,0,label);
+  }
+ }
 });
