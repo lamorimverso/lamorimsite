@@ -9,7 +9,7 @@ const find=(items,index)=>items.find(s=>s.segmentIndex===index);
 test('all three architectural planes and complete landmarks travel left even with frozen route progress',()=>{
  for(const width of [480,900])for(const d of [0,1000,100000,1000000]){
   const state=createSceneryScroll(),a=geom(make(state,d),d,width),b=geom(make(state,d+100),d+100,width);
-  assert.deepEqual(a.layers.map(l=>l.scale),[.24,.38,.56]);
+  assert.deepEqual(a.layers.map(l=>l.scale),[.22,.30,.45]);
   for(let i=0;i<3;i++){
    const visible=a.layers[i].segments.filter(s=>s.x>=0&&s.x<=width);
    assert.ok(visible.length>0);
@@ -21,7 +21,7 @@ test('all three architectural planes and complete landmarks travel left even wit
    }
   }
   const old=a.landmarks.find(s=>s.x>=0&&s.x<=width);
-  assert.ok(old);assert.ok(Math.abs(old.x-find(b.landmarks,old.segmentIndex).x-56)<1e-7);
+  assert.ok(old);assert.ok(Math.abs(old.x-find(b.landmarks,old.segmentIndex).x-45)<1e-7);
   assert.ok(a.layers.every(l=>l.segments.length<20),'bounded draw count');
  }
 });
@@ -129,5 +129,23 @@ test('automatic reduced effects preserve all physical scenery planes while decor
   const before=frame(1000),after=frame(1100);let changed=0;
   for(let i=0;i<before.length;i+=4)if(Math.abs(before[i]-after[i])+Math.abs(before[i+1]-after[i+1])+Math.abs(before[i+2]-after[i+2])>15)changed++;
   assert.ok(changed>1000,'buildings and monuments, not only road marks, move with automatic reduced effects: '+changed);
+ }
+});
+
+
+test('gentler physical parallax preserves depth and the road at high running speed',()=>{
+ for(const width of [480,900]){
+  const state=createSceneryScroll(),a=geom(make(state,1000),1000,width),b=geom(make(state,1360),1360,width);
+  const pixelsPerSecond=a.layers.map((layer,i)=>{
+   const first=layer.segments.find(s=>s.x>=0&&s.x<=width);
+   const next=find(b.layers[i].segments,first.segmentIndex);
+   assert.ok(next,'visible artwork remains allocated over one second');
+   return first.x-next.x;
+  });
+  const expected=[79.2,108,162];
+  for(let i=0;i<3;i++)assert.ok(Math.abs(pixelsPerSecond[i]-expected[i])<1e-7);
+  assert.ok(pixelsPerSecond[0]<pixelsPerSecond[1]&&pixelsPerSecond[1]<pixelsPerSecond[2]);
+  assert.equal(b.scrollDistance-a.scrollDistance,360);
+  assert.ok(Math.abs((b.roadOffset-a.roadOffset+98)%98-360%98)<1e-7);
  }
 });
