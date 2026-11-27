@@ -155,9 +155,10 @@ function flightMood(flight,reducedMotion){
 // route progress only chooses which city is loaded next. Every new region is
 // queued beyond the right edge and its tiles keep their identity until offscreen.
 const scrollPlanes=Object.freeze([
- {id:'far',scale:.24,spacing:150},
- {id:'middle',scale:.38,spacing:210},
- {id:'landmark',scale:.56,spacing:440}
+ // Keep the far plane fast enough to clear a 900px viewport during a route transition.
+ {id:'far',scale:.22,spacing:150},
+ {id:'middle',scale:.30,spacing:210},
+ {id:'landmark',scale:.45,spacing:440}
 ]);
 const SCROLL_ENTRY=190,SCROLL_MARGIN=340,SCROLL_FEATHER=150;
 export function createSceneryScroll(){return {regions:[],lastDistance:0,lastStage:null};}
