@@ -257,3 +257,20 @@ test('clean fullscreen header stays separate from canvas and keeps gear accessib
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
+
+for(const mode of ['story','endless'])for(const direction of [-1,1])
+test(`gesto baixo permite deslize nas duas direções: ${mode}, ${direction}`,async()=>{
+ const {context,page,errors}=await beginMobile({width:390,height:844},{mode});
+ try{
+  const before=await page.evaluate(()=>{const r=__touchRun;r.player.x=r.viewportWidth/2;return {x:r.player.x,distance:r.distance};});
+  await touch(page,'pointerdown',711,{x:140,y:100});
+  await touch(page,'pointermove',711,{x:140,y:155});
+  await page.waitForFunction(()=>__touchRun.player.crouchHeld);
+  await touch(page,'pointermove',711,{x:140+direction*70,y:155});
+  await page.waitForFunction(d=>__touchRun.player.sliding&&__touchRun.player.moveHeld===d,direction);
+  await page.waitForFunction(({x,d,distance})=>(__touchRun.player.x-x)*d>10&&__touchRun.distance>distance,{x:before.x,d:direction,distance:before.distance});
+  await touch(page,'pointercancel',711);
+  assert.deepEqual(await page.evaluate(()=>({move:__touchRun.player.moveHeld,crouch:__touchRun.player.crouchHeld,slide:__touchRun.player.sliding})),{move:0,crouch:false,slide:false});
+  verifyErrors(errors);
+ }finally{await context.close();}
+});

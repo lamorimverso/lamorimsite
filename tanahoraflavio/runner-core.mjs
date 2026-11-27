@@ -4,7 +4,7 @@ import {random,nextSeed,createSeededRandom} from './runner-random.mjs?v=8de9f87c
 export {createSeededRandom};
 import {PURSUERS,CHARACTER_UNLOCK_LEVEL,unlockedCharacters,characterProgressAt,chooseProgressiveCharacter,foeFor,difficultyAt,pursuitAt} from './runner-difficulty.mjs?v=9c65e484cb70';
 export {PURSUERS,CHARACTER_UNLOCK_LEVEL,unlockedCharacters,characterProgressAt,difficultyAt,pursuitAt};
-import {announce,createRunState,startRun,ballotDigit,ballotClear,ballotConfirm,togglePause,scoreFor} from './runner-run-state.mjs?v=cd7d65f48140';
+import {announce,createRunState,startRun,ballotDigit,ballotClear,ballotConfirm,togglePause,scoreFor} from './runner-run-state.mjs?v=376084611be1';
 export {startRun,ballotDigit,ballotClear,ballotConfirm,togglePause,scoreFor};
 import {assistance,REACTION_GAP,threatTimeToContact,threatReservation,threatMotion,rearMotion} from './runner-threat-timing.mjs?v=f309aa6ac16a';
 export {threatTimeToContact};
@@ -21,9 +21,9 @@ export {stagePlanFor} from './runner-stage-director.mjs?v=66988b8ff9e6';
 import {playerBodyFor} from './runner-body.mjs?v=57ec474fca38';
 import {movementProfileFor,rewardMovementVictory} from './runner-movement-skills.mjs?v=d0ad734b4838';
 export {movementProfileFor} from './runner-movement-skills.mjs?v=d0ad734b4838';
-export {terrainProfileFor} from './runner-terrain.mjs?v=d75123c1af20';
-import {TERRAIN,STORY_DASH_RECOVERY_SECONDS,beginTerrain,beginGroundLesson,beginAirTransfer,aircraftHitFor,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer} from './runner-terrain.mjs?v=d75123c1af20';
-export {terrainSupportAt} from './runner-terrain.mjs?v=d75123c1af20';
+export {terrainProfileFor} from './runner-terrain.mjs?v=b0dd3b328059';
+import {TERRAIN,STORY_DASH_RECOVERY_SECONDS,beginTerrain,beginGroundLesson,beginAirTransfer,aircraftHitFor,terrainReservationFor,translateTerrain,advanceSlide,advanceTerrain,stepTerrainPlayer} from './runner-terrain.mjs?v=b0dd3b328059';
+export {terrainSupportAt} from './runner-terrain.mjs?v=b0dd3b328059';
 import {stageRosterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 import {groundRhythmFor,groundStyleFor} from './runner-ground-rhythm.mjs?v=6e4ca3cd0545';
 import {ROUTE_AMMO,addShieldPart} from './runner-supplies.mjs?v=44c67e8a5802';
@@ -260,7 +260,7 @@ export function releaseJumpRun(run){
  p.velocity=cutoff;return true;
 }
 export function clearRunInput(run){
- run.player.moveHeld=0;run.player.crouchHeld=false;run.player.crouching=false;run.player.sliding=false;run.player.slideRemaining=0;run.player.slideLatched=false;run.player.jumpBufferedUntil=run.player.coyoteUntil=0;
+ run.player.moveHeld=0;run.player.crouchHeld=false;run.player.crouching=false;run.player.sliding=false;run.player.slideRemaining=0;run.player.slideLatched=false;run.player.slideDirection=0;run.player.jumpBufferedUntil=run.player.coyoteUntil=0;
  run.player.attackHeld=false;run.player.chargeFor=0;
 }
 // A intenção permanece durante o salto, sem encolher a colisão no ar.
@@ -268,7 +268,7 @@ export function clearRunInput(run){
 export function crouchRun(run,active){
  run.player.crouchHeld=!!active&&run.status==='running'&&!run.player.isJacare;
  const next=!run.player.isJacare&&run.player.crouchHeld&&run.player.grounded!==false&&Math.abs(run.player.y-(run.player.supportY??0))<1e-8&&run.player.velocity===0;
- run.player.crouching=next;if(!next)finishStoryDash(run);if(!active)run.player.slideLatched=false;
+ run.player.crouching=next;if(!next)finishStoryDash(run);if(!active){run.player.slideLatched=false;run.player.slideDirection=0;}
  return next;
 }
 function beginBoss(run){
