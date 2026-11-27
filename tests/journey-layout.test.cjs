@@ -254,6 +254,8 @@ for(const viewport of [{width:320,height:568},{width:390,height:844},{width:568,
   const track=await page.locator('.game-viewport').boundingBox(),copy=await page.locator('#game-overlay-copy').boundingBox(),modes=await page.locator('#game-mode-chooser').boundingBox();
   assert.equal(await page.locator('#game-overlay #game-mode-chooser').count(),1);
   assert.equal(await page.locator('#game-overlay #game-start').count(),1);
+  assert.equal(await page.locator('#game-result-actions .game-battle-link').isVisible(),false,'a Arena não ocupa espaço no resultado compacto');
+  assert.equal(await page.locator('.game-result-battle .game-battle-link').isVisible(),true,'mantém acesso à Arena após a derrota');
   assert.ok(copy.y+copy.height<=modes.y+1&&copy.y+copy.height<=again.y+1,'modos e botão abaixo da mensagem');
   for(const rect of [modes,again])assert.ok(rect.x>=track.x&&rect.x+rect.width<=track.x+track.width&&rect.y+rect.height<=track.y+track.height,'controles inteiros dentro da pista');
   await page.getByRole('radio',{name:'Modo Infinito',exact:true}).check();
@@ -323,15 +325,34 @@ for(const assisted of [false,true])test(`resize real900→480 preserva reação 
  }finally{await context.close();}
 });
 
-test('labels do seletor são apenas Modo História e Modo Infinito',async()=>{
+test('seletor mantém os dois modos de corrida e o acesso à Batalha',async()=>{
  const {context,page,errors}=await open({width:390,height:844});
  try{
   const options=page.locator('#game-mode-chooser label');
   assert.deepEqual((await options.allTextContents()).map(s=>s.trim()),['Modo Infinito','Modo História']);
+  assert.equal(await page.locator('#game-mode-chooser .game-battle-link').getAttribute('href'),'battle/');
+  assert.equal(await page.getByRole('link',{name:'Modo Batalha',exact:true}).count(),1);
   assert.equal(await page.locator('#game-mode-story').isChecked(),true,'abre na campanha hierárquica');
   await page.locator('#game-mode-story').check();
   await page.getByRole('button',{name:'Começar corrida',exact:true}).click();
   assert.equal(await page.locator('#game').getAttribute('data-run-mode'),'story');
+  assert.deepEqual(errors,[]);
+ }finally{await context.close();}
+});
+for(const viewport of [{width:320,height:568},{width:390,height:844},{width:568,height:320},{width:1440,height:900}])test(`Batalha ao lado de História na largada ${viewport.width}×${viewport.height}`,async()=>{
+ const {context,page,errors}=await open(viewport);
+ try{
+  const options=page.locator('#game-ready-actions #game-mode-chooser');
+  const [infinite,story,battle]=await Promise.all([options.locator('label').nth(0).boundingBox(),options.locator('label').nth(1).boundingBox(),options.locator('.game-battle-link').boundingBox()]);
+  const group=await options.boundingBox();
+  assert.ok(infinite&&story&&battle&&group);
+  assert.ok(infinite.x+infinite.width<=story.x+1&&story.x+story.width<=battle.x+1,'três opções na mesma linha, sem sobreposição');
+  for(const rect of [infinite,story,battle])assert.ok(Math.abs(rect.y-story.y)<2&&rect.x>=group.x-1&&rect.x+rect.width<=group.x+group.width+1&&rect.height>=44,'alvos de toque e limites do seletor');
+  assert.equal(await page.locator('.game-result-battle').isVisible(),false);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  await Promise.all([page.waitForURL('**/tanahoraflavio/battle/'),options.getByRole('link',{name:'Modo Batalha',exact:true}).click()]);
+  await page.locator('#start').waitFor({state:'visible'});
+  await page.waitForFunction(()=>!document.getElementById('start').disabled,null,{timeout:15000});
   assert.deepEqual(errors,[]);
  }finally{await context.close();}
 });
