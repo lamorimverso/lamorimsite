@@ -5,7 +5,7 @@ import {standingEnemyPose} from './runner-cast-pose.mjs?v=8f2c5aee1585';
 export {standingEnemyPose} from './runner-cast-pose.mjs?v=8f2c5aee1585';
 import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=d315d90b4c8a';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=bb7820d6e288';
-import {drawMemeArmy} from './runner-art.mjs?v=bc3e0a2584cf';
+import {drawMemeArmy} from './runner-art.mjs?v=635052b7861d';
 import {regionalEmitterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 
 import {CAMPAIGN_CAST_POINT,campaignAccentFor,campaignBossPoseFor,drawCampaignBoss,drawCampaignCrowd} from './runner-campaign-art.mjs?v=700c55ebad49';
