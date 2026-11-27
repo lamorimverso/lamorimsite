@@ -23,7 +23,7 @@ for(const mobile of [false,true])test('Battle mode selects fighters, renders and
   await context.route('**/battle-core.mjs*',r=>r.fulfill({contentType:'text/javascript',body:source+'\nconst original=createBattle;createBattle=(...args)=>{globalThis.__battle=original(...args);return globalThis.__battle;};'}));
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base);
-  await page.getByRole('link',{name:'Modo Batalha · 1 × 1',exact:true}).click();
+  await page.locator('#game-mode-chooser').getByRole('link',{name:'Modo Batalha',exact:true}).click();
   await page.waitForURL('**/battle/');
   await page.waitForFunction(()=>!document.getElementById('start').disabled,null,{timeout:20000});
   assert.equal(await page.locator('#players button').count(),23);

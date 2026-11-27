@@ -27,7 +27,7 @@
 
   <link rel="stylesheet" href="control-settings.css?v=1c20042497ae">
   <link rel="stylesheet" href="game.css?v=e16863dbe61c">
-  <link rel="stylesheet" href="runner-ui.css?v=855d464b3185">
+  <link rel="stylesheet" href="runner-ui.css?v=f95f5ffddf12">
   <script defer src="page-layout.js?v=69f225a085c7"></script>
   <script defer src="runner-bootstrap.js?v=38bc6daea705" data-runner="./runner.mjs?v=82f847d87418"></script>
 </head>
@@ -176,12 +176,13 @@
             <legend class="sr-only">Escolha o modo de jogo</legend>
             <label><input id="game-mode-infinite" type="radio" name="game-mode" value="endless"> Modo Infinito</label>
             <label><input id="game-mode-story" type="radio" name="game-mode" value="story" checked> Modo História</label>
+            <a class="game-battle-link" href="battle/">Modo Batalha</a>
           </fieldset>
           <button type="button" class="game-primary" id="game-start" disabled>Carregando desenhos…</button>
           <button type="button" class="game-primary" id="game-continue" hidden>Usar continuação</button>
         </div>
         </div>
-        <div class="game-mode-chooser" aria-label="Modo de batalha"><a class="game-battle-link" href="battle/">Modo Batalha · 1 × 1</a></div>
+        <div class="game-mode-chooser game-result-battle" aria-label="Modo de batalha"><a class="game-battle-link" href="battle/">Modo Batalha · 1 × 1</a></div>
         <p class="game-loading-note sr-only" id="game-loading-note" role="status">Preparando os personagens…</p>
 
         <div class="game-feedback">

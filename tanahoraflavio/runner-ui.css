@@ -177,3 +177,34 @@
 #game:is(:fullscreen,[data-mobile-fullscreen="true"]) :is(.game-sound, .game-settings summary):focus-visible {
   outline-color: #ffe396;
 }
+
+/* Arena is a navigation choice, not a third runner radio value.
+   Keep the compact defeat/retry controls unchanged. */
+#game-ready-actions #game-mode-chooser {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+#game-ready-actions #game-mode-chooser :is(label, .game-battle-link) {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px 4px;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1.2;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+#game-ready-actions #game-mode-chooser input { flex: none; margin: 0; }
+#game-ready-actions #game-mode-chooser .game-battle-link { grid-column: auto; }
+#game-result-actions #game-mode-chooser .game-battle-link,
+#game .game-result-battle { display: none; }
+#game:is([data-run-state="over"], [data-run-state="won"], [data-run-state="ballot"], [data-run-state="prison"]) .game-result-battle {
+  display: grid;
+}
+@media (min-width: 480px) and (orientation: landscape) and (max-height: 600px) {
+  #game-ready-actions .game-controls { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+}
+@media (min-width: 760px) and (min-height: 601px) {
+  #game-ready-actions .game-controls { grid-template-columns: minmax(0, 365px) minmax(0, 235px); }
+}
