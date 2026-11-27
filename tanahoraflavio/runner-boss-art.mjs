@@ -1,14 +1,14 @@
 import {drawCharacterBody,drawCharacterArm} from './runner-body-art.mjs?v=67badae0df52';
 import {drawPlatformRoom} from './runner-platform-room-art.mjs?v=344dcf5c7c31';
-import {drawBossonariHead} from './runner-character-art.mjs?v=220a271ead2e';
-import {standingEnemyPose} from './runner-cast-pose.mjs?v=8f2c5aee1585';
-export {standingEnemyPose} from './runner-cast-pose.mjs?v=8f2c5aee1585';
-import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=d315d90b4c8a';
+import {drawBossonariHead} from './runner-character-art.mjs?v=fbe66523dfcd';
+import {standingEnemyPose} from './runner-cast-pose.mjs?v=cf4dcecf5558';
+export {standingEnemyPose} from './runner-cast-pose.mjs?v=cf4dcecf5558';
+import {drawCombatSprite,drawSpriteHead} from './runner-sprites.mjs?v=6eb9a984d6e6';
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=bb7820d6e288';
-import {drawMemeArmy} from './runner-art.mjs?v=635052b7861d';
+import {drawMemeArmy} from './runner-art.mjs?v=09d8f463339d';
 import {regionalEmitterFor} from './runner-stage-roster.mjs?v=3f963f6dd2ce';
 
-import {CAMPAIGN_CAST_POINT,campaignAccentFor,campaignBossPoseFor,drawCampaignBoss,drawCampaignCrowd} from './runner-campaign-art.mjs?v=700c55ebad49';
+import {CAMPAIGN_CAST_POINT,campaignAccentFor,campaignBossPoseFor,drawCampaignBoss,drawCampaignCrowd} from './runner-campaign-art.mjs?v=b607bf48f7f7';
 
 // Full illustrated combat sprites share the original running artwork style.
 // Coordinates are logical game pixels; y always remains the top of the deck.
@@ -97,7 +97,8 @@ export function drawHoverEnemy(c,{type='haddad',x=0,y=0,scale=1,phase=0,preparin
   if(hurt)line(c,[[22,-105],[30,-110]],CREAM,3);
   c.restore();return;
  }
- const spriteOptions={phase,preparing,attacking,recovering,hurt,reducedMotion,progress,armyVariant,enraged};
+ const resting=p.state==='idle';
+ const spriteOptions={phase,frame:resting?0:undefined,idleTime:resting?phase/10:0,preparing,attacking,recovering,hurt,reducedMotion,progress,armyVariant,enraged};
  if(drawCombatSprite(c,{type,...spriteOptions})){
   const hand=combatGeometryFor(type,spriteOptions).muzzle;
   drawMagic(c,{arms:{left:{hand:{x:hand.x+7,y:hand.y}}}},accent,preparing&&!hurt,attacking&&!hurt);

@@ -12,7 +12,7 @@ import {projectileStyle,ATTACK_NAMES,attackCueFor} from './runner-attack-cues.mj
 export {projectileStyle,ATTACK_NAMES,attackCueFor};
 import {BOSS_ROSTER,bossAtRound,bossAttackFor,nextBossDistance,takeBoss,storyDuelChallenge,applyStoryDuelTempo} from './runner-boss-rules.mjs?v=c153f9a51b4d';
 export {BOSS_ROSTER,bossAtRound,bossAttackFor,storyDuelChallenge,applyStoryDuelTempo};
-import {setAttackRun,heroMuzzleFor,isHostileProjectile,attackRun,projectileFlightY,storyVolleyPendingVictory,advanceReflectedProjectile,advanceHeroShots} from './runner-projectile-combat.mjs?v=e17e22e1456f';
+import {setAttackRun,heroMuzzleFor,isHostileProjectile,attackRun,projectileFlightY,storyVolleyPendingVictory,advanceReflectedProjectile,advanceHeroShots} from './runner-projectile-combat.mjs?v=ca84fdc99f94';
 export {setAttackRun,heroMuzzleFor,isHostileProjectile,attackRun};
 import {campaignRouteDistance,routeClock,routeStagesFor,routeStageFor,groundLessonFor,lessonPending,nextAirTransfer,routeTransitionFor,stageAt,stageTransitionAt} from './runner-route-progress.mjs?v=ee711fd51f3a';
 export {campaignRouteDistance,routeStagesFor,routeStageFor,routeTransitionFor,stageAt,stageTransitionAt};
@@ -35,7 +35,7 @@ import {BOSS_RANKS,bossProfileFor,bossWeaponFor} from './runner-boss-profiles.mj
 import {combatGeometryFor} from './runner-combat-geometry.mjs?v=bb7820d6e288';
 import {retainMovingThreat} from './runner-visibility.mjs?v=ae4d37b77be7';
 
-import {regularCastMuzzle} from './runner-cast-pose.mjs?v=8f2c5aee1585';
+import {regularCastMuzzle} from './runner-cast-pose.mjs?v=cf4dcecf5558';
 import {allyForStage,collectAlly,advanceAllies} from './runner-allies.mjs?v=d3b6a81b34b9';
 import {ARCHIVE_VOICES} from './runner-voice-data.mjs?v=d5e017561fd6';
 import {BOSS_RUN_INTERVAL,BOSS_CLASSES,STORY_ENCOUNTERS,storyBossAt,nextStoryBossDistance,storyApproachAt,arenaPatternFor,bossArenaPose,stepBossPhase} from './runner-bosses.mjs?v=a359288d2758';
@@ -73,7 +73,7 @@ const STORY_JUMP_BUFFER_SECONDS = .15;
 const STORY_EDGE_JUMP_GRACE = .12;
 const JACARE_ENTRY_GRACE = .60;
 const LATERAL_SPEED = 230;
-export {DUEL_CHARGE_SECONDS} from './runner-hero-shot.mjs?v=7aa1e19e9838';
+export {DUEL_CHARGE_SECONDS} from './runner-hero-shot.mjs?v=85d9528e98fb';
 const isJacareAmpoule=o=>o.falling&&o.owner==='pfizer'&&o.type==='pfizer-ampoule';
 const hasJacareVolley=run=>run.obstacles.some(isJacareAmpoule);
 const JACARE_RESTORE_GRACE = .55;

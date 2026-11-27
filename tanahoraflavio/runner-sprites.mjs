@@ -52,14 +52,35 @@ export function loadSprites(onProgress=()=>{},{coreOnly=false}={}){
  }catch(error){finish(error);}
  return attempt.promise;
 }
+// Head and chest have separate motion, while the hips and feet keep the same
+// pixels and the same deck anchor. Adjacent strips share their seam positions.
+function drawRestingSprite(context,image,frame,x,y,factor,time){
+ const {width,height}=frame;
+ const bodyHeight=Math.min(height,(frame.groundY??frame.y+height)-frame.y);
+ if(!(time>0)||!Number.isFinite(time)||bodyHeight<8){
+  context.drawImage(image,frame.x,frame.y,width,height,x,y,width*factor,height*factor);return;
+ }
+ const neck=Math.round(bodyHeight*.43),waist=Math.round(bodyHeight*.73);
+ const unit=bodyHeight*factor,breath=Math.sin(time*Math.PI*2/2.45),weight=Math.sin(time*Math.PI*2/4.1);
+ const headX=unit*(.020*weight+.007*breath),headY=unit*-.025*breath;
+ const chestX=unit*.012*weight,chestY=unit*-.019*Math.sin(time*Math.PI*2/2.45-.18);
+ for(const [start,end,ax,ay,bx,by] of [[0,neck,headX,headY,chestX,chestY],[neck,waist,chestX,chestY,0,0]]){
+  const top=y+start*factor,stripHeight=(end-start)*factor;
+  const shear=(bx-ax)/stripHeight,stretch=(by-ay)/stripHeight;
+  context.save();context.transform(1,0,shear,1+stretch,ax-shear*top,ay-stretch*top);
+  context.drawImage(image,frame.x,frame.y+start,width,end-start,x,top,width*factor,stripHeight);
+  context.restore();
+ }
+ context.drawImage(image,frame.x,frame.y+waist,width,height-waist,x,y+waist*factor,width*factor,(height-waist)*factor);
+}
 /** Complete campaign drawings use the deck baseline, independent of physics. */
-export function drawCampaignFigure(context,{type,x=0,y=0,scale=1,state='idle',phase=0,progress=1,reducedMotion=false,alpha=1}={}){
+export function drawCampaignFigure(context,{type,x=0,y=0,scale=1,state='idle',phase=0,progress=1,reducedMotion=false,alpha=1,idleTime=0}={}){
  const actor=campaignActors[type],sheet=actor&&sheets.get(actor.sheet);
  if(!sheet||![x,y,scale].every(Number.isFinite)||scale<=0)return false;
  const index=actionDrawing(sheet.frames,actor.row*4,{state,phase,progress,reducedMotion});
  const frame=sheet.frames[index],factor=actor.logicalHeight*scale/actor.height;
  context.save();context.globalAlpha*=alpha;context.imageSmoothingEnabled=true;
- context.drawImage(sheet.image,frame.x,frame.y,frame.width,frame.height,x+(frame.x-frame.center)*factor,y+(frame.y-frame.groundY)*factor,frame.width*factor,frame.height*factor);
+ drawRestingSprite(context,sheet.image,frame,x+(frame.x-frame.center)*factor,y+(frame.y-frame.groundY)*factor,factor,state==='idle'&&!reducedMotion?idleTime:0);
  context.restore();return true;
 }
 export function drawCampaignFigurePortrait(context,{type,x=0,y=0,size=48}={}){
@@ -118,9 +139,13 @@ export function portraitCropFor(frame){
  // Preservar toda a largura, recortando somente a parte inferior para retrato.
  return {x:frame.x,y:frame.y,width:frame.width,height:frame.height*.76};
 }
-export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,standing=false,airborne=false,falling=false,reducedMotion=false,landing=false,crouchPose=landing?1:0,sliding=false,slidePose=sliding?1:0,slidePhase=sliding?.45:0,slideShot,attacking=false,preparing=false,hurt=false,alpha=1,facing}={}){
- if(type==='flavio'&&standing&&!airborne&&!landing&&crouchPose===0&&slidePose===0&&
-  drawCombatSprite(context,{type,x,y,scale,frame:0,alpha,facing:facing??1}))return true;
+export function drawSpriteActor(context,{type='flavio',x=0,y=0,scale=1,phase=0,standing=false,airborne=false,falling=false,reducedMotion=false,landing=false,crouchPose=landing?1:0,sliding=false,slidePose=sliding?1:0,slidePhase=sliding?.45:0,slideShot,attacking=false,preparing=false,recovering=false,hurt=false,progress,combatStance=false,idleTime=0,strideOnly=false,alpha=1,facing}={}){
+ if(strideOnly&&(!runningGroups[type]||!sheets.has(runningGroups[type].sheet)))return false;
+ if(type==='flavio'&&standing&&!airborne&&!landing&&crouchPose===0&&slidePose===0&&(!hurt||combatStance)){
+  const changingPose=attacking||preparing||recovering||hurt;
+  if(drawCombatSprite(context,{type,x,y,scale,frame:changingPose?undefined:0,alpha,facing:facing??1,
+   attacking,preparing,recovering,hurt,progress,reducedMotion,idleTime:changingPose?0:idleTime}))return true;
+ }
  // Santiago is a friendly support. Use complete neutral poses on the ground,
  // with a small breathing motion; neither charging nor firing frames are used.
  if(type==='santiago')return drawCombatSprite(context,{type,x,y:y-Math.sin(phase*Math.PI/2)*.8*scale,scale,frame:Math.floor(Math.max(0,phase))%2?3:0,alpha,facing:facing??1});
@@ -213,14 +238,14 @@ export function drawSpriteHead(context,{type,x=0,y=0,size=40,phase=0}={}){
  context.restore();return true;
 }
 
-/** One drawImage samples one COMPLETE illustrated pose, including face, torso and shoes. */
-export function drawCombatSprite(context,{type,x=0,y=0,alpha=1,...options}={}){
+/** Each keyframe uses a complete illustrated pose from the existing atlas. */
+export function drawCombatSprite(context,{type,x=0,y=0,alpha=1,idleTime=0,...options}={}){
  const geometry=combatGeometryFor(type,options);if(!geometry)return false;
  const sheet=sheets.get(geometry.sheet);if(!sheet)return false;
  const {frame,factor,flip,rect}=geometry;
  context.save();context.globalAlpha*=alpha;context.imageSmoothingEnabled=true;
  context.translate(x,y);if(flip!==1)context.scale(flip,1);
  if(options.hurt){context.shadowColor='#ffd56b';context.shadowBlur=5;}
- context.drawImage(sheet.image,frame.x,frame.y,frame.width,frame.height,rect.x,rect.y,frame.width*factor,frame.height*factor);
+ drawRestingSprite(context,sheet.image,frame,rect.x,rect.y,factor,options.reducedMotion?0:idleTime);
  context.restore();return true;
 }

@@ -42,6 +42,49 @@ test('todos os apoios e as duas formas do herói possuem desenhos animados próp
   }assert.ok(new Set(poses).size>=3,type+' não fica preso em um quadro');
  }
 });
+test('the hero and grounded bosses animate their upper bodies with planted feet',{skip:!canvas},async t=>{
+ const art=await artwork(t),{drawHoverEnemy}=await import('../runner-boss-art.mjs');
+ for(const type of ['flavio','xandao','rick']){
+  function draw(time,reducedMotion=false){
+   const c=canvas.createCanvas(260,200).getContext('2d');
+   if(type==='flavio')art.drawActor(c,{type,x:130,y:160,standing:true,idleTime:time,reducedMotion});
+   else drawHoverEnemy(c,{type,x:130,y:160,phase:time*10,platform:false,reducedMotion});
+   return {upper:c.getImageData(40,40,180,95).data,feet:c.getImageData(40,145,180,20).data};
+  }
+  const neutral=draw(.10),breathing=draw(.68);
+  assert.notDeepEqual(neutral.upper,breathing.upper,`${type} moves its head and chest`);
+  assert.deepEqual(neutral.feet,breathing.feet,`${type} keeps its feet planted`);
+  assert.deepEqual(draw(0,true),draw(.68,true),`${type} respects reduced motion`);
+ }
+});
+
+test('earned powers animate the object in flight and keep the center at its simulated position',{skip:!canvas},async t=>{
+ await artwork(t);
+ const {drawHeroProjectile}=await import('../runner-hero-shot.mjs');
+ for(const [powerId,type,behavior] of [['xandao','hammer','orbit'],['pf','handcuffs','return']]){
+  const shot={powerId,type,behavior,x:92,y:55,vx:520,vy:0};
+  function draw(age,reducedMotion=false){
+   const c=canvas.createCanvas(184,154).getContext('2d'),moves=[];
+   const translate=c.translate.bind(c);c.translate=(...args)=>{moves.push(args);translate(...args);};
+   drawHeroProjectile(c,{...shot,age},130,{reducedMotion});
+   assert.deepEqual(moves[0],[shot.x,130-shot.y]);
+   return c.getImageData(66,50,52,51).data;
+  }
+  assert.notDeepEqual(draw(.06),draw(.21),`${type} moves in flight`);
+  assert.deepEqual(draw(.06,true),draw(.21,true),`${type} holds its pose with reduced motion`);
+ }
+});
+
+test('Flávio shows a distinct stance while preparing, striking and recovering in the arena',{skip:!canvas},async t=>{
+ const art=await artwork(t);
+ const poses=[{}, {preparing:true,progress:.9}, {attacking:true,progress:.2}, {recovering:true,progress:.2}];
+ const frames=poses.map(flags=>{
+  const c=canvas.createCanvas(260,200).getContext('2d');
+  assert.equal(art.drawActor(c,{type:'flavio',x:130,y:160,standing:true,combatStance:true,reducedMotion:true,...flags}),true);
+  return Buffer.from(c.getImageData(40,40,180,130).data).toString('base64');
+ });
+ assert.equal(new Set(frames).size,poses.length);
+});
 test('os 24 encontros históricos desenham cabeça e corpo e articulam carga e soltura',{skip:!canvas},async t=>{
  await artwork(t);const {legacyBossAt}=await import('../runner-bosses.mjs'),{drawHoverEnemy}=await import('../runner-boss-art.mjs');
  for(let i=0;i<24;i++){
