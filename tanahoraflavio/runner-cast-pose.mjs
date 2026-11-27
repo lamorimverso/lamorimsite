@@ -8,7 +8,7 @@ function joint(x,y){return {x,y};}
 /** Pure standing rig. Feet stay planted through breathing, charging and recoil. */
 export function standingEnemyPose({phase=0,preparing=false,attacking=false,recovering=false,hurt=false,reducedMotion=false,classId='sentinel',action='jump',progress}={}){
  const t=reducedMotion?0:(Number.isFinite(phase)?phase:0),breath=reducedMotion?0:Math.sin(t*.32),kind=canonicalClass(classId);
- const weight=Math.sin(t*.17);
+ const weight=reducedMotion?0:Math.sin(t*.17);
  const state=hurt?'recoil':attacking?'release':preparing?'charge':recovering?'recover':'idle';
  const u=Math.max(0,Math.min(1,Number.isFinite(progress)?progress:reducedMotion?1:(1+Math.sin(t*.65))*.5));
  const ease=u*u*(3-2*u);

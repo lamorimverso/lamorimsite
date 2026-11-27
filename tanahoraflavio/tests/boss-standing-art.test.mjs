@@ -37,6 +37,15 @@ test('reduced motion freezes bob, idle gestures and decorative motors but keeps 
  }
 });
 
+test('the reduced-motion standing rig skips decorative trigonometry',()=>{
+ const sin=Math.sin;
+ let calls=0;
+ Math.sin=(...args)=>{calls++;return sin(...args);};
+ try{standingEnemyPose({phase:8,reducedMotion:true});}
+ finally{Math.sin=sin;}
+ assert.equal(calls,0);
+});
+
 test('hover art and arena balance canvas state, use a visible platform, and do not need a DOM',()=>{
  for(const type of ['haddad','lula','xandao','pf','janones','bossonari','meme-army','missing']){
   const c=context();drawHoverEnemy(c,{type,x:250,y:170,scale:.9,phase:4});

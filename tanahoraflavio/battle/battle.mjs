@@ -1,6 +1,6 @@
 import {ROSTER,STAGES,WIDTH,GROUND,STEP,createBattle,stepBattle,randomMatchup} from './battle-core.mjs?v=898ff997b13a';
-import {drawActor,loadSprites,drawProjectile} from '../runner-art.mjs?v=99220b167c4b';
-import {drawHoverEnemy} from '../runner-boss-art.mjs?v=7f0a4354ab6b';
+import {drawActor,loadSprites,drawProjectile} from '../runner-art.mjs?v=09d8f463339d';
+import {drawHoverEnemy} from '../runner-boss-art.mjs?v=f9894621010e';
 import {drawScenery} from '../runner-scenery.mjs?v=f18cb77b75fc';
 const $=id=>document.getElementById(id),canvas=$('canvas'),c=canvas.getContext('2d'),reduced=matchMedia('(prefers-reduced-motion: reduce)');
 let player='flavio',boss='xandao',g=null,raf=0,last=0,acc=0,ready=false,held=new Map(),pressed=[];

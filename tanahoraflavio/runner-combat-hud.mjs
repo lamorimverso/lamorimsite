@@ -2,7 +2,7 @@ import {createPresentationDOM} from './runner-presentation-cache.mjs?v=4712d2710
 import {ammoCapacityFor} from './runner-supplies.mjs?v=44c67e8a5802';
 import {heroPowerFor} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
 import {drawSpriteHead,drawCombatSprite} from './runner-sprites.mjs?v=6eb9a984d6e6';
-import {drawHeroProjectile,DUEL_CHARGE_SECONDS} from './runner-hero-shot.mjs?v=0fb287e4bef1';
+import {drawHeroProjectile,DUEL_CHARGE_SECONDS} from './runner-hero-shot.mjs?v=85d9528e98fb';
 
 import {drawCampaignPortrait} from './runner-campaign-art.mjs?v=b607bf48f7f7';
 

@@ -2,7 +2,7 @@ import {PLAYER,playerX,visibleWidth} from './runner-run-geometry.mjs?v=6561adb00
 import {random,nextSeed} from './runner-random.mjs?v=8de9f87c7593';
 import {heroPowerFor} from './runner-earned-powers.mjs?v=9c3a03f65c5f';
 import {advanceAmmo} from './runner-supplies.mjs?v=44c67e8a5802';
-import {HERO_SHOT_DURATION,DUEL_CHARGE_SECONDS,heroShotPose} from './runner-hero-shot.mjs?v=0fb287e4bef1';
+import {HERO_SHOT_DURATION,DUEL_CHARGE_SECONDS,heroShotPose} from './runner-hero-shot.mjs?v=85d9528e98fb';
 import {playerBodyFor} from './runner-body.mjs?v=57ec474fca38';
 import {bossArenaPose,bossCounterWindow} from './runner-bosses.mjs?v=a359288d2758';
 

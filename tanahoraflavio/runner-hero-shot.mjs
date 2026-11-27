@@ -34,7 +34,7 @@ function drawPowerWake(c,behavior,time,color){
  c.strokeStyle=color;c.globalAlpha*=.65;c.lineWidth=flowing?2:3;c.lineCap='round';
  c.beginPath();
  if(flowing){
-  const ripple=Math.sin(time*23)*5;
+  const ripple=time?Math.sin(time*23)*5:0;
   c.moveTo(-27,-5);c.quadraticCurveTo(-18,-8+ripple,-6,-2);
   c.moveTo(-30,5);c.quadraticCurveTo(-20,8-ripple,-8,2);
  }else{c.moveTo(-18,0);c.lineTo(-5,0);}
