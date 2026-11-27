@@ -239,8 +239,8 @@ export function manholeThreatGeometry(item,ground=246){
 function drawGroundWarning(c,x,width,ground,progress,centerX,arrowY){
  line(c,[[x,ground+12],[x+width,ground+12]],'#34283b',6);
  if(progress>0)line(c,[[x,ground+12],[x+width*progress,ground+12]],'#ffd17a',3);
- box(c,centerX-16,arrowY-20,32,25,'#34283b',5,'#ffd17a');
- text(c,'↔',centerX,arrowY,20,'#fff5de');
+ box(c,centerX-20,arrowY-28,40,32,'#34283b',6,'#ffd17a');
+ text(c,'↔',centerX,arrowY,26,'#fff5de');
 }
 export function drawManholeThreat(c,item,ground=246){
  const g=manholeThreatGeometry(item,ground);c.save();
@@ -270,8 +270,8 @@ export function drawFallingThreat(c,item,ground=246,phase=(item.age||0)*10,{redu
  box(c,item.x+3,ground+3,item.width-6,5,'#a73e50',2,null);
  line(c,[[item.x+3,ground+11],[item.x+3+(item.width-6)*g.progress,ground+11]],'#da9a63',2);
  if(!g.showBody){
-  box(c,g.centerX-16,ground-86,32,27,'#34283b',5,'#ffd17a');
-  text(c,'↔',g.centerX,ground-64,23,'#fff5de');
+  box(c,g.centerX-20,ground-94,40,35,'#34283b',6,'#ffd17a');
+  text(c,'↓',g.centerX,ground-64,29,'#fff5de');
  }else if(item.type==='pfizer-ampoule'){
   // Ampola cenográfica: arte no mesmo alvo e na mesma altura de colisão.
   box(c,g.centerX-13,g.bodyY-24,26,9,'#5b7a88',3,'#31566b');
