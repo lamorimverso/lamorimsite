@@ -235,6 +235,13 @@ export function manholeThreatGeometry(item,ground=246){
   open:item.age>=item.warningFor&&item.age<item.warningFor+item.activeFor,
   progress:Math.max(0,Math.min(1,item.age/item.warningFor))};
 }
+// A fixed, high-contrast warning stays readable at small canvas scales.
+function drawGroundWarning(c,x,width,ground,progress,centerX,arrowY){
+ line(c,[[x,ground+12],[x+width,ground+12]],'#34283b',6);
+ if(progress>0)line(c,[[x,ground+12],[x+width*progress,ground+12]],'#ffd17a',3);
+ box(c,centerX-16,arrowY-20,32,25,'#34283b',5,'#ffd17a');
+ text(c,'↔',centerX,arrowY,20,'#fff5de');
+}
 export function drawManholeThreat(c,item,ground=246){
  const g=manholeThreatGeometry(item,ground);c.save();
  if(Object.hasOwn(CAMPAIGN_PROP_COLORS,item.type)){
@@ -243,8 +250,7 @@ export function drawManholeThreat(c,item,ground=246){
   drawCampaignProp(c,{type:item.type,x:g.centerX,y:base,width:g.width,height:item.type==='crowd-lane'?13:item.height||28,reducedMotion:true});
   c.restore();
   if(!g.open){
-   line(c,[[item.x,ground+12],[item.x+g.width*g.progress,ground+12]],'#bb6841',3);
-   text(c,'↔',g.centerX,ground-27,20,'#8b3b3d');
+   drawGroundWarning(c,item.x,g.width,ground,g.progress,g.centerX,ground-27);
   }
   c.restore();return;
  }
@@ -255,8 +261,7 @@ export function drawManholeThreat(c,item,ground=246){
   for(const side of [-1,1])line(c,[[g.centerX+side*(g.width/2+3),ground-4],[g.centerX+side*(g.width/2+10),ground-10]],'#ba6942',3);
  }else{
   for(let dx=-18;dx<=18;dx+=9)line(c,[[g.centerX+dx,ground-2],[g.centerX+dx,ground+3]],'#526567',1.5);
-  line(c,[[item.x,ground+12],[item.x+g.width*g.progress,ground+12]],'#bb6841',3);
-  text(c,'↔',g.centerX,ground-23,20,'#8b3b3d');
+  drawGroundWarning(c,item.x,g.width,ground,g.progress,g.centerX,ground-23);
  }
  c.restore();
 }
@@ -265,7 +270,8 @@ export function drawFallingThreat(c,item,ground=246,phase=(item.age||0)*10,{redu
  box(c,item.x+3,ground+3,item.width-6,5,'#a73e50',2,null);
  line(c,[[item.x+3,ground+11],[item.x+3+(item.width-6)*g.progress,ground+11]],'#da9a63',2);
  if(!g.showBody){
-  text(c,'↔',g.centerX,ground-64,23,'#8a3348');
+  box(c,g.centerX-16,ground-86,32,27,'#34283b',5,'#ffd17a');
+  text(c,'↔',g.centerX,ground-64,23,'#fff5de');
  }else if(item.type==='pfizer-ampoule'){
   // Ampola cenográfica: arte no mesmo alvo e na mesma altura de colisão.
   box(c,g.centerX-13,g.bodyY-24,26,9,'#5b7a88',3,'#31566b');
