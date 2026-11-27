@@ -1,9 +1,18 @@
-import {ROSTER,STAGES,WIDTH,GROUND,STEP,createBattle,stepBattle,randomMatchup} from './battle-core.mjs?v=898ff997b13a';
+import {ROSTER,STAGES,WIDTH,GROUND,STEP,createBattle,stepBattle,randomMatchup} from './battle-core.mjs?v=db9294d55fd9';
 import {drawActor,loadSprites,drawProjectile} from '../runner-art.mjs?v=09d8f463339d';
 import {drawHoverEnemy} from '../runner-boss-art.mjs?v=f9894621010e';
+import {drawCombatSprite} from '../runner-sprites.mjs?v=6eb9a984d6e6';
 import {drawScenery} from '../runner-scenery.mjs?v=f18cb77b75fc';
 const $=id=>document.getElementById(id),canvas=$('canvas'),c=canvas.getContext('2d'),reduced=matchMedia('(prefers-reduced-motion: reduce)');
 let player='flavio',boss='xandao',g=null,raf=0,last=0,acc=0,ready=false,held=new Map(),pressed=[];
+// The arena scenery is static: rasterize it once per selected stage, not per frame.
+const stageLayer=document.createElement('canvas');stageLayer.width=canvas.width;stageLayer.height=canvas.height;
+const stageContext=stageLayer.getContext('2d');let cachedStage=null;
+function paintScenery(stage){
+ if(!stageContext){c.save();c.scale(1,420/300);drawScenery(c,{stage:{id:stage},distance:0,width:WIDTH,reducedMotion:true});c.restore();return;}
+ if(stage!==cachedStage){stageContext.setTransform(1,0,0,420/300,0,0);drawScenery(stageContext,{stage:{id:stage},distance:0,width:WIDTH,reducedMotion:true});cachedStage=stage;}
+ c.drawImage(stageLayer,0,0);
+}
 const lookup=id=>ROSTER.find(f=>f.id===id);
 function info(node,f){node.replaceChildren();const h=document.createElement('strong');h.textContent=f.name;const p=document.createElement('p');p.textContent=f.label+' · '+f.power.name;const d=document.createElement('p');d.textContent=f.power.description;const stats=document.createElement('p');stats.textContent='Vida '+f.hp+' · Velocidade '+f.speed+' · Força '+Math.round(f.force*100)+'%';node.append(h,p,d,stats);}
 function syncSelection(){for(const button of document.querySelectorAll('.fighter'))button.setAttribute('aria-pressed',String(button.dataset.id===(button.dataset.side==='p'?player:boss)));info($('player-detail'),lookup(player));info($('boss-detail'),lookup(boss));}
@@ -25,15 +34,27 @@ function start(){if(!ready)return;cancelAnimationFrame(raf);clear();g=createBatt
 $('start').onclick=start;$('rematch').onclick=start;$('select-back').onclick=()=>{cancelAnimationFrame(raf);raf=0;g=null;clear();$('fight').hidden=true;$('select').hidden=false;$('start').focus();};
 function frame(now){if(!g)return;if(!last)last=now;acc+=Math.min(.10,(now-last)/1000);last=now;let n=0;while(acc>=STEP&&n++<12){const input={press:pressed.splice(0)};for(const a of held.values())input[a]=true;stepBattle(g,input);acc-=STEP;}render();if(g.status!=='finished')raf=requestAnimationFrame(frame);else clear();}
 function actor(f){
- const y=GROUND-f.y,attack=f.move,hit=f.state==='hurt',low=['crouch','guard-low'].includes(f.state),guard=['guard-high','guard-low','blockstun'].includes(f.state),wind=!!attack&&f.age<attack.start,active=!!attack&&f.age>=attack.start&&f.age<attack.start+attack.active;
+ const y=GROUND-f.y,attack=f.move,hit=f.state==='hurt',low=['crouch','guard-low'].includes(f.state)||f.state==='blockstun'&&f.guardState==='guard-low',guard=['guard-high','guard-low','blockstun'].includes(f.state),wind=!!attack&&f.age<attack.start,active=!!attack&&f.age>=attack.start&&f.age<attack.start+attack.active;
  const recovering=!!attack&&!wind&&!active;
  const progress=attack?Math.min(1,wind?f.age/attack.start:active?(f.age-attack.start)/attack.active:(f.age-attack.start-attack.active)/attack.recover):0;
- const walking=f.state==='walk',phase=walking?f.walk:g.elapsed*10;
+ const retreating=f.state==='guard-high'&&Math.abs(f.vx)>1;
+ const walking=f.state==='walk'||retreating,phase=walking?f.walk:g.elapsed*10;
  c.save();c.globalAlpha=.20;c.fillStyle='#182036';c.beginPath();c.ellipse(f.x,GROUND+3,32,6,0,0,Math.PI*2);c.fill();c.restore();
  c.save();c.translate(f.x,y);
+ // Continuous anticipation and follow-through, anchored at the feet.
+ // Keep essential authored sprite frames even with reduced decorative motion.
+ if(!reduced.matches){
+  const kick=attack?.key?.startsWith('kick'),strength=attack?.key==='heavy'||attack?.key==='kickHigh'?1.3:kick?1.12:1;
+  const lean=attack?strength*(wind?-.045*progress:active?.065*(1+.35*Math.sin(progress*Math.PI)):recovering?.065*(1-progress):0):
+   hit?-.065:walking?.027*Math.sign(f.vx||f.face)/f.face:f.y>0?(f.vy>=0?.035:-.025):0;
+  const height=attack?.level==='low'&&active?.96:attack&&wind?1-.035*progress:1;
+  c.transform(1,0,-f.face*lean,height,0,0);
+ }
  if(f.def.id==='flavio'){
-  drawActor(c,{type:'flavio',scale:1.4,phase,idleTime:g.elapsed,facing:f.face,standing:!walking,airborne:f.y>0,
-   crouchPose:low?1:0,attacking:active,preparing:wind,recovering,hurt:hit,progress,combatStance:true,reducedMotion:reduced.matches});
+  const pose={type:'flavio',scale:1.4,phase,idleTime:g.elapsed,facing:f.face,standing:!walking,airborne:f.y>0,falling:f.vy<0,
+   crouchPose:low?1:0,attacking:active,preparing:wind,recovering,hurt:hit,progress,combatStance:true,reducedMotion:reduced.matches};
+  // The runner's jump sprites otherwise override all combat frames in the air.
+  if(!(attack&&f.y>0&&drawCombatSprite(c,{...pose,idleTime:0})))drawActor(c,pose);
  }else if(!walking||!drawActor(c,{type:f.def.id,scale:1.24,phase,facing:f.face,strideOnly:true,reducedMotion:reduced.matches})){
   c.scale(-f.face,low?.68:1);
   drawHoverEnemy(c,{type:f.def.id,platform:false,scale:1.24,phase,preparing:wind,attacking:active,recovering,hurt:hit,
@@ -43,13 +64,15 @@ function actor(f){
  if(guard){c.save();c.strokeStyle='#9edbff';c.lineWidth=3;c.globalAlpha=.8;c.translate(f.x,y);c.scale(f.face,1);c.beginPath();c.ellipse(12,-(low?44:69),37,low?43:68,0,-1.4,1.4);c.stroke();c.restore();}
  if(active&&attack.key!=='special'){c.save();c.strokeStyle='#fff0b6';c.lineWidth=5;c.globalAlpha=.65;c.beginPath();const yy=y-(attack.level==='low'?34:attack.key.startsWith('kick')?63:81);c.moveTo(f.x+f.face*22,yy-24);c.quadraticCurveTo(f.x+f.face*attack.reach,yy-28,f.x+f.face*(attack.reach-6),yy+18);c.stroke();c.restore();}
 }
-function meter(id,value){const el=$(id);el.style.width=value+'%';el.parentElement.setAttribute('aria-valuenow',String(Math.round(value)));}
+const meterValues=new Map();
+function meter(id,value){if(meterValues.get(id)===value)return;meterValues.set(id,value);const el=$(id);el.style.width=value+'%';const announced=String(Math.round(value));if(el.parentElement.getAttribute('aria-valuenow')!==announced)el.parentElement.setAttribute('aria-valuenow',announced);}
+function setText(id,value){const el=$(id),next=String(value);if(el.textContent!==next)el.textContent=next;}
 function render(){
- if(!g)return;const [a,b]=g.fighters;c.setTransform(1,0,0,1,0,0);c.save();c.scale(1,420/300);drawScenery(c,{stage:{id:g.stage},distance:0,width:WIDTH,reducedMotion:true});c.restore();
+ if(!g)return;const [a,b]=g.fighters;c.setTransform(1,0,0,1,0,0);paintScenery(g.stage);
  for(const f of [a,b])actor(f);
  for(const p of g.projectiles){c.save();c.fillStyle=p.color;c.globalAlpha=.22;c.beginPath();c.ellipse(p.x,GROUND-p.y,p.radius+8,p.radius+8,0,0,Math.PI*2);c.fill();c.restore();drawProjectile(c,{type:p.type,x:p.x-p.radius,y:p.y,width:p.radius*2,height:p.radius*2,speed:-p.vx,launchX:p.launchX,launched:true,flightStyle:['wave','gust','orbit'].includes(p.behavior)?'wind':p.behavior==='ghost'?'ghost':'glide'},GROUND,p.age*24,{reducedMotion:reduced.matches});c.save();c.strokeStyle=p.color;c.lineWidth=2;c.beginPath();c.arc(p.x,GROUND-p.y,p.radius,0,Math.PI*2);c.stroke();c.restore();}
  for(const e of g.effects){c.save();c.globalAlpha=Math.min(1,e.life/.16);c.strokeStyle=e.color||'#fff';c.lineWidth=3;const size=8+(.23-e.life)*95;c.translate(e.x,GROUND-e.y);for(let i=0;i<6;i++){c.rotate(Math.PI/3);c.beginPath();c.moveTo(size*.45,0);c.lineTo(size,0);c.stroke();}c.restore();}
- $('pname').textContent=a.def.name;$('bname').textContent=b.def.name;meter('php',100*a.hp/a.maxHp);meter('bhp',100*b.hp/b.maxHp);meter('pmeter',a.meter);meter('bmeter',b.meter);$('time').textContent=Math.ceil(g.clock);$('round').textContent='ROUND '+g.round;$('pwins').textContent='Rounds: '+g.score[0]+(a.combo>1?' · Combo '+a.combo:'');$('bwins').textContent='Rounds: '+g.score[1];let title='';
+ setText('pname',a.def.name);setText('bname',b.def.name);meter('php',100*a.hp/a.maxHp);meter('bhp',100*b.hp/b.maxHp);meter('pmeter',a.meter);meter('bmeter',b.meter);setText('time',Math.ceil(g.clock));setText('round','ROUND '+g.round);setText('pwins','Rounds: '+g.score[0]+(a.combo>1?' · Combo '+a.combo:''));setText('bwins','Rounds: '+g.score[1]);let title='';
  if(g.status==='intro')title='ROUND '+g.round;else if(g.status==='roundover')title=g.result.reason+(g.result.winner===0?' · Você venceu':g.result.winner===1?' · Chefão venceu':' · Empate');else if(g.status==='finished')title=g.score[0]>g.score[1]?'VITÓRIA!':g.score[0]<g.score[1]?'DERROTA':'EMPATE';else if(g.clock>59.4)title='LUTE!';
  if($('banner').textContent!==title)$('banner').textContent=title;
 }
